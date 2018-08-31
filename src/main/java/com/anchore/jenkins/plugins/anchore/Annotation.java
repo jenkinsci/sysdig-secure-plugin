@@ -7,7 +7,7 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Wrapper class for Anchore query
+ * Wrapper class for Sysdig Secure query
  */
 public class Annotation extends AbstractDescribableImpl<Annotation> implements Serializable {
 
@@ -35,7 +35,7 @@ public class Annotation extends AbstractDescribableImpl<Annotation> implements S
 
     @Override
     public String getDisplayName() {
-      return "Anchore Engine Image Annotation";
+      return "Sysdig Secure Engine Image Annotation";
     }
   }
 }

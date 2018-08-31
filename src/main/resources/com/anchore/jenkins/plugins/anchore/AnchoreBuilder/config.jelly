@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
-  <f:section title="Anchore Build Options">
+  <f:section title="Sysdig Secure Build Options">
 
     <f:entry title="Image list file" field="name">
       <f:textbox default="${descriptor.DEFAULT_NAME}"/>
@@ -17,15 +17,15 @@
 
     <j:choose>
       <j:when test="${descriptor.isMode('anchoreengine')}">
-        <f:entry title="Anchore Engine operation retries" field="engineRetries">
+        <f:entry title="Sysdig Secure Engine operation retries" field="engineRetries">
           <f:textbox default="${descriptor.DEFAULT_ENGINE_RETRIES}"/>
         </f:entry>
 
-        <f:entry title="Anchore Engine policy bundle ID" field="policyBundleId">
+        <f:entry title="Sysdig Secure Engine policy ID" field="policyBundleId">
           <f:textbox default="${descriptor.DEFAULT_POLICY_BUNDLE_ID}"/>
         </f:entry>
 
-        <f:entry title="Anchore Engine image annotations" help="/plugin/anchore-container-scanner/help/help-Annotations.html">
+        <f:entry title="Sysdig Secure Engine image annotations" help="/plugin/sysdig-secure/help/help-Annotations.html">
           <f:repeatableProperty field="annotations" noAddButton="false" add="Add annotation" default="${null}">
             <f:entry>
               <div align="right">
@@ -36,16 +36,16 @@
         </f:entry>
 
         <f:section title="Override Global Configuration">
-          <f:entry title="Anchore Engine URL" field="engineurl" help="/plugin/anchore-container-scanner/help/help-OverrideAEURL.html">
+          <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
             <f:textbox name="engineurl" default=""/>
           </f:entry>
 
-          <f:entry field="engineCredentialsId" title="Anchore Engine credentials"
-            help="/plugin/anchore-container-scanner/help/help-OverrideAECredentials.html">
+          <f:entry field="engineCredentialsId" title="Sysdig Secure Engine credentials"
+            help="/plugin/sysdig-secure/help/help-OverrideAECredentials.html">
             <c:select/>
           </f:entry>
 
-          <f:entry title="Anchore Engine verify SSL" field="engineverify">
+          <f:entry title="Sysdig Secure Engine verify SSL" field="engineverify">
             <f:checkbox name="engineverify" checked="${instance.engineverify}" default="${false}"/>
           </f:entry>
         </f:section>
@@ -61,7 +61,7 @@
           <f:checkbox name="doCleanup" checked="${instance.doCleanup}" default="${descriptor.DEFAULT_DO_CLEANUP}"/>
         </f:entry>
 
-        <f:entry title="Anchore query list">
+        <f:entry title="Sysdig Secure query list">
           <f:repeatableProperty field="inputQueries" noAddButton="false" add="Add query"
             default="${instance == null ? descriptor.DEFAULT_INPUT_QUERIES : null}">
             <f:entry>
@@ -75,7 +75,7 @@
         <f:section title="Policy Evaluation Method">
           <f:radioBlock name="policyEvalMethod" value="autosync" title="Automatic Bundle Sync"
             checked="${instance != null &amp;&amp; instance.policyEvalMethod == 'autosync'}" inline="true"
-            help="/plugin/anchore-container-scanner/help/help-policyEvalMethod.html">
+            help="/plugin/sysdig-secure/help/help-policyEvalMethod.html">
             <f:entry title="Anchore.io username" field="anchoreioUser">
               <f:textbox/>
             </f:entry>
@@ -90,7 +90,7 @@
 
           <f:radioBlock name="policyEvalMethod" value="bundlefile" title="Bundle File Override"
             checked="${instance != null &amp;&amp; instance.policyEvalMethod == 'bundlefile'}" inline="true"
-            help="/plugin/anchore-container-scanner/help/help-policyEvalMethod.html">
+            help="/plugin/sysdig-secure/help/help-policyEvalMethod.html">
             <f:entry title="Bundle File" field="bundleFileOverride">
               <f:textbox default="${descriptor.DEFAULT_BUNDLE_FILE_OVERRIDE}"/>
             </f:entry>
@@ -99,7 +99,7 @@
           <f:radioBlock name="policyEvalMethod" value="plainfile" title="Policy/Whitelist Override"
             checked="${instance == null || instance.policyEvalMethod == null || instance.policyEvalMethod == 'plainfile'}"
             inline="true"
-            help="/plugin/anchore-container-scanner/help/help-policyEvalMethod.html">
+            help="/plugin/sysdig-secure/help/help-policyEvalMethod.html">
             <f:entry title="Policy file" field="policyName">
               <f:textbox default="${descriptor.DEFAULT_POLICY_NAME}"/>
             </f:entry>

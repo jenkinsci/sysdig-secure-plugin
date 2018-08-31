@@ -8,7 +8,7 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
 /**
- * Anchore plugin results for a given build are stored and subsequently retrieved from an instance of this class. Rendering/display of
+ * Sysdig Secure plugin results for a given build are stored and subsequently retrieved from an instance of this class. Rendering/display of
  * the results is defined in the appropriate index and summary jelly files. This Jenkins Action is associated with a build (and not the
  * project which is one level up)
  */
@@ -60,17 +60,17 @@ public class AnchoreAction implements Action {
 
   @Override
   public String getIconFileName() {
-    return Jenkins.RESOURCE_PATH + "/plugin/anchore-container-scanner/images/anchore.png";
+    return Jenkins.RESOURCE_PATH + "/plugin/sysdig-secure/images/sysdig-shovel.png";
   }
 
   @Override
   public String getDisplayName() {
-    return "Anchore Report (" + gateStatus + ")";
+    return "Sysdig Secure Report (" + gateStatus + ")";
   }
 
   @Override
   public String getUrlName() {
-    return "anchore-results";
+    return "sysdig-secure-results";
   }
 
   public Run<?, ?> getBuild() {
@@ -97,7 +97,7 @@ public class AnchoreAction implements Action {
       int query_num = 0;
       Map<String, String> fixedQueryOutputUrls = new HashMap<>();
       for (String key : this.queryOutputUrls.keySet()) {
-        fixedQueryOutputUrls.put(key, base_path + "/anchore_query_" + String.valueOf(++query_num) + ".json");
+        fixedQueryOutputUrls.put(key, base_path + "/sysdig_secure_query_" + String.valueOf(++query_num) + ".json");
       }
       return fixedQueryOutputUrls;
     }*/
@@ -112,7 +112,7 @@ public class AnchoreAction implements Action {
       String base_path = this.gateOutputUrl.substring(0, this.gateOutputUrl.lastIndexOf('/'));
       int query_num = 0;
       for (String key : this.queryOutputUrls.keySet()) {
-        fixedQueryOutputUrls.put(key, base_path + "/anchore_query_" + String.valueOf(++query_num) + ".json");
+        fixedQueryOutputUrls.put(key, base_path + "/sysdig_secure_query_" + String.valueOf(++query_num) + ".json");
       }
     }
     return fixedQueryOutputUrls;

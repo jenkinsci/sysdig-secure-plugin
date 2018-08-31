@@ -5,7 +5,7 @@ import java.util.List;
 import com.google.common.base.Strings;
 
 /**
- * Holder for all Anchore configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
+ * Holder for all Sysdig Secure configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
  * the config at the beginning of plugin execution and caching it for use during that specific execution
  */
 public class BuildConfig {

@@ -9,11 +9,11 @@
     <relativePath />
   </parent>
 
-  <artifactId>anchore-container-scanner</artifactId>
+  <artifactId>sysdig-secure</artifactId>
   <version>1.0.18-SNAPSHOT</version>
   <packaging>hpi</packaging>
-  <name>Anchore Container Image Scanner Plugin</name>
-  <description>Integrates Jenkins with the Anchore Image Scanner</description>
+  <name>Sysdig Secure Container Image Scanner Plugin</name>
+  <description>Integrates Jenkins with the Sysdig Secure Image Scanner</description>
 
   <url>https://wiki.jenkins-ci.org/display/JENKINS/Anchore+Container+Image+Scanner+Plugin</url>
 
@@ -40,14 +40,9 @@
 
   <developers>
     <developer>
-      <id>nurmi</id>
-      <name>Daniel Nurmi</name>
-      <email>nurmi@anchore.com</email>
-    </developer>
-    <developer>
-      <id>swathigangisetty</id>
-      <name>Swathi Gangisetty</name>
-      <email>swathi@anchore.com</email>
+      <id>sysdig-secure</id>
+      <name>Sysdig Secure</name>
+      <email>info@sysdig.com</email>
     </developer>
   </developers>
 
@@ -55,7 +50,7 @@
     <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
     <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    <tag>anchore-container-scanner-1.0.0</tag>
+    <tag>sysdig-secure-1.0.0</tag>
   </scm>
   <!--
     <scm>

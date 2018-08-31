@@ -23,6 +23,7 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -37,7 +38,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 /**
- * <p>Anchore Plugin enables Jenkins users to scan container images, generate analysis, evaluate gate policy, and execute customizable
+ * <p>Sysdig Secure Plugin  enables Jenkins users to scan container images, generate analysis, evaluate gate policy, and execute customizable
  * queries. The plugin can be used in a freestyle project as a step or invoked from a pipeline script</p>
  *
  * <p>Requirements:</p>
@@ -47,10 +48,10 @@ import org.kohsuke.stapler.StaplerRequest;
  * <li>Each host on which jenkins jobs will run must have docker installed and the jenkins user (or whichever user you have configured
  * jenkins to run jobs as) must be allowed to interact with docker (either directly or via sudo)</li>
  *
- * <li>Each host on which jenkins jobs will run must have the latest anchore container image installed in the local docker host. To
+ * <li>Each host on which jenkins jobs will run must have the latest sysdig secure container image installed in the local docker host. To
  * install, run 'docker pull anchore/jenkins:latest' on each jenkins host to make the image available to the plugin. The plugin will
  * start an instance of the anchore/jenkins:latest docker container named 'jenkins_anchore' by default, on each host that runs a
- * jenkins job that includes an Anchore Container Image Scanner step.</li> </ol>
+ * jenkins job that includes an Sysdig Secure Container Image Scanner step.</li> </ol>
  */
 public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
@@ -72,11 +73,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   private boolean useCachedBundle = DescriptorImpl.DEFAULT_USE_CACHED_BUNDLE;
   private String policyEvalMethod = DescriptorImpl.DEFAULT_POLICY_EVAL_METHOD;
   private String bundleFileOverride = DescriptorImpl.DEFAULT_BUNDLE_FILE_OVERRIDE;
-  private List<AnchoreQuery> inputQueries;
+  private List<AnchoreQuery> inputQueries = new ArrayList<>();
   private String policyBundleId = DescriptorImpl.DEFAULT_POLICY_BUNDLE_ID;
-  private List<Annotation> annotations;
+  private List<Annotation> annotations = new ArrayList<>();
 
-  // Override global config. Supported for anchore-engine mode config only
+  // Override global config. Supported for sysdig-secure-engine mode config only
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
   private boolean engineverify = false;
@@ -272,13 +273,13 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       throws InterruptedException, IOException {
 
     LOG.warning(
-        "Starting Anchore Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run.getNumber());
+        "Starting Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run.getNumber());
 
     boolean failedByGate = false;
     BuildConfig config = null;
     BuildWorker worker = null;
     DescriptorImpl globalConfig = getDescriptor();
-    ConsoleLog console = new ConsoleLog("AnchorePlugin", listener.getLogger(), globalConfig.getDebug());
+    ConsoleLog console = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
 
     GATE_ACTION finalAction;
 
@@ -288,7 +289,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       String engineuser = null;
       String enginepass = null;
       if (!Strings.isNullOrEmpty(engineCredentialsId)) {
-        console.logDebug("Found build override for anchore-engine credentials. Processing Jenkins credential ID ");
+        console.logDebug("Found build override for sysdig-secure-engine credentials. Processing Jenkins credential ID ");
         try {
           StandardUsernamePasswordCredentials creds = CredentialsProvider
               .findCredentialById(engineCredentialsId, StandardUsernamePasswordCredentials.class, run,
@@ -322,13 +323,13 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
       /* Log any build time overrides are at play */
       if (!Strings.isNullOrEmpty(engineurl)) {
-        console.logInfo("Build override set for Anchore Engine URL");
+        console.logInfo("Build override set for Sysdig Secure Engine URL");
       }
       if (!Strings.isNullOrEmpty(engineuser) && !Strings.isNullOrEmpty(enginepass)) {
-        console.logInfo("Build override set for Anchore Engine credentials");
+        console.logInfo("Build override set for Sysdig Secure Engine credentials");
       }
       if (isEngineverifyOverrride) {
-        console.logInfo("Build override set for Anchore Engine verify SSL");
+        console.logInfo("Build override set for Sysdig Secure Engine verify SSL");
       }
 
       /* Run analysis */
@@ -341,7 +342,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       try {
         worker.runQueries();
       } catch (Exception e) {
-        console.logWarn("Recording failure to execute Anchore queries and moving on with plugin operation", e);
+        console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
       }
 
       /* Setup reports */
@@ -351,28 +352,28 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       if (null != finalAction) {
         if ((config.getBailOnFail() && (GATE_ACTION.STOP.equals(finalAction) || GATE_ACTION.FAIL.equals(finalAction))) || (
             config.getBailOnWarn() && GATE_ACTION.WARN.equals(finalAction))) {
-          console.logWarn("Failing Anchore Container Image Scanner Plugin step due to final result " + finalAction);
+          console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
           failedByGate = true;
-          throw new AbortException("Failing Anchore Container Image Scanner Plugin step due to final result " + finalAction);
+          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
         } else {
-          console.logInfo("Marking Anchore Container Image Scanner step as successful, final result " + finalAction);
+          console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
         }
       } else {
-        console.logInfo("Marking Anchore Container Image Scanner step as successful, no final result");
+        console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
       }
 
     } catch (Exception e) {
       if (failedByGate) {
         throw e;
       } else if ((null != config && config.getBailOnPluginFail()) || bailOnPluginFail) {
-        console.logError("Failing Anchore Container Image Scanner Plugin step due to errors in plugin execution", e);
+        console.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
         if (e instanceof AbortException) {
           throw e;
         } else {
-          throw new AbortException("Failing Anchore Container Image Scanner Plugin step due to errors in plugin execution");
+          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
         }
       } else {
-        console.logWarn("Marking Anchore Container Image Scanner step as successful despite errors in plugin execution");
+        console.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
       }
     } finally {
       // Wrap cleanup in try catch block to ensure this finally block does not throw an exception
@@ -383,8 +384,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
           console.logDebug("Failed to cleanup after the plugin, ignoring the errors", e);
         }
       }
-      console.logInfo("Completed Anchore Container Image Scanner step");
-      LOG.warning("Completed Anchore Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
+      console.logInfo("Completed Sysdig Secure Container Image Scanner step");
+      LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
           .getNumber());
     }
   }
@@ -399,12 +400,12 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
     // Default job level config that may be used both by config.jelly and an instance of AnchoreBuilder
-    public static final String DEFAULT_NAME = "anchore_images";
-    public static final String DEFAULT_POLICY_NAME = "anchore_policy";
-    public static final String DEFAULT_GLOBAL_WHITELIST = "anchore_global_whitelist";
+    public static final String DEFAULT_NAME = "sysdig_secure_images";
+    public static final String DEFAULT_POLICY_NAME = "sysdig_secure_policy";
+    public static final String DEFAULT_GLOBAL_WHITELIST = "sysdig_secure_global_whitelist";
     public static final String DEFAULT_ANCHORE_IO_USER = "";
     public static final String DEFAULT_ANCHORE_IO_PASSWORD = "";
-    public static final String DEFAULT_USER_SCRIPTS = "anchore_user_scripts";
+    public static final String DEFAULT_USER_SCRIPTS = "sysdig_secure_user_scripts";
     public static final String DEFAULT_ENGINE_RETRIES = "300";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_WARN = false;
@@ -412,7 +413,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     public static final boolean DEFAULT_DO_CLEANUP = false;
     public static final boolean DEFAULT_USE_CACHED_BUNDLE = true;
     public static final String DEFAULT_POLICY_EVAL_METHOD = "plainfile";
-    public static final String DEFAULT_BUNDLE_FILE_OVERRIDE = "anchore_policy_bundle.json";
+    public static final String DEFAULT_BUNDLE_FILE_OVERRIDE = "sysdig_secure_policy_bundle.json";
     public static final String DEFAULT_PLUGIN_MODE = "anchoreengine";
     public static final List<AnchoreQuery> DEFAULT_INPUT_QUERIES = ImmutableList
         .of(new AnchoreQuery("cve-scan all"), new AnchoreQuery("list-packages all"), new AnchoreQuery("list-files all"),
@@ -425,7 +426,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     private String enginemode;
     private String engineurl;
     private String engineuser;
-    private Secret enginepass;
+    private Secret enginepass = Secret.fromString(DEFAULT_ANCHORE_IO_PASSWORD);
     private boolean engineverify;
     private String containerImageId;
     private String containerId;
@@ -556,7 +557,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
     @Override
     public String getDisplayName() {
-      return "Anchore Container Image Scanner";
+      return "Sysdig Secure Container Image Scanner";
     }
 
     @Override
@@ -588,7 +589,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       if (!Strings.isNullOrEmpty(value)) {
         return FormValidation.ok();
       } else {
-        return FormValidation.error("Please provide a valid Anchore Container Image ID");
+        return FormValidation.error("Please provide a valid Sysdig Secure Container Image ID");
       }
     }
 
@@ -597,7 +598,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       if (!Strings.isNullOrEmpty(value)) {
         return FormValidation.ok();
       } else {
-        return FormValidation.error("Please provide a valid Anchore Container ID");
+        return FormValidation.error("Please provide a valid Sysdig Secure Container ID");
       }
     }
 

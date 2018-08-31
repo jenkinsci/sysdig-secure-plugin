@@ -45,7 +45,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 /**
- * A helper class to ensure concurrent jobs don't step on each other's toes. Anchore plugin instantiates a new instance of this class
+ * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
  * for each individual job i.e. invocation of perform(). Global and project configuration at the time of execution is loaded into
  * worker instance via its constructor. That specific worker instance is responsible for the bulk of the plugin operations for a given
  * job.
@@ -56,10 +56,10 @@ public class BuildWorker {
 
   // TODO refactor
   private static final String ANCHORE_BINARY = "anchore";
-  private static final String GATES_OUTPUT_PREFIX = "anchore_gates";
-  private static final String CVE_LISTING_PREFIX = "anchore_security";
-  private static final String QUERY_OUTPUT_PREFIX = "anchore_query_";
-  private static final String JENKINS_DIR_NAME_PREFIX = "AnchoreReport.";
+  private static final String GATES_OUTPUT_PREFIX = "sysdig_secure_gates";
+  private static final String CVE_LISTING_PREFIX = "sysdig_secure_security";
+  private static final String QUERY_OUTPUT_PREFIX = "sysdig_secure_query_";
+  private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
   private static final String JSON_FILE_EXTENSION = ".json";
 
   // Private members
@@ -85,7 +85,7 @@ public class BuildWorker {
   private JSONObject gateSummary;
   private String cveListingFileName;
 
-  // Initialized by Anchore workspace prep
+  // Initialized by Sysdig Secure workspace prep
   private String anchoreWorkspaceDirName;
   private String anchoreImageFileName; //TODO rename
   private String anchorePolicyFileName;
@@ -107,7 +107,7 @@ public class BuildWorker {
       if (null != listener) {
         this.listener = listener;
       } else {
-        LOG.warning("Anchore Container Image Scanner plugin cannot initialize Jenkins task listener");
+        LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
         throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
       }
 
@@ -115,10 +115,10 @@ public class BuildWorker {
       if (null != config) {
         this.config = config;
       } else {
-        LOG.warning("Anchore Container Image Scanner cannot find the required configuration");
+        LOG.warning("Sysdig Secure Container Image Scanner cannot find the required configuration");
         throw new AbortException(
-            "Configuration for the plugin is invalid. Configure the plugin under Manage Jenkins->Configure System->Anchore "
-                + "Configuration first. Add the Anchore Container Image Scanner step in your project and retry");
+            "Configuration for the plugin is invalid. Configure the plugin under Manage Jenkins->Configure System->Sysdig Secure "
+                + "Configuration first. Add the Sysdig Secure Container Image Scanner step in your project and retry");
       }
 
       // Initialize build logger to log output to consoleLog, use local logging methods only after this initializer completes
@@ -153,7 +153,7 @@ public class BuildWorker {
       // Initialize Jenkins workspace
       initializeJenkinsWorkspace();
 
-      // Initialize Anchore workspace
+      // Initialize Sysdig Secure workspace
       initializeAnchoreWorkspace();
 
       console.logDebug("Build worker initialized");
@@ -244,18 +244,18 @@ public class BuildWorker {
           httppost.addHeader("Content-Type", "application/json");
           httppost.setEntity(new StringEntity(body));
 
-          console.logDebug("anchore-engine add image URL: " + theurl);
-          console.logDebug("anchore-engine add image payload: " + body);
+          console.logDebug("sysdig-secure-engine add image URL: " + theurl);
+          console.logDebug("sysdig-secure-engine add image payload: " + body);
 
           try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
               String serverMessage = EntityUtils.toString(response.getEntity());
               console.logError(
-                  "anchore-engine add image failed. URL: " + theurl + ", status: " + response.getStatusLine() + ", error: "
+                  "sysdig-secure-engine add image failed. URL: " + theurl + ", status: " + response.getStatusLine() + ", error: "
                       + serverMessage);
               throw new AbortException("Failed to analyze " + tag
-                  + " due to error adding image to anchore-engine. Check above logs for errors from anchore-engine");
+                  + " due to error adding image to sysdig-secure-engine. Check above logs for errors from sysdig-secure-engine");
             } else {
               // Read the response body.
               String responseBody = EntityUtils.toString(response.getEntity());
@@ -276,29 +276,29 @@ public class BuildWorker {
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, log it and wrap its
-      console.logError("Failed to add image(s) to anchore-engine due to an unexpected error", e);
+      console.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException(
-          "Failed to add image(s) to anchore-engine due to an unexpected error. Please refer to above logs for more information");
+          "Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
   private void runAnalyzerLocal() throws AbortException {
     try {
-      console.logInfo("Running Anchore Analyzer");
+      console.logInfo("Running Sysdig Secure Analyzer");
 
       int rc = executeAnchoreCommand("analyze --skipgates --imagefile " + anchoreImageFileName);
       if (rc != 0) {
-        console.logError("Anchore analyzer failed with return code " + rc + ", check output above for details");
-        throw new AbortException("Anchore analyzer failed, check output above for details");
+        console.logError("Sysdig Secure analyzer failed with return code " + rc + ", check output above for details");
+        throw new AbortException("Sysdig Secure analyzer failed, check output above for details");
       }
-      console.logDebug("Anchore analyzer completed successfully");
+      console.logDebug("Sysdig Secure analyzer completed successfully");
       analyzed = true;
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, log it and wrap its
-      console.logError("Failed to run Anchore analyzer due to an unexpected error", e);
+      console.logError("Failed to run Sysdig Secure analyzer due to an unexpected error", e);
       throw new AbortException(
-          "Failed to run Anchore analyzer due to an unexpected error. Please refer to above logs for more information");
+          "Failed to run Sysdig Secure analyzer due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
@@ -306,18 +306,18 @@ public class BuildWorker {
 
     try {
       String cmd =
-          "docker exec " + config.getContainerId() + " /bin/bash -c \"export ANCHOREPASS=$ANCHOREPASS && anchore login --user "
+          "docker exec " + config.getContainerId() + " /bin/bash -c \"export ANCHOREPASS=$ANCHOREPASS && sysdig secure login --user "
               + config.getAnchoreioUser() + "\"";
       int rc = executeCommand(cmd, "ANCHOREPASS=" + config.getAnchoreioPass());
       if (rc != 0) {
-        console.logWarn("Failed to log in to anchore.io using specified credentials");
-        throw new AbortException("Failed to log in to anchore.io using specified credentials");
+        console.logWarn("Failed to log in to sysdig secure using specified credentials");
+        throw new AbortException("Failed to log in to sysdig secure using specified credentials");
       }
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) {
-      console.logWarn("Failed to log in to anchore.io using specified credentials");
-      throw new AbortException("Failed to log in to anchore.io using specified credentials");
+      console.logWarn("Failed to log in to sysdig secure using specified credentials");
+      throw new AbortException("Failed to log in to sysdig secure using specified credentials");
     }
   }
 
@@ -327,14 +327,14 @@ public class BuildWorker {
       String cmd = "--json policybundle sync";
       int rc = executeAnchoreCommand(cmd);
       if (rc != 0) {
-        console.logWarn("Failed to sync your policy bundle from anchore.io");
-        throw new AbortException("Failed to sync your policy bundle from anchore.io");
+        console.logWarn("Failed to sync your policy from sysdig secure");
+        throw new AbortException("Failed to sync your policy from sysdig secure");
       }
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) {
-      console.logWarn("Failed to sync your policy bundle from anchore.io");
-      throw new AbortException("Failed to sync your policy bundle from anchore.io");
+      console.logWarn("Failed to sync your policy from sysdig secure");
+      throw new AbortException("Failed to sync your policy from sysdig secure");
     }
   }
 
@@ -371,14 +371,14 @@ public class BuildWorker {
 
           console.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
 
-          Boolean anchore_eval_status = false;
+          Boolean sysdig_secure_eval_status = false;
           String theurl =
               config.getEngineurl().replaceAll("/+$", "") + "/images/" + imageDigest + "/check?tag=" + tag + "&detail=true";
 
           if (!Strings.isNullOrEmpty(config.getPolicyBundleId())) {
             theurl += "&policyId=" + config.getPolicyBundleId();
           }
-          console.logDebug("anchore-engine get policy evaluation URL: " + theurl);
+          console.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
 
           int tryCount = 0;
           int maxCount = Integer.parseInt(config.getEngineRetries());
@@ -391,14 +391,14 @@ public class BuildWorker {
 
           do { // try this at least once regardless what the retry count is
             if (sleep) {
-              console.logDebug("Snoozing before retrying anchore-engine get policy evaluation");
+              console.logDebug("Snoozing before retrying sysdig-secure-engine get policy evaluation");
               Thread.sleep(1000);
               sleep = false;
             }
 
             tryCount++;
             try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-              console.logDebug("Attempting anchore-engine get policy evaluation (" + tryCount + "/" + maxCount + ")");
+              console.logDebug("Attempting sysdig-secure-engine get policy evaluation (" + tryCount + "/" + maxCount + ")");
 
               try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
                 statusCode = response.getStatusLine().getStatusCode();
@@ -406,7 +406,7 @@ public class BuildWorker {
                 if (statusCode != 200) {
                   serverMessage = EntityUtils.toString(response.getEntity());
                   console.logDebug(
-                      "anchore-engine get policy evaluation failed. URL: " + theurl + ", status: " + response.getStatusLine()
+                      "sysdig-secure-engine get policy evaluation failed. URL: " + theurl + ", status: " + response.getStatusLine()
                           + ", error: " + serverMessage);
                   // Thread.sleep(1000); sleeping here keeps connection open. Unnecessary if the retries have been exhausted
                   sleep = true;
@@ -427,12 +427,12 @@ public class BuildWorker {
                   // (JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest)))).get(0)).getJSONArray(tag);
                   if (null == tag_evals) {
                     throw new AbortException(
-                        "Failed to analyze " + tag + " due to missing tag eval records in anchore-engine policy evaluation response");
+                        "Failed to analyze " + tag + " due to missing tag eval records in sysdig-secure-engine policy evaluation response");
                   }
                   if (tag_evals.size() < 1) {
                     // try again until we get an eval
                     console
-                        .logDebug("anchore-engine get policy evaluation response contains no tag eval records. May snooze and retry");
+                        .logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
                     // Thread.sleep(1000); sleeping here keeps connection open. Unnecessary if the retries have been exhausted
                     sleep = true;
                   } else {
@@ -443,8 +443,8 @@ public class BuildWorker {
                         JSONObject.fromObject(JSONObject.fromObject(tag_evals.get(0)).getJSONObject("detail")).getJSONObject("result"))
                         .getJSONObject("result"));
 
-                    console.logDebug("anchore-engine get policy evaluation status: " + eval_status);
-                    console.logDebug("anchore-engine get policy evaluation result: " + gate_result.toString());
+                    console.logDebug("sysdig-secure-engine get policy evaluation status: " + eval_status);
+                    console.logDebug("sysdig-secure-engine get policy evaluation result: " + gate_result.toString());
                     for (Object key : gate_result.keySet()) {
                       try {
                         gate_results.put((String) key, gate_result.getJSONObject((String) key));
@@ -456,7 +456,7 @@ public class BuildWorker {
                     // we actually got a real result
                     // this is the only way this gets flipped to true
                     if (eval_status.equals("pass")) {
-                      anchore_eval_status = true;
+                      sysdig_secure_eval_status = true;
                     }
                     done = true;
                     console.logInfo("Completed analysis and processed policy evaluation result");
@@ -473,16 +473,16 @@ public class BuildWorker {
           if (!done) {
             if (statusCode != 200) {
               console.logWarn(
-                  "anchore-engine get policy evaluation failed. HTTP method: GET, URL: " + theurl + ", status: " + statusCode
+                  "sysdig-secure-engine get policy evaluation failed. HTTP method: GET, URL: " + theurl + ", status: " + statusCode
                       + ", error: " + serverMessage);
             }
-            console.logWarn("Exhausted all attempts polling anchore-engine. Analysis is incomplete for " + imageDigest);
+            console.logWarn("Exhausted all attempts polling sysdig-secure-engine. Analysis is incomplete for " + imageDigest);
             throw new AbortException(
-                "Timed out waiting for anchore-engine analysis to complete (increasing engineRetries might help). Check above logs "
-                    + "for errors from anchore-engine");
+                "Timed out waiting for sysdig-secure-engine analysis to complete (increasing engineRetries might help). Check above logs "
+                    + "for errors from sysdig-secure-engine");
           } else {
             // only set to stop if an eval is successful and is reporting fail
-            if (!anchore_eval_status) {
+            if (!sysdig_secure_eval_status) {
               finalAction = GATE_ACTION.FAIL;
             }
           }
@@ -499,21 +499,21 @@ public class BuildWorker {
         }
 
         generateGatesSummary(gate_results);
-        console.logInfo("Anchore Container Image Scanner Plugin step result - " + finalAction);
+        console.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
         return finalAction;
       } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
         throw e;
       } catch (Exception e) { // caught unknown exception, log it and wrap it
-        console.logError("Failed to execute anchore-engine policy evaluation due to an unexpected error", e);
+        console.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
         throw new AbortException(
-            "Failed to execute anchore-engine policy evaluation due to an unexpected error. Please refer to above logs for more "
+            "Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more "
                 + "information");
       }
     } else {
       console.logError(
-          "Image(s) were not added to anchore-engine (or a prior attempt to add images may have failed). Re-submit image(s) to "
-              + "anchore-engine before attempting policy evaluation");
-      throw new AbortException("Submit image(s) to anchore-engine for analysis before attempting policy evaluation");
+          "Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to "
+              + "sysdig-secure-engine before attempting policy evaluation");
+      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
     }
 
   }
@@ -549,7 +549,7 @@ public class BuildWorker {
             HttpGet httpget = new HttpGet(theurl);
             httpget.addHeader("Content-Type", "application/json");
 
-            console.logDebug("anchore-engine get vulnerability listing URL: " + theurl);
+            console.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
             try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
               String responseBody = EntityUtils.toString(response.getEntity());
               JSONObject responseJson = JSONObject.fromObject(responseBody);
@@ -588,16 +588,16 @@ public class BuildWorker {
       } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
         throw e;
       } catch (Exception e) { // caught unknown exception, log it and wrap it
-        console.logError("Failed to fetch vulnerability listing from anchore-engine due to an unexpected error", e);
+        console.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
         throw new AbortException(
-            "Failed to fetch vulnerability listing from anchore-engine due to an unexpected error. Please refer to above logs for "
+            "Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for "
                 + "more information");
       }
     } else {
       console.logError(
-          "Image(s) were not added to anchore-engine (or a prior attempt to add images may have failed). Re-submit image(s) to "
-              + "anchore-engine before attempting vulnerability listing");
-      throw new AbortException("Submit image(s) to anchore-engine for analysis before attempting vulnerability listing");
+          "Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to "
+              + "sysdig-secure-engine before attempting vulnerability listing");
+      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
     }
   }
 
@@ -762,7 +762,7 @@ public class BuildWorker {
   private GATE_ACTION runGatesLocal() throws AbortException {
     if (analyzed) {
       try {
-        console.logInfo("Running Anchore Gates");
+        console.logInfo("Running Sysdig Secure Gates");
 
         FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
         FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
@@ -818,7 +818,7 @@ public class BuildWorker {
               finalAction = Util.GATE_ACTION.STOP;
           }
 
-          console.logDebug("Anchore gate execution completed successfully, final action: " + finalAction);
+          console.logDebug("Sysdig Secure gate execution completed successfully, final action: " + finalAction);
         } catch (IOException | InterruptedException e) {
           console.logWarn("Failed to write gates output to " + jenkinsGatesOutputFP.getRemote(), e);
           throw new AbortException("Failed to write gates output to " + jenkinsGatesOutputFP.getRemote());
@@ -830,9 +830,9 @@ public class BuildWorker {
       } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
         throw e;
       } catch (Exception e) { // caught unknown exception, log it and wrap it
-        console.logError("Failed to run Anchore gates due to an unexpected error", e);
+        console.logError("Failed to run Sysdig Secure gates due to an unexpected error", e);
         throw new AbortException(
-            "Failed to run Anchore gates due to an unexpected error. Please refer to above logs for more information");
+            "Failed to run Sysdig Secure gates due to an unexpected error. Please refer to above logs for more information");
       }
     } else {
       console.logError("Analysis step has not been executed (or may have failed in a prior attempt). Rerun analyzer before gates");
@@ -858,7 +858,7 @@ public class BuildWorker {
             String query = entry.getQuery().trim();
             if (!Strings.isNullOrEmpty(query) && !queryOutputMap.containsKey(query)) {
 
-              console.logInfo("Running Anchore Query: " + query);
+              console.logInfo("Running Sysdig Secure Query: " + query);
               String queryOutputFileName = QUERY_OUTPUT_PREFIX + (++key) + JSON_FILE_EXTENSION;
               FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
               FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, queryOutputFileName);
@@ -892,9 +892,9 @@ public class BuildWorker {
           console.logDebug("No queries found, skipping query execution");
         }
       } catch (RuntimeException e) {
-        console.logError("Failed to run Anchore queries due to an unexpected error", e);
+        console.logError("Failed to run Sysdig Secure queries due to an unexpected error", e);
         throw new AbortException(
-            "Failed to run Anchore queries due to an unexpected error. Please refer to above logs for more information");
+            "Failed to run Sysdig Secure queries due to an unexpected error. Please refer to above logs for more information");
       }
     } else {
       console.logError("Analysis step has not been executed (or may have failed in a prior attempt). Rerun analyzer before queries");
@@ -905,7 +905,7 @@ public class BuildWorker {
 
   public void setupBuildReports() throws AbortException {
     try {
-      // store anchore output json files using jenkins archiver (for remote storage as well)
+      // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       console.logDebug("Archiving results");
       //      FilePath buildWorkspaceFP = build.getWorkspace();
       //      if (null != buildWorkspaceFP) {
@@ -916,7 +916,7 @@ public class BuildWorker {
       //        throw new AbortException("Unable to archive results due to an invalid reference to Jenkins build workspace");
       //      }
 
-      // add the link in jenkins UI for anchore results
+      // add the link in jenkins UI for sysdig secure results
       console.logDebug("Setting up build results");
 
       if (finalAction != null) {
@@ -952,30 +952,30 @@ public class BuildWorker {
         }
       }
 
-      // Clear Anchore Container workspace
+      // Clear Sysdig Secure Container workspace
       if (!Strings.isNullOrEmpty(anchoreWorkspaceDirName)) {
         try {
-          console.logDebug("Deleting Anchore container workspace " + anchoreWorkspaceDirName);
+          console.logDebug("Deleting Sysdig Secure container workspace " + anchoreWorkspaceDirName);
           rc = cleanAnchoreWorkspaceQuietly();
           // rc = executeCommand("docker exec " + config.getContainerId() + " rm -rf " + anchoreWorkspaceDirName);
           if (rc != 0) {
-            console.logWarn("Unable to delete Anchore container workspace " + anchoreWorkspaceDirName + ", process returned " + rc);
+            console.logWarn("Unable to delete Sysdig Secure container workspace " + anchoreWorkspaceDirName + ", process returned " + rc);
           }
         } catch (Exception e) {
-          console.logWarn("Failed to recursively delete Anchore container workspace " + anchoreWorkspaceDirName, e);
+          console.logWarn("Failed to recursively delete Sysdig Secure container workspace " + anchoreWorkspaceDirName, e);
         }
       }
 
       if (config.getDoCleanup() && null != anchoreInputImages) {
         for (String imageId : anchoreInputImages) {
           try {
-            console.logDebug("Deleting analytics for " + imageId + " from Anchore database");
+            console.logDebug("Deleting analytics for " + imageId + " from Sysdig Secure database");
             rc = executeAnchoreCommand("toolbox --image " + imageId + " delete --dontask");
             if (rc != 0) {
-              console.logWarn("Failed to delete analytics for " + imageId + " from Anchore database, process returned " + rc);
+              console.logWarn("Failed to delete analytics for " + imageId + " from Sysdig Secure database, process returned " + rc);
             }
           } catch (Exception e) {
-            console.logWarn("Failed to delete analytics for " + imageId + " from Anchore database", e);
+            console.logWarn("Failed to delete analytics for " + imageId + " from Sysdig Secure database", e);
           }
         }
       }
@@ -994,7 +994,7 @@ public class BuildWorker {
         && (plugins = Jenkins.getActiveInstance().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName()
-            .equals("anchore-container-scanner")) { // artifact ID of the plugin, TODO is there a better way to get this
+            .equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
           console.logInfo(plugin.getDisplayName() + " version: " + plugin.getVersion());
           break;
         }
@@ -1016,7 +1016,7 @@ public class BuildWorker {
     if (Strings.isNullOrEmpty(config.getName())) {
       console.logError("Image list file not found");
       throw new AbortException(
-          "Image list file not specified. Please provide a valid image list file name in the Anchore Container Image Scanner step "
+          "Image list file not specified. Please provide a valid image list file name in the Sysdig Secure Container Image Scanner step "
               + "and try again");
     }
 
@@ -1024,14 +1024,14 @@ public class BuildWorker {
       if (!new FilePath(workspace, config.getName()).exists()) {
         console.logError("Cannot find image list file \"" + config.getName() + "\" under " + workspace);
         throw new AbortException("Cannot find image list file \'" + config.getName()
-            + "\'. Please ensure that image list file is created prior to Anchore Container Image Scanner step");
+            + "\'. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step");
       }
     } catch (AbortException e) {
       throw e;
     } catch (Exception e) {
       console.logWarn("Unable to access image list file \"" + config.getName() + "\" under " + workspace, e);
       throw new AbortException("Unable to access image list file " + config.getName()
-          + ". Please ensure that image list file is created prior to Anchore Container Image Scanner step");
+          + ". Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step");
     }
 
     if (config.getEnginemode().equals("anchoreengine")) {
@@ -1039,9 +1039,9 @@ public class BuildWorker {
     } else {
 
       if (Strings.isNullOrEmpty(config.getContainerId())) {
-        console.logError("Anchore Container ID not found");
+        console.logError("Sysdig Secure Container ID not found");
         throw new AbortException(
-            "Please configure \"Anchore Container ID\" under Manage Jenkins->Configure System->Anchore Configuration and retry. If the"
+            "Please configure \"Sysdig Secure Container ID\" under Manage Jenkins->Configure System->Sysdig Secure Configuration and retry. If the"
                 + " container is not running, the plugin will launch it");
       }
 
@@ -1091,7 +1091,7 @@ public class BuildWorker {
 
   private void initializeAnchoreWorkspaceEngine() throws AbortException {
     try {
-      console.logDebug("Initializing Anchore workspace (enginemode)");
+      console.logDebug("Initializing Sysdig Secure workspace (enginemode)");
 
       // get the input and store it in tag/dockerfile map
       FilePath inputImageFP = new FilePath(workspace, config.getName()); // Already checked in checkConfig()
@@ -1135,39 +1135,39 @@ public class BuildWorker {
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
-      console.logError("Failed to initialize Anchore workspace due to an unexpected error", e);
+      console.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException(
-          "Failed to initialize Anchore workspace due to an unexpected error. Please refer to above logs for more information");
+          "Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
 
   private void initializeAnchoreWorkspaceLocal() throws AbortException {
     try {
-      console.logDebug("Initializing Anchore workspace");
+      console.logDebug("Initializing Sysdig Secure workspace");
 
       // Setup the container first
       setupAnchoreContainer();
 
-      // Initialize anchore workspace variables
+      // Initialize sysdig secure workspace variables
       anchoreWorkspaceDirName = "/root/anchore." + buildId;
       anchoreImageFileName = anchoreWorkspaceDirName + "/images";
       anchoreInputImages = new ArrayList<>();
 
-      // setup staging directory in anchore container
+      // setup staging directory in sysdig secure container
       console.logDebug(
-          "Creating build artifact directory " + anchoreWorkspaceDirName + " in Anchore container " + config.getContainerId());
+          "Creating build artifact directory " + anchoreWorkspaceDirName + " in Sysdig Secure container " + config.getContainerId());
       int rc = executeCommand("docker exec " + config.getContainerId() + " mkdir -p " + anchoreWorkspaceDirName);
       if (rc != 0) {
-        console.logError("Failed to create build artifact directory " + anchoreWorkspaceDirName + " in Anchore container " + config
+        console.logError("Failed to create build artifact directory " + anchoreWorkspaceDirName + " in Sysdig Secure container " + config
             .getContainerId());
         throw new AbortException(
-            "Failed to create build artifact directory " + anchoreWorkspaceDirName + " in Anchore container " + config
+            "Failed to create build artifact directory " + anchoreWorkspaceDirName + " in Sysdig Secure container " + config
                 .getContainerId());
       }
 
       // Sanitize the input image list
-      // - Copy dockerfile for images to anchore container
+      // - Copy dockerfile for images to sysdig secure container
       // - Create a staging file with adjusted paths
       console.logDebug("Staging image file in Jenkins workspace");
 
@@ -1192,22 +1192,22 @@ public class BuildWorker {
                 String jenkinsDFile = partIterator.next();
                 String anchoreDFile = anchoreWorkspaceDirName + "/dfile." + (++count);
 
-                // Copy file from Jenkins to Anchore container
+                // Copy file from Jenkins to Sysdig Secure container
                 console.logDebug(
-                    "Copying Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Anchore workspace: " + anchoreDFile);
+                    "Copying Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Sysdig Secure workspace: " + anchoreDFile);
                 rc = executeCommand("docker cp " + jenkinsDFile + " " + config.getContainerId() + ":" + anchoreDFile);
                 if (rc != 0) {
                   // TODO check with Dan if operation should continue for other images
                   console.logError(
-                      "Failed to copy Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Anchore workspace: " + anchoreDFile);
+                      "Failed to copy Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Sysdig Secure workspace: " + anchoreDFile);
                   throw new AbortException(
-                      "Failed to copy Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Anchore workspace: " + anchoreDFile
-                          + ". Please ensure that Dockerfile is present in the Jenkins workspace prior to running Anchore plugin");
+                      "Failed to copy Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Sysdig Secure workspace: " + anchoreDFile
+                          + ". Please ensure that Dockerfile is present in the Jenkins workspace prior to running Sysdig Secure plugin");
                 }
                 lineToBeAdded += " " + anchoreDFile;
               } else {
                 console
-                    .logWarn("No dockerfile specified for image " + imgId + ". Anchore analyzer will attempt to construct dockerfile");
+                    .logWarn("No dockerfile specified for image " + imgId + ". Sysdig Secure analyzer will attempt to construct dockerfile");
               }
 
               console.logDebug("Staging sanitized entry: \"" + lineToBeAdded + "\"");
@@ -1235,55 +1235,55 @@ public class BuildWorker {
 
       // finally, stage the rest of the files
 
-      // Copy the staged images file from Jenkins workspace to Anchore container
+      // Copy the staged images file from Jenkins workspace to Sysdig Secure container
       console.logDebug(
-          "Copying staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Anchore workspace: "
+          "Copying staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Sysdig Secure workspace: "
               + anchoreImageFileName);
       rc = executeCommand(
           "docker cp " + jenkinsStagedImageFP.getRemote() + " " + config.getContainerId() + ":" + anchoreImageFileName);
       if (rc != 0) {
         console.logError(
-            "Failed to copy staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Anchore workspace: "
+            "Failed to copy staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Sysdig Secure workspace: "
                 + anchoreImageFileName);
         throw new AbortException(
-            "Failed to copy staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Anchore workspace: "
+            "Failed to copy staged image file from Jenkins workspace: " + jenkinsStagedImageFP.getRemote() + ", to Sysdig Secure workspace: "
                 + anchoreImageFileName);
       }
 
-      // Copy the user scripts directory from Jenkins workspace to Anchore container
+      // Copy the user scripts directory from Jenkins workspace to Sysdig Secure container
       try {
         FilePath jenkinsScriptsDir;
         if (!Strings.isNullOrEmpty(config.getUserScripts()) && (jenkinsScriptsDir = new FilePath(workspace, config.getUserScripts()))
             .exists()) {
           anchoreScriptsDirName = anchoreWorkspaceDirName + "/anchorescripts/";
-          console.logDebug("Copying user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Anchore workspace: "
+          console.logDebug("Copying user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Sysdig Secure workspace: "
               + anchoreScriptsDirName);
           rc = executeCommand(
               "docker cp " + jenkinsScriptsDir.getRemote() + " " + config.getContainerId() + ":" + anchoreScriptsDirName);
           if (rc != 0) {
             // TODO Check with Dan if we should abort here
             console.logWarn(
-                "Failed to copy user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Anchore workspace: "
-                    + anchoreScriptsDirName + ". Using default Anchore modules");
+                "Failed to copy user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Sysdig Secure workspace: "
+                    + anchoreScriptsDirName + ". Using default Sysdig Secure modules");
             anchoreScriptsDirName = null; // reset it so it doesn't get used later
             // throw new AbortException(
-            //    "Failed to copy user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Anchore workspace: "
+            //    "Failed to copy user scripts from Jenkins workspace: " + jenkinsScriptsDir.getRemote() + ", to Sysdig Secure workspace: "
             //        + anchoreScriptsDirName);
           }
         } else {
-          console.logDebug("No user scripts/modules found, using default Anchore modules");
+          console.logDebug("No user scripts/modules found, using default Sysdig Secure modules");
         }
       } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user modules, using default Anchore modules");
+        console.logWarn("Failed to resolve user modules, using default Sysdig Secure modules");
       }
 
-      // Copy the policy file from Jenkins workspace to Anchore container
+      // Copy the policy file from Jenkins workspace to Sysdig Secure container
       try {
         FilePath jenkinsBundleFile;
         if (!Strings.isNullOrEmpty(config.getBundleFileOverride()) && (jenkinsBundleFile = new FilePath(workspace,
             config.getBundleFileOverride())).exists()) {
           anchoreBundleFileName = anchoreWorkspaceDirName + "/bundle.json";
-          console.logDebug("Copying bundle file from Jenkins workspace: " + jenkinsBundleFile.getRemote() + ", to Anchore workspace: "
+          console.logDebug("Copying bundle file from Jenkins workspace: " + jenkinsBundleFile.getRemote() + ", to Sysdig Secure workspace: "
               + anchoreBundleFileName);
 
           rc = executeCommand(
@@ -1291,27 +1291,27 @@ public class BuildWorker {
           if (rc != 0) {
             // TODO check with Dan if we should abort here
             console.logWarn(
-                "Failed to copy bundle file from Jenkins workspace: " + jenkinsBundleFile.getRemote() + ", to Anchore workspace: "
-                    + anchoreBundleFileName + ". Using default Anchore policy");
+                "Failed to copy bundle file from Jenkins workspace: " + jenkinsBundleFile.getRemote() + ", to Sysdig Secure workspace: "
+                    + anchoreBundleFileName + ". Using default Sysdig Secure scanning policy");
             anchoreBundleFileName = null; // reset it so it doesn't get used later
             // throw new AbortException(
-            //    "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Anchore workspace: "
+            //    "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Sysdig Secure workspace: "
             //        + anchorePolicyFileName);
           }
         } else {
-          console.logInfo("Bundle file either not specified or does not exist, using default Anchore policy");
+          console.logInfo("Bundle file either not specified or does not exist, using default Sysdig Secure scanning policy");
         }
       } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user bundle, using default Anchore policy");
+        console.logWarn("Failed to resolve user bundle, using default Sysdig Secure scanning policy");
       }
 
-      // Copy the policy file from Jenkins workspace to Anchore container
+      // Copy the policy file from Jenkins workspace to Sysdig Secure container
       try {
         FilePath jenkinsPolicyFile;
         if (!Strings.isNullOrEmpty(config.getPolicyName()) && (jenkinsPolicyFile = new FilePath(workspace, config.getPolicyName()))
             .exists()) {
           anchorePolicyFileName = anchoreWorkspaceDirName + "/policy";
-          console.logDebug("Copying policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Anchore workspace: "
+          console.logDebug("Copying policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Sysdig Secure workspace: "
               + anchorePolicyFileName);
 
           rc = executeCommand(
@@ -1319,49 +1319,49 @@ public class BuildWorker {
           if (rc != 0) {
             // TODO check with Dan if we should abort here
             console.logWarn(
-                "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Anchore workspace: "
-                    + anchorePolicyFileName + ". Using default Anchore policy");
+                "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Sysdig Secure workspace: "
+                    + anchorePolicyFileName + ". Using default Sysdig Secure scanning policy");
             anchorePolicyFileName = null; // reset it so it doesn't get used later
             // throw new AbortException(
-            //    "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Anchore workspace: "
+            //    "Failed to copy policy file from Jenkins workspace: " + jenkinsPolicyFile.getRemote() + ", to Sysdig Secure workspace: "
             //        + anchorePolicyFileName);
           }
         } else {
-          console.logInfo("Policy file either not specified or does not exist, using default Anchore policy");
+          console.logInfo("Policy file either not specified or does not exist, using default Sysdig Secure scanning policy");
         }
       } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user policy, using default Anchore policy");
+        console.logWarn("Failed to resolve user policy, using default Sysdig Secure scanning policy");
       }
 
-      // Copy the global whitelist file from Jenkins workspace to Anchore container
+      // Copy the global whitelist file from Jenkins workspace to Sysdig Secure container
       try {
         FilePath jenkinsGlobalWhitelistFile;
         if (!Strings.isNullOrEmpty(config.getGlobalWhiteList()) && (jenkinsGlobalWhitelistFile = new FilePath(workspace,
             config.getGlobalWhiteList())).exists()) {
           anchoreGlobalWhiteListFileName = anchoreWorkspaceDirName + "/globalwhitelist";
           console.logDebug("Copying global whitelist file from Jenkins workspace: " + jenkinsGlobalWhitelistFile.getRemote()
-              + ", to Anchore workspace: " + anchoreGlobalWhiteListFileName);
+              + ", to Sysdig Secure workspace: " + anchoreGlobalWhiteListFileName);
 
           rc = executeCommand("docker cp " + jenkinsGlobalWhitelistFile.getRemote() + " " + config.getContainerId() + ":"
               + anchoreGlobalWhiteListFileName);
           if (rc != 0) {
             // TODO check with Dan if we should abort here
             console.logWarn("Failed to global whitelist file from Jenkins workspace: " + jenkinsGlobalWhitelistFile.getRemote()
-                + ", to Anchore workspace: " + anchoreGlobalWhiteListFileName + ". Using default Anchore global whitelist");
+                + ", to Sysdig Secure workspace: " + anchoreGlobalWhiteListFileName + ". Using default Sysdig Secure global whitelist");
             anchoreGlobalWhiteListFileName = null; // reset it so it doesn't get used later
           }
         } else {
-          console.logInfo("Global whitelist file either not specified or does not exist, using default Anchore global whitelist");
+          console.logInfo("Global whitelist file either not specified or does not exist, using default Sysdig Secure global whitelist");
         }
       } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve global whitelist, using default Anchore global whitelist");
+        console.logWarn("Failed to resolve global whitelist, using default Sysdig Secure global whitelist");
       }
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
-      console.logError("Failed to initialize Anchore workspace due to an unexpected error", e);
+      console.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException(
-          "Failed to initialize Anchore workspace due to an unexpected error. Please refer to above logs for more information");
+          "Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
@@ -1369,11 +1369,11 @@ public class BuildWorker {
     String containerId = config.getContainerId();
 
     if (!isAnchoreRunning()) {
-      console.logDebug("Anchore container " + containerId + " is not running");
+      console.logDebug("Sysdig Secure container " + containerId + " is not running");
       String containerImageId = config.getContainerImageId();
 
       if (isAnchoreImageAvailable()) {
-        console.logInfo("Launching Anchore container " + containerId + " from image " + containerImageId);
+        console.logInfo("Launching Sysdig Secure container " + containerId + " from image " + containerImageId);
 
         String cmd = "docker run -d -v /var/run/docker.sock:/var/run/docker.sock";
         if (!Strings.isNullOrEmpty(config.getLocalVol())) {
@@ -1381,29 +1381,29 @@ public class BuildWorker {
         }
 
         if (!Strings.isNullOrEmpty(config.getModulesVol())) {
-          cmd = cmd + " -v " + config.getModulesVol() + ":/root/anchore_modules";
+          cmd = cmd + " -v " + config.getModulesVol() + ":/root/sysdig_secure_modules";
         }
         cmd = cmd + " --name " + containerId + " " + containerImageId;
 
         int rc = executeCommand(cmd);
 
         if (rc == 0) {
-          console.logDebug("Anchore container " + containerId + " has been launched");
+          console.logDebug("Sysdig Secure container " + containerId + " has been launched");
         } else {
-          console.logError("Failed to launch Anchore container " + containerId + " ");
-          throw new AbortException("Failed to launch Anchore container " + containerId);
+          console.logError("Failed to launch Sysdig Secure container " + containerId + " ");
+          throw new AbortException("Failed to launch Sysdig Secure container " + containerId);
         }
 
       } else { // image is not available
         console.logError(
-            "Anchore container image " + containerImageId + " not found on local dockerhost, cannot launch Anchore container "
+            "Sysdig Secure container image " + containerImageId + " not found on local dockerhost, cannot launch Sysdig Secure container "
                 + containerId);
         throw new AbortException(
-            "Anchore container image " + containerImageId + " not found on local dockerhost, cannot launch Anchore container "
+            "Sysdig Secure container image " + containerImageId + " not found on local dockerhost, cannot launch Sysdig Secure container "
                 + containerId + ". Please make the anchore/jenkins image available to the local dockerhost and retry");
       }
     } else {
-      console.logDebug("Anchore container " + containerId + " is already running");
+      console.logDebug("Sysdig Secure container " + containerId + " is already running");
     }
   }
 
@@ -1416,9 +1416,9 @@ public class BuildWorker {
         return true;
       }
     } else {
-      console.logError("Anchore Container ID not found");
+      console.logError("Sysdig Secure Container ID not found");
       throw new AbortException(
-          "Please configure \"Anchore Container ID\" under Manage Jenkins->Configure System->Anchore Configuration and retry. If the"
+          "Please configure \"Sysdig Secure Container ID\" under Manage Jenkins->Configure System->Sysdig Secure Configuration and retry. If the"
               + " container is not running, the plugin will launch it");
     }
   }
@@ -1432,9 +1432,9 @@ public class BuildWorker {
         return true;
       }
     } else {
-      console.logError("Anchore Container Image ID not found");
+      console.logError("Sysdig Secure Container Image ID not found");
       throw new AbortException(
-          "Please configure \"Anchore Container Image ID\" under Manage Jenkins->Configure System->Anchore Configuration and retry");
+          "Please configure \"Sysdig Secure Container Image ID\" under Manage Jenkins->Configure System->Sysdig Secure Configuration and retry");
     }
   }
 
@@ -1458,7 +1458,7 @@ public class BuildWorker {
   }
 
   /**
-   * Helper for executing Anchore CLI. Abstracts docker and debug options out for the caller
+   * Helper for executing Sysdig Secure CLI. Abstracts docker and debug options out for the caller
    */
   private int executeAnchoreCommand(String cmd, OutputStream out, OutputStream error, String... envOverrides) throws AbortException {
     String dockerCmd = "docker exec " + config.getContainerId() + " " + ANCHORE_BINARY;

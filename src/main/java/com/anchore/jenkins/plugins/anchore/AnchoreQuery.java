@@ -7,7 +7,7 @@ import java.io.Serializable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
- * Wrapper class for Anchore query
+ * Wrapper class for Sysdig Secure query
  */
 public class AnchoreQuery extends AbstractDescribableImpl<AnchoreQuery> implements Serializable {
 
@@ -29,7 +29,7 @@ public class AnchoreQuery extends AbstractDescribableImpl<AnchoreQuery> implemen
 
     @Override
     public String getDisplayName() {
-      return "Anchore Query";
+      return "Sysdig Secure Query";
     }
   }
 }
