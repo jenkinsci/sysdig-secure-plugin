@@ -13,9 +13,9 @@
   <version>1.0.18-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Sysdig Secure Container Image Scanner Plugin</name>
-  <description>Integrates Jenkins with the Sysdig Secure Image Scanner</description>
+  <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan Docker images</description>
 
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/Anchore+Container+Image+Scanner+Plugin</url>
+  <url>https://wiki.jenkins.io/display/JENKINS/Sysdig+Secure+Jenkins+Plugin</url>
 
   <licenses>
     <license>

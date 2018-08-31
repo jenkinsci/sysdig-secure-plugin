@@ -5,7 +5,7 @@ analysis, and gate the build based on the policy evaluation of the image.
 
 ## Setup
 
-Refer to https://wiki.jenkins.io/display/JENKINS/Anchore+Container+Image+Scanner+Plugin
+Refer to https://wiki.jenkins.io/display/JENKINS/Sysdig+Secure+Jenkins+Plugin
 
 ## Local development and installation
 
