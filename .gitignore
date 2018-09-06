@@ -20,3 +20,8 @@ target/
 
 # OS
 .DS_Store
+
+.classpath
+.factorypath
+.project
+.settings/
