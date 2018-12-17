@@ -1,4 +1,4 @@
-package com.anchore.jenkins.plugins.anchore;
+package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Splitter;
 import java.util.regex.Pattern;

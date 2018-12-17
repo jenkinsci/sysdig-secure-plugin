@@ -1,7 +1,7 @@
-package com.anchore.jenkins.plugins.anchore;
+package com.sysdig.jenkins.plugins.sysdig;
 
-import com.anchore.jenkins.plugins.anchore.Util.GATE_ACTION;
-import com.anchore.jenkins.plugins.anchore.Util.GATE_SUMMARY_COLUMN;
+import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
+import com.sysdig.jenkins.plugins.sysdig.Util.GATE_SUMMARY_COLUMN;
 import com.google.common.base.Strings;
 import hudson.AbortException;
 import hudson.FilePath;

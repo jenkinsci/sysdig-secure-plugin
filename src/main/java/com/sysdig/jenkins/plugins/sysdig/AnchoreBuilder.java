@@ -1,7 +1,7 @@
-package com.anchore.jenkins.plugins.anchore;
+package com.sysdig.jenkins.plugins.sysdig;
 
 
-import com.anchore.jenkins.plugins.anchore.Util.GATE_ACTION;
+import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
