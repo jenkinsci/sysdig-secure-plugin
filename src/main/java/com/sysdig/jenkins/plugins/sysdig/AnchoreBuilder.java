@@ -395,7 +395,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     return (DescriptorImpl) super.getDescriptor();
   }
 
-  @Symbol("anchore") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
+  @Symbol("sysdigSecure") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
