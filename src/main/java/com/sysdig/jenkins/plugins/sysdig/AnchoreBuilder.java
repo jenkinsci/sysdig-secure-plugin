@@ -1,7 +1,7 @@
-package com.anchore.jenkins.plugins.anchore;
+package com.sysdig.jenkins.plugins.sysdig;
 
 
-import com.anchore.jenkins.plugins.anchore.Util.GATE_ACTION;
+import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
@@ -395,7 +395,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     return (DescriptorImpl) super.getDescriptor();
   }
 
-  @Symbol("anchore") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
+  @Symbol("sysdigSecure") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 

@@ -1,4 +1,4 @@
-package com.anchore.jenkins.plugins.anchore;
+package com.sysdig.jenkins.plugins.sysdig;
 
 import hudson.AbortException;
 import java.io.PrintStream;
