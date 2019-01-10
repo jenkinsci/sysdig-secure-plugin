@@ -315,8 +315,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
           annotations, globalConfig.getDebug(), globalConfig.getEnginemode(),
           // messy build time overrides, ugh!
           !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
-          !Strings.isNullOrEmpty(engineuser) ? engineuser : globalConfig.getEngineuser(),
-          !Strings.isNullOrEmpty(enginepass) ? enginepass : globalConfig.getEnginepass().getPlainText(),
+          engineuser != null ? engineuser : globalConfig.getEngineuser(),
+          enginepass != null ? enginepass : globalConfig.getEnginepass().getPlainText(),
           isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
           globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
       worker = new BuildWorker(run, workspace, launcher, listener, config);
@@ -325,7 +325,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       if (!Strings.isNullOrEmpty(engineurl)) {
         console.logInfo("Build override set for Sysdig Secure Engine URL");
       }
-      if (!Strings.isNullOrEmpty(engineuser) && !Strings.isNullOrEmpty(enginepass)) {
+      if (engineuser != null && enginepass != null) {
         console.logInfo("Build override set for Sysdig Secure Engine credentials");
       }
       if (isEngineverifyOverrride) {
@@ -420,13 +420,14 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
             new AnchoreQuery("show-pkg-diffs base"));
     public static final String DEFAULT_POLICY_BUNDLE_ID = "";
     public static final String EMPTY_STRING = "";
+    public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com/api/scanning/v1/anchore";
 
     // Global configuration
     private boolean debug;
     private String enginemode;
-    private String engineurl;
-    private String engineuser;
-    private Secret enginepass = Secret.fromString(DEFAULT_ANCHORE_IO_PASSWORD);
+    private String engineurl = DEFAULT_ENGINE_URL;
+    private String engineuser = EMPTY_STRING;
+    private Secret enginepass = Secret.fromString(EMPTY_STRING);
     private boolean engineverify;
     private String containerImageId;
     private String containerId;
