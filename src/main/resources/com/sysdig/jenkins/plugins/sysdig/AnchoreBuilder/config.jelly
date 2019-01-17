@@ -21,20 +21,6 @@
           <f:textbox default="${descriptor.DEFAULT_ENGINE_RETRIES}"/>
         </f:entry>
 
-        <f:entry title="Sysdig Secure Engine policy ID" field="policyBundleId">
-          <f:textbox default="${descriptor.DEFAULT_POLICY_BUNDLE_ID}"/>
-        </f:entry>
-
-        <f:entry title="Sysdig Secure Engine image annotations" help="/plugin/sysdig-secure/help/help-Annotations.html">
-          <f:repeatableProperty field="annotations" noAddButton="false" add="Add annotation" default="${null}">
-            <f:entry>
-              <div align="right">
-                <f:repeatableDeleteButton/>
-              </div>
-            </f:entry>
-          </f:repeatableProperty>
-        </f:entry>
-
         <f:section title="Override Global Configuration">
           <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
             <f:textbox name="engineurl" default=""/>
