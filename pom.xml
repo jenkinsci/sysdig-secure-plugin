@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>sysdig-secure</artifactId>
-  <version>1.0.19.3-SNAPSHOT</version>
+  <version>1.0.19.3</version>
   <packaging>hpi</packaging>
   <name>Sysdig Secure Container Image Scanner Plugin</name>
   <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan Docker images</description>
