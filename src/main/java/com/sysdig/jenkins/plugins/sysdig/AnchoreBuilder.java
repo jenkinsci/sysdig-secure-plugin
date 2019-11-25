@@ -288,10 +288,12 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
       String engineuser = "";
       String enginepass = "";
+      // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
       if (Strings.isNullOrEmpty(engineCredentialsId) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())){
           throw new AbortException("Cannot find Jenkins credentials by ID: \'" + engineCredentialsId
                   + "\'. Ensure credentials are defined in Jenkins before using them");
       }
+      //Prefer the job credentials set by the user and fallback to the global ones
       String credID = !Strings.isNullOrEmpty(engineCredentialsId)? engineCredentialsId : globalConfig.getEngineCredentialsId();
       console.logDebug("Processing Jenkins credential ID " + credID);
         try {
@@ -299,9 +301,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
           CredentialsProvider.findCredentialById(
                   credID,
                   StandardUsernamePasswordCredentials.class,
-                run,
+                  run,
                   Collections.<DomainRequirement>emptyList());
           if (null != creds) {
+              //This is to maintain backward compatibility with how the API layer fetching the information. This will be changed in the next version to use 
+              //the Authorization header instead.  
               engineuser = creds.getPassword().getPlainText();
               enginepass = "";
           } else {
