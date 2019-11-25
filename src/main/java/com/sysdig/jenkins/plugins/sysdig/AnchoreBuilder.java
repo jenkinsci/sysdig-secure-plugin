@@ -304,7 +304,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
                   run,
                   Collections.<DomainRequirement>emptyList());
           if (null != creds) {
-              //This is to maintain backward compatibility with how the API layer fetching the information. This will be changed in the next version to use 
+              //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use 
               //the Authorization header instead.  
               engineuser = creds.getPassword().getPlainText();
               enginepass = "";
