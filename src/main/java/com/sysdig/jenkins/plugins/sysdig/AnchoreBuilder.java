@@ -286,27 +286,37 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     try {
 
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-      String engineuser = null;
-      String enginepass = null;
-      if (!Strings.isNullOrEmpty(engineCredentialsId)) {
-        console.logDebug("Found build override for sysdig-secure-engine credentials. Processing Jenkins credential ID ");
+      String engineuser = "";
+      String enginepass = "";
+      // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
+      if (Strings.isNullOrEmpty(engineCredentialsId) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())){
+          throw new AbortException("Cannot find Jenkins credentials by ID: \'" + engineCredentialsId
+                  + "\'. Ensure credentials are defined in Jenkins before using them");
+      }
+      //Prefer the job credentials set by the user and fallback to the global ones
+      String credID = !Strings.isNullOrEmpty(engineCredentialsId)? engineCredentialsId : globalConfig.getEngineCredentialsId();
+      console.logDebug("Processing Jenkins credential ID " + credID);
         try {
-          StandardUsernamePasswordCredentials creds = CredentialsProvider
-              .findCredentialById(engineCredentialsId, StandardUsernamePasswordCredentials.class, run,
+          StandardUsernamePasswordCredentials creds =
+          CredentialsProvider.findCredentialById(
+                  credID,
+                  StandardUsernamePasswordCredentials.class,
+                  run,
                   Collections.<DomainRequirement>emptyList());
           if (null != creds) {
-            engineuser = creds.getUsername();
-            enginepass = creds.getPassword().getPlainText();
+              //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use 
+              //the Authorization header instead.  
+              engineuser = creds.getPassword().getPlainText();
+              enginepass = "";
           } else {
-            throw new AbortException("Cannot find Jenkins credentials by ID: \'" + engineCredentialsId
+            throw new AbortException("Cannot find Jenkins credentials by ID: \'" + credID
                 + "\'. Ensure credentials are defined in Jenkins before using them");
           }
         } catch (AbortException e) {
           throw e;
         } catch (Exception e) {
-          console.logError("Error looking up Jenkins credentials by ID: \'" + engineCredentialsId + "\'", e);
-          throw new AbortException("Error looking up Jenkins credentials by ID: \'" + engineCredentialsId);
-        }
+          console.logError("Error looking up Jenkins credentials by ID: \'" + credID + "\'", e);
+          throw new AbortException("Error looking up Jenkins credentials by ID: \'" + credID);
       }
 
       /* Instantiate config and a new build worker */
@@ -315,8 +325,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
           annotations, globalConfig.getDebug(), globalConfig.getEnginemode(),
           // messy build time overrides, ugh!
           !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
-          engineuser != null ? engineuser : globalConfig.getEngineuser(),
-          enginepass != null ? enginepass : globalConfig.getEnginepass().getPlainText(),
+          engineuser,
+          enginepass,
           isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
           globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
       worker = new BuildWorker(run, workspace, launcher, listener, config);
@@ -395,7 +405,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     return (DescriptorImpl) super.getDescriptor();
   }
 
-  @Symbol("sysdigSecure") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
+  @Symbol("sysdig") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
@@ -434,6 +444,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     private String localVol;
     private String modulesVol;
     private boolean useSudo;
+	private String engineCredentialsId;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -455,7 +466,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     public void setEngineurl(String engineurl) {
       this.engineurl = engineurl;
     }
-
+	
+    public void setEngineCredentialsId(String engineCredentialsId) {
+      this.engineCredentialsId = engineCredentialsId;
+    }
+	
     public void setEngineuser(String engineuser) {
       this.engineuser = engineuser;
     }
@@ -517,6 +532,10 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
     public String getEngineuser() {
       return engineuser;
+    }
+	
+	public String getEngineCredentialsId() {
+      return engineCredentialsId;
     }
 
     public Secret getEnginepass() {

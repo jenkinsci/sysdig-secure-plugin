@@ -55,7 +55,7 @@ public class BuildWorker {
   private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
 
   // TODO refactor
-  private static final String ANCHORE_BINARY = "anchore";
+  private static final String ANCHORE_BINARY = "sysdig";
   private static final String GATES_OUTPUT_PREFIX = "sysdig_secure_gates";
   private static final String CVE_LISTING_PREFIX = "sysdig_secure_security";
   private static final String QUERY_OUTPUT_PREFIX = "sysdig_secure_query_";
