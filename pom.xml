@@ -15,7 +15,7 @@
   <name>Sysdig Secure Container Image Scanner Plugin</name>
   <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan Docker images</description>
 
-  <url>https://wiki.jenkins.io/display/JENKINS/Sysdig+Secure+Jenkins+Plugin</url>
+  <url>https://github.com/jenkinsci/sysdig-secure-plugin/blob/master/README.md</url>
 
   <licenses>
     <license>
