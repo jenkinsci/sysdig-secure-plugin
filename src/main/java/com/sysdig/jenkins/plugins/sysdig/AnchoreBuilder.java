@@ -329,7 +329,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
           enginepass,
           isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
           globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
-      worker = new BuildWorker(run, workspace, launcher, listener, config);
+      worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
 
       /* Log any build time overrides are at play */
       if (!Strings.isNullOrEmpty(engineurl)) {
