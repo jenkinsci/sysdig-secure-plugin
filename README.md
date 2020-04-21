@@ -1,5 +1,8 @@
 # Sysdig Secure Jenkins Plugin
 
+![Jenkins Plugins](https://img.shields.io/jenkins/plugin/v/sysdig-secure)
+![Jenkins Plugin installs](https://img.shields.io/jenkins/plugin/i/sysdig-secure?color=blue)
+
 [Sysdig Secure](https://sysdig.com/products/secure/) is a container
 security platform that brings together docker image scanning and
 run-time protection to identify vulnerabilities, block threats, enforce
