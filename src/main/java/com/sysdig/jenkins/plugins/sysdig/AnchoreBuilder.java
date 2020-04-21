@@ -1,14 +1,13 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
 
-import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -22,12 +21,6 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.logging.Logger;
-import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
@@ -36,6 +29,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+
+import javax.annotation.Nonnull;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * <p>Sysdig Secure Plugin  enables Jenkins users to scan container images, generate analysis, evaluate gate policy, and execute customizable
@@ -59,7 +59,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   private static final Logger LOG = Logger.getLogger(AnchoreBuilder.class.getName());
 
   // Assigning the defaults here for pipeline builds
-  private String name;
+  private final String name;
   private String policyName = DescriptorImpl.DEFAULT_POLICY_NAME;
   private String globalWhiteList = DescriptorImpl.DEFAULT_GLOBAL_WHITELIST;
   private String anchoreioUser = DescriptorImpl.DEFAULT_ANCHORE_IO_USER;
@@ -269,11 +269,9 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
-      throws InterruptedException, IOException {
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException {
 
-    LOG.warning(
-        "Starting Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run.getNumber());
+    LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
     boolean failedByGate = false;
     BuildConfig config = null;
@@ -284,60 +282,62 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     GATE_ACTION finalAction;
 
     try {
-
-      /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-      String engineuser = "";
-      String enginepass = "";
       // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
-      if (Strings.isNullOrEmpty(engineCredentialsId) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())){
-          throw new AbortException("Cannot find Jenkins credentials by ID: \'" + engineCredentialsId
-                  + "\'. Ensure credentials are defined in Jenkins before using them");
+      if (Strings.isNullOrEmpty(engineCredentialsId) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())) {
+        throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", engineCredentialsId));
       }
       //Prefer the job credentials set by the user and fallback to the global ones
-      String credID = !Strings.isNullOrEmpty(engineCredentialsId)? engineCredentialsId : globalConfig.getEngineCredentialsId();
+      String credID = !Strings.isNullOrEmpty(engineCredentialsId) ? engineCredentialsId : globalConfig.getEngineCredentialsId();
       console.logDebug("Processing Jenkins credential ID " + credID);
-        try {
-          StandardUsernamePasswordCredentials creds =
-          CredentialsProvider.findCredentialById(
-                  credID,
-                  StandardUsernamePasswordCredentials.class,
-                  run,
-                  Collections.<DomainRequirement>emptyList());
-          if (null != creds) {
-              //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use 
-              //the Authorization header instead.  
-              engineuser = creds.getPassword().getPlainText();
-              enginepass = "";
-          } else {
-            throw new AbortException("Cannot find Jenkins credentials by ID: \'" + credID
-                + "\'. Ensure credentials are defined in Jenkins before using them");
-          }
-        } catch (AbortException e) {
-          throw e;
-        } catch (Exception e) {
-          console.logError("Error looking up Jenkins credentials by ID: \'" + credID + "\'", e);
-          throw new AbortException("Error looking up Jenkins credentials by ID: \'" + credID);
+
+      /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
+      String enginepass;
+      String engineuser;
+      try {
+        StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
+        if (null != creds) {
+          //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use
+          //the Authorization header instead.
+          engineuser = creds.getPassword().getPlainText();
+          enginepass = "";
+        } else {
+          throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
+        }
+      } catch (AbortException e) {
+        throw e;
+      } catch (Exception e) {
+        console.logError(String.format("Error looking up Jenkins credentials by ID: '%s'", credID), e);
+        throw new AbortException(String.format("Error looking up Jenkins credentials by ID: '%s", credID));
       }
 
       /* Instantiate config and a new build worker */
       config = new BuildConfig(name, policyName, globalWhiteList, anchoreioUser, anchoreioPass, userScripts, engineRetries, bailOnFail,
-          bailOnWarn, bailOnPluginFail, doCleanup, useCachedBundle, policyEvalMethod, bundleFileOverride, inputQueries, policyBundleId,
-          annotations, globalConfig.getDebug(), globalConfig.getEnginemode(),
-          // messy build time overrides, ugh!
-          !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
-          engineuser,
-          enginepass,
-          isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
-          globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
-      worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
+        bailOnWarn, bailOnPluginFail, doCleanup, useCachedBundle, policyEvalMethod, bundleFileOverride, inputQueries, policyBundleId,
+        annotations, globalConfig.getDebug(), globalConfig.getEnginemode(),
+        // messy build time overrides, ugh!
+        !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
+        engineuser,
+        enginepass,
+        isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
+        globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
+
+      switch (config.getEnginemode()) {
+        case "anchoreengine":
+          worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
+          break;
+        case "anchorelocal":
+          worker = new BuildWorkerInline(run, workspace, launcher, listener, config);
+          break;
+        default:
+          console.logError(String.format("Undefined engine mode: %s", config.getEnginemode()));
+          throw new AbortException(String.format("Undefined engine mode: %s. Valid engine modes are 'anchoreengine' or 'anchorelocal'", config.getEnginemode()));
+      }
 
       /* Log any build time overrides are at play */
       if (!Strings.isNullOrEmpty(engineurl)) {
         console.logInfo("Build override set for Sysdig Secure Engine URL");
       }
-      if (engineuser != null && enginepass != null) {
-        console.logInfo("Build override set for Sysdig Secure Engine credentials");
-      }
+
       if (isEngineverifyOverrride) {
         console.logInfo("Build override set for Sysdig Secure Engine verify SSL");
       }
@@ -361,7 +361,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
         if ((config.getBailOnFail() && (GATE_ACTION.STOP.equals(finalAction) || GATE_ACTION.FAIL.equals(finalAction))) || (
-            config.getBailOnWarn() && GATE_ACTION.WARN.equals(finalAction))) {
+          config.getBailOnWarn() && GATE_ACTION.WARN.equals(finalAction))) {
           console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
           failedByGate = true;
           throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
@@ -396,7 +396,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       }
       console.logInfo("Completed Sysdig Secure Container Image Scanner step");
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
-          .getNumber());
+        .getNumber());
     }
   }
 
@@ -425,16 +425,19 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     public static final String DEFAULT_POLICY_EVAL_METHOD = "plainfile";
     public static final String DEFAULT_BUNDLE_FILE_OVERRIDE = "sysdig_secure_policy_bundle.json";
     public static final String DEFAULT_PLUGIN_MODE = "anchoreengine";
-    public static final List<AnchoreQuery> DEFAULT_INPUT_QUERIES = ImmutableList
-        .of(new AnchoreQuery("cve-scan all"), new AnchoreQuery("list-packages all"), new AnchoreQuery("list-files all"),
-            new AnchoreQuery("show-pkg-diffs base"));
+    public static final List<AnchoreQuery> DEFAULT_INPUT_QUERIES = ImmutableList.of(
+      new AnchoreQuery("cve-scan all"),
+      new AnchoreQuery("list-packages all"),
+      new AnchoreQuery("list-files all"),
+      new AnchoreQuery("show-pkg-diffs base")
+    );
     public static final String DEFAULT_POLICY_BUNDLE_ID = "";
     public static final String EMPTY_STRING = "";
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com/api/scanning/v1/anchore";
 
     // Global configuration
     private boolean debug;
-    private String enginemode;
+    private String enginemode = DEFAULT_PLUGIN_MODE;
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineuser = EMPTY_STRING;
     private Secret enginepass = Secret.fromString(EMPTY_STRING);
@@ -444,7 +447,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     private String localVol;
     private String modulesVol;
     private boolean useSudo;
-	private String engineCredentialsId;
+    private String engineCredentialsId;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -466,11 +469,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     public void setEngineurl(String engineurl) {
       this.engineurl = engineurl;
     }
-	
+
     public void setEngineCredentialsId(String engineCredentialsId) {
       this.engineCredentialsId = engineCredentialsId;
     }
-	
+
     public void setEngineuser(String engineuser) {
       this.engineuser = engineuser;
     }
@@ -520,10 +523,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     }
 
     public boolean isMode(String inmode) {
-      if (!Strings.isNullOrEmpty(inmode) && getEnginemode().equals(inmode)) {
-        return true;
-      }
-      return false;
+      return !Strings.isNullOrEmpty(inmode) && getEnginemode().equals(inmode);
     }
 
     public String getEngineurl() {
@@ -533,8 +533,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     public String getEngineuser() {
       return engineuser;
     }
-	
-	public String getEngineCredentialsId() {
+
+    public String getEngineCredentialsId() {
       return engineCredentialsId;
     }
 
@@ -581,7 +581,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+    public boolean configure(StaplerRequest req, JSONObject formData) {
       req.bindJSON(this, formData); // Use stapler request to bind
       save();
       return true;
@@ -630,9 +630,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
         return result.includeCurrentValue(credentialsId);
       }
 
-      return result.includeEmptyValue()
-          .includeMatchingAs(ACL.SYSTEM, Jenkins.getActiveInstance(), StandardUsernamePasswordCredentials.class,
-              Collections.<DomainRequirement>emptyList(), CredentialsMatchers.always());
+      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
+        Jenkins.getActiveInstance(),
+        StandardUsernamePasswordCredentials.class,
+        Collections.emptyList(),
+        CredentialsMatchers.always());
     }
   }
 }

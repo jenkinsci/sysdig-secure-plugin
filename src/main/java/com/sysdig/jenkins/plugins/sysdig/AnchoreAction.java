@@ -2,8 +2,10 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import hudson.model.Action;
 import hudson.model.Run;
+
 import java.util.HashMap;
 import java.util.Map;
+
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 
@@ -29,7 +31,7 @@ public class AnchoreAction implements Action {
 
 
   public AnchoreAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport,
-      Map<String, String> queryReports, String gateSummary, String cveListingFileName) {
+                       Map<String, String> queryReports, String gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
@@ -38,23 +40,13 @@ public class AnchoreAction implements Action {
     for (Map.Entry<String, String> entry : queryReports.entrySet()) {
       String k = entry.getKey();
       String v = entry.getValue();
-      String newv = "../artifact/" + jenkinsOutputDirName + "/" + v;
+      String newv = String.format("../artifact/%s/%s", jenkinsOutputDirName, v);
       this.queryOutputUrls.put(k, newv);
     }
 
-    // original maps conversion method
-    /*
-    this.queryOutputUrls = Maps.transformValues(queryReports, new Function<String, String>() {
-
-      @Override
-      public String apply(@Nullable String queryOutput) {
-        return "../artifact/" + jenkinsOutputDirName + "/" + queryOutput;
-      }
-    });
-    */
     this.gateSummary = gateSummary;
     if (null != cveListingFileName && cveListingFileName.trim().length() > 0) {
-      this.cveListingUrl = "../artifact/" + jenkinsOutputDirName + "/" + cveListingFileName;
+      this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
     }
   }
 
