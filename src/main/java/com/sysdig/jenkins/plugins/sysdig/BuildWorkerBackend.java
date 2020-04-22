@@ -3,6 +3,8 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_SUMMARY_COLUMN;
+import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -59,7 +61,7 @@ public class BuildWorkerBackend implements BuildWorker {
 
 
   /* Initialized by the constructor */
-  private ConsoleLog console; // Log handler for logging to build console
+  private SysdigLogger logger; // Log handler for logging to build console
   private boolean analyzed;
 
   private String jenkinsOutputDirName;
@@ -92,8 +94,8 @@ public class BuildWorkerBackend implements BuildWorker {
       // FIXME create an interface for this ConsoleLog and use it instead of the object itself
       // FIXME also receive it as dependency injection
       // Initialize build logger to log output to consoleLog, use local logging methods only after this initializer completes
-      console = new ConsoleLog("AnchoreWorker", this.listener.getLogger(), this.config.getDebug());
-      console.logDebug("Initializing build worker");
+      logger = new ConsoleLog("SysdigWorker", this.listener.getLogger(), this.config.getDebug());
+      logger.logDebug("Initializing build worker");
 
       // Verify and initialize Jenkins launcher for executing processes
       // TODO is this necessary? Can't we use the launcher reference that was passed in
@@ -108,11 +110,11 @@ public class BuildWorkerBackend implements BuildWorker {
       initializeJenkinsWorkspace();
       initializeAnchoreWorkspace();
 
-      console.logDebug("Build worker initialized");
+      logger.logDebug("Build worker initialized");
     } catch (Exception e) {
       try {
-        if (console != null) {
-          console.logError("Failed to initialize worker for plugin execution", e);
+        if (logger != null) {
+          logger.logError("Failed to initialize worker for plugin execution", e);
         }
         cleanJenkinsWorkspaceQuietly();
       } catch (Exception innere) {
@@ -139,7 +141,7 @@ public class BuildWorkerBackend implements BuildWorker {
         String tag = entry.getKey();
         String dfile = entry.getValue();
 
-        console.logInfo(String.format("Submitting %s for analysis", tag));
+        logger.logInfo(String.format("Submitting %s for analysis", tag));
 
         try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
           // Prep POST request
@@ -159,14 +161,14 @@ public class BuildWorkerBackend implements BuildWorker {
           httppost.addHeader("Content-Type", "application/json");
           httppost.setEntity(new StringEntity(body));
 
-          console.logDebug(String.format("sysdig-secure-engine add image URL: %s", theurl));
-          console.logDebug(String.format("sysdig-secure-engine add image payload: %s", body));
+          logger.logDebug(String.format("sysdig-secure-engine add image URL: %s", theurl));
+          logger.logDebug(String.format("sysdig-secure-engine add image payload: %s", body));
 
           try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
               String serverMessage = EntityUtils.toString(response.getEntity());
-              console.logError(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
+              logger.logError(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
               throw new AbortException(String.format("Failed to analyze %s due to error adding image to sysdig-secure-engine. Check above logs for errors from sysdig-secure-engine", tag));
             }
 
@@ -174,7 +176,7 @@ public class BuildWorkerBackend implements BuildWorker {
             String responseBody = EntityUtils.toString(response.getEntity());
             JSONArray respJson = JSONArray.fromObject(responseBody);
             imageDigest = JSONObject.fromObject(respJson.get(0)).getString("imageDigest");
-            console.logInfo(String.format("Analysis request accepted, received image digest %s", imageDigest));
+            logger.logInfo(String.format("Analysis request accepted, received image digest %s", imageDigest));
             input_image_imageDigest.put(tag, imageDigest);
 
           }
@@ -184,7 +186,7 @@ public class BuildWorkerBackend implements BuildWorker {
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, log it and wrap its
-      console.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
+      logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
     }
   }
@@ -235,12 +237,12 @@ public class BuildWorkerBackend implements BuildWorker {
           String tag = entry.getKey();
           String imageDigest = entry.getValue();
 
-          console.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
+          logger.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
 
           boolean sysdig_secure_eval_status = false;
           String theurl = String.format("%s/images/%s/check?tag=%s&detail=true", config.getEngineurl().replaceAll("/+$", ""), imageDigest, tag);
 
-          console.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
+          logger.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
 
           int tryCount = 0;
           int maxCount = Integer.parseInt(config.getEngineRetries());
@@ -253,21 +255,21 @@ public class BuildWorkerBackend implements BuildWorker {
 
           do { // try this at least once regardless what the retry count is
             if (sleep) {
-              console.logDebug("Snoozing before retrying sysdig-secure-engine get policy evaluation");
+              logger.logDebug("Snoozing before retrying sysdig-secure-engine get policy evaluation");
               Thread.sleep(1000);
               sleep = false;
             }
 
             tryCount++;
             try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-              console.logDebug(String.format("Attempting sysdig-secure-engine get policy evaluation (%d/%d)", tryCount, maxCount));
+              logger.logDebug(String.format("Attempting sysdig-secure-engine get policy evaluation (%d/%d)", tryCount, maxCount));
 
               try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
                 statusCode = response.getStatusLine().getStatusCode();
 
                 if (statusCode != 200) {
                   serverMessage = EntityUtils.toString(response.getEntity());
-                  console.logDebug(String.format("sysdig-secure-engine get policy evaluation failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
+                  logger.logDebug(String.format("sysdig-secure-engine get policy evaluation failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
                   sleep = true;
                 } else {
                   // Read the response body.
@@ -285,20 +287,20 @@ public class BuildWorkerBackend implements BuildWorker {
                   }
                   if (tag_evals.size() < 1) {
                     // try again until we get an eval
-                    console.logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
+                    logger.logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
 
                     sleep = true;
                   } else {
                     String eval_status = JSONObject.fromObject(JSONObject.fromObject(tag_evals.get(0))).getString("status");
                     JSONObject gate_result = JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(tag_evals.get(0)).getJSONObject("detail")).getJSONObject("result")).getJSONObject("result"));
 
-                    console.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", eval_status));
-                    console.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gate_result.toString()));
+                    logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", eval_status));
+                    logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gate_result.toString()));
                     for (Object key : gate_result.keySet()) {
                       try {
                         gate_results.put((String) key, gate_result.getJSONObject((String) key));
                       } catch (Exception e) {
-                        console.logDebug("Ignoring error parsing policy evaluation result key: " + key);
+                        logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
                       }
                     }
 
@@ -308,7 +310,7 @@ public class BuildWorkerBackend implements BuildWorker {
                       sysdig_secure_eval_status = true;
                     }
                     done = true;
-                    console.logInfo("Completed analysis and processed policy evaluation result");
+                    logger.logInfo("Completed analysis and processed policy evaluation result");
                   }
                 }
               }
@@ -317,9 +319,9 @@ public class BuildWorkerBackend implements BuildWorker {
 
           if (!done) {
             if (statusCode != 200) {
-              console.logWarn(String.format("sysdig-secure-engine get policy evaluation failed. HTTP method: GET, URL: %s, status: %d, error: %s", theurl, statusCode, serverMessage));
+              logger.logWarn(String.format("sysdig-secure-engine get policy evaluation failed. HTTP method: GET, URL: %s, status: %d, error: %s", theurl, statusCode, serverMessage));
             }
-            console.logWarn(String.format("Exhausted all attempts polling sysdig-secure-engine. Analysis is incomplete for %s", imageDigest));
+            logger.logWarn(String.format("Exhausted all attempts polling sysdig-secure-engine. Analysis is incomplete for %s", imageDigest));
             throw new AbortException("Timed out waiting for sysdig-secure-engine analysis to complete (increasing engineRetries might help). Check above logs for errors from sysdig-secure-engine");
           } else {
             // only set to stop if an eval is successful and is reporting fail
@@ -330,32 +332,32 @@ public class BuildWorkerBackend implements BuildWorker {
         }
 
         try {
-          console.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
+          logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
           try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsGatesOutputFP.write(), StandardCharsets.UTF_8))) {
             bw.write(gate_results.toString());
           }
         } catch (IOException | InterruptedException e) {
-          console.logWarn(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()), e);
+          logger.logWarn(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()), e);
           throw new AbortException(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()));
         }
 
         generateGatesSummary(gate_results);
-        console.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
+        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
         return finalAction;
       } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
         throw e;
       } catch (Exception e) { // caught unknown exception, log it and wrap it
-        console.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
+        logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
         throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
       }
     } else {
-      console.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
+      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
     }
   }
 
   private void generateGatesSummary(JSONObject gatesJson) {
-    console.logDebug("Summarizing policy evaluation results");
+    logger.logDebug("Summarizing policy evaluation results");
     if (gatesJson != null) {
       JSONArray summaryRows = new JSONArray();
       // Populate once and reuse
@@ -390,13 +392,13 @@ public class BuildWorkerBackend implements BuildWorker {
                   }
                 }
               } else {
-                console.logWarn(String.format("'header' element not found in gate output, skipping summary computation for %s", imageKey));
+                logger.logWarn(String.format("'header' element not found in gate output, skipping summary computation for %s", imageKey));
                 continue;
               }
             }
 
             if (numColumns <= 0 || repoTagIndex < 0 || gateNameIndex < 0 || gateActionIndex < 0) {
-              console.logWarn(String.format("Either 'header' element has no columns or column indices (for Repo_Tag, Gate, Gate_Action) not initialized, skipping summary computation for %s", imageKey));
+              logger.logWarn(String.format("Either 'header' element has no columns or column indices (for Repo_Tag, Gate, Gate_Action) not initialized, skipping summary computation for %s", imageKey));
               continue;
             }
 
@@ -433,12 +435,12 @@ public class BuildWorkerBackend implements BuildWorker {
                     }
                   }
                 } else {
-                  console.logWarn(String.format("Expected %d elements but got %d, skipping row %s in summary computation for %s", numColumns, row.size(), row, imageKey));
+                  logger.logWarn(String.format("Expected %d elements but got %d, skipping row %s in summary computation for %s", numColumns, row.size(), row, imageKey));
                 }
               }
 
               if (!Strings.isNullOrEmpty(repoTag)) {
-                console.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
+                logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
 
                 JSONObject summaryRow = new JSONObject();
                 summaryRow.put(GATE_SUMMARY_COLUMN.Repo_Tag.toString(), repoTag);
@@ -448,7 +450,7 @@ public class BuildWorkerBackend implements BuildWorker {
                 summaryRow.put(GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
                 summaryRows.add(summaryRow);
               } else {
-                console.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
+                logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
                 JSONObject summaryRow = new JSONObject();
                 summaryRow.put(GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
                 summaryRow.put(GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
@@ -458,16 +460,16 @@ public class BuildWorkerBackend implements BuildWorker {
                 summaryRows.add(summaryRow);
 
                 //console.logWarn("Repo_Tag element not found in gate output, skipping summary computation for " + imageKey);
-                console.logWarn(String.format("Repo_Tag element not found in gate output, using imageId: %s", imageKey));
+                logger.logWarn(String.format("Repo_Tag element not found in gate output, using imageId: %s", imageKey));
               }
             } else { // rows object not found
-              console.logWarn(String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
+              logger.logWarn(String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
             }
           } else { // result object not found, log and move on
-            console.logWarn(String.format("'result' element not found in gate output, skipping summary computation for %s", imageKey));
+            logger.logWarn(String.format("'result' element not found in gate output, skipping summary computation for %s", imageKey));
           }
         } else { // no content found for a given image id, log and move on
-          console.logWarn(String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
+          logger.logWarn(String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
         }
       }
 
@@ -476,7 +478,7 @@ public class BuildWorkerBackend implements BuildWorker {
       gateSummary.put("rows", summaryRows);
 
     } else { // could not load gates output to json object
-      console.logWarn("Invalid input to generate gates summary");
+      logger.logWarn("Invalid input to generate gates summary");
     }
   }
 
@@ -508,12 +510,12 @@ public class BuildWorkerBackend implements BuildWorker {
           String digest = entry.getValue();
 
           try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-            console.logInfo("Querying vulnerability listing for " + input);
+            logger.logInfo("Querying vulnerability listing for " + input);
             String theurl = String.format("%s/images/%s/vuln/all", config.getEngineurl().replaceAll("/+$", ""), digest);
             HttpGet httpget = new HttpGet(theurl);
             httpget.addHeader("Content-Type", "application/json");
 
-            console.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
+            logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
             try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
               String responseBody = EntityUtils.toString(response.getEntity());
               JSONObject responseJson = JSONObject.fromObject(responseBody);
@@ -540,22 +542,22 @@ public class BuildWorkerBackend implements BuildWorker {
         FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
         FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, cveListingFileName);
         try {
-          console.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
+          logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
           try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsQueryOutputFP.write(), StandardCharsets.UTF_8))) {
             bw.write(securityJson.toString());
           }
         } catch (IOException | InterruptedException e) {
-          console.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
+          logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
           throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
         }
       } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
         throw e;
       } catch (Exception e) { // caught unknown exception, log it and wrap it
-        console.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
+        logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
         throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
       }
     } else {
-      console.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
+      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
     }
   }
@@ -564,12 +566,12 @@ public class BuildWorkerBackend implements BuildWorker {
   public void setupBuildReports() throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
-      console.logDebug("Archiving results");
+      logger.logDebug("Archiving results");
       ArtifactArchiver artifactArchiver = new ArtifactArchiver(jenkinsOutputDirName + "/");
       artifactArchiver.perform(build, workspace, launcher, listener);
 
       // add the link in jenkins UI for sysdig secure results
-      console.logDebug("Setting up build results");
+      logger.logDebug("Setting up build results");
 
       if (finalAction != null) {
         build.addAction(new AnchoreAction(build, finalAction.toString(), jenkinsOutputDirName, gateOutputFileName, queryOutputMap,
@@ -579,7 +581,7 @@ public class BuildWorkerBackend implements BuildWorker {
           cveListingFileName));
       }
     } catch (Exception e) { // caught unknown exception, log it and wrap it
-      console.logError("Failed to setup build results due to an unexpected error", e);
+      logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
         "Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
     }
@@ -588,19 +590,19 @@ public class BuildWorkerBackend implements BuildWorker {
   @Override
   public void cleanup() {
     try {
-      console.logDebug("Cleaning up build artifacts");
+      logger.logDebug("Cleaning up build artifacts");
 
       if (!Strings.isNullOrEmpty(jenkinsOutputDirName)) {
         try {
-          console.logDebug("Deleting Jenkins workspace " + jenkinsOutputDirName);
+          logger.logDebug("Deleting Jenkins workspace " + jenkinsOutputDirName);
           cleanJenkinsWorkspaceQuietly();
         } catch (IOException | InterruptedException e) {
-          console.logDebug("Unable to delete Jenkins workspace " + jenkinsOutputDirName, e);
+          logger.logDebug("Unable to delete Jenkins workspace " + jenkinsOutputDirName, e);
         }
       }
 
     } catch (RuntimeException e) { // caught unknown exception, log it
-      console.logDebug("Failed to clean up build artifacts due to an unexpected error", e);
+      logger.logDebug("Failed to clean up build artifacts due to an unexpected error", e);
     }
   }
 
@@ -608,17 +610,17 @@ public class BuildWorkerBackend implements BuildWorker {
    * Print versions info and configuration
    */
   private void printConfig() {
-    console.logInfo("Jenkins version: " + Jenkins.VERSION);
+    logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
     if (Jenkins.getActiveInstance().getPluginManager() != null && (plugins = Jenkins.getActiveInstance().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
-          console.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
+          logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
           break;
         }
       }
     }
-    config.print(console);
+    config.print(logger);
   }
 
   /**
@@ -627,35 +629,32 @@ public class BuildWorkerBackend implements BuildWorker {
   // FIXME: Is this really necessary? Can't we check if the config is correct at the moment of the creation?
   private void checkConfig() throws AbortException {
     if (Strings.isNullOrEmpty(config.getName())) {
-      console.logError("Image list file not found");
+      logger.logError("Image list file not found");
       throw new AbortException(
         "Image list file not specified. Please provide a valid image list file name in the Sysdig Secure Container Image Scanner step and try again");
     }
 
     try {
       if (!new FilePath(workspace, config.getName()).exists()) {
-        console.logError(String.format("Cannot find image list file \"%s\" under %s", config.getName(), workspace));
+        logger.logError(String.format("Cannot find image list file \"%s\" under %s", config.getName(), workspace));
         throw new AbortException(String.format("Cannot find image list file '%s'. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
       }
     } catch (AbortException e) {
       throw e;
     } catch (Exception e) {
-      console.logWarn(String.format("Unable to access image list file \"%s\" under %s", config.getName(), workspace), e);
+      logger.logWarn(String.format("Unable to access image list file \"%s\" under %s", config.getName(), workspace), e);
       throw new AbortException(String.format("Unable to access image list file %s. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
     }
-
-    // TODO docker and image checks necessary here? check with Dan
-
   }
 
   private void initializeJenkinsWorkspace() throws AbortException {
     try {
-      console.logDebug("Initializing Jenkins workspace");
+      logger.logDebug("Initializing Jenkins workspace");
 
       // Initialized by Jenkins workspace prep
       String buildId;
       if (Strings.isNullOrEmpty(buildId = build.getParent().getDisplayName() + "_" + build.getNumber())) {
-        console.logWarn("Unable to generate a unique identifier for this build due to invalid configuration");
+        logger.logWarn("Unable to generate a unique identifier for this build due to invalid configuration");
         throw new AbortException("Unable to generate a unique identifier for this build due to invalid configuration");
       }
 
@@ -664,7 +663,7 @@ public class BuildWorkerBackend implements BuildWorker {
 
       // Create output directories
       if (!jenkinsReportDir.exists()) {
-        console.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
+        logger.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
         jenkinsReportDir.mkdirs();
       }
 
@@ -674,7 +673,7 @@ public class BuildWorkerBackend implements BuildWorker {
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, log it and wrap it
-      console.logWarn("Failed to initialize Jenkins workspace", e);
+      logger.logWarn("Failed to initialize Jenkins workspace", e);
       throw new AbortException("Failed to initialize Jenkins workspace due to to an unexpected error");
     }
   }
@@ -683,7 +682,7 @@ public class BuildWorkerBackend implements BuildWorker {
 
 
     try {
-      console.logDebug("Initializing Sysdig Secure workspace (enginemode)");
+      logger.logDebug("Initializing Sysdig Secure workspace");
 
       // get the input and store it in tag/dockerfile map
       FilePath inputImageFP = new FilePath(workspace, config.getName()); // Already checked in checkConfig()
@@ -708,15 +707,15 @@ public class BuildWorkerBackend implements BuildWorker {
                   b.append(myline).append('\n');
                 }
               }
-              console.logDebug(String.format("Dockerfile contents: %s", b.toString()));
+              logger.logDebug(String.format("Dockerfile contents: %s", b.toString()));
               byte[] encodedBytes = Base64.encodeBase64(b.toString().getBytes(StandardCharsets.UTF_8));
               dfilecontents = new String(encodedBytes, StandardCharsets.UTF_8);
 
             }
           }
           if (null != imgId) {
-            console.logDebug(String.format("Image tag/digest: %s", imgId));
-            console.logDebug(String.format("Base64 encoded Dockerfile contents: %s", dfilecontents));
+            logger.logDebug(String.format("Image tag/digest: %s", imgId));
+            logger.logDebug(String.format("Base64 encoded Dockerfile contents: %s", dfilecontents));
             input_image_dfile.put(imgId, dfilecontents);
           }
         }
@@ -724,7 +723,7 @@ public class BuildWorkerBackend implements BuildWorker {
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
-      console.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
+      logger.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException("Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
     }
   }

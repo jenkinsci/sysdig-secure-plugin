@@ -3,6 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_SUMMARY_COLUMN;
+import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;

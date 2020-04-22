@@ -1,9 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
 
-import java.util.List;
-
-import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 
 /**
  * Holder for all Sysdig Secure configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
@@ -104,7 +102,7 @@ public class BuildConfig {
     return modulesVol;
   }
 
-  public void print(ConsoleLog consoleLog) {
+  public void print(SysdigLogger consoleLog) {
     consoleLog.logInfo(String.format("[global] debug: %s", String.valueOf(debug)));
     consoleLog.logInfo(String.format("[global] inlineScanning: %s", inlineScanning));
 
