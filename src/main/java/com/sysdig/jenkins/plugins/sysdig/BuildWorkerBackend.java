@@ -71,6 +71,7 @@ public class BuildWorkerBackend implements BuildWorker {
   private JSONObject gateSummary;
   private String cveListingFileName;
 
+  // FIXME can we get rid of this config? Also the launcher is not being used...
   public BuildWorkerBackend(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config)
     throws AbortException {
     try {
@@ -88,6 +89,8 @@ public class BuildWorkerBackend implements BuildWorker {
       this.listener = listener;
       this.config = config;
 
+      // FIXME create an interface for this ConsoleLog and use it instead of the object itself
+      // FIXME also receive it as dependency injection
       // Initialize build logger to log output to consoleLog, use local logging methods only after this initializer completes
       console = new ConsoleLog("AnchoreWorker", this.listener.getLogger(), this.config.getDebug());
       console.logDebug("Initializing build worker");
@@ -148,16 +151,10 @@ public class BuildWorkerBackend implements BuildWorker {
           if (null != dfile) {
             jsonBody.put("dockerfile", dfile);
           }
-          if (null != config.getAnnotations() && !config.getAnnotations().isEmpty()) {
-            JSONObject annotations = new JSONObject();
-            for (Annotation a : config.getAnnotations()) {
-              annotations.put(a.getKey(), a.getValue());
-            }
-            jsonBody.put("annotations", annotations);
-          }
 
           String body = jsonBody.toString();
 
+          // FIXME Move all content that contacts with the backend to a Client
           HttpPost httppost = new HttpPost(theurl);
           httppost.addHeader("Content-Type", "application/json");
           httppost.setEntity(new StringEntity(body));
@@ -243,9 +240,6 @@ public class BuildWorkerBackend implements BuildWorker {
           boolean sysdig_secure_eval_status = false;
           String theurl = String.format("%s/images/%s/check?tag=%s&detail=true", config.getEngineurl().replaceAll("/+$", ""), imageDigest, tag);
 
-          if (!Strings.isNullOrEmpty(config.getPolicyBundleId())) {
-            theurl += String.format("&policyId=%s", config.getPolicyBundleId());
-          }
           console.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
 
           int tryCount = 0;
@@ -630,14 +624,8 @@ public class BuildWorkerBackend implements BuildWorker {
   /**
    * Checks for minimum required config for executing step
    */
+  // FIXME: Is this really necessary? Can't we check if the config is correct at the moment of the creation?
   private void checkConfig() throws AbortException {
-    // FIXME MOVE THIS CHECK TO THE METHOD THAT CREATES THE OBJECT
-    if (!config.getEnginemode().equals("anchoreengine") && !config.getEnginemode().equals("anchorelocal")) {
-      console.logError("Undefined engine mode: " + config.getEnginemode());
-      throw new AbortException(
-        String.format("Undefined engine mode: %s. Valid engine modes are 'anchoreengine' or 'anchorelocal'", config.getEnginemode()));
-    }
-
     if (Strings.isNullOrEmpty(config.getName())) {
       console.logError("Image list file not found");
       throw new AbortException(

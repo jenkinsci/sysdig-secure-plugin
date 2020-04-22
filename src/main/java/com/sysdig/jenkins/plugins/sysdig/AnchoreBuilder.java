@@ -6,7 +6,6 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import hudson.AbortException;
 import hudson.Extension;
@@ -60,53 +59,20 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
   // Assigning the defaults here for pipeline builds
   private final String name;
-  private String policyName = DescriptorImpl.DEFAULT_POLICY_NAME;
-  private String globalWhiteList = DescriptorImpl.DEFAULT_GLOBAL_WHITELIST;
-  private String anchoreioUser = DescriptorImpl.DEFAULT_ANCHORE_IO_USER;
-  private String anchoreioPass = DescriptorImpl.DEFAULT_ANCHORE_IO_PASSWORD;
-  private String userScripts = DescriptorImpl.DEFAULT_USER_SCRIPTS;
   private String engineRetries = DescriptorImpl.DEFAULT_ENGINE_RETRIES;
   private boolean bailOnFail = DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
-  private boolean bailOnWarn = DescriptorImpl.DEFAULT_BAIL_ON_WARN;
   private boolean bailOnPluginFail = DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
-  private boolean doCleanup = DescriptorImpl.DEFAULT_DO_CLEANUP;
-  private boolean useCachedBundle = DescriptorImpl.DEFAULT_USE_CACHED_BUNDLE;
-  private String policyEvalMethod = DescriptorImpl.DEFAULT_POLICY_EVAL_METHOD;
-  private String bundleFileOverride = DescriptorImpl.DEFAULT_BUNDLE_FILE_OVERRIDE;
-  private List<AnchoreQuery> inputQueries = new ArrayList<>();
-  private String policyBundleId = DescriptorImpl.DEFAULT_POLICY_BUNDLE_ID;
-  private List<Annotation> annotations = new ArrayList<>();
+  private boolean inlineScanning = DescriptorImpl.DEFAULT_INLINE_SCANNING;
 
   // Override global config. Supported for sysdig-secure-engine mode config only
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
   private boolean engineverify = false;
   // More flags to indicate boolean override, ugh!
-  private boolean isEngineverifyOverrride = false;
 
   // Getters are used by config.jelly
   public String getName() {
     return name;
-  }
-
-  public String getPolicyName() {
-    return policyName;
-  }
-
-  public String getGlobalWhiteList() {
-    return globalWhiteList;
-  }
-
-  public String getAnchoreioUser() {
-    return anchoreioUser;
-  }
-
-  public String getAnchoreioPass() {
-    return anchoreioPass;
-  }
-
-  public String getUserScripts() {
-    return userScripts;
   }
 
   public String getEngineRetries() {
@@ -117,40 +83,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     return bailOnFail;
   }
 
-  public boolean getBailOnWarn() {
-    return bailOnWarn;
-  }
-
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
-  }
-
-  public boolean getDoCleanup() {
-    return doCleanup;
-  }
-
-  public boolean getUseCachedBundle() {
-    return useCachedBundle;
-  }
-
-  public String getPolicyEvalMethod() {
-    return policyEvalMethod;
-  }
-
-  public String getBundleFileOverride() {
-    return bundleFileOverride;
-  }
-
-  public List<AnchoreQuery> getInputQueries() {
-    return inputQueries;
-  }
-
-  public String getPolicyBundleId() {
-    return policyBundleId;
-  }
-
-  public List<Annotation> getAnnotations() {
-    return annotations;
   }
 
   public String getEngineurl() {
@@ -165,29 +99,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     return engineverify;
   }
 
-  @DataBoundSetter
-  public void setPolicyName(String policyName) {
-    this.policyName = policyName;
-  }
-
-  @DataBoundSetter
-  public void setGlobalWhiteList(String globalWhiteList) {
-    this.globalWhiteList = globalWhiteList;
-  }
-
-  @DataBoundSetter
-  public void setAnchoreioUser(String anchoreioUser) {
-    this.anchoreioUser = anchoreioUser;
-  }
-
-  @DataBoundSetter
-  public void setAnchoreioPass(String anchoreioPass) {
-    this.anchoreioPass = anchoreioPass;
-  }
-
-  @DataBoundSetter
-  public void setUserScripts(String userScripts) {
-    this.userScripts = userScripts;
+  public boolean isInlineScanning() {
+    return inlineScanning;
   }
 
   @DataBoundSetter
@@ -201,49 +114,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
-  public void setBailOnWarn(boolean bailOnWarn) {
-    this.bailOnWarn = bailOnWarn;
-  }
-
-  @DataBoundSetter
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     this.bailOnPluginFail = bailOnPluginFail;
-  }
-
-  @DataBoundSetter
-  public void setDoCleanup(boolean doCleanup) {
-    this.doCleanup = doCleanup;
-  }
-
-  @DataBoundSetter
-  public void setUseCachedBundle(boolean useCachedBundle) {
-    this.useCachedBundle = useCachedBundle;
-  }
-
-  @DataBoundSetter
-  public void setPolicyEvalMethod(String policyEvalMethod) {
-    this.policyEvalMethod = policyEvalMethod;
-  }
-
-  @DataBoundSetter
-  public void setBundleFileOverride(String bundleFileOverride) {
-    this.bundleFileOverride = bundleFileOverride;
-  }
-
-  // Convenience method for easily passing queries, invoked only by Jenkins Pipelines
-  @DataBoundSetter
-  public void setInputQueries(List<AnchoreQuery> inputQueries) {
-    this.inputQueries = inputQueries;
-  }
-
-  @DataBoundSetter
-  public void setPolicyBundleId(String policyBundleId) {
-    this.policyBundleId = policyBundleId;
-  }
-
-  @DataBoundSetter
-  public void setAnnotations(List<Annotation> annotations) {
-    this.annotations = annotations;
   }
 
   @DataBoundSetter
@@ -257,9 +129,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
-  public void setEngineverify(boolean engineverify) {
-    this.engineverify = engineverify;
-    this.isEngineverifyOverrride = true;
+  public void setInlineScanning(boolean inlineScanning) {
+    this.inlineScanning = inlineScanning;
   }
 
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
@@ -311,35 +182,24 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       }
 
       /* Instantiate config and a new build worker */
-      config = new BuildConfig(name, policyName, globalWhiteList, anchoreioUser, anchoreioPass, userScripts, engineRetries, bailOnFail,
-        bailOnWarn, bailOnPluginFail, doCleanup, useCachedBundle, policyEvalMethod, bundleFileOverride, inputQueries, policyBundleId,
-        annotations, globalConfig.getDebug(), globalConfig.getEnginemode(),
+      config = new BuildConfig(name, engineRetries, bailOnFail, bailOnPluginFail, globalConfig.getDebug(),
+        globalConfig.getInlineScanning(),
         // messy build time overrides, ugh!
         !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
         engineuser,
         enginepass,
-        isEngineverifyOverrride ? engineverify : globalConfig.getEngineverify(), globalConfig.getContainerImageId(),
-        globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol(), globalConfig.getUseSudo());
+        engineverify, globalConfig.getContainerImageId(),
+        globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol());
 
-      switch (config.getEnginemode()) {
-        case "anchoreengine":
-          worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
-          break;
-        case "anchorelocal":
-          worker = new BuildWorkerInline(run, workspace, launcher, listener, config);
-          break;
-        default:
-          console.logError(String.format("Undefined engine mode: %s", config.getEnginemode()));
-          throw new AbortException(String.format("Undefined engine mode: %s. Valid engine modes are 'anchoreengine' or 'anchorelocal'", config.getEnginemode()));
+      if (config.isInlineScanning()) {
+        worker = new BuildWorkerInline(run, workspace, launcher, listener, config);
+      } else {
+        worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
       }
 
       /* Log any build time overrides are at play */
       if (!Strings.isNullOrEmpty(engineurl)) {
         console.logInfo("Build override set for Sysdig Secure Engine URL");
-      }
-
-      if (isEngineverifyOverrride) {
-        console.logInfo("Build override set for Sysdig Secure Engine verify SSL");
       }
 
       /* Run analysis */
@@ -360,8 +220,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
-        if ((config.getBailOnFail() && (GATE_ACTION.STOP.equals(finalAction) || GATE_ACTION.FAIL.equals(finalAction))) || (
-          config.getBailOnWarn() && GATE_ACTION.WARN.equals(finalAction))) {
+        if ((config.getBailOnFail() && (GATE_ACTION.STOP.equals(finalAction) || GATE_ACTION.FAIL.equals(finalAction)))) {
           console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
           failedByGate = true;
           throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
@@ -411,33 +270,15 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
     // Default job level config that may be used both by config.jelly and an instance of AnchoreBuilder
     public static final String DEFAULT_NAME = "sysdig_secure_images";
-    public static final String DEFAULT_POLICY_NAME = "sysdig_secure_policy";
-    public static final String DEFAULT_GLOBAL_WHITELIST = "sysdig_secure_global_whitelist";
-    public static final String DEFAULT_ANCHORE_IO_USER = "";
-    public static final String DEFAULT_ANCHORE_IO_PASSWORD = "";
-    public static final String DEFAULT_USER_SCRIPTS = "sysdig_secure_user_scripts";
     public static final String DEFAULT_ENGINE_RETRIES = "300";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
-    public static final boolean DEFAULT_BAIL_ON_WARN = false;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
-    public static final boolean DEFAULT_DO_CLEANUP = false;
-    public static final boolean DEFAULT_USE_CACHED_BUNDLE = true;
-    public static final String DEFAULT_POLICY_EVAL_METHOD = "plainfile";
-    public static final String DEFAULT_BUNDLE_FILE_OVERRIDE = "sysdig_secure_policy_bundle.json";
-    public static final String DEFAULT_PLUGIN_MODE = "anchoreengine";
-    public static final List<AnchoreQuery> DEFAULT_INPUT_QUERIES = ImmutableList.of(
-      new AnchoreQuery("cve-scan all"),
-      new AnchoreQuery("list-packages all"),
-      new AnchoreQuery("list-files all"),
-      new AnchoreQuery("show-pkg-diffs base")
-    );
-    public static final String DEFAULT_POLICY_BUNDLE_ID = "";
+    public static final boolean DEFAULT_INLINE_SCANNING = false;
     public static final String EMPTY_STRING = "";
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com/api/scanning/v1/anchore";
 
     // Global configuration
     private boolean debug;
-    private String enginemode = DEFAULT_PLUGIN_MODE;
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineuser = EMPTY_STRING;
     private Secret enginepass = Secret.fromString(EMPTY_STRING);
@@ -446,8 +287,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     private String containerId;
     private String localVol;
     private String modulesVol;
-    private boolean useSudo;
     private String engineCredentialsId;
+    private boolean inlineScanning = DEFAULT_INLINE_SCANNING;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -460,10 +301,6 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     @Deprecated
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
-    }
-
-    public void setEnginemode(String enginemode) {
-      this.enginemode = enginemode;
     }
 
     public void setEngineurl(String engineurl) {
@@ -502,8 +339,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       this.modulesVol = modulesVol;
     }
 
-    public void setUseSudo(boolean useSudo) {
-      this.useSudo = useSudo;
+    public void setInlineScanning(boolean inlineScanning) {
+      this.inlineScanning = inlineScanning;
     }
 
     public boolean getDebug() {
@@ -513,17 +350,6 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     @Deprecated
     public boolean getEnabled() {
       return enabled;
-    }
-
-    public String getEnginemode() {
-      if (Strings.isNullOrEmpty(enginemode)) {
-        enginemode = DEFAULT_PLUGIN_MODE;
-      }
-      return enginemode;
-    }
-
-    public boolean isMode(String inmode) {
-      return !Strings.isNullOrEmpty(inmode) && getEnginemode().equals(inmode);
     }
 
     public String getEngineurl() {
@@ -546,10 +372,6 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       return engineverify;
     }
 
-    public boolean getUseSudo() {
-      return useSudo;
-    }
-
     public String getContainerImageId() {
       return containerImageId;
     }
@@ -564,6 +386,10 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
     public String getModulesVol() {
       return modulesVol;
+    }
+
+    public boolean getInlineScanning() {
+      return inlineScanning;
     }
 
     public DescriptorImpl() {

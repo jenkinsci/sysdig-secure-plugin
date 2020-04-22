@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.32</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>sysdig-secure</artifactId>
@@ -15,7 +16,7 @@
   <name>Sysdig Secure Container Image Scanner Plugin</name>
   <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan Docker images</description>
 
-  <url>https://github.com/jenkinsci/sysdig-secure-plugin/blob/master/README.md</url>
+  <url>https://github.com/jenkinsci/sysdig-secure-plugin</url>
 
   <licenses>
     <license>
@@ -65,14 +66,30 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.3</version>
+      <version>4.5.12</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>credentials</artifactId>
       <version>2.1.18</version>
     </dependency>
+    <dependency>
+      <groupId>com.github.docker-java</groupId>
+      <artifactId>docker-java</artifactId>
+      <version>3.2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.30</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+      <version>1.7.30</version>
+    </dependency>
   </dependencies>
+
 
   <build>
     <plugins>
@@ -133,13 +150,19 @@
               <resources>
                 <resource>
                   <targetPath>js</targetPath>
-                  <directory>${project.build.directory}/webjars/META-INF/resources/webjars/jquery/1.12.3</directory>
+                  <directory>
+                    ${project.build.directory}/webjars/META-INF/resources/webjars/jquery/1.12.3
+                  </directory>
                 </resource>
                 <resource>
-                  <directory>${project.build.directory}/webjars/META-INF/resources/webjars/datatables/1.10.11</directory>
+                  <directory>
+                    ${project.build.directory}/webjars/META-INF/resources/webjars/datatables/1.10.11
+                  </directory>
                 </resource>
                 <resource>
-                  <directory>${project.build.directory}/webjars/META-INF/resources/webjars/bootstrap/3.3.7-1</directory>
+                  <directory>
+                    ${project.build.directory}/webjars/META-INF/resources/webjars/bootstrap/3.3.7-1
+                  </directory>
                 </resource>
                 <!-- also copy existing resources to use them in the HPL for testing -->
                 <resource>
@@ -156,6 +179,7 @@
         <groupId>org.jenkins-ci.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
         <configuration>
+          <minimumJavaVersion>1.8</minimumJavaVersion>
           <webResources>
             <webResource>
               <directory>${project.build.directory}/external-resources</directory>

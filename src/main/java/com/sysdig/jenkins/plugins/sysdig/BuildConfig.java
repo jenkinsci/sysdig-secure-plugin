@@ -2,6 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 
 import java.util.List;
+
 import com.google.common.base.Strings;
 
 /**
@@ -12,27 +13,13 @@ public class BuildConfig {
 
   // Build configuration
   private String name;
-  private String policyName;
-  private String globalWhiteList;
-  private String anchoreioUser;
-  private String anchoreioPass;
-  private String userScripts;
   private String engineRetries;
   private boolean bailOnFail;
-  private boolean bailOnWarn;
   private boolean bailOnPluginFail;
-  private boolean doCleanup;
-  private boolean useCachedBundle;
-  private String policyEvalMethod;
-  private String bundleFileOverride;
-  private List<AnchoreQuery> inputQueries;
-  private String policyBundleId;
-
-  private List<Annotation> annotations;
 
   // Global configuration
   private boolean debug;
-  private String enginemode;
+  private boolean inlineScanning;
   private String engineurl;
   private String engineuser;
   private String enginepass;
@@ -41,33 +28,16 @@ public class BuildConfig {
   private String containerId;
   private String localVol;
   private String modulesVol;
-  private boolean useSudo;
 
-  public BuildConfig(String name, String policyName, String globalWhiteList, String anchoreioUser, String anchoreioPass,
-      String userScripts, String engineRetries, boolean bailOnFail, boolean bailOnWarn, boolean bailOnPluginFail, boolean doCleanup,
-      boolean useCachedBundle, String policyEvalMethod, String bundleFileOverride, List<AnchoreQuery> inputQueries,
-      String policyBundleId, List<Annotation> annotations, boolean debug, String enginemode, String engineurl, String engineuser,
-      String enginepass, boolean engineverify, String containerImageId, String containerId, String localVol, String modulesVol,
-      boolean useSudo) {
+  public BuildConfig(String name, String engineRetries, boolean bailOnFail, boolean bailOnPluginFail,
+                     boolean debug, boolean inlineScanning, String engineurl, String engineuser, String enginepass,
+                     boolean engineverify, String containerImageId, String containerId, String localVol, String modulesVol) {
     this.name = name;
-    this.policyName = policyName;
-    this.globalWhiteList = globalWhiteList;
-    this.anchoreioUser = anchoreioUser;
-    this.anchoreioPass = anchoreioPass;
-    this.userScripts = userScripts;
     this.engineRetries = engineRetries;
     this.bailOnFail = bailOnFail;
-    this.bailOnWarn = bailOnWarn;
     this.bailOnPluginFail = bailOnPluginFail;
-    this.doCleanup = doCleanup;
-    this.useCachedBundle = useCachedBundle;
-    this.policyEvalMethod = policyEvalMethod;
-    this.bundleFileOverride = bundleFileOverride;
-    this.inputQueries = inputQueries;
-    this.policyBundleId = policyBundleId;
-    this.annotations = annotations;
     this.debug = debug;
-    this.enginemode = enginemode;
+    this.inlineScanning = inlineScanning;
     this.engineurl = engineurl;
     this.engineuser = engineuser;
     this.enginepass = enginepass;
@@ -76,35 +46,10 @@ public class BuildConfig {
     this.containerId = containerId;
     this.localVol = localVol;
     this.modulesVol = modulesVol;
-    this.useSudo = useSudo;
-
-    if (Strings.isNullOrEmpty(this.enginemode)) {
-      this.enginemode = "anchoreengine";
-    }
   }
 
   public String getName() {
     return name;
-  }
-
-  public String getPolicyName() {
-    return policyName;
-  }
-
-  public String getGlobalWhiteList() {
-    return globalWhiteList;
-  }
-
-  public String getAnchoreioUser() {
-    return anchoreioUser;
-  }
-
-  public String getAnchoreioPass() {
-    return anchoreioPass;
-  }
-
-  public String getUserScripts() {
-    return userScripts;
   }
 
   public String getEngineRetries() {
@@ -115,55 +60,16 @@ public class BuildConfig {
     return bailOnFail;
   }
 
-  public boolean getBailOnWarn() {
-    return bailOnWarn;
-  }
-
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
-  }
-
-  public boolean getDoCleanup() {
-    return doCleanup;
-  }
-
-  public boolean getUseCachedBundle() {
-    return useCachedBundle;
-  }
-
-  public String getPolicyEvalMethod() {
-    return policyEvalMethod;
-  }
-
-  public String getBundleFileOverride() {
-    return bundleFileOverride;
-  }
-
-  public List<AnchoreQuery> getInputQueries() {
-    return inputQueries;
-  }
-
-  public String getPolicyBundleId() {
-    return policyBundleId;
-  }
-
-  public List<Annotation> getAnnotations() {
-    return annotations;
   }
 
   public boolean getDebug() {
     return debug;
   }
 
-  public String getEnginemode() {
-    return enginemode;
-  }
-
-  public boolean isMode(String inmode) {
-    if (!Strings.isNullOrEmpty(inmode) && getEnginemode().equals(inmode)) {
-      return true;
-    }
-    return false;
+  public boolean isInlineScanning() {
+    return inlineScanning;
   }
 
   public String getEngineurl() {
@@ -198,61 +104,29 @@ public class BuildConfig {
     return modulesVol;
   }
 
-  public boolean getUseSudo() {
-    return useSudo;
-  }
-
   public void print(ConsoleLog consoleLog) {
-    consoleLog.logInfo("[global] debug: " + String.valueOf(debug));
-    consoleLog.logInfo("[global] enginemode: " + enginemode);
+    consoleLog.logInfo(String.format("[global] debug: %s", String.valueOf(debug)));
+    consoleLog.logInfo(String.format("[global] inlineScanning: %s", inlineScanning));
 
-    if (enginemode.equals("anchoreengine")) {
+    if (!inlineScanning) {
       // Global or build properties
-      consoleLog.logInfo("[build] engineurl: " + engineurl);
+      consoleLog.logInfo(String.format("[build] engineurl: %s", engineurl));
       consoleLog.logInfo("[build] engineverify: " + String.valueOf(engineverify));
 
       // Build properties
-      consoleLog.logInfo("[build] name: " + name);
-      consoleLog.logInfo("[build] engineRetries: " + engineRetries);
-      consoleLog.logInfo("[build] policyBundleId: " + policyBundleId);
-      if (null != annotations && !annotations.isEmpty()) {
-        for (Annotation a : annotations) {
-          consoleLog.logInfo("[build] annotation: " + a.getKey() + "=" + a.getValue());
-        }
-      }
-      consoleLog.logInfo("[build] bailOnFail: " + bailOnFail);
-      consoleLog.logInfo("[build] bailOnPluginFail: " + bailOnPluginFail);
+      consoleLog.logInfo(String.format("[build] name: %s", name));
+      consoleLog.logInfo(String.format("[build] engineRetries: %s", engineRetries));
     } else {
       // Global properties
-      consoleLog.logInfo("[global] containerImageId: " + containerImageId);
-      consoleLog.logInfo("[global] containerId: " + containerId);
-      consoleLog.logInfo("[global] localVol: " + localVol);
-      consoleLog.logInfo("[global] modulesVol: " + modulesVol);
-      consoleLog.logInfo("[global] useSudo: " + String.valueOf(useSudo));
+      consoleLog.logInfo(String.format("[global] containerImageId: %s", containerImageId));
+      consoleLog.logInfo(String.format("[global] containerId: %s", containerId));
+      consoleLog.logInfo(String.format("[global] localVol: %s", localVol));
+      consoleLog.logInfo(String.format("[global] modulesVol: %s", modulesVol));
 
       // Build properties
-      consoleLog.logInfo("[build] name: " + name);
-      consoleLog.logInfo("[build] userScripts: " + userScripts);
-      consoleLog.logInfo("[build] policyEvalMethod: " + policyEvalMethod);
-      if (policyEvalMethod.equals("autosync")) {
-        consoleLog.logInfo("[build] anchoreioUser: " + anchoreioUser);
-        consoleLog.logInfo("[build] anchoreioPass: " + "****");
-        consoleLog.logInfo("[build] useCachedBundle: " + useCachedBundle);
-      } else if (policyEvalMethod.equals("bundlefile")) {
-        consoleLog.logInfo("[build] bundleFileOverride: " + bundleFileOverride);
-      } else if (policyEvalMethod.equals("plainfile")) {
-        consoleLog.logInfo("[build] policyName: " + policyName);
-        consoleLog.logInfo("[build] globalWhiteList: " + globalWhiteList);
-      }
-      if (null != inputQueries && !inputQueries.isEmpty()) {
-        for (AnchoreQuery anchoreQuery : inputQueries) {
-          consoleLog.logInfo("[build] query: " + anchoreQuery.getQuery());
-        }
-      }
-      consoleLog.logInfo("[build] doCleanup: " + doCleanup);
-      consoleLog.logInfo("[build] bailOnFail: " + bailOnFail);
-      consoleLog.logInfo("[build] bailOnWarn: " + bailOnWarn);
-      consoleLog.logInfo("[build] bailOnPluginFail: " + bailOnPluginFail);
+      consoleLog.logInfo(String.format("[build] name: %s", name));
     }
+    consoleLog.logInfo(String.format("[build] bailOnFail: %s", bailOnFail));
+    consoleLog.logInfo(String.format("[build] bailOnPluginFail: %s", bailOnPluginFail));
   }
 }

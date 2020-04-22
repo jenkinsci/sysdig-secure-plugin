@@ -60,10 +60,6 @@ public class BuildWorkerInline implements BuildWorker {
   // Initialized by Sysdig Secure workspace prep
   private String anchoreWorkspaceDirName;
   private String anchoreImageFileName; //TODO rename
-  private String anchorePolicyFileName;
-  private String anchoreGlobalWhiteListFileName;
-  private String anchoreBundleFileName;
-  private String anchoreScriptsDirName;
   private List<String> anchoreInputImages;
 
   public BuildWorkerInline(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config)
@@ -136,41 +132,6 @@ public class BuildWorkerInline implements BuildWorker {
     }
   }
 
-  private void doAnchoreioLogin() throws AbortException {
-
-    try {
-      String cmd =
-        String.format("docker exec %s /bin/bash -c \"export ANCHOREPASS=$ANCHOREPASS && sysdig secure login --user %s\"", config.getContainerId(), config.getAnchoreioUser());
-      int rc = executeCommand(cmd, "ANCHOREPASS=" + config.getAnchoreioPass());
-      if (rc != 0) {
-        console.logWarn("Failed to log in to sysdig secure using specified credentials");
-        throw new AbortException("Failed to log in to sysdig secure using specified credentials");
-      }
-    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-      throw e;
-    } catch (Exception e) {
-      console.logWarn("Failed to log in to sysdig secure using specified credentials");
-      throw new AbortException("Failed to log in to sysdig secure using specified credentials");
-    }
-  }
-
-  private void doAnchoreioBundleSync() throws AbortException {
-
-    try {
-      String cmd = "--json policybundle sync";
-      int rc = executeAnchoreCommand(cmd);
-      if (rc != 0) {
-        console.logWarn("Failed to sync your policy from sysdig secure");
-        throw new AbortException("Failed to sync your policy from sysdig secure");
-      }
-    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-      throw e;
-    } catch (Exception e) {
-      console.logWarn("Failed to sync your policy from sysdig secure");
-      throw new AbortException("Failed to sync your policy from sysdig secure");
-    }
-  }
-
   @Override
   public GATE_ACTION runGates() throws AbortException {
     if (analyzed) {
@@ -180,43 +141,6 @@ public class BuildWorkerInline implements BuildWorker {
         FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
         FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
         String cmd = String.format("--json gate --imagefile %s --show-triggerids --show-whitelisted", anchoreImageFileName);
-
-        String evalMode = config.getPolicyEvalMethod();
-        if (Strings.isNullOrEmpty(evalMode)) {
-          evalMode = "plainfile";
-        }
-
-        if (evalMode.equals("autosync")) {
-          cmd += " --run-bundle --resultsonly";
-
-          // try the login/bundle sync, only error out if usecachedbundle is not selected
-          if (!Strings.isNullOrEmpty(config.getAnchoreioUser()) && !Strings.isNullOrEmpty(config.getAnchoreioPass())) {
-            try {
-              doAnchoreioLogin();
-              doAnchoreioBundleSync();
-            } catch (AbortException e) { // probably caught one of the thrown exceptions
-              // only fail if getUseCacheBundle is unchecked
-              if (!config.getUseCachedBundle()) {
-                console.logWarn("Unable to log in/sync bundle");
-                throw e;
-              }
-            }
-          }
-
-        } else if (evalMode.equals("bundlefile")) {
-          cmd += " --run-bundle --resultsonly";
-          if (!Strings.isNullOrEmpty(anchoreBundleFileName)) {
-            cmd += " --bundlefile " + anchoreBundleFileName;
-          }
-        } else {
-          if (!Strings.isNullOrEmpty(anchorePolicyFileName)) {
-            cmd += " --policy " + anchorePolicyFileName;
-          }
-
-          if (!Strings.isNullOrEmpty(anchoreGlobalWhiteListFileName)) {
-            cmd += " --global-whitelist " + anchoreGlobalWhiteListFileName;
-          }
-        }
 
         try {
           int rc = executeAnchoreCommand(cmd, jenkinsGatesOutputFP.write());
@@ -411,58 +335,7 @@ public class BuildWorkerInline implements BuildWorker {
   }
 
   @Override
-  public void runQueries() throws AbortException {
-    if (analyzed) {
-      try {
-        if (config.getInputQueries() != null && !config.getInputQueries().isEmpty()) {
-          int key = 0;
-          for (AnchoreQuery entry : config.getInputQueries()) {
-            String query = entry.getQuery().trim();
-            if (!Strings.isNullOrEmpty(query) && !queryOutputMap.containsKey(query)) {
-
-              console.logInfo("Running Sysdig Secure Query: " + query);
-              String queryOutputFileName = QUERY_OUTPUT_PREFIX + (++key) + JSON_FILE_EXTENSION;
-              FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
-              FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, queryOutputFileName);
-
-              try {
-                int rc = executeAnchoreCommand("--json query --imagefile " + anchoreImageFileName + " " + query,
-                  jenkinsQueryOutputFP.write());
-                if (rc != 0) {
-                  // Record failure and move on to next query
-                  console.logWarn("Query execution failed for: " + query + ", return code: " + rc);
-                } else {
-                  if (jenkinsQueryOutputFP.exists() && jenkinsQueryOutputFP.length() > 0) {
-                    console.logDebug("Query execution completed successfully and generated a report for: " + query);
-                    queryOutputMap.put(query, queryOutputFileName);
-                  } else {
-                    // Record failure and move on to next query
-                    console.logWarn("Query execution completed successfully but did not generate a report for: " + query);
-                    jenkinsQueryOutputFP.delete();
-                  }
-                }
-              } catch (IOException | InterruptedException e) {
-                // Record failure and move on to next query
-                console.logWarn("Query execution failed for: " + query, e);
-              }
-
-            } else {
-              console.logWarn("Invalid query or query may have already been executed");
-            }
-          }
-        } else {
-          console.logDebug("No queries found, skipping query execution");
-        }
-      } catch (RuntimeException e) {
-        console.logError("Failed to run Sysdig Secure queries due to an unexpected error", e);
-        throw new AbortException(
-          "Failed to run Sysdig Secure queries due to an unexpected error. Please refer to above logs for more information");
-      }
-    } else {
-      console.logError("Analysis step has not been executed (or may have failed in a prior attempt). Rerun analyzer before queries");
-      throw new AbortException(
-        "Analysis step has not been executed (or may have failed in a prior attempt). Rerun analyzer before queries");
-    }
+  public void runQueries() {
   }
 
   @Override
@@ -518,20 +391,6 @@ public class BuildWorkerInline implements BuildWorker {
           console.logWarn("Failed to recursively delete Sysdig Secure container workspace " + anchoreWorkspaceDirName, e);
         }
       }
-
-      if (config.getDoCleanup() && null != anchoreInputImages) {
-        for (String imageId : anchoreInputImages) {
-          try {
-            console.logDebug("Deleting analytics for " + imageId + " from Sysdig Secure database");
-            rc = executeAnchoreCommand("toolbox --image " + imageId + " delete --dontask");
-            if (rc != 0) {
-              console.logWarn("Failed to delete analytics for " + imageId + " from Sysdig Secure database, process returned " + rc);
-            }
-          } catch (Exception e) {
-            console.logWarn("Failed to delete analytics for " + imageId + " from Sysdig Secure database", e);
-          }
-        }
-      }
     } catch (RuntimeException e) { // caught unknown exception, log it
       console.logDebug("Failed to clean up build artifacts due to an unexpected error", e);
     }
@@ -558,14 +417,8 @@ public class BuildWorkerInline implements BuildWorker {
   /**
    * Checks for minimum required config for executing step
    */
+  // FIXME: Is this really necessary? Can't we check if the config is correct at the moment of the creation?
   private void checkConfig() throws AbortException {
-    // FIXME REMOVE THIS AND MOVE TO THE METHOD THAT CREATES THE OBJECT
-    if (!config.getEnginemode().equals("anchoreengine") && !config.getEnginemode().equals("anchorelocal")) {
-      console.logError("Undefined engine mode: " + config.getEnginemode());
-      throw new AbortException(
-        "Undefined engine mode: " + config.getEnginemode() + ". Valid engine modes are 'anchoreengine' or 'anchorelocal'");
-    }
-
     if (Strings.isNullOrEmpty(config.getName())) {
       console.logError("Image list file not found");
       throw new AbortException(
@@ -674,12 +527,11 @@ public class BuildWorkerInline implements BuildWorker {
 
               if (partIterator.hasNext()) {
                 String jenkinsDFile = partIterator.next();
-                String anchoreDFile = anchoreWorkspaceDirName + "/dfile." + (++count);
+                String anchoreDFile = String.format("%s/dfile.%d", anchoreWorkspaceDirName, ++count);
 
                 // Copy file from Jenkins to Sysdig Secure container
-                console.logDebug(
-                  "Copying Dockerfile from Jenkins workspace: " + jenkinsDFile + ", to Sysdig Secure workspace: " + anchoreDFile);
-                rc = executeCommand("docker cp " + jenkinsDFile + " " + config.getContainerId() + ":" + anchoreDFile);
+                console.logDebug(String.format("Copying Dockerfile from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsDFile, anchoreDFile));
+                rc = executeCommand(String.format("docker cp %s %s:%s", jenkinsDFile, config.getContainerId(), anchoreDFile));
                 if (rc != 0) {
                   // TODO check with Dan if operation should continue for other images
                   console.logError(
@@ -723,93 +575,6 @@ public class BuildWorkerInline implements BuildWorker {
           String.format("Failed to copy staged image file from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsStagedImageFP.getRemote(), anchoreImageFileName));
         throw new AbortException(
           String.format("Failed to copy staged image file from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsStagedImageFP.getRemote(), anchoreImageFileName));
-      }
-
-      // Copy the user scripts directory from Jenkins workspace to Sysdig Secure container
-      try {
-        FilePath jenkinsScriptsDir;
-        if (!Strings.isNullOrEmpty(config.getUserScripts()) && (jenkinsScriptsDir = new FilePath(workspace, config.getUserScripts()))
-          .exists()) {
-          anchoreScriptsDirName = String.format("%s/anchorescripts/", anchoreWorkspaceDirName);
-          console.logDebug(String.format("Copying user scripts from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsScriptsDir.getRemote(), anchoreScriptsDirName));
-          rc = executeCommand(
-            String.format("docker cp %s %s:%s", jenkinsScriptsDir.getRemote(), config.getContainerId(), anchoreScriptsDirName));
-          if (rc != 0) {
-            // TODO Check with Dan if we should abort here
-            console.logWarn(
-              String.format("Failed to copy user scripts from Jenkins workspace: %s, to Sysdig Secure workspace: %s. Using default Sysdig Secure modules", jenkinsScriptsDir.getRemote(), anchoreScriptsDirName));
-            anchoreScriptsDirName = null; // reset it so it doesn't get used later
-          }
-        } else {
-          console.logDebug("No user scripts/modules found, using default Sysdig Secure modules");
-        }
-      } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user modules, using default Sysdig Secure modules");
-      }
-
-      // Copy the policy file from Jenkins workspace to Sysdig Secure container
-      try {
-        FilePath jenkinsBundleFile;
-        if (!Strings.isNullOrEmpty(config.getBundleFileOverride()) && (jenkinsBundleFile = new FilePath(workspace,
-          config.getBundleFileOverride())).exists()) {
-          anchoreBundleFileName = String.format("%s/bundle.json", anchoreWorkspaceDirName);
-          console.logDebug(String.format("Copying bundle file from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsBundleFile.getRemote(), anchoreBundleFileName));
-
-          rc = executeCommand(String.format("docker cp %s %s:%s", jenkinsBundleFile.getRemote(), config.getContainerId(), anchoreBundleFileName));
-          if (rc != 0) {
-            // TODO check with Dan if we should abort here
-            console.logWarn(String.format("Failed to copy bundle file from Jenkins workspace: %s, to Sysdig Secure workspace: %s. Using default Sysdig Secure scanning policy", jenkinsBundleFile.getRemote(), anchoreBundleFileName));
-            anchoreBundleFileName = null; // reset it so it doesn't get used later
-          }
-        } else {
-          console.logInfo("Bundle file either not specified or does not exist, using default Sysdig Secure scanning policy");
-        }
-      } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user bundle, using default Sysdig Secure scanning policy");
-      }
-
-      // Copy the policy file from Jenkins workspace to Sysdig Secure container
-      try {
-        FilePath jenkinsPolicyFile;
-        if (!Strings.isNullOrEmpty(config.getPolicyName()) && (jenkinsPolicyFile = new FilePath(workspace, config.getPolicyName()))
-          .exists()) {
-          anchorePolicyFileName = String.format("%s/policy", anchoreWorkspaceDirName);
-          console.logDebug(String.format("Copying policy file from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsPolicyFile.getRemote(), anchorePolicyFileName));
-
-          rc = executeCommand(
-            String.format("docker cp %s %s:%s", jenkinsPolicyFile.getRemote(), config.getContainerId(), anchorePolicyFileName));
-          if (rc != 0) {
-            // TODO check with Dan if we should abort here
-            console.logWarn(
-              String.format("Failed to copy policy file from Jenkins workspace: %s, to Sysdig Secure workspace: %s. Using default Sysdig Secure scanning policy", jenkinsPolicyFile.getRemote(), anchorePolicyFileName));
-            anchorePolicyFileName = null; // reset it so it doesn't get used later
-          }
-        } else {
-          console.logInfo("Policy file either not specified or does not exist, using default Sysdig Secure scanning policy");
-        }
-      } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve user policy, using default Sysdig Secure scanning policy");
-      }
-
-      // Copy the global whitelist file from Jenkins workspace to Sysdig Secure container
-      try {
-        FilePath jenkinsGlobalWhitelistFile;
-        if (!Strings.isNullOrEmpty(config.getGlobalWhiteList()) && (jenkinsGlobalWhitelistFile = new FilePath(workspace,
-          config.getGlobalWhiteList())).exists()) {
-          anchoreGlobalWhiteListFileName = String.format("%s/globalwhitelist", anchoreWorkspaceDirName);
-          console.logDebug(String.format("Copying global whitelist file from Jenkins workspace: %s, to Sysdig Secure workspace: %s", jenkinsGlobalWhitelistFile.getRemote(), anchoreGlobalWhiteListFileName));
-
-          rc = executeCommand(String.format("docker cp %s %s:%s", jenkinsGlobalWhitelistFile.getRemote(), config.getContainerId(), anchoreGlobalWhiteListFileName));
-          if (rc != 0) {
-            // TODO check with Dan if we should abort here
-            console.logWarn(String.format("Failed to global whitelist file from Jenkins workspace: %s, to Sysdig Secure workspace: %s. Using default Sysdig Secure global whitelist", jenkinsGlobalWhitelistFile.getRemote(), anchoreGlobalWhiteListFileName));
-            anchoreGlobalWhiteListFileName = null; // reset it so it doesn't get used later
-          }
-        } else {
-          console.logInfo("Global whitelist file either not specified or does not exist, using default Sysdig Secure global whitelist");
-        }
-      } catch (IOException | InterruptedException e) {
-        console.logWarn("Failed to resolve global whitelist, using default Sysdig Secure global whitelist");
       }
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
@@ -910,10 +675,6 @@ public class BuildWorkerInline implements BuildWorker {
       dockerCmd += " --debug";
     }
 
-    if (!Strings.isNullOrEmpty(anchoreScriptsDirName)) {
-      dockerCmd += String.format(" --config-override user_scripts_dir=%s", anchoreScriptsDirName);
-    }
-
     dockerCmd += String.format(" %s", cmd);
 
     return executeCommand(dockerCmd, out, error, envOverrides);
@@ -927,10 +688,6 @@ public class BuildWorkerInline implements BuildWorker {
 
   private int executeCommand(String cmd, OutputStream out, OutputStream error, String... envOverrides) throws AbortException {
     int rc;
-
-    if (config.getUseSudo()) {
-      cmd = String.format("sudo %s", cmd);
-    }
 
     Launcher.ProcStarter ps = launcher.launch();
 
