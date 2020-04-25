@@ -3,6 +3,9 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_SUMMARY_COLUMN;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientImpl;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
@@ -21,12 +24,10 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -34,8 +35,13 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
@@ -66,7 +72,7 @@ public class BuildWorkerBackend implements BuildWorker {
 
   private String jenkinsOutputDirName;
   private Map<String, String> queryOutputMap; // TODO rename
-  private final Map<String, String> input_image_dfile = new LinkedHashMap<>();
+  private final Map<String, String> inputImageDockerfile = new LinkedHashMap<>();
   private final Map<String, String> input_image_imageDigest = new LinkedHashMap<>();
   private String gateOutputFileName;
   private GATE_ACTION finalAction;
@@ -108,7 +114,6 @@ public class BuildWorkerBackend implements BuildWorker {
       checkConfig();
 
       initializeJenkinsWorkspace();
-      initializeAnchoreWorkspace();
 
       logger.logDebug("Build worker initialized");
     } catch (Exception e) {
@@ -125,72 +130,70 @@ public class BuildWorkerBackend implements BuildWorker {
   }
 
   @Override
-  public void runAnalyzer() throws AbortException {
-    String imageDigest;
-    String username = config.getEngineuser();
-    String password = config.getEnginepass();
-    boolean sslverify = config.getEngineverify();
-
-    CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
-    HttpClientContext context = HttpClientContext.create();
-    context.setCredentialsProvider(credsProvider);
+  public ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+    String sysdigToken = config.getEngineuser();
+    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
+      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
+      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
 
     try {
-      for (Map.Entry<String, String> entry : input_image_dfile.entrySet()) {
-        String tag = entry.getKey();
-        String dfile = entry.getValue();
+      ArrayList<ImageScanningSubmission> submissionList = new ArrayList<>();
+      for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
+        String imageTag = entry.getKey();
+        String dockerFile = entry.getValue();
 
-        logger.logInfo(String.format("Submitting %s for analysis", tag));
+        logger.logInfo(String.format("Submitting %s for analysis", imageTag));
+        ImageScanningSubmission submission = sysdigSecureClient.submitImageForScanning(imageTag, dockerFile);
+        logger.logInfo(String.format("Analysis request accepted, received image %s", submission.getImageDigest()));
 
-        try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-          // Prep POST request
-          String theurl = String.format("%s/images", config.getEngineurl().replaceAll("/+$", ""));
-
-          // Prep request body
-          JSONObject jsonBody = new JSONObject();
-          jsonBody.put("tag", tag);
-          if (null != dfile) {
-            jsonBody.put("dockerfile", dfile);
-          }
-
-          String body = jsonBody.toString();
-
-          // FIXME Move all content that contacts with the backend to a Client
-          HttpPost httppost = new HttpPost(theurl);
-          httppost.addHeader("Content-Type", "application/json");
-          httppost.setEntity(new StringEntity(body));
-
-          logger.logDebug(String.format("sysdig-secure-engine add image URL: %s", theurl));
-          logger.logDebug(String.format("sysdig-secure-engine add image payload: %s", body));
-
-          try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != 200) {
-              String serverMessage = EntityUtils.toString(response.getEntity());
-              logger.logError(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
-              throw new AbortException(String.format("Failed to analyze %s due to error adding image to sysdig-secure-engine. Check above logs for errors from sysdig-secure-engine", tag));
-            }
-
-            // Read the response body.
-            String responseBody = EntityUtils.toString(response.getEntity());
-            JSONArray respJson = JSONArray.fromObject(responseBody);
-            imageDigest = JSONObject.fromObject(respJson.get(0)).getString("imageDigest");
-            logger.logInfo(String.format("Analysis request accepted, received image digest %s", imageDigest));
-            input_image_imageDigest.put(tag, imageDigest);
-
-          }
-        }
+        submissionList.add(submission);
+//        try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
+//          // Prep POST request
+//          String theurl = String.format("%s/images", config.getEngineurl().replaceAll("/+$", ""));
+//
+//          // Prep request body
+//          JSONObject jsonBody = new JSONObject();
+//          jsonBody.put("tag", tag);
+//          if (null != dfile) {
+//            jsonBody.put("dockerfile", dfile);
+//          }
+//
+//          String body = jsonBody.toString();
+//
+//          // FIXME Move all content that contacts with the backend to a Client
+//          HttpPost httppost = new HttpPost(theurl);
+//          httppost.addHeader("Content-Type", "application/json");
+//          httppost.setEntity(new StringEntity(body));
+//
+//          logger.logDebug(String.format("sysdig-secure-engine add image URL: %s", theurl));
+//          logger.logDebug(String.format("sysdig-secure-engine add image payload: %s", body));
+//
+//          try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
+//            int statusCode = response.getStatusLine().getStatusCode();
+//            if (statusCode != 200) {
+//              String serverMessage = EntityUtils.toString(response.getEntity());
+//              logger.logError(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
+//              throw new AbortException(String.format("Failed to analyze %s due to error adding image to sysdig-secure-engine. Check above logs for errors from sysdig-secure-engine", tag));
+//            }
+//
+//            // Read the response body.
+//            String responseBody = EntityUtils.toString(response.getEntity());
+//            JSONArray respJson = JSONArray.fromObject(responseBody);
+//            imageDigest = JSONObject.fromObject(respJson.get(0)).getString("imageDigest");
+//            logger.logInfo(String.format("Analysis request accepted, received image digest %s", imageDigest));
+//            input_image_imageDigest.put(tag, imageDigest);
+//
+//          }
+//        }
       }
-      analyzed = true;
-    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-      throw e;
-    } catch (Exception e) { // caught unknown exception, log it and wrap its
+      return submissionList;
+    } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
+  // FIXME: Remove this method and move to a client
   private static CloseableHttpClient makeHttpClient(boolean verify) {
     CloseableHttpClient httpclient = null;
     if (verify) {
@@ -214,7 +217,7 @@ public class BuildWorkerBackend implements BuildWorker {
   }
 
   @Override
-  public GATE_ACTION runGates() throws AbortException {
+  public GATE_ACTION runGates(List<ImageScanningSubmission> submissionList) throws AbortException {
     String username = config.getEngineuser();
     String password = config.getEnginepass();
     boolean sslverify = config.getEngineverify();
@@ -229,17 +232,17 @@ public class BuildWorkerBackend implements BuildWorker {
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
 
     finalAction = GATE_ACTION.PASS;
-    if (analyzed) {
+    if (! submissionList.isEmpty()) {
       try {
         JSONObject gate_results = new JSONObject();
 
-        for (Map.Entry<String, String> entry : input_image_imageDigest.entrySet()) {
-          String tag = entry.getKey();
-          String imageDigest = entry.getValue();
+        for (ImageScanningSubmission submission : submissionList) {
+          String tag = submission.getTag();
+          String imageDigest = submission.getImageDigest();
 
           logger.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
 
-          boolean sysdig_secure_eval_status = false;
+          boolean sysdigSecureEvalStatus = false;
           String theurl = String.format("%s/images/%s/check?tag=%s&detail=true", config.getEngineurl().replaceAll("/+$", ""), imageDigest, tag);
 
           logger.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
@@ -275,24 +278,24 @@ public class BuildWorkerBackend implements BuildWorker {
                   // Read the response body.
                   String responseBody = EntityUtils.toString(response.getEntity());
                   JSONArray respJson = JSONArray.fromObject(responseBody);
-                  JSONObject tag_eval_obj = JSONObject.fromObject(JSONArray.fromObject(JSONArray.fromObject(JSONObject.fromObject(JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest)))).get(0));
-                  JSONArray tag_evals = null;
-                  for (Object key : tag_eval_obj.keySet()) {
-                    tag_evals = tag_eval_obj.getJSONArray((String) key);
+                  JSONObject tagEvalObj = JSONObject.fromObject(JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest));
+                  JSONArray tagEvals = null;
+                  for (Object key : tagEvalObj.keySet()) {
+                    tagEvals = tagEvalObj.getJSONArray((String) key);
                     break;
                   }
 
-                  if (null == tag_evals) {
+                  if (null == tagEvals) {
                     throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
                   }
-                  if (tag_evals.size() < 1) {
+                  if (tagEvals.size() < 1) {
                     // try again until we get an eval
                     logger.logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
 
                     sleep = true;
                   } else {
-                    String eval_status = JSONObject.fromObject(JSONObject.fromObject(tag_evals.get(0))).getString("status");
-                    JSONObject gate_result = JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(tag_evals.get(0)).getJSONObject("detail")).getJSONObject("result")).getJSONObject("result"));
+                    String eval_status = JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0))).getString("status");
+                    JSONObject gate_result = JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0)).getJSONObject("detail")).getJSONObject("result")).getJSONObject("result"));
 
                     logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", eval_status));
                     logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gate_result.toString()));
@@ -307,7 +310,7 @@ public class BuildWorkerBackend implements BuildWorker {
                     // we actually got a real result
                     // this is the only way this gets flipped to true
                     if (eval_status.equals("pass")) {
-                      sysdig_secure_eval_status = true;
+                      sysdigSecureEvalStatus = true;
                     }
                     done = true;
                     logger.logInfo("Completed analysis and processed policy evaluation result");
@@ -325,7 +328,7 @@ public class BuildWorkerBackend implements BuildWorker {
             throw new AbortException("Timed out waiting for sysdig-secure-engine analysis to complete (increasing engineRetries might help). Check above logs for errors from sysdig-secure-engine");
           } else {
             // only set to stop if an eval is successful and is reporting fail
-            if (!sysdig_secure_eval_status) {
+            if (!sysdigSecureEvalStatus) {
               finalAction = GATE_ACTION.FAIL;
             }
           }
@@ -678,48 +681,64 @@ public class BuildWorkerBackend implements BuildWorker {
     }
   }
 
-  private void initializeAnchoreWorkspace() throws AbortException {
+  @Override
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath filePath) throws AbortException {
 
+    logger.logDebug("Initializing Sysdig Secure workspace");
 
+    // get the input and store it in tag/dockerfile map
     try {
-      logger.logDebug("Initializing Sysdig Secure workspace");
-
-      // get the input and store it in tag/dockerfile map
-      FilePath inputImageFP = new FilePath(workspace, config.getName()); // Already checked in checkConfig()
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(inputImageFP.read(), StandardCharsets.UTF_8))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-          String imgId = null;
-          String dfilecontents = null;
-          Iterator<String> partIterator = Util.IMAGE_LIST_SPLITTER.split(line).iterator();
-
-          if (partIterator.hasNext()) {
-            imgId = partIterator.next();
-
-            if (partIterator.hasNext()) {
-              String jenkinsDFile = partIterator.next();
-
-              StringBuilder b = new StringBuilder();
-              FilePath myfp = new FilePath(workspace, jenkinsDFile);
-              try (BufferedReader mybr = new BufferedReader(new InputStreamReader(myfp.read(), StandardCharsets.UTF_8))) {
-                String myline;
-                while ((myline = mybr.readLine()) != null) {
-                  b.append(myline).append('\n');
-                }
-              }
-              logger.logDebug(String.format("Dockerfile contents: %s", b.toString()));
-              byte[] encodedBytes = Base64.encodeBase64(b.toString().getBytes(StandardCharsets.UTF_8));
-              dfilecontents = new String(encodedBytes, StandardCharsets.UTF_8);
-
-            }
-          }
-          if (null != imgId) {
-            logger.logDebug(String.format("Image tag/digest: %s", imgId));
-            logger.logDebug(String.format("Base64 encoded Dockerfile contents: %s", dfilecontents));
-            input_image_dfile.put(imgId, dfilecontents);
-          }
+      String[] fileLines = filePath
+        .readToString()
+        .split("\\r?\\n");
+      Map<String, String> imageDockerfileMap = new HashMap<>();
+      for (String line : fileLines) {
+        String[] split = line.split(" ", 1);
+        String tag = split[0];
+        String dockerFileContents = "";
+        if (split.length > 1) {
+          FilePath dockerFilePath = new FilePath(workspace, split[1]);
+          dockerFileContents = new String(Base64.encodeBase64(dockerFilePath.readToString().getBytes(StandardCharsets.UTF_8)));
         }
+        imageDockerfileMap.put(tag, dockerFileContents);
       }
+      return imageDockerfileMap;
+
+//      try (BufferedReader br = new BufferedReader(new InputStreamReader(inputImageFP.read(), StandardCharsets.UTF_8))) {
+//        String line;
+//        while ((line = br.readLine()) != null) {
+//          String imgId = null;
+//          String dfilecontents = null;
+//          Iterator<String> partIterator = Util.IMAGE_LIST_SPLITTER.split(line).iterator();
+//
+//          if (partIterator.hasNext()) {
+//            imgId = partIterator.next();
+//
+//            if (partIterator.hasNext()) {
+//              String jenkinsDFile = partIterator.next();
+//
+//              StringBuilder b = new StringBuilder();
+//              FilePath myfp = new FilePath(workspace, jenkinsDFile);
+//              try (BufferedReader mybr = new BufferedReader(new InputStreamReader(myfp.read(), StandardCharsets.UTF_8))) {
+//                String myline;
+//                while ((myline = mybr.readLine()) != null) {
+//                  b.append(myline).append('\n');
+//                }
+//              }
+//              logger.logDebug(String.format("Dockerfile contents: %s", b.toString()));
+//              byte[] encodedBytes = Base64.encodeBase64(b.toString().getBytes(StandardCharsets.UTF_8));
+//              dfilecontents = new String(encodedBytes, StandardCharsets.UTF_8);
+//
+//            }
+//          }
+//          if (null != imgId) {
+//            logger.logDebug(String.format("Image tag/digest: %s", imgId));
+//            logger.logDebug(String.format("Base64 encoded Dockerfile contents: %s", dfilecontents));
+//            inputImageDockerfile.put(imgId, dfilecontents);
+//          }
+//        }
+//      }
+
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it

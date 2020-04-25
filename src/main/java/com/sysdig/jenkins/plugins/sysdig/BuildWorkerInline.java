@@ -3,6 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_SUMMARY_COLUMN;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -113,7 +114,7 @@ public class BuildWorkerInline implements BuildWorker {
   }
 
   @Override
-  public void runAnalyzer() throws AbortException {
+  public ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
     try {
       console.logInfo("Running Sysdig Secure Analyzer");
 
@@ -131,10 +132,11 @@ public class BuildWorkerInline implements BuildWorker {
       throw new AbortException(
         "Failed to run Sysdig Secure analyzer due to an unexpected error. Please refer to above logs for more information");
     }
+    return new ArrayList<>(); // FIXME Once this is implemented correctly, return the correct arrayList
   }
 
   @Override
-  public GATE_ACTION runGates() throws AbortException {
+  public GATE_ACTION runGates(List<ImageScanningSubmission> submissionList) throws AbortException {
     if (analyzed) {
       try {
         console.logInfo("Running Sysdig Secure Gates");
@@ -395,6 +397,11 @@ public class BuildWorkerInline implements BuildWorker {
     } catch (RuntimeException e) { // caught unknown exception, log it
       console.logDebug("Failed to clean up build artifacts due to an unexpected error", e);
     }
+  }
+
+  @Override
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath file) throws AbortException {
+    return null;
   }
 
   /**

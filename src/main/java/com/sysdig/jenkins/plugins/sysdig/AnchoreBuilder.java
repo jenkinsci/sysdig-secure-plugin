@@ -7,6 +7,7 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import hudson.AbortException;
 import hudson.Extension;
@@ -32,7 +33,13 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -139,7 +146,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException {
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -201,11 +208,12 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
         console.logInfo("Build override set for Sysdig Secure Engine URL");
       }
 
+      Map<String, String> imagesAndDockerfiles = worker.readImagesAndDockerfilesFromPath(new FilePath(workspace, config.getName()));
       /* Run analysis */
-      worker.runAnalyzer();
+      ArrayList<ImageScanningSubmission> submissionList = worker.scanImages(imagesAndDockerfiles);
 
       /* Run gates */
-      finalAction = worker.runGates();
+      finalAction = worker.runGates(submissionList);
 
       /* Run queries and continue even if it fails */
       try {
