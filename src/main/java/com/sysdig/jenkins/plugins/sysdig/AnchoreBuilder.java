@@ -169,13 +169,13 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
       String enginepass;
-      String engineuser;
+      String sysdigToken;
       try {
         StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
         if (null != creds) {
           //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use
           //the Authorization header instead.
-          engineuser = creds.getPassword().getPlainText();
+          sysdigToken = creds.getPassword().getPlainText();
           enginepass = "";
         } else {
           throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
@@ -192,8 +192,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
         globalConfig.getInlineScanning(),
         // messy build time overrides, ugh!
         !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
-        engineuser,
-        enginepass,
+        sysdigToken,
         engineverify, globalConfig.getContainerImageId(),
         globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol());
 
@@ -430,29 +429,17 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
      */
     @SuppressWarnings("unused")
     public FormValidation doCheckName(@QueryParameter String value) {
-      if (!Strings.isNullOrEmpty(value)) {
-        return FormValidation.ok();
-      } else {
-        return FormValidation.error("Please enter a valid file name");
-      }
+      return Strings.isNullOrEmpty(value) ? FormValidation.error("Please enter a valid file name") : FormValidation.ok();
     }
 
     @SuppressWarnings("unused")
     public FormValidation doCheckContainerImageId(@QueryParameter String value) {
-      if (!Strings.isNullOrEmpty(value)) {
-        return FormValidation.ok();
-      } else {
-        return FormValidation.error("Please provide a valid Sysdig Secure Container Image ID");
-      }
+      return Strings.isNullOrEmpty(value) ? FormValidation.error("Please provide a valid Sysdig Secure Container Image ID") : FormValidation.ok();
     }
 
     @SuppressWarnings("unused")
     public FormValidation doCheckContainerId(@QueryParameter String value) {
-      if (!Strings.isNullOrEmpty(value)) {
-        return FormValidation.ok();
-      } else {
-        return FormValidation.error("Please provide a valid Sysdig Secure Container ID");
-      }
+      return Strings.isNullOrEmpty(value) ? FormValidation.error("Please provide a valid Sysdig Secure Container ID") : FormValidation.ok();
     }
 
     @SuppressWarnings("unused")

@@ -35,12 +35,8 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /**
@@ -131,7 +127,7 @@ public class BuildWorkerBackend implements BuildWorker {
 
   @Override
   public ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
-    String sysdigToken = config.getEngineuser();
+    String sysdigToken = config.getSysdigToken();
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
@@ -218,12 +214,11 @@ public class BuildWorkerBackend implements BuildWorker {
 
   @Override
   public GATE_ACTION runGates(List<ImageScanningSubmission> submissionList) throws AbortException {
-    String username = config.getEngineuser();
-    String password = config.getEnginepass();
+    String sysdigToken = config.getSysdigToken();
     boolean sslverify = config.getEngineverify();
 
     CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(sysdigToken, ""));
     HttpClientContext context = HttpClientContext.create();
     context.setCredentialsProvider(credsProvider);
 
@@ -489,12 +484,11 @@ public class BuildWorkerBackend implements BuildWorker {
   public void runQueries() throws AbortException {
 
     if (analyzed) {
-      String username = config.getEngineuser();
-      String password = config.getEnginepass();
+      String sysdigToken = config.getSysdigToken();
       boolean sslverify = config.getEngineverify();
 
       CredentialsProvider credsProvider = new BasicCredentialsProvider();
-      credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password));
+      credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(sysdigToken, ""));
       HttpClientContext context = HttpClientContext.create();
       context.setCredentialsProvider(credsProvider);
 

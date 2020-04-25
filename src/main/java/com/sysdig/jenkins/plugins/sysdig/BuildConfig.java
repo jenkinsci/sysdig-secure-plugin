@@ -19,8 +19,7 @@ public class BuildConfig {
   private boolean debug;
   private boolean inlineScanning;
   private String engineurl;
-  private String engineuser;
-  private String enginepass;
+  private String sysdigToken;
   private boolean engineverify;
   private String containerImageId;
   private String containerId;
@@ -28,7 +27,7 @@ public class BuildConfig {
   private String modulesVol;
 
   public BuildConfig(String name, String engineRetries, boolean bailOnFail, boolean bailOnPluginFail,
-                     boolean debug, boolean inlineScanning, String engineurl, String engineuser, String enginepass,
+                     boolean debug, boolean inlineScanning, String engineurl, String sysdigToken,
                      boolean engineverify, String containerImageId, String containerId, String localVol, String modulesVol) {
     this.name = name;
     this.engineRetries = engineRetries;
@@ -37,8 +36,7 @@ public class BuildConfig {
     this.debug = debug;
     this.inlineScanning = inlineScanning;
     this.engineurl = engineurl;
-    this.engineuser = engineuser;
-    this.enginepass = enginepass;
+    this.sysdigToken = sysdigToken;
     this.engineverify = engineverify;
     this.containerImageId = containerImageId;
     this.containerId = containerId;
@@ -74,12 +72,8 @@ public class BuildConfig {
     return engineurl;
   }
 
-  public String getEngineuser() {
-    return engineuser;
-  }
-
-  public String getEnginepass() {
-    return enginepass;
+  public String getSysdigToken() {
+    return sysdigToken;
   }
 
   public boolean getEngineverify() {
