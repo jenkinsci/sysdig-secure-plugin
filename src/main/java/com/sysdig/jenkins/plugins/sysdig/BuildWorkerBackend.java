@@ -93,8 +93,7 @@ public class BuildWorkerBackend implements BuildWorker {
       this.listener = listener;
       this.config = config;
 
-      // FIXME create an interface for this ConsoleLog and use it instead of the object itself
-      // FIXME also receive it as dependency injection
+      // FIXME receive it as dependency injection
       // Initialize build logger to log output to consoleLog, use local logging methods only after this initializer completes
       logger = new ConsoleLog("SysdigWorker", this.listener.getLogger(), this.config.getDebug());
       logger.logDebug("Initializing build worker");
@@ -143,44 +142,6 @@ public class BuildWorkerBackend implements BuildWorker {
         logger.logInfo(String.format("Analysis request accepted, received image %s", submission.getImageDigest()));
 
         submissionList.add(submission);
-//        try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-//          // Prep POST request
-//          String theurl = String.format("%s/images", config.getEngineurl().replaceAll("/+$", ""));
-//
-//          // Prep request body
-//          JSONObject jsonBody = new JSONObject();
-//          jsonBody.put("tag", tag);
-//          if (null != dfile) {
-//            jsonBody.put("dockerfile", dfile);
-//          }
-//
-//          String body = jsonBody.toString();
-//
-//          // FIXME Move all content that contacts with the backend to a Client
-//          HttpPost httppost = new HttpPost(theurl);
-//          httppost.addHeader("Content-Type", "application/json");
-//          httppost.setEntity(new StringEntity(body));
-//
-//          logger.logDebug(String.format("sysdig-secure-engine add image URL: %s", theurl));
-//          logger.logDebug(String.format("sysdig-secure-engine add image payload: %s", body));
-//
-//          try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
-//            int statusCode = response.getStatusLine().getStatusCode();
-//            if (statusCode != 200) {
-//              String serverMessage = EntityUtils.toString(response.getEntity());
-//              logger.logError(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
-//              throw new AbortException(String.format("Failed to analyze %s due to error adding image to sysdig-secure-engine. Check above logs for errors from sysdig-secure-engine", tag));
-//            }
-//
-//            // Read the response body.
-//            String responseBody = EntityUtils.toString(response.getEntity());
-//            JSONArray respJson = JSONArray.fromObject(responseBody);
-//            imageDigest = JSONObject.fromObject(respJson.get(0)).getString("imageDigest");
-//            logger.logInfo(String.format("Analysis request accepted, received image digest %s", imageDigest));
-//            input_image_imageDigest.put(tag, imageDigest);
-//
-//          }
-//        }
       }
       return submissionList;
     } catch (Exception e) {
@@ -195,10 +156,6 @@ public class BuildWorkerBackend implements BuildWorker {
     if (verify) {
       httpclient = HttpClients.createDefault();
     } else {
-      //SSLContextBuilder builder;
-
-      //SSLConnectionSocketFactory sslsf=null;
-
       try {
         SSLContextBuilder builder = new SSLContextBuilder();
         builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
@@ -222,12 +179,11 @@ public class BuildWorkerBackend implements BuildWorker {
     HttpClientContext context = HttpClientContext.create();
     context.setCredentialsProvider(credsProvider);
 
-    //Credentials defaultcreds = new UsernamePasswordCredentials(username, password);
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
 
     finalAction = GATE_ACTION.PASS;
-    if (! submissionList.isEmpty()) {
+    if (!submissionList.isEmpty()) {
       try {
         JSONObject gate_results = new JSONObject();
 
@@ -697,44 +653,6 @@ public class BuildWorkerBackend implements BuildWorker {
         imageDockerfileMap.put(tag, dockerFileContents);
       }
       return imageDockerfileMap;
-
-//      try (BufferedReader br = new BufferedReader(new InputStreamReader(inputImageFP.read(), StandardCharsets.UTF_8))) {
-//        String line;
-//        while ((line = br.readLine()) != null) {
-//          String imgId = null;
-//          String dfilecontents = null;
-//          Iterator<String> partIterator = Util.IMAGE_LIST_SPLITTER.split(line).iterator();
-//
-//          if (partIterator.hasNext()) {
-//            imgId = partIterator.next();
-//
-//            if (partIterator.hasNext()) {
-//              String jenkinsDFile = partIterator.next();
-//
-//              StringBuilder b = new StringBuilder();
-//              FilePath myfp = new FilePath(workspace, jenkinsDFile);
-//              try (BufferedReader mybr = new BufferedReader(new InputStreamReader(myfp.read(), StandardCharsets.UTF_8))) {
-//                String myline;
-//                while ((myline = mybr.readLine()) != null) {
-//                  b.append(myline).append('\n');
-//                }
-//              }
-//              logger.logDebug(String.format("Dockerfile contents: %s", b.toString()));
-//              byte[] encodedBytes = Base64.encodeBase64(b.toString().getBytes(StandardCharsets.UTF_8));
-//              dfilecontents = new String(encodedBytes, StandardCharsets.UTF_8);
-//
-//            }
-//          }
-//          if (null != imgId) {
-//            logger.logDebug(String.format("Image tag/digest: %s", imgId));
-//            logger.logDebug(String.format("Base64 encoded Dockerfile contents: %s", dfilecontents));
-//            inputImageDockerfile.put(imgId, dfilecontents);
-//          }
-//        }
-//      }
-
-    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-      throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
       logger.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException("Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
