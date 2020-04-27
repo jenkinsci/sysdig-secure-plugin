@@ -192,11 +192,9 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
         engineverify, globalConfig.getContainerImageId(),
         globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol());
 
-      if (config.isInlineScanning()) {
-        worker = new BuildWorkerInline(run, workspace, launcher, listener, config);
-      } else {
-        worker = new BuildWorkerBackend(run, workspace, launcher, listener, config);
-      }
+      worker = config.isInlineScanning() ?
+        new BuildWorkerInline(run, workspace, launcher, listener, config) :
+        new BuildWorkerBackend(run, workspace, launcher, listener, config);
 
       /* Log any build time overrides are at play */
       if (!Strings.isNullOrEmpty(engineurl)) {
@@ -208,11 +206,11 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       ArrayList<ImageScanningSubmission> submissionList = worker.scanImages(imagesAndDockerfiles);
 
       /* Run gates */
-      finalAction = worker.runGates(submissionList);
+      finalAction = worker.retrievePolicyEvaluation(submissionList);
 
       /* Run queries and continue even if it fails */
       try {
-        worker.checkVulnerabilityEvaluation(submissionList);
+        worker.retrieveVulnerabilityEvaluation(submissionList);
       } catch (Exception e) {
         console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
       }
