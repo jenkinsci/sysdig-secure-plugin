@@ -365,20 +365,16 @@ public class BuildWorkerBackend implements BuildWorker {
   }
 
   @Override
-  public void runQueries(List<ImageScanningSubmission> submissionList) throws AbortException {
+  public void checkVulnerabilityEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
     if (submissionList.isEmpty()) {
       logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
     }
 
-
     String sysdigToken = config.getSysdigToken();
-    boolean sslverify = config.getEngineverify();
-
-    CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(sysdigToken, ""));
-    HttpClientContext context = HttpClientContext.create();
-    context.setCredentialsProvider(credsProvider);
+    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
+      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
+      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
 
     try {
       JSONObject securityJson = new JSONObject();
@@ -391,34 +387,38 @@ public class BuildWorkerBackend implements BuildWorker {
       JSONArray dataJson = new JSONArray();
 
       for (ImageScanningSubmission entry : submissionList) {
-        String input = entry.getTag();
+        String tag = entry.getTag();
         String digest = entry.getImageDigest();
+        logger.logInfo(String.format("Querying vulnerability listing for %s", tag));
 
-        try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-          logger.logInfo("Querying vulnerability listing for " + input);
-          String theurl = String.format("%s/images/%s/vuln/all", config.getEngineurl().replaceAll("/+$", ""), digest);
-          HttpGet httpget = new HttpGet(theurl);
-          httpget.addHeader("Content-Type", "application/json");
+        ImageScanningVulnerabilities imageScanningVulnerabilities = sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, digest);
+        dataJson.addAll(imageScanningVulnerabilities.getDataJson());
 
-          logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
-          try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
-            String responseBody = EntityUtils.toString(response.getEntity());
-            JSONObject responseJson = JSONObject.fromObject(responseBody);
-            JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
-            for (int i = 0; i < vulList.size(); i++) {
-              JSONObject vulnJson = vulList.getJSONObject(i);
-              JSONArray vulnArray = new JSONArray();
-              vulnArray.addAll(Arrays.asList(
-                input,
-                vulnJson.getString("vuln"),
-                vulnJson.getString("severity"),
-                vulnJson.getString("package"),
-                vulnJson.getString("fix"),
-                String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
-              dataJson.add(vulnArray);
-            }
-          }
-        }
+//        try (CloseableHttpClient httpclient = makeHttpClient(config.getEngineverify())) {
+//          logger.logInfo("Querying vulnerability listing for " + input);
+//          String theurl = String.format("%s/images/%s/vuln/all", config.getEngineurl().replaceAll("/+$", ""), digest);
+//          HttpGet httpget = new HttpGet(theurl);
+//          httpget.addHeader("Content-Type", "application/json");
+//
+//          logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
+//          try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+//            String responseBody = EntityUtils.toString(response.getEntity());
+//            JSONObject responseJson = JSONObject.fromObject(responseBody);
+//            JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
+//            for (int i = 0; i < vulList.size(); i++) {
+//              JSONObject vulnJson = vulList.getJSONObject(i);
+//              JSONArray vulnArray = new JSONArray();
+//              vulnArray.addAll(Arrays.asList(
+//                input,
+//                vulnJson.getString("vuln"),
+//                vulnJson.getString("severity"),
+//                vulnJson.getString("package"),
+//                vulnJson.getString("fix"),
+//                String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+//              dataJson.add(vulnArray);
+//            }
+//          }
+//        }
       }
       securityJson.put("columns", columnsJson);
       securityJson.put("data", dataJson);

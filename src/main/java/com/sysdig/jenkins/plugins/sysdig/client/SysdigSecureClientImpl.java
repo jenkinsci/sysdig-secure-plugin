@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.sysdig.jenkins.plugins.sysdig.Util;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -20,6 +19,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
@@ -119,6 +120,43 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
         return Optional.of(new ImageScanningResult(evalStatus, gateResult));
       }
     } catch (Exception e) {
+      throw new ImageScanningException(e);
+    }
+  }
+
+  @Override
+  public ImageScanningVulnerabilities retrieveImageScanningVulnerabilities(String tag, String imageDigest) throws ImageScanningException {
+    try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
+
+      String url = String.format("%s/images/%s/vuln/all", apiURL, imageDigest);
+
+      HttpGet httpget = new HttpGet(url);
+      httpget.addHeader("Content-Type", "application/json");
+      HttpClientContext context = makeHttpClientContext(token);
+
+//      logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + url);
+
+      JSONArray dataJson = new JSONArray();
+      try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+        String responseBody = EntityUtils.toString(response.getEntity());
+        JSONObject responseJson = JSONObject.fromObject(responseBody);
+        JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
+        for (int i = 0; i < vulList.size(); i++) {
+          JSONObject vulnJson = vulList.getJSONObject(i);
+          JSONArray vulnArray = new JSONArray();
+          vulnArray.addAll(Arrays.asList(
+            tag,
+            vulnJson.getString("vuln"),
+            vulnJson.getString("severity"),
+            vulnJson.getString("package"),
+            vulnJson.getString("fix"),
+            String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+          dataJson.add(vulnArray);
+        }
+
+        return new ImageScanningVulnerabilities(dataJson);
+      }
+    } catch (IOException e) {
       throw new ImageScanningException(e);
     }
   }

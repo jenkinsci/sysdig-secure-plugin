@@ -338,7 +338,7 @@ public class BuildWorkerInline implements BuildWorker {
   }
 
   @Override
-  public void runQueries(List<ImageScanningSubmission> submissionList) {
+  public void checkVulnerabilityEvaluation(List<ImageScanningSubmission> submissionList) {
   }
 
   @Override

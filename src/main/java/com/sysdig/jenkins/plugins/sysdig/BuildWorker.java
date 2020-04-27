@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface BuildWorker {
-  void runQueries(List<ImageScanningSubmission> submissionList) throws AbortException;
-
   void setupBuildReports() throws AbortException;
 
   void cleanup();
@@ -20,4 +18,6 @@ public interface BuildWorker {
   ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException;
 
   Util.GATE_ACTION runGates(List<ImageScanningSubmission> submissionList) throws AbortException;
+
+  void checkVulnerabilityEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException;
 }

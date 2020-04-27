@@ -33,12 +33,8 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -216,7 +212,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
       /* Run queries and continue even if it fails */
       try {
-        worker.runQueries(submissionList);
+        worker.checkVulnerabilityEvaluation(submissionList);
       } catch (Exception e) {
         console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
       }
