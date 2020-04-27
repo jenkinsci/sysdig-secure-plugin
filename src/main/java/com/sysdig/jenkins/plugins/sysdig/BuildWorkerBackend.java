@@ -68,8 +68,6 @@ public class BuildWorkerBackend implements BuildWorker {
 
   private String jenkinsOutputDirName;
   private Map<String, String> queryOutputMap; // TODO rename
-  private final Map<String, String> inputImageDockerfile = new LinkedHashMap<>();
-  private final Map<String, String> input_image_imageDigest = new LinkedHashMap<>();
   private String gateOutputFileName;
   private GATE_ACTION finalAction;
   private JSONObject gateSummary;
@@ -183,130 +181,131 @@ public class BuildWorkerBackend implements BuildWorker {
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
 
     finalAction = GATE_ACTION.PASS;
-    if (!submissionList.isEmpty()) {
-      try {
-        JSONObject gate_results = new JSONObject();
+    if (submissionList.isEmpty()) {
+      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
+      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
+    }
 
-        for (ImageScanningSubmission submission : submissionList) {
-          String tag = submission.getTag();
-          String imageDigest = submission.getImageDigest();
 
-          logger.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
+    try {
+      JSONObject gate_results = new JSONObject();
 
-          boolean sysdigSecureEvalStatus = false;
-          String theurl = String.format("%s/images/%s/check?tag=%s&detail=true", config.getEngineurl().replaceAll("/+$", ""), imageDigest, tag);
+      for (ImageScanningSubmission submission : submissionList) {
+        String tag = submission.getTag();
+        String imageDigest = submission.getImageDigest();
 
-          logger.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
+        logger.logInfo("Waiting for analysis of " + tag + ", polling status periodically");
 
-          int tryCount = 0;
-          int maxCount = Integer.parseInt(config.getEngineRetries());
-          boolean done = false;
-          HttpGet httpget = new HttpGet(theurl);
-          httpget.addHeader("Content-Type", "application/json");
-          int statusCode;
-          String serverMessage = null;
-          boolean sleep = false;
+        boolean sysdigSecureEvalStatus = false;
+        String theurl = String.format("%s/images/%s/check?tag=%s&detail=true", config.getEngineurl().replaceAll("/+$", ""), imageDigest, tag);
 
-          do { // try this at least once regardless what the retry count is
-            if (sleep) {
-              logger.logDebug("Snoozing before retrying sysdig-secure-engine get policy evaluation");
-              Thread.sleep(1000);
-              sleep = false;
-            }
+        logger.logDebug("sysdig-secure-engine get policy evaluation URL: " + theurl);
 
-            tryCount++;
-            try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-              logger.logDebug(String.format("Attempting sysdig-secure-engine get policy evaluation (%d/%d)", tryCount, maxCount));
+        int tryCount = 0;
+        int maxCount = Integer.parseInt(config.getEngineRetries());
+        boolean done = false;
+        HttpGet httpget = new HttpGet(theurl);
+        httpget.addHeader("Content-Type", "application/json");
+        int statusCode;
+        String serverMessage = null;
+        boolean sleep = false;
 
-              try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
-                statusCode = response.getStatusLine().getStatusCode();
+        do { // try this at least once regardless what the retry count is
+          if (sleep) {
+            logger.logDebug("Snoozing before retrying sysdig-secure-engine get policy evaluation");
+            Thread.sleep(1000);
+            sleep = false;
+          }
 
-                if (statusCode != 200) {
-                  serverMessage = EntityUtils.toString(response.getEntity());
-                  logger.logDebug(String.format("sysdig-secure-engine get policy evaluation failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
+          tryCount++;
+          try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
+            logger.logDebug(String.format("Attempting sysdig-secure-engine get policy evaluation (%d/%d)", tryCount, maxCount));
+
+            try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+              statusCode = response.getStatusLine().getStatusCode();
+
+              if (statusCode != 200) {
+                serverMessage = EntityUtils.toString(response.getEntity());
+                logger.logDebug(String.format("sysdig-secure-engine get policy evaluation failed. URL: %s, status: %s, error: %s", theurl, response.getStatusLine(), serverMessage));
+                sleep = true;
+              } else {
+                // Read the response body.
+                String responseBody = EntityUtils.toString(response.getEntity());
+                JSONArray respJson = JSONArray.fromObject(responseBody);
+                JSONObject tagEvalObj = JSONObject.fromObject(JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest));
+                JSONArray tagEvals = null;
+                for (Object key : tagEvalObj.keySet()) {
+                  tagEvals = tagEvalObj.getJSONArray((String) key);
+                  break;
+                }
+
+                if (null == tagEvals) {
+                  throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
+                }
+                if (tagEvals.size() < 1) {
+                  // try again until we get an eval
+                  logger.logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
+
                   sleep = true;
                 } else {
-                  // Read the response body.
-                  String responseBody = EntityUtils.toString(response.getEntity());
-                  JSONArray respJson = JSONArray.fromObject(responseBody);
-                  JSONObject tagEvalObj = JSONObject.fromObject(JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest));
-                  JSONArray tagEvals = null;
-                  for (Object key : tagEvalObj.keySet()) {
-                    tagEvals = tagEvalObj.getJSONArray((String) key);
-                    break;
-                  }
+                  String eval_status = JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0))).getString("status");
+                  JSONObject gate_result = JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0)).getJSONObject("detail")).getJSONObject("result")).getJSONObject("result"));
 
-                  if (null == tagEvals) {
-                    throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
-                  }
-                  if (tagEvals.size() < 1) {
-                    // try again until we get an eval
-                    logger.logDebug("sysdig-secure-engine get policy evaluation response contains no tag eval records. May snooze and retry");
-
-                    sleep = true;
-                  } else {
-                    String eval_status = JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0))).getString("status");
-                    JSONObject gate_result = JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(JSONObject.fromObject(tagEvals.get(0)).getJSONObject("detail")).getJSONObject("result")).getJSONObject("result"));
-
-                    logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", eval_status));
-                    logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gate_result.toString()));
-                    for (Object key : gate_result.keySet()) {
-                      try {
-                        gate_results.put((String) key, gate_result.getJSONObject((String) key));
-                      } catch (Exception e) {
-                        logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
-                      }
+                  logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", eval_status));
+                  logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gate_result.toString()));
+                  for (Object key : gate_result.keySet()) {
+                    try {
+                      gate_results.put((String) key, gate_result.getJSONObject((String) key));
+                    } catch (Exception e) {
+                      logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
                     }
-
-                    // we actually got a real result
-                    // this is the only way this gets flipped to true
-                    if (eval_status.equals("pass")) {
-                      sysdigSecureEvalStatus = true;
-                    }
-                    done = true;
-                    logger.logInfo("Completed analysis and processed policy evaluation result");
                   }
+
+                  // we actually got a real result
+                  // this is the only way this gets flipped to true
+                  if (eval_status.equals("pass")) {
+                    sysdigSecureEvalStatus = true;
+                  }
+                  done = true;
+                  logger.logInfo("Completed analysis and processed policy evaluation result");
                 }
               }
             }
-          } while (!done && tryCount < maxCount);
+          }
+        } while (!done && tryCount < maxCount);
 
-          if (!done) {
-            if (statusCode != 200) {
-              logger.logWarn(String.format("sysdig-secure-engine get policy evaluation failed. HTTP method: GET, URL: %s, status: %d, error: %s", theurl, statusCode, serverMessage));
-            }
-            logger.logWarn(String.format("Exhausted all attempts polling sysdig-secure-engine. Analysis is incomplete for %s", imageDigest));
-            throw new AbortException("Timed out waiting for sysdig-secure-engine analysis to complete (increasing engineRetries might help). Check above logs for errors from sysdig-secure-engine");
-          } else {
-            // only set to stop if an eval is successful and is reporting fail
-            if (!sysdigSecureEvalStatus) {
-              finalAction = GATE_ACTION.FAIL;
-            }
+        if (!done) {
+          if (statusCode != 200) {
+            logger.logWarn(String.format("sysdig-secure-engine get policy evaluation failed. HTTP method: GET, URL: %s, status: %d, error: %s", theurl, statusCode, serverMessage));
+          }
+          logger.logWarn(String.format("Exhausted all attempts polling sysdig-secure-engine. Analysis is incomplete for %s", imageDigest));
+          throw new AbortException("Timed out waiting for sysdig-secure-engine analysis to complete (increasing engineRetries might help). Check above logs for errors from sysdig-secure-engine");
+        } else {
+          // only set to stop if an eval is successful and is reporting fail
+          if (!sysdigSecureEvalStatus) {
+            finalAction = GATE_ACTION.FAIL;
           }
         }
-
-        try {
-          logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
-          try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsGatesOutputFP.write(), StandardCharsets.UTF_8))) {
-            bw.write(gate_results.toString());
-          }
-        } catch (IOException | InterruptedException e) {
-          logger.logWarn(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()), e);
-          throw new AbortException(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()));
-        }
-
-        generateGatesSummary(gate_results);
-        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
-        return finalAction;
-      } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-        throw e;
-      } catch (Exception e) { // caught unknown exception, log it and wrap it
-        logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
-        throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
       }
-    } else {
-      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
-      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
+
+      try {
+        logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsGatesOutputFP.write(), StandardCharsets.UTF_8))) {
+          bw.write(gate_results.toString());
+        }
+      } catch (IOException | InterruptedException e) {
+        logger.logWarn(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()), e);
+        throw new AbortException(String.format("Failed to write policy evaluation output to %s", jenkinsGatesOutputFP.getRemote()));
+      }
+
+      generateGatesSummary(gate_results);
+      logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
+      return finalAction;
+    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
+      throw e;
+    } catch (Exception e) { // caught unknown exception, log it and wrap it
+      logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
+      throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
@@ -437,82 +436,83 @@ public class BuildWorkerBackend implements BuildWorker {
   }
 
   @Override
-  public void runQueries() throws AbortException {
-
-    if (analyzed) {
-      String sysdigToken = config.getSysdigToken();
-      boolean sslverify = config.getEngineverify();
-
-      CredentialsProvider credsProvider = new BasicCredentialsProvider();
-      credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(sysdigToken, ""));
-      HttpClientContext context = HttpClientContext.create();
-      context.setCredentialsProvider(credsProvider);
-
-      try {
-        JSONObject securityJson = new JSONObject();
-        JSONArray columnsJson = new JSONArray();
-        for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
-          JSONObject columnJson = new JSONObject();
-          columnJson.put("title", column);
-          columnsJson.add(columnJson);
-        }
-        JSONArray dataJson = new JSONArray();
-
-        for (Map.Entry<String, String> entry : input_image_imageDigest.entrySet()) {
-          String input = entry.getKey();
-          String digest = entry.getValue();
-
-          try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
-            logger.logInfo("Querying vulnerability listing for " + input);
-            String theurl = String.format("%s/images/%s/vuln/all", config.getEngineurl().replaceAll("/+$", ""), digest);
-            HttpGet httpget = new HttpGet(theurl);
-            httpget.addHeader("Content-Type", "application/json");
-
-            logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
-            try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
-              String responseBody = EntityUtils.toString(response.getEntity());
-              JSONObject responseJson = JSONObject.fromObject(responseBody);
-              JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
-              for (int i = 0; i < vulList.size(); i++) {
-                JSONObject vulnJson = vulList.getJSONObject(i);
-                JSONArray vulnArray = new JSONArray();
-                vulnArray.addAll(Arrays.asList(
-                  input,
-                  vulnJson.getString("vuln"),
-                  vulnJson.getString("severity"),
-                  vulnJson.getString("package"),
-                  vulnJson.getString("fix"),
-                  String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
-                dataJson.add(vulnArray);
-              }
-            }
-          }
-        }
-        securityJson.put("columns", columnsJson);
-        securityJson.put("data", dataJson);
-
-        cveListingFileName = CVE_LISTING_PREFIX + JSON_FILE_EXTENSION;
-        FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
-        FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, cveListingFileName);
-        try {
-          logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
-          try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsQueryOutputFP.write(), StandardCharsets.UTF_8))) {
-            bw.write(securityJson.toString());
-          }
-        } catch (IOException | InterruptedException e) {
-          logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
-          throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
-        }
-      } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-        throw e;
-      } catch (Exception e) { // caught unknown exception, log it and wrap it
-        logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
-        throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
-      }
-    } else {
+  public void runQueries(List<ImageScanningSubmission> submissionList) throws AbortException {
+    if (submissionList.isEmpty()) {
       logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
     }
+
+
+    String sysdigToken = config.getSysdigToken();
+    boolean sslverify = config.getEngineverify();
+
+    CredentialsProvider credsProvider = new BasicCredentialsProvider();
+    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(sysdigToken, ""));
+    HttpClientContext context = HttpClientContext.create();
+    context.setCredentialsProvider(credsProvider);
+
+    try {
+      JSONObject securityJson = new JSONObject();
+      JSONArray columnsJson = new JSONArray();
+      for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
+        JSONObject columnJson = new JSONObject();
+        columnJson.put("title", column);
+        columnsJson.add(columnJson);
+      }
+      JSONArray dataJson = new JSONArray();
+
+      for (ImageScanningSubmission entry : submissionList) {
+        String input = entry.getTag();
+        String digest = entry.getImageDigest();
+
+        try (CloseableHttpClient httpclient = makeHttpClient(sslverify)) {
+          logger.logInfo("Querying vulnerability listing for " + input);
+          String theurl = String.format("%s/images/%s/vuln/all", config.getEngineurl().replaceAll("/+$", ""), digest);
+          HttpGet httpget = new HttpGet(theurl);
+          httpget.addHeader("Content-Type", "application/json");
+
+          logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + theurl);
+          try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+            String responseBody = EntityUtils.toString(response.getEntity());
+            JSONObject responseJson = JSONObject.fromObject(responseBody);
+            JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
+            for (int i = 0; i < vulList.size(); i++) {
+              JSONObject vulnJson = vulList.getJSONObject(i);
+              JSONArray vulnArray = new JSONArray();
+              vulnArray.addAll(Arrays.asList(
+                input,
+                vulnJson.getString("vuln"),
+                vulnJson.getString("severity"),
+                vulnJson.getString("package"),
+                vulnJson.getString("fix"),
+                String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+              dataJson.add(vulnArray);
+            }
+          }
+        }
+      }
+      securityJson.put("columns", columnsJson);
+      securityJson.put("data", dataJson);
+
+      cveListingFileName = CVE_LISTING_PREFIX + JSON_FILE_EXTENSION;
+      FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
+      FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, cveListingFileName);
+      try {
+        logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsQueryOutputFP.write(), StandardCharsets.UTF_8))) {
+          bw.write(securityJson.toString());
+        }
+      } catch (IOException | InterruptedException e) {
+        logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
+        throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
+      }
+    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
+      throw e;
+    } catch (Exception e) { // caught unknown exception, log it and wrap it
+      logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
+      throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
+    }
+
   }
 
   @Override
@@ -632,34 +632,31 @@ public class BuildWorkerBackend implements BuildWorker {
   }
 
   @Override
-  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath filePath) throws AbortException {
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
+    Map<String, String> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
 
     // get the input and store it in tag/dockerfile map
+    FilePath filePath = new FilePath(workspace, manifestFile);
     try {
-      String[] fileLines = filePath
-        .readToString()
-        .split("\\r?\\n");
-      Map<String, String> imageDockerfileMap = new HashMap<>();
+      String[] fileLines = filePath.readToString().split("\\r?\\n");
       for (String line : fileLines) {
-        String[] split = line.split(" ", 1);
-        String tag = split[0];
-        String dockerFileContents = "";
-        if (split.length > 1) {
-          FilePath dockerFilePath = new FilePath(workspace, split[1]);
-          dockerFileContents = new String(Base64.encodeBase64(dockerFilePath.readToString().getBytes(StandardCharsets.UTF_8)));
-        }
+        String[] lineSplit = line.split(" ", 1);
+        String tag = lineSplit[0];
+        String dockerFileContents = (lineSplit.length > 1) ? new String(Base64.encodeBase64(new FilePath(workspace, lineSplit[1]).readToString().getBytes(StandardCharsets.UTF_8))) : "";
         imageDockerfileMap.put(tag, dockerFileContents);
       }
-      return imageDockerfileMap;
+
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
       logger.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException("Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
     }
+
+    return imageDockerfileMap;
   }
 
-  private JSONArray generateDataTablesColumnsForGateSummary() {
+  private static JSONArray generateDataTablesColumnsForGateSummary() {
     JSONArray headers = new JSONArray();
     for (GATE_SUMMARY_COLUMN column : GATE_SUMMARY_COLUMN.values()) {
       JSONObject header = new JSONObject();

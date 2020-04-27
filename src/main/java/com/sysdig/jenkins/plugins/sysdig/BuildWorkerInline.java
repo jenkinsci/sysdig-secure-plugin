@@ -338,7 +338,7 @@ public class BuildWorkerInline implements BuildWorker {
   }
 
   @Override
-  public void runQueries() {
+  public void runQueries(List<ImageScanningSubmission> submissionList) {
   }
 
   @Override
@@ -400,7 +400,7 @@ public class BuildWorkerInline implements BuildWorker {
   }
 
   @Override
-  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath file) throws AbortException {
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
     return null;
   }
 

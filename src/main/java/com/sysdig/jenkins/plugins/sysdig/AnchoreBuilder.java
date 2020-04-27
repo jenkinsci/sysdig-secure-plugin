@@ -207,7 +207,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
         console.logInfo("Build override set for Sysdig Secure Engine URL");
       }
 
-      Map<String, String> imagesAndDockerfiles = worker.readImagesAndDockerfilesFromPath(new FilePath(workspace, config.getName()));
+      Map<String, String> imagesAndDockerfiles = worker.readImagesAndDockerfilesFromPath(workspace, config.getName());
       /* Run analysis */
       ArrayList<ImageScanningSubmission> submissionList = worker.scanImages(imagesAndDockerfiles);
 
@@ -216,7 +216,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
       /* Run queries and continue even if it fails */
       try {
-        worker.runQueries();
+        worker.runQueries(submissionList);
       } catch (Exception e) {
         console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
       }
