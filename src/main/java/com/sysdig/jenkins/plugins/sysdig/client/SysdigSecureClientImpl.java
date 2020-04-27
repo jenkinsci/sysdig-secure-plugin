@@ -1,11 +1,14 @@
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.sysdig.jenkins.plugins.sysdig.Util;
+import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -16,6 +19,8 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+
+import java.util.Optional;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
   private static final String DEFAULT_API_URL = "https://secure.sysdig.com/";
@@ -79,8 +84,43 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   }
 
   @Override
-  public ImageScanningResult retrieveImageScanningResults(String tag, String dockerFile) throws ImageScanningException {
-    return null;
+  public Optional<ImageScanningResult> retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+    String url = String.format("%s/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
+
+    HttpGet httpget = new HttpGet(url);
+    httpget.addHeader("Content-Type", "application/json");
+    HttpClientContext context = makeHttpClientContext(token);
+
+    try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
+      try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+        if (response.getStatusLine().getStatusCode() != 200) {
+          return Optional.empty();
+        }
+
+        // Read the response body.
+        String responseBody = EntityUtils.toString(response.getEntity());
+        JSONArray respJson = JSONArray.fromObject(responseBody);
+        JSONObject tagEvalObj = JSONObject.fromObject(JSONObject.fromObject(respJson.get(0)).getJSONObject(imageDigest));
+        JSONArray tagEvals = null;
+        for (Object key : tagEvalObj.keySet()) {
+          tagEvals = tagEvalObj.getJSONArray((String) key);
+          break;
+        }
+
+        if (null == tagEvals) {
+          throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
+        }
+        if (tagEvals.size() < 1) {
+          return Optional.empty();
+        }
+        String evalStatus = tagEvals.getJSONObject(0).getString("status");
+        JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
+
+        return Optional.of(new ImageScanningResult(evalStatus, gateResult));
+      }
+    } catch (Exception e) {
+      throw new ImageScanningException(e);
+    }
   }
 
 
