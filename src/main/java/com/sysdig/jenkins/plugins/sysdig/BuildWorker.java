@@ -21,9 +21,7 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
@@ -32,10 +30,9 @@ public abstract class BuildWorker {
 
   private static final Logger LOG = Logger.getLogger(BuildWorkerBackend.class.getName());
 
-  private static final String GATES_OUTPUT_PREFIX = "sysdig_secure_gates";
-  private static final String CVE_LISTING_PREFIX = "sysdig_secure_security";
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
-  private static final String JSON_FILE_EXTENSION = ".json";
+  private final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
+  private final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
 
   // Private members
   Run<?, ?> build;
@@ -47,14 +44,10 @@ public abstract class BuildWorker {
 
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
-  private boolean analyzed;
 
   private String jenkinsOutputDirName;
-  private Map<String, String> queryOutputMap; // TODO rename
-  private String gateOutputFileName;
   private Util.GATE_ACTION finalAction;
   private JSONObject gateSummary;
-  private String cveListingFileName;
 
   // FIXME can we get rid of this config? Also the launcher is not being used...
   public BuildWorker(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config)
@@ -83,13 +76,11 @@ public abstract class BuildWorker {
       // TODO is this necessary? Can't we use the launcher reference that was passed in
       this.launcher = workspace.createLauncher(listener);
 
-      // Initialize analyzed flag to false to indicate that analysis step has not run
-      this.analyzed = false;
-
       printConfig();
-      checkConfig();
+//      checkConfig();
 
       initializeJenkinsWorkspace();
+
 
       logger.logDebug("Build worker initialized");
     } catch (Exception e) {
@@ -106,7 +97,7 @@ public abstract class BuildWorker {
   }
 
 
-  public abstract ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException;
+  public abstract ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException;
 
   // FIXME: Remove this method and move to a client
   private static CloseableHttpClient makeHttpClient(boolean verify) {
@@ -135,7 +126,7 @@ public abstract class BuildWorker {
 
 
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
-    FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, gateOutputFileName);
+    FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, GATE_OUTPUT_FILENAME);
 
     finalAction = Util.GATE_ACTION.PASS;
     if (submissionList.isEmpty()) {
@@ -151,7 +142,7 @@ public abstract class BuildWorker {
         String tag = submission.getTag();
         String imageDigest = submission.getImageDigest();
 
-        logger.logInfo(String.format("Waiting for analysis of %s, polling status periodically...", tag));
+        logger.logInfo(String.format("Waiting for analysis of %s with digest %s, polling status periodically...", tag, imageDigest));
 
         for (int i = 0; i < Integer.parseInt(config.getEngineRetries()); i++) {
           Thread.sleep(i * 5000);
@@ -357,24 +348,23 @@ public abstract class BuildWorker {
       securityJson.put("columns", columnsJson);
       securityJson.put("data", dataJson);
 
-      cveListingFileName = CVE_LISTING_PREFIX + JSON_FILE_EXTENSION;
-      FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
-      FilePath jenkinsQueryOutputFP = new FilePath(jenkinsOutputDirFP, cveListingFileName);
 
-      logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
-      try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(jenkinsQueryOutputFP.write(), StandardCharsets.UTF_8))) {
-        bw.write(securityJson.toString());
+      FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
+      try {
+        logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
+        jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
       } catch (IOException | InterruptedException e) {
         logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
         throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
       }
+
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
-  public void setupBuildReports() throws AbortException {
+  public void setupBuildReports(Util.GATE_ACTION finalAction) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
@@ -383,14 +373,9 @@ public abstract class BuildWorker {
 
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
-
-      if (finalAction != null) {
-        build.addAction(new AnchoreAction(build, finalAction.toString(), jenkinsOutputDirName, gateOutputFileName, queryOutputMap,
-          gateSummary.toString(), cveListingFileName));
-      } else {
-        build.addAction(new AnchoreAction(build, "", jenkinsOutputDirName, gateOutputFileName, queryOutputMap, gateSummary.toString(),
-          cveListingFileName));
-      }
+      String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
+      build.addAction(new AnchoreAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(),
+        CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
@@ -476,10 +461,6 @@ public abstract class BuildWorker {
         logger.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
         jenkinsReportDir.mkdirs();
       }
-
-      queryOutputMap = new LinkedHashMap<>(); // maintain the ordering of queries
-      gateOutputFileName = GATES_OUTPUT_PREFIX + JSON_FILE_EXTENSION;
-
     } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
       throw e;
     } catch (Exception e) { // caught unknown exception, log it and wrap it

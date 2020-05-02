@@ -56,8 +56,6 @@ import java.util.logging.Logger;
  */
 public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
-  //  Log handler for logging above INFO level events to jenkins log
-  private static final Logger LOG = Logger.getLogger(AnchoreBuilder.class.getName());
 
   // Assigning the defaults here for pipeline builds
   private final String name;
@@ -143,120 +141,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
-
-    LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
-
-    boolean failedByGate = false;
-    BuildConfig config = null;
-    BuildWorker worker = null;
-    DescriptorImpl globalConfig = getDescriptor();
-    ConsoleLog console = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
-
-    GATE_ACTION finalAction;
-
-    try {
-      // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
-      if (Strings.isNullOrEmpty(engineCredentialsId) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())) {
-        throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", engineCredentialsId));
-      }
-      //Prefer the job credentials set by the user and fallback to the global ones
-      String credID = !Strings.isNullOrEmpty(engineCredentialsId) ? engineCredentialsId : globalConfig.getEngineCredentialsId();
-      console.logDebug("Processing Jenkins credential ID " + credID);
-
-      /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-      String enginepass;
-      String sysdigToken;
-      try {
-        StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
-        if (null != creds) {
-          //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use
-          //the Authorization header instead.
-          sysdigToken = creds.getPassword().getPlainText();
-          enginepass = "";
-        } else {
-          throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
-        }
-      } catch (AbortException e) {
-        throw e;
-      } catch (Exception e) {
-        console.logError(String.format("Error looking up Jenkins credentials by ID: '%s'", credID), e);
-        throw new AbortException(String.format("Error looking up Jenkins credentials by ID: '%s", credID));
-      }
-
-      /* Instantiate config and a new build worker */
-      config = new BuildConfig(name, engineRetries, bailOnFail, bailOnPluginFail, globalConfig.getDebug(),
-        globalConfig.getInlineScanning(),
-        // messy build time overrides, ugh!
-        !Strings.isNullOrEmpty(engineurl) ? engineurl : globalConfig.getEngineurl(),
-        sysdigToken,
-        engineverify, globalConfig.getContainerImageId(),
-        globalConfig.getContainerId(), globalConfig.getLocalVol(), globalConfig.getModulesVol());
-
-      worker = config.isInlineScanning() ?
-        new BuildWorkerInline(run, workspace, launcher, listener, config) :
-        new BuildWorkerBackend(run, workspace, launcher, listener, config);
-
-      /* Log any build time overrides are at play */
-      if (!Strings.isNullOrEmpty(engineurl)) {
-        console.logInfo("Build override set for Sysdig Secure Engine URL");
-      }
-
-      Map<String, String> imagesAndDockerfiles = worker.readImagesAndDockerfilesFromPath(workspace, config.getName());
-      /* Run analysis */
-      ArrayList<ImageScanningSubmission> submissionList = worker.scanImages(imagesAndDockerfiles);
-
-      /* Run gates */
-      finalAction = worker.retrievePolicyEvaluation(submissionList);
-
-      /* Run queries and continue even if it fails */
-      try {
-        worker.retrieveVulnerabilityEvaluation(submissionList);
-      } catch (Exception e) {
-        console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
-      }
-
-      /* Setup reports */
-      worker.setupBuildReports();
-
-      /* Evaluate result of step based on gate action */
-      if (null != finalAction) {
-        if ((config.getBailOnFail() && (GATE_ACTION.STOP.equals(finalAction) || GATE_ACTION.FAIL.equals(finalAction)))) {
-          console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
-          failedByGate = true;
-          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
-        } else {
-          console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
-        }
-      } else {
-        console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-      }
-
-    } catch (Exception e) {
-      if (failedByGate) {
-        throw e;
-      } else if ((null != config && config.getBailOnPluginFail()) || bailOnPluginFail) {
-        console.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
-        if (e instanceof AbortException) {
-          throw e;
-        } else {
-          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
-        }
-      } else {
-        console.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
-      }
-    } finally {
-      // Wrap cleanup in try catch block to ensure this finally block does not throw an exception
-      if (null != worker) {
-        try {
-          worker.cleanup();
-        } catch (Exception e) {
-          console.logDebug("Failed to cleanup after the plugin, ignoring the errors", e);
-        }
-      }
-      console.logInfo("Completed Sysdig Secure Container Image Scanner step");
-      LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
-        .getNumber());
-    }
+    new AnchoreBuilderExecutor(this, run, workspace, launcher, listener);
   }
 
   @Override
@@ -270,23 +155,16 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
     // Default job level config that may be used both by config.jelly and an instance of AnchoreBuilder
     public static final String DEFAULT_NAME = "sysdig_secure_images";
-    public static final String DEFAULT_ENGINE_RETRIES = "300";
+    public static final String DEFAULT_ENGINE_RETRIES = "15";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final boolean DEFAULT_INLINE_SCANNING = false;
     public static final String EMPTY_STRING = "";
-    public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com/api/scanning/v1/anchore";
+    public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
 
     // Global configuration
     private boolean debug;
     private String engineurl = DEFAULT_ENGINE_URL;
-    private String engineuser = EMPTY_STRING;
-    private Secret enginepass = Secret.fromString(EMPTY_STRING);
-    private boolean engineverify;
-    private String containerImageId;
-    private String containerId;
-    private String localVol;
-    private String modulesVol;
     private String engineCredentialsId;
     private boolean inlineScanning = DEFAULT_INLINE_SCANNING;
 
@@ -312,31 +190,12 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     }
 
     public void setEngineuser(String engineuser) {
-      this.engineuser = engineuser;
     }
 
     public void setEnginepass(Secret enginepass) {
-      this.enginepass = enginepass;
     }
 
     public void setEngineverify(boolean engineverify) {
-      this.engineverify = engineverify;
-    }
-
-    public void setContainerImageId(String containerImageId) {
-      this.containerImageId = containerImageId;
-    }
-
-    public void setContainerId(String containerId) {
-      this.containerId = containerId;
-    }
-
-    public void setLocalVol(String localVol) {
-      this.localVol = localVol;
-    }
-
-    public void setModulesVol(String modulesVol) {
-      this.modulesVol = modulesVol;
     }
 
     public void setInlineScanning(boolean inlineScanning) {
@@ -356,36 +215,8 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       return engineurl;
     }
 
-    public String getEngineuser() {
-      return engineuser;
-    }
-
     public String getEngineCredentialsId() {
       return engineCredentialsId;
-    }
-
-    public Secret getEnginepass() {
-      return enginepass;
-    }
-
-    public boolean getEngineverify() {
-      return engineverify;
-    }
-
-    public String getContainerImageId() {
-      return containerImageId;
-    }
-
-    public String getContainerId() {
-      return containerId;
-    }
-
-    public String getLocalVol() {
-      return localVol;
-    }
-
-    public String getModulesVol() {
-      return modulesVol;
     }
 
     public boolean getInlineScanning() {
@@ -427,16 +258,6 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckContainerImageId(@QueryParameter String value) {
-      return Strings.isNullOrEmpty(value) ? FormValidation.error("Please provide a valid Sysdig Secure Container Image ID") : FormValidation.ok();
-    }
-
-    @SuppressWarnings("unused")
-    public FormValidation doCheckContainerId(@QueryParameter String value) {
-      return Strings.isNullOrEmpty(value) ? FormValidation.error("Please provide a valid Sysdig Secure Container ID") : FormValidation.ok();
-    }
-
-    @SuppressWarnings("unused")
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
       StandardListBoxModel result = new StandardListBoxModel();
 
@@ -445,7 +266,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
       }
 
       return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
-        Jenkins.getActiveInstance(),
+        Jenkins.get(),
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());

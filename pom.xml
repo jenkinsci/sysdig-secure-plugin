@@ -11,10 +11,10 @@
   </parent>
 
   <artifactId>sysdig-secure</artifactId>
-  <version>1.0.20.1-SNAPSHOT</version>
+  <version>2.0.0.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Sysdig Secure Container Image Scanner Plugin</name>
-  <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan Docker images</description>
+  <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan OCI images</description>
 
   <url>https://github.com/jenkinsci/sysdig-secure-plugin</url>
 
@@ -26,7 +26,7 @@
   </licenses>
 
   <properties>
-    <jenkins.version>2.60.3</jenkins.version>
+    <jenkins.version>2.150.1</jenkins.version>
     <java.level>8</java.level>
   </properties>
 
@@ -61,7 +61,7 @@
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>structs</artifactId>
-      <version>1.17</version>
+      <version>1.20</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -78,6 +78,11 @@
       <artifactId>docker-java</artifactId>
       <version>3.2.1</version>
     </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.jenkins-ci.plugins</groupId>-->
+<!--      <artifactId>docker-java-api</artifactId>-->
+<!--      <version>3.1.5.2</version>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -87,6 +92,21 @@
       <groupId>org.slf4j</groupId>
       <artifactId>jcl-over-slf4j</artifactId>
       <version>1.7.30</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>4.5.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-vfs2</artifactId>
+      <version>2.6.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.10.3</version>
     </dependency>
   </dependencies>
 

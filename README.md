@@ -54,7 +54,7 @@ To configure the Sysdig Secure plugin:
 5.  Define the engine URL:
 
     ``` syntaxhighlighter-pre
-    https://secure.sysdig.com/api/scanning/v1/anchore
+    https://secure.sysdig.com
     ```
 
     ![](https://wiki.jenkins.io/download/attachments/145359144/Screen%20Shot%202018-08-30%20at%209.31.42%20PM.png?version=1&modificationDate=1535691769000&api=v2)

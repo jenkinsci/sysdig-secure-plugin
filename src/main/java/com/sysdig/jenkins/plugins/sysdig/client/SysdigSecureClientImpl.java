@@ -1,24 +1,24 @@
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -50,7 +50,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
   @Override
   public ImageScanningSubmission submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
-    String imagesUrl = String.format("%s/images", apiURL);
+    String imagesUrl = String.format("%s/api/scanning/v1/anchore/images", apiURL);
 
     JSONObject jsonBody = new JSONObject();
     jsonBody.put("tag", tag);
@@ -58,16 +58,15 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       jsonBody.put("dockerfile", dockerFile);
     }
 
-    HttpClientContext context = makeHttpClientContext(token);
-
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
       String body = jsonBody.toString();
 
       HttpPost httppost = new HttpPost(imagesUrl);
       httppost.addHeader("Content-Type", "application/json");
+      httppost.addHeader("Authorization", String.format("Bearer %s", token));
       httppost.setEntity(new StringEntity(body));
 
-      try (CloseableHttpResponse response = httpclient.execute(httppost, context)) {
+      try (CloseableHttpResponse response = httpclient.execute(httppost)) {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != 200) {
           String serverMessage = EntityUtils.toString(response.getEntity());
@@ -85,15 +84,44 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   }
 
   @Override
+  public ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult) throws ImageScanningException {
+    String url = String.format("%s/api/scanning/v1/anchore/import/images", apiURL);
+
+    HttpPost httpPost = new HttpPost(url);
+    httpPost.addHeader("Authorization", String.format("Bearer %s", token));
+    httpPost.addHeader("imageId", imageID);
+    httpPost.addHeader("digestId", imageDigest);
+    httpPost.addHeader("imageName", imageName);
+
+    MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
+    multipartEntityBuilder.addBinaryBody("archive_file", scanningResult); //, ContentType.DEFAULT_BINARY, "archive_file");
+
+    HttpEntity build = multipartEntityBuilder.build();
+    httpPost.setEntity(build);
+
+    try (CloseableHttpClient httpClient = makeHttpClient(verifySSL)) {
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String responseStr = EntityUtils.toString(response.getEntity());
+        if (response.getStatusLine().getStatusCode() != 200) {
+          throw new ImageScanningException(String.format("Error while pushing the image scanning results: %s", responseStr));
+        }
+      }
+    } catch (IOException e) {
+      throw new ImageScanningException(e);
+    }
+    return new ImageScanningSubmission(imageName, imageDigest);
+  }
+
+  @Override
   public Optional<ImageScanningResult> retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
-    String url = String.format("%s/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
+    String url = String.format("%s/api/scanning/v1/anchore/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
 
     HttpGet httpget = new HttpGet(url);
     httpget.addHeader("Content-Type", "application/json");
-    HttpClientContext context = makeHttpClientContext(token);
+    httpget.addHeader("Authorization", String.format("Bearer %s", token));
 
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
-      try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+      try (CloseableHttpResponse response = httpclient.execute(httpget)) {
         if (response.getStatusLine().getStatusCode() != 200) {
           return Optional.empty();
         }
@@ -128,16 +156,21 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   public ImageScanningVulnerabilities retrieveImageScanningVulnerabilities(String tag, String imageDigest) throws ImageScanningException {
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
 
-      String url = String.format("%s/images/%s/vuln/all", apiURL, imageDigest);
+      String url = String.format("%s/api/scanning/v1/anchore/images/%s/vuln/all", apiURL, imageDigest);
 
       HttpGet httpget = new HttpGet(url);
       httpget.addHeader("Content-Type", "application/json");
-      HttpClientContext context = makeHttpClientContext(token);
+      httpget.addHeader("Authorization", String.format("Bearer %s", token));
 
 //      logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + url);
 
       JSONArray dataJson = new JSONArray();
-      try (CloseableHttpResponse response = httpclient.execute(httpget, context)) {
+      try (CloseableHttpResponse response = httpclient.execute(httpget)) {
+        if (response.getStatusLine().getStatusCode() != 200) {
+          String responseStr = EntityUtils.toString(response.getEntity());
+          throw new ImageScanningException(String.format("Error while retrieving the image vulnerabilities: %s", responseStr));
+        }
+
         String responseBody = EntityUtils.toString(response.getEntity());
         JSONObject responseJson = JSONObject.fromObject(responseBody);
         JSONArray vulList = responseJson.getJSONArray("vulnerabilities");
@@ -155,6 +188,29 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
         }
 
         return new ImageScanningVulnerabilities(dataJson);
+      }
+    } catch (IOException e) {
+      throw new ImageScanningException(e);
+    }
+  }
+
+  @Override
+  public String getScanningAccount() throws ImageScanningException {
+    String url = String.format("%s/api/scanning/v1/account", apiURL);
+
+    HttpGet httpget = new HttpGet(url);
+    httpget.addHeader("Content-Type", "application/json");
+    httpget.addHeader("Authorization", String.format("Bearer %s", token));
+
+    try (CloseableHttpClient httpClient = makeHttpClient(verifySSL)) {
+      try (CloseableHttpResponse response = httpClient.execute(httpget)) {
+        String responseBody = EntityUtils.toString(response.getEntity());
+        if (response.getStatusLine().getStatusCode() != 200) {
+          throw new ImageScanningException(String.format("Unable to retrieve the Scanning Account: %s", responseBody));
+        }
+
+        JSONObject responseJSON = JSONObject.fromObject(responseBody);
+        return responseJSON.getString("name");
       }
     } catch (IOException e) {
       throw new ImageScanningException(e);
@@ -182,13 +238,5 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       }
     }
     return (httpclient);
-  }
-
-  private static HttpClientContext makeHttpClientContext(String token) {
-    CredentialsProvider credsProvider = new BasicCredentialsProvider();
-    credsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials("", token));
-    HttpClientContext context = HttpClientContext.create();
-    context.setCredentialsProvider(credsProvider);
-    return context;
   }
 }

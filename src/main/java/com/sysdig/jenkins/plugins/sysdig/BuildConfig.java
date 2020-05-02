@@ -10,25 +10,21 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 public class BuildConfig {
 
   // Build configuration
-  private String name;
-  private String engineRetries;
-  private boolean bailOnFail;
-  private boolean bailOnPluginFail;
+  private final String name;
+  private final String engineRetries;
+  private final boolean bailOnFail;
+  private final boolean bailOnPluginFail;
 
   // Global configuration
-  private boolean debug;
-  private boolean inlineScanning;
-  private String engineurl;
-  private String sysdigToken;
-  private boolean engineverify;
-  private String containerImageId;
-  private String containerId;
-  private String localVol;
-  private String modulesVol;
+  private final boolean debug;
+  private final boolean inlineScanning;
+  private final String engineurl;
+  private final String sysdigToken;
+  private final boolean engineverify;
 
   public BuildConfig(String name, String engineRetries, boolean bailOnFail, boolean bailOnPluginFail,
                      boolean debug, boolean inlineScanning, String engineurl, String sysdigToken,
-                     boolean engineverify, String containerImageId, String containerId, String localVol, String modulesVol) {
+                     boolean engineverify) {
     this.name = name;
     this.engineRetries = engineRetries;
     this.bailOnFail = bailOnFail;
@@ -38,10 +34,6 @@ public class BuildConfig {
     this.engineurl = engineurl;
     this.sysdigToken = sysdigToken;
     this.engineverify = engineverify;
-    this.containerImageId = containerImageId;
-    this.containerId = containerId;
-    this.localVol = localVol;
-    this.modulesVol = modulesVol;
   }
 
   public String getName() {
@@ -64,10 +56,6 @@ public class BuildConfig {
     return debug;
   }
 
-  public boolean isInlineScanning() {
-    return inlineScanning;
-  }
-
   public String getEngineurl() {
     return engineurl;
   }
@@ -80,45 +68,14 @@ public class BuildConfig {
     return engineverify;
   }
 
-  public String getContainerImageId() {
-    return containerImageId;
-  }
-
-  public String getContainerId() {
-    return containerId;
-  }
-
-  public String getLocalVol() {
-    return localVol;
-  }
-
-  public String getModulesVol() {
-    return modulesVol;
-  }
-
   public void print(SysdigLogger consoleLog) {
-    consoleLog.logInfo(String.format("[global] debug: %s", String.valueOf(debug)));
+    consoleLog.logInfo(String.format("[global] debug: %s", debug));
     consoleLog.logInfo(String.format("[global] inlineScanning: %s", inlineScanning));
-
-    if (!inlineScanning) {
-      // Global or build properties
-      consoleLog.logInfo(String.format("[build] engineurl: %s", engineurl));
-      consoleLog.logInfo("[build] engineverify: " + String.valueOf(engineverify));
-
-      // Build properties
-      consoleLog.logInfo(String.format("[build] name: %s", name));
-      consoleLog.logInfo(String.format("[build] engineRetries: %s", engineRetries));
-    } else {
-      // Global properties
-      consoleLog.logInfo(String.format("[global] containerImageId: %s", containerImageId));
-      consoleLog.logInfo(String.format("[global] containerId: %s", containerId));
-      consoleLog.logInfo(String.format("[global] localVol: %s", localVol));
-      consoleLog.logInfo(String.format("[global] modulesVol: %s", modulesVol));
-
-      // Build properties
-      consoleLog.logInfo(String.format("[build] name: %s", name));
-    }
+    consoleLog.logInfo(String.format("[build] engineurl: %s", engineurl));
+    consoleLog.logInfo(String.format("[build] engineverify: %s", engineverify));
+    consoleLog.logInfo(String.format("[build] name: %s", name));
     consoleLog.logInfo(String.format("[build] bailOnFail: %s", bailOnFail));
+    consoleLog.logInfo(String.format("[build] engineRetries: %s", engineRetries));
     consoleLog.logInfo(String.format("[build] bailOnPluginFail: %s", bailOnPluginFail));
   }
 }

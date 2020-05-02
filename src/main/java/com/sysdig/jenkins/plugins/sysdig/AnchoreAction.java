@@ -19,7 +19,6 @@ public class AnchoreAction implements Action {
   private Run<?, ?> build;
   private String gateStatus;
   private String gateOutputUrl;
-  private Map<String, String> queryOutputUrls;
   private String gateSummary;
   private String cveListingUrl;
 
@@ -30,20 +29,10 @@ public class AnchoreAction implements Action {
   private Map<String, String> queries;
 
 
-  public AnchoreAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport,
-                       Map<String, String> queryReports, String gateSummary, String cveListingFileName) {
+  public AnchoreAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
-
-    this.queryOutputUrls = new HashMap<String, String>();
-    for (Map.Entry<String, String> entry : queryReports.entrySet()) {
-      String k = entry.getKey();
-      String v = entry.getValue();
-      String newv = String.format("../artifact/%s/%s", jenkinsOutputDirName, v);
-      this.queryOutputUrls.put(k, newv);
-    }
-
     this.gateSummary = gateSummary;
     if (null != cveListingFileName && cveListingFileName.trim().length() > 0) {
       this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
@@ -75,39 +64,6 @@ public class AnchoreAction implements Action {
 
   public String getGateOutputUrl() {
     return this.gateOutputUrl;
-  }
-
-  public Map<String, String> getQueryOutputUrls() {
-    // queryOutputUrls was a guava TransformedEntriesMap object in plugin version < 1.0.13 and is loaded as such. Plugin versions >=
-    // 1.0.13 changed the type definition and lose the transformer function required for reading the  map contents. This results in
-    // a failure to load the member. Transfer the contents from the underlying guava map to a native java map using the keys and
-    // some hacky guess work
-
-    /* Find bugs does not like the instanceof check, falling back to try-catch approach
-    if (!(this.queryOutputUrls instanceof HashMap)) {
-      String base_path = this.gateOutputUrl.substring(0, this.gateOutputUrl.lastIndexOf('/'));
-      int query_num = 0;
-      Map<String, String> fixedQueryOutputUrls = new HashMap<>();
-      for (String key : this.queryOutputUrls.keySet()) {
-        fixedQueryOutputUrls.put(key, base_path + "/sysdig_secure_query_" + String.valueOf(++query_num) + ".json");
-      }
-      return fixedQueryOutputUrls;
-    }*/
-
-    Map<String, String> fixedQueryOutputUrls = new HashMap<>();
-    try {
-      // Fetch values in the map to verify the underlying map is functional
-      if (null != this.queryOutputUrls) {
-        fixedQueryOutputUrls.putAll(this.queryOutputUrls);
-      }
-    } catch (Exception e) {
-      String base_path = this.gateOutputUrl.substring(0, this.gateOutputUrl.lastIndexOf('/'));
-      int query_num = 0;
-      for (String key : this.queryOutputUrls.keySet()) {
-        fixedQueryOutputUrls.put(key, base_path + "/sysdig_secure_query_" + String.valueOf(++query_num) + ".json");
-      }
-    }
-    return fixedQueryOutputUrls;
   }
 
   public JSONObject getGateSummary() {
