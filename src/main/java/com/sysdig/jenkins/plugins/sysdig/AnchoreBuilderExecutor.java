@@ -20,7 +20,7 @@ public class AnchoreBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
   private static final Logger LOG = Logger.getLogger(AnchoreBuilderExecutor.class.getName());
 
-  public AnchoreBuilderExecutor(AnchoreBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws AbortException, InterruptedException {
+  public AnchoreBuilderExecutor(AnchoreBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -67,7 +67,7 @@ public class AnchoreBuilderExecutor {
       /* Run queries and continue even if it fails */
       try {
         worker.retrieveVulnerabilityEvaluation(submissionList);
-      } catch (Exception e) {
+      } catch (AbortException e) {
         console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
       }
 
@@ -87,16 +87,12 @@ public class AnchoreBuilderExecutor {
         console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
       }
 
-    } catch (Exception e) {
+    } catch (AbortException e) {
       if (failedByGate) {
         throw e;
       } else if ((null != config && config.getBailOnPluginFail()) || builder.getBailOnPluginFail()) {
         console.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
-        if (e instanceof AbortException) {
-          throw e;
-        } else {
-          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution: " + e.toString());
-        }
+        throw e;
       } else {
         console.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
       }

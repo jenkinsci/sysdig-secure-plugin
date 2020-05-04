@@ -30,6 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,7 +89,11 @@ public class BuildWorkerInline extends BuildWorker {
     }
 
     logger.logInfo(String.format("Retrieving ID and Digest from image %s", imageName));
-    String imageID = Iterables.getLast(Arrays.asList(dockerClient.inspectImageCmd(imageName).exec().getId().split(":")));
+    String imageID = dockerClient.inspectImageCmd(imageName).exec().getId();
+    if (imageID == null) {
+      throw new ImageScanningException("Unable to retrieve the ID from image");
+    }
+    imageID = Iterables.getLast(Arrays.asList(imageID.split(":")));
     String imageDigest = getDigestIDFromImage(dockerClient, imageName);
 
     logger.logInfo(String.format("%s image ID to scan: %s", imageName, imageID));
@@ -153,7 +159,7 @@ public class BuildWorkerInline extends BuildWorker {
 
       @Override
       public void onNext(Frame item) {
-        logbuffer.append(new String(item.getPayload()));
+        logbuffer.append(new String(item.getPayload(), StandardCharsets.UTF_8));
         super.onNext(item);
       }
 
@@ -211,7 +217,7 @@ public class BuildWorkerInline extends BuildWorker {
 
       @Override
       public void onNext(Frame item) {
-        logbuffer.append(new String(item.getPayload()));
+        logbuffer.append(new String(item.getPayload(), StandardCharsets.UTF_8));
         super.onNext(item);
       }
 
@@ -260,7 +266,7 @@ public class BuildWorkerInline extends BuildWorker {
 
       dockerClient.copyArchiveToContainerCmd(scanningContainerID)
         .withHostResource(imageTarFile)
-        .withRemotePath(String.format("/anchore-engine", imageBaseName))
+        .withRemotePath("/anchore-engine")
         .exec();
 
     } catch (Exception e) {

@@ -31,8 +31,8 @@ public abstract class BuildWorker {
   private static final Logger LOG = Logger.getLogger(BuildWorkerBackend.class.getName());
 
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
-  private final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
-  private final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
+  private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
+  private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
 
   // Private members
   Run<?, ?> build;
@@ -177,7 +177,7 @@ public abstract class BuildWorker {
       logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
       return finalAction;
 
-    } catch (Exception e) { // caught unknown exception, log it and wrap it
+    } catch (InterruptedException | IOException | ImageScanningException e) {
       logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
       throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
@@ -358,7 +358,7 @@ public abstract class BuildWorker {
         throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
       }
 
-    } catch (Exception e) { // caught unknown exception, log it and wrap it
+    } catch (ImageScanningException e) {
       logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
     }
@@ -481,7 +481,7 @@ public abstract class BuildWorker {
       for (String line : fileLines) {
         String[] lineSplit = line.split(" ", 1);
         String tag = lineSplit[0];
-        String dockerFileContents = (lineSplit.length > 1) ? new String(Base64.encodeBase64(new FilePath(workspace, lineSplit[1]).readToString().getBytes(StandardCharsets.UTF_8))) : "";
+        String dockerFileContents = (lineSplit.length > 1) ? new String(Base64.encodeBase64(new FilePath(workspace, lineSplit[1]).readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : "";
         imageDockerfileMap.put(tag, dockerFileContents);
       }
 

@@ -140,7 +140,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException, InterruptedException {
     new AnchoreBuilderExecutor(this, run, workspace, launcher, listener);
   }
 
