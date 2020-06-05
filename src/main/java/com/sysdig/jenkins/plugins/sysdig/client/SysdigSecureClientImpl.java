@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -11,7 +10,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -24,8 +22,6 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
-  private static final String DEFAULT_API_URL = "https://secure.sysdig.com/";
-
   private final String token;
   private final String apiURL;
   private boolean verifySSL;
@@ -162,8 +158,6 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       httpget.addHeader("Content-Type", "application/json");
       httpget.addHeader("Authorization", String.format("Bearer %s", token));
 
-//      logger.logDebug("sysdig-secure-engine get vulnerability listing URL: " + url);
-
       JSONArray dataJson = new JSONArray();
       try (CloseableHttpResponse response = httpclient.execute(httpget)) {
         if (response.getStatusLine().getStatusCode() != 200) {
@@ -223,10 +217,6 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     if (verify) {
       httpclient = HttpClients.createDefault();
     } else {
-      //SSLContextBuilder builder;
-
-      //SSLConnectionSocketFactory sslsf=null;
-
       try {
         SSLContextBuilder builder = new SSLContextBuilder();
         builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());

@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-public class ImageScanningSubmission {
+import java.io.Serializable;
+
+public class ImageScanningSubmission implements Serializable {
   private final String tag;
   private final String imageDigest;
 
