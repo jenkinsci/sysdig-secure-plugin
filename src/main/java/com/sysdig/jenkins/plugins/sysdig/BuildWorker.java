@@ -123,6 +123,7 @@ public abstract class BuildWorker {
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
+    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
 
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
@@ -326,6 +327,7 @@ public abstract class BuildWorker {
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
+    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
     try {
       JSONObject securityJson = new JSONObject();

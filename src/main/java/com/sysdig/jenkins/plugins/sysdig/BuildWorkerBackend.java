@@ -3,6 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientImpl;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientImplWithRetries;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -31,6 +32,7 @@ public class BuildWorkerBackend extends BuildWorker {
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
+    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
     try {
       ArrayList<ImageScanningSubmission> submissionList = new ArrayList<>();

@@ -10,10 +10,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
-import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
-import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientImpl;
+import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -59,6 +56,7 @@ public class BuildWorkerInline extends BuildWorker {
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(config.getSysdigToken(), config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(config.getSysdigToken(), config.getEngineurl());
+    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
     ArrayList<ImageScanningSubmission> imageScanningSubmissions = new ArrayList<>();
     try {
