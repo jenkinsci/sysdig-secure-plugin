@@ -45,23 +45,19 @@ and is available for installation on any Jenkins server.
 
 To configure the Sysdig Secure plugin:
 
-1.  Complete these steps after installing the hpi file from the
-    installation link above.
+1.  Complete these steps after installing the hpi file from the installation link above.
 2.  From the main Jenkins menu, select `Manage Jenkins`.
 3.  Click the `Configure System` link.  
-    **![](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)**
+    ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
 4.  Scroll to the `Sysdig Secure Plugin Mode` section.
-5.  Define the engine URL:
+5.  Create a new credential for the Sysdig token found here: <https://secure.sysdig.com/#/settings/user>
 
-    ``` syntaxhighlighter-pre
-    https://secure.sysdig.com
-    ```
+    ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
+    
+6.  Define the engine URL as `https://secure.sysdig.com` or your own if you are using an on-prem installation and select the previously created credential:
 
-    ![](https://wiki.jenkins.io/download/attachments/145359144/Screen%20Shot%202018-08-30%20at%209.31.42%20PM.png?version=1&modificationDate=1535691769000&api=v2)
-
-6.  Input the API token found
-    here: <https://secure.sysdig.com/#/settings/user>
-
+    ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
+    
 7.  Click `Save`.
 
 # Integrate the Sysdig Secure Plugin with a Freestyle Project
@@ -102,9 +98,9 @@ Sysdig Secure Image Scan can be called from the Jenkins UI:
 1.  Open the `Add build step` drop-down menu, and select
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
-    ![](https://wiki.jenkins.io/download/attachments/145359144/Builddropdown.png?version=1&modificationDate=1535691866000&api=v2)
+    ![](docs/images/FreestyleAddStep.png)
 2.  Configure the available options, and click `Save`.  
-    ![](https://wiki.jenkins.io/download/attachments/145359144/Screen%20Shot%202018-08-30%20at%209.55.35%20PM.png?version=1&modificationDate=1535691768000&api=v2)  
+    ![](docs/images/FreestyleConfigStep.png)  
     The table below describes each of the configuration options.
 
     | Option                                 | Description                                                                                                                                                                                                                                                      |
@@ -112,8 +108,8 @@ Sysdig Secure Image Scan can be called from the Jenkins UI:
     | Image list file                        | The name of the file, present in the workspace that contains the image name, and optionally the Dockerfile location.                                                                                                                                             |
     | Fail build on policy check STOP result | If the Sysdig Secure policy evaluate returns a fail (STOP) then the Jenkins job should be failed. If this is not selected then a failed policy evaluation will allow the build to continue.                                                                      |
     | Fail build on critical plugin error    | If selected, and the Sysdig Secure Plugin experiences a critical error, the the build will be failed. This is typically used to ensure that a fault with Sysdig Secure (eg. service not available) does not permit a failing image to be promoted to production. |
-    | Sysdig Secure operation retries        | How long in seconds the Sysdig Secure Plugin waits until timing out image analysis. The plugin will continue operation once the image has been analyzed but will time out if this period is exceeded.                                                            |
-    | Sysdig Secure Engine policy ID         | The ID of the policy that the image will be evaluated against. Policies can be found within Sysdig Secure here: <https://secure.sysdig.com/#/scanning/policies>.                                                                                                 |
+    | Inline Scanning                        | **Experimental feature.** Executes the scanning in the same host where the image has been built without needing to push it to an staging registry. Requires a runner with access to the Docker socket at `/var/run/docker.sock` and read-write privileges in it. |
+    | Sysdig Secure operation retries        | The number of retries that the plugin will execute in case of an error while scanning the image.                                                                                                                                                                 |
 
 # Local development and installation
 
