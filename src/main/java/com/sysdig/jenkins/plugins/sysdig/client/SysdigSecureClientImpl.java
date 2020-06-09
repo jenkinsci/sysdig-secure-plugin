@@ -7,8 +7,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -221,7 +222,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
         SSLContextBuilder builder = new SSLContextBuilder();
         builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
         SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(),
-          SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+          NoopHostnameVerifier.INSTANCE);
         httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
       } catch (Exception e) {
         System.out.println(e.toString());
