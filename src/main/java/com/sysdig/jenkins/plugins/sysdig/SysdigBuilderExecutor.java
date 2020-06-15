@@ -16,18 +16,18 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class AnchoreBuilderExecutor {
+public class SysdigBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
-  private static final Logger LOG = Logger.getLogger(AnchoreBuilderExecutor.class.getName());
+  private static final Logger LOG = Logger.getLogger(SysdigBuilderExecutor.class.getName());
 
-  public AnchoreBuilderExecutor(AnchoreBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, AbortException {
+  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
     boolean failedByGate = false;
     BuildConfig config = null;
     BuildWorker worker = null;
-    AnchoreBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
+    SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
     ConsoleLog console = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
 
     try {
@@ -111,7 +111,7 @@ public class AnchoreBuilderExecutor {
     }
   }
 
-  private String getEngineurl(AnchoreBuilder builder, AnchoreBuilder.DescriptorImpl globalConfig, ConsoleLog console) {
+  private String getEngineurl(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, ConsoleLog console) {
     String engineurl = globalConfig.getEngineurl();
     if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
       console.logInfo("Build override set for Sysdig Secure Engine URL");
@@ -120,7 +120,7 @@ public class AnchoreBuilderExecutor {
     return engineurl;
   }
 
-  private String getSysdigTokenFromCredentials(AnchoreBuilder builder, AnchoreBuilder.DescriptorImpl globalConfig, Run<?, ?> run, ConsoleLog console) throws AbortException {
+  private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run, ConsoleLog console) throws AbortException {
     String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();
     console.logDebug("Processing Jenkins credential ID " + credID);
 

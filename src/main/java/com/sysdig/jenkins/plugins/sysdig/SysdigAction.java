@@ -14,7 +14,7 @@ import net.sf.json.JSONObject;
  * the results is defined in the appropriate index and summary jelly files. This Jenkins Action is associated with a build (and not the
  * project which is one level up)
  */
-public class AnchoreAction implements Action {
+public class SysdigAction implements Action {
 
   private Run<?, ?> build;
   private String gateStatus;
@@ -29,7 +29,7 @@ public class AnchoreAction implements Action {
   private Map<String, String> queries;
 
 
-  public AnchoreAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
+  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;

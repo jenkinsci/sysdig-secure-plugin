@@ -2,13 +2,9 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.Util.GATE_ACTION;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -32,11 +28,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * <p>Sysdig Secure Plugin  enables Jenkins users to scan container images, generate analysis, evaluate gate policy, and execute customizable
@@ -47,14 +39,10 @@ import java.util.logging.Logger;
  * <ol> <li>Jenkins installed and configured either as a single system, or with multiple configured jenkins worker nodes</li>
  *
  * <li>Each host on which jenkins jobs will run must have docker installed and the jenkins user (or whichever user you have configured
- * jenkins to run jobs as) must be allowed to interact with docker (either directly or via sudo)</li>
- *
- * <li>Each host on which jenkins jobs will run must have the latest sysdig secure container image installed in the local docker host. To
- * install, run 'docker pull anchore/jenkins:latest' on each jenkins host to make the image available to the plugin. The plugin will
- * start an instance of the anchore/jenkins:latest docker container named 'jenkins_anchore' by default, on each host that runs a
- * jenkins job that includes an Sysdig Secure Container Image Scanner step.</li> </ol>
+ * jenkins to run jobs as) must be allowed to interact with docker</li>
+ * </ol>
  */
-public class AnchoreBuilder extends Builder implements SimpleBuildStep {
+public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
 
   // Assigning the defaults here for pipeline builds
@@ -135,13 +123,13 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
 
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
   @DataBoundConstructor
-  public AnchoreBuilder(String name) {
+  public SysdigBuilder(String name) {
     this.name = name;
   }
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException, InterruptedException {
-    new AnchoreBuilderExecutor(this, run, workspace, launcher, listener);
+    new SysdigBuilderExecutor(this, run, workspace, launcher, listener);
   }
 
   @Override
@@ -153,7 +141,7 @@ public class AnchoreBuilder extends Builder implements SimpleBuildStep {
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
-    // Default job level config that may be used both by config.jelly and an instance of AnchoreBuilder
+    // Default job level config that may be used both by config.jelly and an instance of SysdigBuilder
     public static final String DEFAULT_NAME = "sysdig_secure_images";
     public static final String DEFAULT_ENGINE_RETRIES = "15";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;

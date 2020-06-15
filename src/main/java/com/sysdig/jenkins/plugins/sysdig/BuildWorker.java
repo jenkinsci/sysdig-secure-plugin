@@ -376,7 +376,7 @@ public abstract class BuildWorker {
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      build.addAction(new AnchoreAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(),
+      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(),
         CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
