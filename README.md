@@ -25,14 +25,37 @@ Table of Contents
 
 # Getting Started
 
+## Backend scanning or Inline scanning
+
+The Sysdig Secure plugin supports two different operation modes:
+* **Backend Scanning**: Image scanning happens in the Sysdig Secure Backend
+* **Inline Scanning**: Image scanning happens in the Jenkins worker nodes
+
+### Backend Scanning
+
+PRO:
+* Jenkins workers do not need to communicate with the host-local Docker daemon
+
+CON:
+* Sysdig Secure Backend needs to have network visibility in order to fetch and scan the images during the pipeline
+
+### Inline Scanning
+
+PRO:
+* No need to configure registry credentials in the Sysdig Secure Backend
+* No need to expose your registry externally, so it can be reached by Sysdig Secure (see CON in the section above)
+* Image contents are never transmitted outside the pipeline, just the image metadata
+
+CON:
+* The job performing the inline scanning needs to have access to the host-local Docker daemon
+
 ## Pre-requisites
 
-The Sysdig Secure plugin installation process has the following
-prerequisites:
+Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/find-the-super-admin-credentials-and-api-token.html#al_UUID-be84a2f1-b996-c30c-b5d8-5b8e4663146a_UUID-87bc65c6-ef79-6225-3910-39f619617a2c)
 
--   Sysdig Secure installed within the build environment.
--   All authentication credentials/Sysdig Secure API endpoint
-    information prepared for input when configuring the plugin.
+For Backend mode, the Sysdig Backend (SaaS or Onprem) needs to be able to fetch the images produced by this pipeline, usually accessing a buffer Docker repository.
+
+For Inline mode, Jenkins workers need to have access to the host-local Docker daemon, in the most common case, by mounting or linking the Docker socket. The Jenkins worker user needs to be able to read and write the socket.
 
 ## Installation
 
@@ -50,11 +73,13 @@ To configure the Sysdig Secure plugin:
 3.  Click the `Configure System` link.  
     ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
 4.  Scroll to the `Sysdig Secure Plugin Mode` section.
-5.  Create a new credential for the Sysdig token found here: <https://secure.sysdig.com/#/settings/user>
+5.  Create a new credential containing the Sysdig API key found here (You just need to fill the password field): <https://secure.sysdig.com/#/settings/user>
 
     ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
     
-6.  Define the engine URL as `https://secure.sysdig.com` or your own if you are using an on-prem installation and select the previously created credential:
+6.  Configure the Sysdig Backend URL, `https://secure.sysdig.com` if you are using SaaS or your own if you are using an on-prem installation, and select the previously created credential.
+
+Mark the Inline scanning option in case you have decided to use Inline scanning:
 
     ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
     
@@ -99,7 +124,8 @@ Sysdig Secure Image Scan can be called from the Jenkins UI:
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
     ![](docs/images/FreestyleAddStep.png)
-2.  Configure the available options, and click `Save`.  
+2.  
+available options, and click `Save`.  
     ![](docs/images/FreestyleConfigStep.png)  
     The table below describes each of the configuration options.
 
