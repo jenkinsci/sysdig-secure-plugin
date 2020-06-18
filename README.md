@@ -79,7 +79,7 @@ To configure the Sysdig Secure plugin:
     
 6.  Configure the Sysdig Backend URL, `https://secure.sysdig.com` if you are using SaaS or your own if you are using an on-prem installation, and select the previously created credential.
 
-Mark the Inline scanning option in case you have decided to use Inline scanning:
+    Mark the Inline scanning option in case you have decided to use Inline scanning:
 
     ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
     
@@ -124,8 +124,7 @@ Sysdig Secure Image Scan can be called from the Jenkins UI:
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
     ![](docs/images/FreestyleAddStep.png)
-2.  
-available options, and click `Save`.  
+2.  Configure the available options, and click `Save`.  
     ![](docs/images/FreestyleConfigStep.png)  
     The table below describes each of the configuration options.
 
