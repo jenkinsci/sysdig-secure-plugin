@@ -118,14 +118,14 @@ alpine:latest
 
 1.  Using the Jenkins Docker plugin for this example, you could start by building the image and writing the image name to the `sysdig_secure_images` file
 
-    ![](docs/images/FreestyleDockerBuild.png)
+    <img src="docs/images/FreestyleDockerBuild.png" height="500px" />
 
 2.  Open the `Add build step` drop-down menu, and select
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
     ![](docs/images/FreestyleAddStep.png)
 3.  Configure the available options, and click `Save`.  
-    ![](docs/images/FreestyleConfigStep.png)  
+    <img src="docs/images/FreestyleConfigStep.png" height="400px" />
 
 
 :speech_balloon: Take into account that this example is using the Inline scanning mode, in case you want to use Backend scanning, you would need to push the image to a registry that is pulleable by the Sysdig Backend.
@@ -180,7 +180,7 @@ sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-
 
 Once the scanning and evaluation is complete, you will have the following build artifacts and reports in the workspace
 
-![](docs/images/AfterExecution.png)
+<img src="docs/images/AfterExecution.png" height="500px" />
 
 `sysdig_secure_gates.json` Scanning results for the Sysdig [policy evaluation](https://docs.sysdig.com/en/manage-scanning-policies.html).
 
@@ -188,7 +188,7 @@ Once the scanning and evaluation is complete, you will have the following build 
 
 Additionally, the plugin offers you an HTML formatted table output that you can directly display from the interface (`Sysdig Secure Report (FAIL)` in the image above)
 
-![](docs/images/ScanCompleteResults.png)
+<img src="docs/images/ScanCompleteResults.png" height="600px" />
 
 
 # Local development and installation
@@ -200,3 +200,4 @@ docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /us
 ```
 
 You can then install the plugin via the Jenkins UI, or by copying it into $JENKINS_HOME/plugins.
+
