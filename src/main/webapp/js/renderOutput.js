@@ -114,7 +114,7 @@ function buildPolicyEvalTable(tableId, outputFile) {
   });
 }
 
-function buildTableFromAnchoreOutput(tableId, outputFile) {
+function buildTableFromSysdigOutput(tableId, outputFile) {
   jQuery.getJSON(outputFile, function (data) {
     var headers = [];
     var rows = [];
@@ -139,7 +139,7 @@ function buildTableFromAnchoreOutput(tableId, outputFile) {
   });
 }
 
-function buildTableFromAnchoreOutputWithUrls(tableId, outputFile, index) {
+function buildTableFromSysdigOutputWithUrls(tableId, outputFile, index) {
   var urlRegex = /(https?:\/\/[^\s\)]+)/g;
 
   jQuery.getJSON(outputFile, function (data) {

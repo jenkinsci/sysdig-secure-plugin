@@ -1,0 +1,28 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+  <f:section title="Sysdig Secure Plugin Mode">
+
+    <f:entry title="Engine URL" field="engineurl">
+      <f:textbox name="engineurl" default="https://secure.sysdig.com"/>
+    </f:entry>
+
+    <f:entry title="Sysdig Secure API Credentials" field="engineCredentialsId">
+      <c:select/>
+    </f:entry>
+
+    <f:entry title="Verify SSL" field="engineverify">
+      <f:checkbox name="engineverify" checked="${descriptor.engineverify}" default="${true}"/>
+    </f:entry>
+
+    <f:entry title="Enable DEBUG logging" field="debug">
+      <f:checkbox name="debug" checked="${descriptor.debug}" default="${false}"/>
+    </f:entry>
+
+    <f:entry title="Inline Scanning (Experimental)" field="inlineScanning">
+      <f:checkbox name="inlineScanning" checked="${descriptor.inlineScanning}" default="${false}"/>
+    </f:entry>
+
+  </f:section>
+
+</j:jelly>

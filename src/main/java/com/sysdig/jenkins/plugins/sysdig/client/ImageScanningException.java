@@ -13,17 +13,26 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.google.common.base.Splitter;
-import java.util.regex.Pattern;
+public class ImageScanningException extends Exception {
+  public ImageScanningException() {
+    super();
+  }
 
-public class Util {
+  public ImageScanningException(String s) {
+    super(s);
+  }
 
-  // TODO This is probably the slowest way of formatting strings, should do for now but please figure out a better way
-  public static final Splitter IMAGE_LIST_SPLITTER = Splitter.on(Pattern.compile("\\s+")).trimResults().omitEmptyStrings();
+  public ImageScanningException(String s, Throwable throwable) {
+    super(s, throwable);
+  }
 
-  public enum GATE_ACTION {STOP, WARN, GO, PASS, FAIL}
+  public ImageScanningException(Throwable throwable) {
+    super(throwable);
+  }
 
-  public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
+  protected ImageScanningException(String s, Throwable throwable, boolean b, boolean b1) {
+    super(s, throwable, b, b1);
+  }
 }

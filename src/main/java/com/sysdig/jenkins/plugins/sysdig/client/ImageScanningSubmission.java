@@ -13,17 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.google.common.base.Splitter;
-import java.util.regex.Pattern;
+import java.io.Serializable;
 
-public class Util {
+public class ImageScanningSubmission implements Serializable {
+  private final String tag;
+  private final String imageDigest;
 
-  // TODO This is probably the slowest way of formatting strings, should do for now but please figure out a better way
-  public static final Splitter IMAGE_LIST_SPLITTER = Splitter.on(Pattern.compile("\\s+")).trimResults().omitEmptyStrings();
+  public ImageScanningSubmission(String tag, String imageDigest) {
+    this.tag = tag;
+    this.imageDigest = imageDigest;
+  }
 
-  public enum GATE_ACTION {STOP, WARN, GO, PASS, FAIL}
+  public String getTag() {
+    return tag;
+  }
 
-  public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
+  public String getImageDigest() {
+    return imageDigest;
+  }
 }

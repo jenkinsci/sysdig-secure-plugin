@@ -1,0 +1,42 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+  <f:section title="Sysdig Secure Build Options">
+
+    <f:entry title="Image list file" field="name">
+      <f:textbox default="${descriptor.DEFAULT_NAME}"/>
+    </f:entry>
+
+    <f:entry title="Fail build on policy evaluation FAIL result" field="bailOnFail">
+      <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}" default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
+    </f:entry>
+
+    <f:entry title="Fail build on critical plugin error" field="bailOnPluginFail">
+      <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
+    </f:entry>
+
+    <f:entry title="Inline Scanning (Experimental)" field="inlineScanning" help="/plugin/sysdig-secure/help/help-inlineScanning.html">
+          <f:checkbox name="inlineScanning" checked="${it.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
+    </f:entry>
+
+
+    <f:entry title="Sysdig Secure Engine operation retries" field="engineRetries">
+        <f:textbox default="${descriptor.DEFAULT_ENGINE_RETRIES}"/>
+    </f:entry>
+
+    <f:section title="Override Global Configuration">
+        <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
+            <f:textbox name="engineurl" default=""/>
+        </f:entry>
+
+        <f:entry field="engineCredentialsId" title="Sysdig Secure Engine credentials" help="/plugin/sysdig-secure/help/help-OverrideAECredentials.html">
+            <c:select/>
+        </f:entry>
+
+        <f:entry title="Sysdig Secure Engine verify SSL" field="engineverify">
+            <f:checkbox name="engineverify" checked="${instance.engineverify}" default="${false}"/>
+        </f:entry>
+
+    </f:section>
+  </f:section>
+</j:jelly>
