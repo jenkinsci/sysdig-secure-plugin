@@ -49,8 +49,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class RemoteInlineScanningExecution implements Callable<ImageScanningSubmission, Exception>, Serializable {
-  private static final String INLINE_SCAN_IMAGE = "docker.io/anchore/inline-scan:v0.6.1";
-  private static final String INLINE_CONTAINER_NAME = "inline-scan";
+  private static final String anchoreVersion = "0.6.1"; // TODO do NOT hardcode this, retrieve it from /api/scanning/v1/anchore/status
+  private static final String INLINE_SCAN_IMAGE = "docker.io/anchore/inline-scan:v" + anchoreVersion;
+
   private final String imageName;
   private final String dockerfileContents;
   private final TaskListener listener;
@@ -110,8 +111,6 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
       sysdigSecureClient.getScanningAccount(),
       imageName);
 
-    cleanUpContainers(dockerClient);
-
     logger.logInfo(String.format("Creating container for scanning with image: %s", INLINE_SCAN_IMAGE));
     String scanningContainerID = createScanningContainer(dockerClient);
     logger.logInfo(String.format("Created container for scanning: %s", scanningContainerID));
@@ -119,20 +118,21 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     logger.logInfo(String.format("Launching container for scanning: %s", scanningContainerID));
     dockerClient.startContainerCmd(scanningContainerID).exec();
 
-    logger.logInfo(String.format("Copying image %s to container %s", imageName, scanningContainerID));
+    logger.logInfo(String.format("Copying image %s to scanning container %s", imageName, scanningContainerID));
     copyImageToContainer(dockerClient, imageName, scanningContainerID);
 
     logger.logInfo(String.format("Executing Inline Scanning"));
     String scanOutput = performScanInContainer(dockerClient, args, scanningContainerID);
     logger.logInfo(scanOutput);
 
-    logger.logInfo(String.format("Extracting results from scanning container %s", scanningContainerID));
+    logger.logInfo(String.format("Extracting results from scanning container: %s", scanningContainerID));
     File resultsFromContainer = extractScanResultsFromContainer(dockerClient, scanningContainerID);
+
+    logger.logInfo(String.format("Removing scanning container: %s", scanningContainerID));
+    dockerClient.removeContainerCmd(scanningContainerID).withRemoveVolumes(true).withForce(true).exec();
 
     logger.logInfo("Sending results to Sysdig Secure");
     ImageScanningSubmission submission = sysdigSecureClient.submitImageForScanning(imageID, imageName, imageDigest, resultsFromContainer);
-
-    cleanUpContainers(dockerClient);
 
     return submission;
 
@@ -243,14 +243,23 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     return resultCallback.toString();
   }
 
+  /**
+   * Creates a container with the Inline Scan image, but forces it to sleep
+   * for 1h, automatically removing the container after this time.
+   * The scanning will be executed with an exec into this container.
+   * The Sleep process is very lightweight, and can be left running if the
+   * scanning fails for some reason, without impacting the performance.
+   * @param dockerClient
+   * @return The created container ID.
+   */
   private static String createScanningContainer(DockerClient dockerClient) {
     CreateContainerResponse createdScanningContainer = dockerClient.createContainerCmd(INLINE_SCAN_IMAGE)
-      .withName(INLINE_CONTAINER_NAME)
       .withEntrypoint("/bin/sh")
       .withCmd("-c", "sleep 3600") // 1 hour to scan the image should be enough
       .withAttachStdout(true)
       .withAttachStderr(true)
       .withTty(true)
+      .withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
       .exec();
 
     return createdScanningContainer.getId();
@@ -271,18 +280,6 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
     } catch (Exception e) {
       throw new ImageScanningException(e);
-    }
-  }
-
-  private void cleanUpContainers(DockerClient dockerClient) {
-    List<Container> containerList = dockerClient.listContainersCmd()
-      .withShowAll(true)
-      .withNameFilter(Collections.singletonList(INLINE_CONTAINER_NAME))
-      .exec();
-
-    for (Container container : containerList) {
-//      logger.logInfo(String.format("Removing existing container %s: %s", container.getNames()[0], container.getId()));
-      dockerClient.removeContainerCmd(container.getId()).withForce(true).exec();
     }
   }
 }
