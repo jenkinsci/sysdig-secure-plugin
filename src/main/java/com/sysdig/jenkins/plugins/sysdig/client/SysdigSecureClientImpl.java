@@ -97,7 +97,13 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
   @Override
   public ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult) throws ImageScanningException {
-    String url = String.format("%s/api/scanning/v1/anchore/import/images", apiURL);
+    return submitImageForScanning(imageID, imageName, imageDigest, scanningResult, false);
+  }
+
+  private ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult, boolean async) throws ImageScanningException {
+    String url = async ?
+      String.format("%s/api/scanning/v1/anchore/import/images", apiURL) :
+      String.format("%s/api/scanning/v1/anchore/sync/import/images", apiURL);
 
     HttpPost httpPost = new HttpPost(url);
     httpPost.addHeader("Authorization", String.format("Bearer %s", token));
@@ -114,6 +120,11 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     try (CloseableHttpClient httpClient = makeHttpClient(verifySSL)) {
       try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
         String responseStr = EntityUtils.toString(response.getEntity());
+        if (response.getStatusLine().getStatusCode() == 404 && !async) {
+          // If the endpoint doesn't exist, maybe the installation is older,
+          // so we try again with the async one.
+          return submitImageForScanning(imageID, imageName, imageDigest, scanningResult, true);
+        }
         if (response.getStatusLine().getStatusCode() != 200) {
           throw new ImageScanningException(String.format("Error while pushing the image scanning results: %s", responseStr));
         }

@@ -4,7 +4,7 @@
   <f:section title="Sysdig Secure Plugin Mode">
 
     <f:entry title="Engine URL" field="engineurl">
-      <f:textbox name="engineurl" default="https://secure.sysdig.com"/>
+      <f:textbox name="engineurl" default="https://api.sysdigcloud.com"/>
     </f:entry>
 
     <f:entry title="Sysdig Secure API Credentials" field="engineCredentialsId">
