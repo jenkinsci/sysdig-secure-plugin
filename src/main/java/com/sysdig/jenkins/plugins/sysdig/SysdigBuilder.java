@@ -163,7 +163,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final boolean DEFAULT_INLINE_SCANNING = false;
     public static final String EMPTY_STRING = "";
-    public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
+    public static final String DEFAULT_ENGINE_URL = "https://api.sysdigcloud.com";
 
     // Global configuration
     private boolean debug;

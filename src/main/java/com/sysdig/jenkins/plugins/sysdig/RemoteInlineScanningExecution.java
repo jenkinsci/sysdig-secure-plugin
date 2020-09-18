@@ -20,7 +20,6 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.async.ResultCallbackTemplate;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -45,12 +44,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class RemoteInlineScanningExecution implements Callable<ImageScanningSubmission, Exception>, Serializable {
-  private static final String INLINE_SCAN_IMAGE = "docker.io/anchore/inline-scan:v0.6.1";
-  private static final String INLINE_CONTAINER_NAME = "inline-scan";
+  private static final String anchoreVersion = "0.6.1"; // TODO do NOT hardcode this, retrieve it from /api/scanning/v1/anchore/status
+  private static final String INLINE_SCAN_IMAGE = "docker.io/anchore/anchore-engine:v" + anchoreVersion;
+  public static final String RESULTS_PATH_INSIDE_SCANNING_CONTAINER = "/tmp/image-analysis-archive.tgz";
+
   private final String imageName;
   private final String dockerfileContents;
   private final TaskListener listener;
@@ -99,18 +99,6 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     logger.logInfo(String.format("%s image ID to scan: %s", imageName, imageID));
 
 
-    List<String> args = Arrays.asList(
-      "docker-entrypoint.sh",
-      "analyze",
-      "-i",
-      imageID,
-      "-d",
-      imageDigest,
-      "-u",
-      sysdigSecureClient.getScanningAccount(),
-      imageName);
-
-    cleanUpContainers(dockerClient);
 
     logger.logInfo(String.format("Creating container for scanning with image: %s", INLINE_SCAN_IMAGE));
     String scanningContainerID = createScanningContainer(dockerClient);
@@ -119,20 +107,35 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     logger.logInfo(String.format("Launching container for scanning: %s", scanningContainerID));
     dockerClient.startContainerCmd(scanningContainerID).exec();
 
-    logger.logInfo(String.format("Copying image %s to container %s", imageName, scanningContainerID));
-    copyImageToContainer(dockerClient, imageName, scanningContainerID);
+    logger.logInfo(String.format("Copying image %s to scanning container %s", imageName, scanningContainerID));
+    String remoteImagePath = copyImageToContainer(dockerClient, imageName, scanningContainerID);
 
     logger.logInfo(String.format("Executing Inline Scanning"));
+    List<String> args = Arrays.asList(
+      "anchore-manager",
+      "analyzers",
+      "exec",
+      remoteImagePath,
+      RESULTS_PATH_INSIDE_SCANNING_CONTAINER,
+      "--image-id",
+      imageID,
+      "--digest",
+      imageDigest,
+      "--account-id",
+      sysdigSecureClient.getScanningAccount(),
+      "--tag",
+      imageName);
     String scanOutput = performScanInContainer(dockerClient, args, scanningContainerID);
     logger.logInfo(scanOutput);
 
-    logger.logInfo(String.format("Extracting results from scanning container %s", scanningContainerID));
+    logger.logInfo(String.format("Extracting results from scanning container: %s", scanningContainerID));
     File resultsFromContainer = extractScanResultsFromContainer(dockerClient, scanningContainerID);
+
+    logger.logInfo(String.format("Removing scanning container: %s", scanningContainerID));
+    dockerClient.removeContainerCmd(scanningContainerID).withRemoveVolumes(true).withForce(true).exec();
 
     logger.logInfo("Sending results to Sysdig Secure");
     ImageScanningSubmission submission = sysdigSecureClient.submitImageForScanning(imageID, imageName, imageDigest, resultsFromContainer);
-
-    cleanUpContainers(dockerClient);
 
     return submission;
 
@@ -188,14 +191,16 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
   }
 
   private static File extractScanResultsFromContainer(DockerClient dockerClient, String scanningContainerID) throws IOException {
-    Path resultFile = Paths.get("/tmp/image-analysis-archive.tgz");
+    Path resultFile = Paths.get(String.format("/tmp/image-analysis-archive-%s.tgz", scanningContainerID.substring(5)));
 
     // Copy file from the container
-    String tempTarFile = "/tmp/temp-image-analysis-archive.tar";
+    String tempTarFile = String.format("/tmp/temp-image-analysis-archive%s.tar", scanningContainerID.substring(5));
+    Path tempTarPath = Paths.get(tempTarFile);
+
     InputStream copyToHostStream = dockerClient
-      .copyArchiveFromContainerCmd(scanningContainerID, "/anchore-engine/image-analysis-archive.tgz")
+      .copyArchiveFromContainerCmd(scanningContainerID, RESULTS_PATH_INSIDE_SCANNING_CONTAINER)
       .exec();
-    OutputStream tempTarFileStream = Files.newOutputStream(Paths.get(tempTarFile));
+    OutputStream tempTarFileStream = Files.newOutputStream(tempTarPath);
     IOUtils.copy(copyToHostStream, tempTarFileStream);
     copyToHostStream.close();
 
@@ -207,6 +212,8 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     OutputStream outputStream = Files.newOutputStream(resultFile);
     IOUtils.copy(inputStream, outputStream);
     fileObject.close();
+
+    Files.deleteIfExists(tempTarPath); // Remove temporary file
 
     return resultFile.toFile();
   }
@@ -243,46 +250,47 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     return resultCallback.toString();
   }
 
+  /**
+   * Creates a container with the Inline Scan image, but forces it to sleep
+   * for 1h, automatically removing the container after this time.
+   * The scanning will be executed with an exec into this container.
+   * The Sleep process is very lightweight, and can be left running if the
+   * scanning fails for some reason, without impacting the performance.
+   * @param dockerClient
+   * @return The created container ID.
+   */
   private static String createScanningContainer(DockerClient dockerClient) {
     CreateContainerResponse createdScanningContainer = dockerClient.createContainerCmd(INLINE_SCAN_IMAGE)
-      .withName(INLINE_CONTAINER_NAME)
       .withEntrypoint("/bin/sh")
       .withCmd("-c", "sleep 3600") // 1 hour to scan the image should be enough
       .withAttachStdout(true)
       .withAttachStderr(true)
       .withTty(true)
+      .withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+      .withEnv("ANCHORE_DB_HOST=useless", "ANCHORE_DB_USER=useless", "ANCHORE_DB_PASSWORD=useless")
       .exec();
 
     return createdScanningContainer.getId();
   }
 
-  private static void copyImageToContainer(DockerClient dockerClient, String imageName, String scanningContainerID) throws ImageScanningException {
+  private static String copyImageToContainer(DockerClient dockerClient, String imageName, String scanningContainerID) throws ImageScanningException {
     try (InputStream imageToScan = dockerClient.saveImageCmd(imageName).exec()) {
       String imageBaseName = Iterables.getLast(Arrays.asList(imageName.split("/")), imageName.replaceAll("/", "_"));
 
       String imageTarFile = String.format("/tmp/%s.tar", imageBaseName);
-      OutputStream imageTarFileOS = Files.newOutputStream(Paths.get(imageTarFile));
+      Path imageTarPath = Paths.get(imageTarFile);
+      OutputStream imageTarFileOS = Files.newOutputStream(imageTarPath);
       IOUtils.copy(imageToScan, imageTarFileOS);
 
       dockerClient.copyArchiveToContainerCmd(scanningContainerID)
         .withHostResource(imageTarFile)
-        .withRemotePath("/anchore-engine")
+        .withRemotePath("/tmp")
         .exec();
 
+      Files.deleteIfExists(imageTarPath);
+      return imageTarFile;
     } catch (Exception e) {
       throw new ImageScanningException(e);
-    }
-  }
-
-  private void cleanUpContainers(DockerClient dockerClient) {
-    List<Container> containerList = dockerClient.listContainersCmd()
-      .withShowAll(true)
-      .withNameFilter(Collections.singletonList(INLINE_CONTAINER_NAME))
-      .exec();
-
-    for (Container container : containerList) {
-//      logger.logInfo(String.format("Removing existing container %s: %s", container.getNames()[0], container.getId()));
-      dockerClient.removeContainerCmd(container.getId()).withForce(true).exec();
     }
   }
 }
