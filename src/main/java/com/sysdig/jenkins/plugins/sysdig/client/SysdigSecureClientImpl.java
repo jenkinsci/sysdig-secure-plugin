@@ -102,8 +102,8 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
   private ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult, boolean async) throws ImageScanningException {
     String url = async ?
-      String.format("%s/api/scanning/v1/anchore/import/images", apiURL) :
-      String.format("%s/api/scanning/v1/anchore/sync/import/images", apiURL);
+      String.format("%s/api/scanning/v1/import/images", apiURL) :
+      String.format("%s/api/scanning/v1/sync/import/images", apiURL);
 
     HttpPost httpPost = new HttpPost(url);
     httpPost.addHeader("Authorization", String.format("Bearer %s", token));
@@ -112,7 +112,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     httpPost.addHeader("imageName", imageName);
 
     MultipartEntityBuilder multipartEntityBuilder = MultipartEntityBuilder.create();
-    multipartEntityBuilder.addBinaryBody("archive_file", scanningResult); //, ContentType.DEFAULT_BINARY, "archive_file");
+    multipartEntityBuilder.addBinaryBody("archive_file", scanningResult);
 
     HttpEntity build = multipartEntityBuilder.build();
     httpPost.setEntity(build);
