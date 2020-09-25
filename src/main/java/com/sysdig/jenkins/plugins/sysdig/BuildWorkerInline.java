@@ -81,7 +81,7 @@ public class BuildWorkerInline extends BuildWorker {
       }
 
       for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
-        RemoteInlineScanningExecution task = new RemoteInlineScanningExecution(entry.getKey(), entry.getValue(), listener, sysdigSecureClient);
+        RemoteInlineScanningExecution task = new RemoteInlineScanningExecution(entry.getKey(), entry.getValue(), listener, config, workspace);
 
         ImageScanningSubmission submission = channel.call(task);
         imageScanningSubmissions.add(submission);
