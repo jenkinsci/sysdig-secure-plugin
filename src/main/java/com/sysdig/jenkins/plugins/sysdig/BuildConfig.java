@@ -33,6 +33,7 @@ public class BuildConfig {
   // Global configuration
   private final boolean debug;
   private final boolean inlineScanning;
+  private final String containerRunMethod;
   private final String engineurl;
   private final String sysdigToken;
   private final boolean engineverify;
@@ -46,6 +47,7 @@ public class BuildConfig {
     this.bailOnPluginFail = bailOnPluginFail;
     this.debug = debug;
     this.inlineScanning = inlineScanning;
+    this.containerRunMethod = "TO-DO";
     this.engineurl = engineurl;
     this.sysdigToken = sysdigToken;
     this.engineverify = engineverify;
