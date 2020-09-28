@@ -35,18 +35,17 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   private interface RunnableFunction {
-    public void run() throws ImageScanningException;
+    public Object run() throws ImageScanningException;
   }
 
-  private void executeWithRetriesAndBackoff(RunnableFunction function) throws ImageScanningException {
+  private Object executeWithRetriesAndBackoff(RunnableFunction function) throws ImageScanningException {
     ImageScanningException lastException = new ImageScanningException("the number of retries is negative or 0");
     long sleepTime = 0;
     for (int i = 0; i < retries; i++) {
       try {
         Thread.sleep(sleepTime);
         sleepTime += 5000;
-        function.run();
-        return;
+        return function.run();
       } catch (ImageScanningException e) {
         lastException = e;
       } catch (InterruptedException e) {
@@ -58,46 +57,41 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
 
   @Override
   public ImageScanningSubmission submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
-    final ImageScanningSubmission[] submission = {null};
-    executeWithRetriesAndBackoff(() -> {
-      submission[0] = sysdigSecureClient.submitImageForScanning(tag, dockerFile);
-    });
-    return submission[0];
+    return (ImageScanningSubmission)
+      executeWithRetriesAndBackoff(() ->
+        sysdigSecureClient.submitImageForScanning(tag, dockerFile)
+      );
   }
 
   @Override
   public ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult) throws ImageScanningException {
-    final ImageScanningSubmission[] submission = {null};
-    executeWithRetriesAndBackoff(() -> {
-      submission[0] = sysdigSecureClient.submitImageForScanning(imageID, imageName, imageDigest, scanningResult);
-    });
-    return submission[0];
+    return (ImageScanningSubmission)
+      executeWithRetriesAndBackoff(() ->
+        sysdigSecureClient.submitImageForScanning(imageID, imageName, imageDigest, scanningResult)
+      );
   }
 
   @Override
-  public Optional<ImageScanningResult> retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
-    final Optional<ImageScanningResult>[] submission = new Optional[]{Optional.empty()};
-    executeWithRetriesAndBackoff(() -> {
-      submission[0] = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-    });
-    return submission[0];
+  public ImageScanningResult retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+    return (ImageScanningResult)
+      executeWithRetriesAndBackoff(() ->
+        sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest)
+      );
   }
 
   @Override
   public ImageScanningVulnerabilities retrieveImageScanningVulnerabilities(String tag, String imageDigest) throws ImageScanningException {
-    final ImageScanningVulnerabilities[] vulnerabilities = {null};
-    executeWithRetriesAndBackoff(() -> {
-      vulnerabilities[0] = sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, imageDigest);
-    });
-    return vulnerabilities[0];
+    return (ImageScanningVulnerabilities)
+      executeWithRetriesAndBackoff(() ->
+       sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, imageDigest)
+      );
   }
 
   @Override
   public String getScanningAccount() throws ImageScanningException {
-    final String[] scanningAccount = {null};
-    executeWithRetriesAndBackoff(() -> {
-      scanningAccount[0] = sysdigSecureClient.getScanningAccount();
-    });
-    return scanningAccount[0];
+    return (String)
+    executeWithRetriesAndBackoff(() ->
+      sysdigSecureClient.getScanningAccount()
+    );
   }
 }
