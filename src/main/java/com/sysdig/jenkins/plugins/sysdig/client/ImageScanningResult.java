@@ -17,12 +17,14 @@ package com.sysdig.jenkins.plugins.sysdig.client;
 
 import net.sf.json.JSONObject;
 
-public class ImageScanningResult {
-  private String evalStatus;
-  private JSONObject gateResult;
+import java.io.Serializable;
 
-  public ImageScanningResult(String evalStatus, JSONObject gateResult) {
+public class ImageScanningResult extends ImageScanningSubmission implements Serializable {
+  private final String evalStatus;
+  private final JSONObject gateResult;
 
+  public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult) {
+    super(tag, imageDigest);
     this.evalStatus = evalStatus;
     this.gateResult = gateResult;
   }
@@ -31,15 +33,7 @@ public class ImageScanningResult {
     return evalStatus;
   }
 
-  public void setEvalStatus(String evalStatus) {
-    this.evalStatus = evalStatus;
-  }
-
   public JSONObject getGateResult() {
     return gateResult;
-  }
-
-  public void setGateResult(JSONObject gateResult) {
-    this.gateResult = gateResult;
   }
 }

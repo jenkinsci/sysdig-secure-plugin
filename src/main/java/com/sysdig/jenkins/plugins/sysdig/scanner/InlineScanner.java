@@ -13,40 +13,32 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.scanner;
 
+import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
-import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.*;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.util.*;
 
-/**
- * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
- * for each individual job i.e. invocation of perform(). Global and project configuration at the time of execution is loaded into
- * worker instance via its constructor. That specific worker instance is responsible for the bulk of the plugin operations for a given
- * job.
- */
-public class BuildWorkerInline extends BuildWorker {
+public class InlineScanner extends Scanner {
 
-
-  public BuildWorkerInline(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
-    super(build, workspace, launcher, listener, config);
+  public InlineScanner(Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
+    super(launcher, listener, config);
   }
 
   @Override
   public @NotNull
-  ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+  ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
 
-    ArrayList<ImageScanningSubmission> imageScanningSubmissions = new ArrayList<>();
+    ArrayList<ImageScanningResult> resultList = new ArrayList<>();
     try {
       VirtualChannel channel = launcher.getChannel();
       if (channel == null) {
@@ -54,16 +46,16 @@ public class BuildWorkerInline extends BuildWorker {
       }
 
       for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
-        RemoteInlineScanningExecution task = new RemoteInlineScanningExecution(entry.getKey(), entry.getValue(), listener, config);
+        InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(entry.getKey(), entry.getValue(), logger, config);
 
-        ImageScanningSubmission submission = channel.call(task);
-        imageScanningSubmissions.add(submission);
+        ImageScanningResult result = channel.call(task);
+        resultList.add(result);
       }
     } catch (Exception e) {
       throw new AbortException(e.toString());
     }
 
-    return imageScanningSubmissions;
+    return resultList;
   }
 
 }

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
@@ -24,13 +24,13 @@ import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
@@ -40,7 +40,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class RemoteInlineScanningExecution implements Callable<ImageScanningSubmission, Exception>, Serializable {
+public class InlineScannerRemoteExecutor implements Callable<ImageScanningResult, Exception>, Serializable {
+  private static final String anchoreVersion = "0.6.1"; // TODO do NOT hardcode this, retrieve it from /api/scanning/v1/anchore/status
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
 
   private final String imageName;
@@ -48,16 +49,15 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
   private final BuildConfig config;
   private final SysdigLogger logger;
 
-
-  public RemoteInlineScanningExecution(String imageName, String dockerfileContents, TaskListener listener, BuildConfig config) throws AbortException {
+  public InlineScannerRemoteExecutor(String imageName, String dockerfileContents, SysdigLogger logger, BuildConfig config) {
     this.imageName = imageName;
     this.dockerfileContents = dockerfileContents;
     this.config = config;
-    this.logger = new ConsoleLog("InlineScanner", listener.getLogger(), false);
+    this.logger = logger;
   }
 
   @Override
-  public ImageScanningSubmission call() throws Exception {
+  public ImageScanningResult call() throws Exception {
     DockerClient dockerClient = DockerClientBuilder
       .getInstance()
       .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
@@ -70,7 +70,7 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
   }
 
-  private ImageScanningSubmission scanImage(DockerClient dockerClient, String imageName, String dockerFileContents) throws InterruptedException, ImageScanningException {
+  private ImageScanningResult scanImage(DockerClient dockerClient, String imageName, String dockerFileContents) throws InterruptedException, ImageScanningException, AbortException {
     //TODO: dockerFileContents
     logger.logInfo(String.format("Pulling inline-scan image %s", INLINE_SCAN_IMAGE));
     dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();
@@ -86,9 +86,31 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     }
     logger.logInfo("Inline Scanning output:\n" + scanOutput.getString("log"));
 
-    String tag = scanOutput.getString("tag");
-    String digest = scanOutput.getString("digest");
-    return new ImageScanningSubmission(tag, digest);
+    JSONObject scanReport = scanOutput.getJSONArray("scanReport").getJSONObject(0);
+    return buildImageScanningResult(scanReport, scanOutput.getString("digest"), scanOutput.getString("tag"));
+  }
+
+  private ImageScanningResult buildImageScanningResult(JSONObject scanReport, String imageDigest, String tag) throws AbortException {
+    /*TODO(airadier): dup code with SysdigSecureClientImpl. Get this code out of the client, which should \
+    just return the raw JSON, and process the JSON in the Scanner? */
+
+    JSONObject tagEvalObj = scanReport.getJSONObject(imageDigest);
+    JSONArray tagEvals = null;
+    for (Object key : tagEvalObj.keySet()) {
+      tagEvals = tagEvalObj.getJSONArray((String) key);
+      break;
+    }
+    if (tagEvals == null) {
+      throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
+    }
+    if (tagEvals.size() < 1) {
+      return null;
+    }
+
+    String evalStatus = tagEvals.getJSONObject(0).getString("status");
+    JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
+
+    return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult);
   }
 
   private String performScanInContainer(DockerClient dockerClient, String scanningContainerID) throws InterruptedException {
