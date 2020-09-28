@@ -18,11 +18,13 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 
+import java.io.Serializable;
+
 /**
  * Holder for all Sysdig Secure configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
  * the config at the beginning of plugin execution and caching it for use during that specific execution
  */
-public class BuildConfig {
+public class BuildConfig implements Serializable {
 
   // Build configuration
   private final String name;

@@ -13,9 +13,9 @@ public class ConsoleLog implements SysdigLogger {
   private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(ConsoleLog.class.getName());
   private static final String LOG_FORMAT = "%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL %2$-6s %3$-15s %4$s";
 
-  private String name;
-  private PrintStream logger;
-  private boolean enableDebug;
+  private final String name;
+  private final PrintStream logger;
+  private final boolean enableDebug;
 
   @Override
   public PrintStream getLogger() {
