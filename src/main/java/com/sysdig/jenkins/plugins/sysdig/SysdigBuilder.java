@@ -264,7 +264,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
       StandardListBoxModel result = new StandardListBoxModel();
 
-      if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+      if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
         return result.includeCurrentValue(credentialsId);
       }
 

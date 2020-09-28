@@ -136,7 +136,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   }
 
   @Override
-  public Optional<ImageScanningResult> retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+  public ImageScanningResult retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
     String url = String.format("%s/api/scanning/v1/anchore/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
 
     HttpGet httpget = new HttpGet(url);
@@ -146,7 +146,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
       try (CloseableHttpResponse response = httpclient.execute(httpget)) {
         if (response.getStatusLine().getStatusCode() != 200) {
-          return Optional.empty();
+          return null;
         }
 
         // Read the response body.
@@ -163,12 +163,12 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
           throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
         }
         if (tagEvals.size() < 1) {
-          return Optional.empty();
+          return null;
         }
         String evalStatus = tagEvals.getJSONObject(0).getString("status");
         JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
 
-        return Optional.of(new ImageScanningResult(evalStatus, gateResult));
+        return new ImageScanningResult(evalStatus, gateResult);
       }
     } catch (Exception e) {
       throw new ImageScanningException(e);
