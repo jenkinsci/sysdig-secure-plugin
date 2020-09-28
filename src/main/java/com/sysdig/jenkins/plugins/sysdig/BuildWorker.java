@@ -19,6 +19,7 @@ import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -36,10 +37,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
 
-public abstract class BuildWorker {
+/**
+ * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
+ * for each individual job i.e. invocation of perform(). Global and project configuration at the time of execution is loaded into
+ * worker instance via its constructor. That specific worker instance is responsible for the bulk of the plugin operations for a given
+ * job.
+ */
+public class BuildWorker {
 
-  private static final Logger LOG = Logger.getLogger(BuildWorkerBackend.class.getName());
-
+  private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
@@ -51,16 +57,14 @@ public abstract class BuildWorker {
   TaskListener listener;
   BuildConfig config;
 
-
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
 
   private String jenkinsOutputDirName;
-  private Util.GATE_ACTION finalAction;
   private JSONObject gateSummary;
 
   // FIXME can we get rid of this config? Also the launcher is not being used...
-  public BuildWorker(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config)
+  public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, BuildConfig config)
     throws AbortException {
     try {
       if (listener == null) {
@@ -87,7 +91,6 @@ public abstract class BuildWorker {
       this.launcher = workspace.createLauncher(listener);
 
       printConfig();
-//      checkConfig();
 
       initializeJenkinsWorkspace();
 
@@ -106,60 +109,59 @@ public abstract class BuildWorker {
     }
   }
 
+  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException, InterruptedException {
+    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
-  public abstract ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException;
+    /* Run analysis */
+    ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
 
-  public Util.GATE_ACTION retrievePolicyEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
-    String sysdigToken = config.getSysdigToken();
-    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
+    /* Run gates */
+    Util.GATE_ACTION finalAction = this.processPolicyEvaluation(scanResults);
 
+    /* Run queries and continue even if it fails */
+    try {
+      this.retrieveVulnerabilityEvaluation(scanResults);
+    } catch (AbortException e) {
+      logger.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
+    }
 
+    /* Setup reports */
+    this.setupBuildReports(finalAction);
+
+    return finalAction;
+  }
+
+  public Util.GATE_ACTION processPolicyEvaluation(List<ImageScanningResult> resultList) throws AbortException {
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, GATE_OUTPUT_FILENAME);
 
-    finalAction = Util.GATE_ACTION.PASS;
-    if (submissionList.isEmpty()) {
+    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
+    if (resultList.isEmpty()) {
       logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
     }
 
-
     try {
       JSONObject fullGateResults = new JSONObject();
 
-      for (ImageScanningSubmission submission : submissionList) {
-        String tag = submission.getTag();
-        String imageDigest = submission.getImageDigest();
+      for (ImageScanningResult result : resultList) {
+        if (result == null) continue;
 
-        logger.logInfo(String.format("Waiting for analysis of %s with digest %s, polling status periodically...", tag, imageDigest));
-
-        for (int i = 0; i < Integer.parseInt(config.getEngineRetries()); i++) {
-          Thread.sleep(i * 5000);
-
-          ImageScanningResult result = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-          if (result == null) continue;
-
-          JSONObject gateResult = result.getGateResult();
-          String evalStatus = result.getEvalStatus();
-          if (!"pass".equals(evalStatus)) {
-            finalAction = Util.GATE_ACTION.FAIL;
+        JSONObject gateResult = result.getGateResult();
+        String evalStatus = result.getEvalStatus();
+        if (!"pass".equals(evalStatus)) {
+          finalAction = Util.GATE_ACTION.FAIL;
+        }
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
+        for (Object key : gateResult.keySet()) {
+          try {
+            fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
+          } catch (Exception e) {
+            logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
           }
-          logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
-          logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
-          for (Object key : gateResult.keySet()) {
-            try {
-              fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
-            } catch (Exception e) {
-              logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
-            }
-          }
-          break;
         }
       }
-
 
       logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
       jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -168,7 +170,7 @@ public abstract class BuildWorker {
       logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
       return finalAction;
 
-    } catch (InterruptedException | IOException | ImageScanningException e) {
+    } catch (InterruptedException | IOException e) {
       logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
       throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
@@ -307,7 +309,7 @@ public abstract class BuildWorker {
     return gateSummary;
   }
 
-  public void retrieveVulnerabilityEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
+  public void retrieveVulnerabilityEvaluation(List<ImageScanningResult> submissionList) throws AbortException {
     if (submissionList.isEmpty()) {
       logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
@@ -410,30 +412,6 @@ public abstract class BuildWorker {
     config.print(logger);
   }
 
-  /**
-   * Checks for minimum required config for executing step
-   */
-  // FIXME: Is this really necessary? Can't we check if the config is correct at the moment of the creation?
-  private void checkConfig() throws AbortException {
-    if (Strings.isNullOrEmpty(config.getName())) {
-      logger.logError("Image list file not found");
-      throw new AbortException(
-        "Image list file not specified. Please provide a valid image list file name in the Sysdig Secure Container Image Scanner step and try again");
-    }
-
-    try {
-      if (!new FilePath(workspace, config.getName()).exists()) {
-        logger.logError(String.format("Cannot find image list file \"%s\" under %s", config.getName(), workspace));
-        throw new AbortException(String.format("Cannot find image list file '%s'. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
-      }
-    } catch (AbortException e) {
-      throw e;
-    } catch (Exception e) {
-      logger.logWarn(String.format("Unable to access image list file \"%s\" under %s", config.getName(), workspace), e);
-      throw new AbortException(String.format("Unable to access image list file %s. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
-    }
-  }
-
   private void initializeJenkinsWorkspace() throws AbortException {
     try {
       logger.logDebug("Initializing Jenkins workspace");
@@ -500,4 +478,5 @@ public abstract class BuildWorker {
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     jenkinsOutputDirFP.deleteRecursive();
   }
+
 }

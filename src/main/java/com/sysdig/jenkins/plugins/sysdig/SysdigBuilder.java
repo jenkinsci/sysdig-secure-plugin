@@ -59,7 +59,6 @@ import java.util.Collections;
  */
 public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
-
   // Assigning the defaults here for pipeline builds
   private final String name;
   private String engineRetries = DescriptorImpl.DEFAULT_ENGINE_RETRIES;

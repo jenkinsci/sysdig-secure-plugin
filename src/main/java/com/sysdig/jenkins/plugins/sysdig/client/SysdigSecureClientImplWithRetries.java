@@ -15,16 +15,13 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-import java.awt.*;
 import java.io.File;
 import java.security.InvalidParameterException;
-import java.util.Optional;
-import java.util.function.Function;
 
 public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
 
-  private SysdigSecureClient sysdigSecureClient;
-  private int retries;
+  private final SysdigSecureClient sysdigSecureClient;
+  private final int retries;
 
   public SysdigSecureClientImplWithRetries(SysdigSecureClient sysdigSecureClient, int retries) {
     if (retries <= 0) {
@@ -35,7 +32,7 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   private interface RunnableFunction {
-    public Object run() throws ImageScanningException;
+    Object run() throws ImageScanningException;
   }
 
   private Object executeWithRetriesAndBackoff(RunnableFunction function) throws ImageScanningException {
