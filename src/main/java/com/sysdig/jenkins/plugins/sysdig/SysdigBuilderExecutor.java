@@ -18,17 +18,15 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class SysdigBuilderExecutor {
@@ -42,6 +40,7 @@ public class SysdigBuilderExecutor {
     boolean failedByGate = false;
     BuildConfig config = null;
     BuildWorker worker = null;
+    Scanner scanner = null;
     SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
     ConsoleLog console = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
 
@@ -68,26 +67,12 @@ public class SysdigBuilderExecutor {
         builder.getEngineverify()
       );
 
-      worker = isInlineScanning ?
-        new BuildWorkerInline(run, workspace, launcher, listener, config) :
-        new BuildWorkerBackend(run, workspace, launcher, listener, config);
+      worker = new BuildWorker(run, workspace, listener, config);
+      scanner = isInlineScanning ?
+        new InlineScanner(launcher, listener, config) :
+        new BackendScanner(launcher, listener, config);
 
-      Map<String, String> imagesAndDockerfiles = worker.readImagesAndDockerfilesFromPath(workspace, config.getName());
-      /* Run analysis */
-      ArrayList<ImageScanningSubmission> submissionList = worker.scanImages(imagesAndDockerfiles);
-
-      /* Run gates */
-      Util.GATE_ACTION finalAction = worker.retrievePolicyEvaluation(submissionList);
-
-      /* Run queries and continue even if it fails */
-      try {
-        worker.retrieveVulnerabilityEvaluation(submissionList);
-      } catch (AbortException e) {
-        console.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
-      }
-
-      /* Setup reports */
-      worker.setupBuildReports(finalAction);
+      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner);
 
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {

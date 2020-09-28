@@ -35,7 +35,6 @@ import org.apache.http.util.EntityUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Optional;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
   private final String token;
@@ -168,7 +167,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
         String evalStatus = tagEvals.getJSONObject(0).getString("status");
         JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
 
-        return new ImageScanningResult(evalStatus, gateResult);
+        return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult);
       }
     } catch (Exception e) {
       throw new ImageScanningException(e);
