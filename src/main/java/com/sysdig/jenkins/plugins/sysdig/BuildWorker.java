@@ -30,11 +30,6 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -114,25 +109,6 @@ public abstract class BuildWorker {
 
   public abstract ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException;
 
-  // FIXME: Remove this method and move to a client
-  private static CloseableHttpClient makeHttpClient(boolean verify) {
-    CloseableHttpClient httpclient = null;
-    if (verify) {
-      httpclient = HttpClients.createDefault();
-    } else {
-      try {
-        SSLContextBuilder builder = new SSLContextBuilder();
-        builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(),
-          SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-      } catch (Exception e) {
-        System.out.println(e.toString());
-      }
-    }
-    return (httpclient);
-  }
-
   public Util.GATE_ACTION retrievePolicyEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
     String sysdigToken = config.getSysdigToken();
     SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
@@ -163,10 +139,9 @@ public abstract class BuildWorker {
         for (int i = 0; i < Integer.parseInt(config.getEngineRetries()); i++) {
           Thread.sleep(i * 5000);
 
-          Optional<ImageScanningResult> imageScanningResult = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-          if (!imageScanningResult.isPresent()) continue;
+          ImageScanningResult result = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
+          if (result == null) continue;
 
-          ImageScanningResult result = imageScanningResult.get();
           JSONObject gateResult = result.getGateResult();
           String evalStatus = result.getEvalStatus();
           if (!"pass".equals(evalStatus)) {
@@ -424,7 +399,7 @@ public abstract class BuildWorker {
   private void printConfig() {
     logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
-    if (Jenkins.getActiveInstance().getPluginManager() != null && (plugins = Jenkins.getActiveInstance().getPluginManager().getPlugins()) != null) {
+    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));

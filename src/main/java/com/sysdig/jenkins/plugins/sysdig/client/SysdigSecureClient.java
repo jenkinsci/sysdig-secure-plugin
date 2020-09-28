@@ -26,7 +26,7 @@ public interface SysdigSecureClient extends Serializable {
 
   ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult) throws ImageScanningException;
 
-  Optional<ImageScanningResult> retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException;
+  ImageScanningResult retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException;
   ImageScanningVulnerabilities retrieveImageScanningVulnerabilities(String tag, String imageDigest) throws ImageScanningException;
   String getScanningAccount() throws ImageScanningException;
 }
