@@ -20,10 +20,8 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.async.ResultCallbackTemplate;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.WaitResponse;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
@@ -31,7 +29,7 @@ import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningSubmission;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.FilePath;
+import net.sf.json.JSONObject;
 import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
@@ -47,19 +45,15 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
   private final String imageName;
   private final String dockerfileContents;
-  private final TaskListener listener;
-  private BuildConfig config;
-  private FilePath workspace;
-  private SysdigLogger logger;
+  private final BuildConfig config;
+  private final SysdigLogger logger;
 
 
-  public RemoteInlineScanningExecution(String imageName, String dockerfileContents, TaskListener listener, BuildConfig config, FilePath workspace) throws AbortException {
+  public RemoteInlineScanningExecution(String imageName, String dockerfileContents, TaskListener listener, BuildConfig config) throws AbortException {
     this.imageName = imageName;
     this.dockerfileContents = dockerfileContents;
-    this.listener = listener;
     this.config = config;
-    this.workspace = workspace;
-    this.logger = new ConsoleLog("InlineScanner", this.listener.getLogger(), false);
+    this.logger = new ConsoleLog("InlineScanner", listener.getLogger(), false);
   }
 
   @Override
@@ -68,7 +62,7 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
       .getInstance()
       .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
       .build();
-    return scanImage(config, dockerClient, imageName, dockerfileContents);
+    return scanImage(dockerClient, imageName, dockerfileContents);
   }
 
   @Override
@@ -76,94 +70,73 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
   }
 
-  private ImageScanningSubmission scanImage(BuildConfig config, DockerClient dockerClient, String imageName, String dockerFileContents) throws ImageScanningException, IOException, InterruptedException {
+  private ImageScanningSubmission scanImage(DockerClient dockerClient, String imageName, String dockerFileContents) throws InterruptedException, ImageScanningException {
+    //TODO: dockerFileContents
     logger.logInfo(String.format("Pulling inline-scan image %s", INLINE_SCAN_IMAGE));
     dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();
 
     logger.logInfo(String.format("Creating container for scanning with image: %s", INLINE_SCAN_IMAGE));
-    List<String> args = Arrays.asList("-D", "-j", "/out/output.json", imageName);
+    List<String> args = Arrays.asList("-D", "-x", "-j", "/dev/stdout", imageName);
     String scanningContainerID = this.createScanningContainer(dockerClient, args);
 
-    logger.logInfo(String.format("Executing Inline Scanning"));
-    String scanOutput = this.performScanInContainer(dockerClient, scanningContainerID);
-    //TODO: output is just the result code. How to stream container output?
-    //TODO: This is apparently the container exit code, not the internal one? from docker? or what? always 1
-    logger.logInfo("Exit code:" + scanOutput);
+    logger.logInfo("Executing Inline Scanning...");
+    JSONObject scanOutput = JSONObject.fromObject(this.performScanInContainer(dockerClient, scanningContainerID));
+    if (scanOutput.has("error")) {
+      throw new ImageScanningException(scanOutput.getString("error"));
+    }
+    logger.logInfo("Inline Scanning output:\n" + scanOutput.getString("log"));
 
-    //TODO: Get JSON from $workspace/jsonoutput/output.json
-
-    logger.logInfo("Sending results to Sysdig Secure");
-    //TODO: Get tag and digest from json output.
-    //TODO: We could directly get the report, and skip querying the backend!
-    String tag = "/localbuild/sysdigcicd/cronagent:sysdig-line-scan";
-    String digest = "sha256:9be6c870235fa9d4843889d7e70f7e50a3d177df12c86e37740f313b926a49ef";
+    String tag = scanOutput.getString("tag");
+    String digest = scanOutput.getString("digest");
     return new ImageScanningSubmission(tag, digest);
   }
 
   private String performScanInContainer(DockerClient dockerClient, String scanningContainerID) throws InterruptedException {
-    ResultCallbackTemplate logCallback = new ResultCallback.Adapter<Frame>() {
+    ResultCallbackTemplate<?, Frame> logCallback = new ResultCallback.Adapter<Frame>() {
+      final StringBuilder builder = new StringBuilder();
 
       @Override
       public void onNext(Frame item) {
-        logger.logInfo(new String(item.getPayload(), StandardCharsets.UTF_8).replaceAll("\\s+$", ""));
-        super.onNext(item);
-      }
-    };
-
-    ResultCallbackTemplate resultCallback = new ResultCallback.Adapter<WaitResponse>() {
-      private int statusCode;
-
-      @Override
-      public void onNext(WaitResponse item) {
-        this.statusCode = item.getStatusCode();
+        builder.append(new String(item.getPayload(), StandardCharsets.UTF_8).replaceAll("\\s+$", ""));
         super.onNext(item);
       }
 
       @Override
       public String toString() {
-        return Integer.toString(statusCode);
+        return builder.toString();
       }
-    };    
+    };
 
     dockerClient.startContainerCmd(scanningContainerID)
       .exec();
 
-    dockerClient.attachContainerCmd(scanningContainerID)
+    dockerClient.logContainerCmd(scanningContainerID)
       .withStdOut(true)
       .withStdErr(true)
       .withFollowStream(true)
-      .withLogs(true)
-      .withLogs(true)
+      .withTailAll()
       .exec(logCallback)
       .awaitCompletion();
 
-    dockerClient.waitContainerCmd(scanningContainerID)
-      .exec(resultCallback)
-      .awaitCompletion();
-
-    return resultCallback.toString();
+    return logCallback.toString();
   }
 
   /**
    * Creates a container with the Inline Scan image
    * @param dockerClient
+   * @param args
    * @return The created container ID.
    */
-  private String createScanningContainer(DockerClient dockerClient, List<String> args) throws IOException, InterruptedException {
-    Volume dockerSocket = new Volume("/var/run/docker.sock");
-    File outputdir = new File(this.workspace.toString(), "jsonoutput");
-    outputdir.mkdirs();
-    outputdir.setWritable(true);
-    outputdir.setExecutable(true);
-    Volume output = new Volume(outputdir.toString());
+  private String createScanningContainer(DockerClient dockerClient, List<String> args) {
+    HostConfig hostConfig = HostConfig.newHostConfig()
+      .withAutoRemove(true)
+      .withBinds(
+        Bind.parse("/var/run/docker.sock:/var/run/docker.sock"));
 
     CreateContainerResponse createdScanningContainer = dockerClient.createContainerCmd(INLINE_SCAN_IMAGE)
-      .withCmd(args.toArray(new String[args.size()]))
+      .withCmd(args.toArray(new String[0]))
       .withEnv("SYSDIG_API_TOKEN="+ this.config.getSysdigToken())
-      .withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
-      .withBinds(
-        Bind.parse("/var/run/docker.sock:/var/run/docker.sock"),
-        Bind.parse(outputdir.toString() + ":/out"))
+      .withHostConfig(hostConfig)
       .exec();
 
     return createdScanningContainer.getId();
