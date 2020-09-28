@@ -15,16 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.async.ResultCallbackTemplate;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.model.*;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -33,19 +23,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.*;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.vfs2.FileObject;
-import org.apache.commons.vfs2.VFS;
-import org.jenkinsci.remoting.RoleChecker;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -63,15 +41,10 @@ public class BuildWorkerInline extends BuildWorker {
 
   @Override
   public @NotNull
-  ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
+  ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
-
-    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(config.getSysdigToken(), config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(config.getSysdigToken(), config.getEngineurl());
-    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
     ArrayList<ImageScanningSubmission> imageScanningSubmissions = new ArrayList<>();
     try {
@@ -81,7 +54,7 @@ public class BuildWorkerInline extends BuildWorker {
       }
 
       for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
-        RemoteInlineScanningExecution task = new RemoteInlineScanningExecution(entry.getKey(), entry.getValue(), listener, config, workspace);
+        RemoteInlineScanningExecution task = new RemoteInlineScanningExecution(entry.getKey(), entry.getValue(), listener, config);
 
         ImageScanningSubmission submission = channel.call(task);
         imageScanningSubmissions.add(submission);
