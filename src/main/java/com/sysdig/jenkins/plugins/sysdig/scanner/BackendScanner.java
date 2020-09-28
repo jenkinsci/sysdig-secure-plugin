@@ -67,7 +67,6 @@ public class BackendScanner extends Scanner {
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
     sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
 
-    ImageScanningResult result = null;
     try {
       String tag = submission.getTag();
       String imageDigest = submission.getImageDigest();
@@ -77,14 +76,14 @@ public class BackendScanner extends Scanner {
       for (int i = 0; i < Integer.parseInt(config.getEngineRetries()); i++) {
         Thread.sleep(i * 5000);
 
-        result = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-        if (result != null) break;
+        ImageScanningResult result = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
+        if (result != null) return result;
       }
 
+      throw new AbortException("Unable to retrieve image scanning result for tag "+ tag + " digest " + imageDigest);
     } catch (InterruptedException | ImageScanningException e) {
       logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
       throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
-    return result;
   }
 }

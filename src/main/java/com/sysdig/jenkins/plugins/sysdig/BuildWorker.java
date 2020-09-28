@@ -145,7 +145,6 @@ public class BuildWorker {
       JSONObject fullGateResults = new JSONObject();
 
       for (ImageScanningResult result : resultList) {
-        if (result == null) continue;
 
         JSONObject gateResult = result.getGateResult();
         String evalStatus = result.getEvalStatus();
