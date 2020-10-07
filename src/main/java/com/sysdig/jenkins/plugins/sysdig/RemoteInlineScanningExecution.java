@@ -275,7 +275,7 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
   private static String copyImageToContainer(DockerClient dockerClient, String imageName, String scanningContainerID) throws ImageScanningException {
     try (InputStream imageToScan = dockerClient.saveImageCmd(imageName).exec()) {
-      String imageBaseName = Iterables.getLast(Arrays.asList(imageName.split("/")), imageName.replaceAll("/", "_"));
+      String imageBaseName = Iterables.getLast(Arrays.asList(imageName.split("/")), imageName).replaceAll("/|:|\\.", "_");
 
       String imageTarFile = String.format("/tmp/%s.tar", imageBaseName);
       Path imageTarPath = Paths.get(imageTarFile);
