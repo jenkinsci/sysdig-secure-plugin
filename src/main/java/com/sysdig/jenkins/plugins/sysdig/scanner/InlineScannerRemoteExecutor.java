@@ -40,8 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InlineScannerRemoteExecutor implements Callable<ImageScanningResult, Exception>, Serializable {
-  private static final String anchoreVersion = "0.6.1"; // TODO do NOT hardcode this, retrieve it from /api/scanning/v1/anchore/status
-  private static final String INLINE_SCAN_IMAGE = "docker.io/sysdiglabs/sysdig-inline-scan:latest"; // TODO: Get matching AIP version
+  private static final String INLINE_SCAN_IMAGE = "docker.io/sysdiglabs/secure-inline-scan:2";
 
   private final String imageName;
   private final String dockerfileContents;
@@ -75,7 +74,7 @@ public class InlineScannerRemoteExecutor implements Callable<ImageScanningResult
     dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();
 
     logger.logInfo(String.format("Creating container for scanning with image: %s", INLINE_SCAN_IMAGE));
-    List<String> args = Arrays.asList("-D", "-x", "-j", "/dev/stdout", imageName);
+    List<String> args = Arrays.asList("--storage-type", "docker-daemon", "--format","JSON", imageName);
     String scanningContainerID = this.createScanningContainer(dockerClient, args);
 
     logger.logInfo("Executing Inline Scanning...");
@@ -144,6 +143,7 @@ public class InlineScannerRemoteExecutor implements Callable<ImageScanningResult
 
   /**
    * Creates a container with the Inline Scan image
+   *
    * @param dockerClient
    * @param args
    * @return The created container ID.
@@ -156,7 +156,7 @@ public class InlineScannerRemoteExecutor implements Callable<ImageScanningResult
 
     CreateContainerResponse createdScanningContainer = dockerClient.createContainerCmd(INLINE_SCAN_IMAGE)
       .withCmd(args.toArray(new String[0]))
-      .withEnv("SYSDIG_API_TOKEN="+ this.config.getSysdigToken())
+      .withEnv("SYSDIG_API_TOKEN=" + this.config.getSysdigToken())
       .withHostConfig(hostConfig)
       .exec();
 
