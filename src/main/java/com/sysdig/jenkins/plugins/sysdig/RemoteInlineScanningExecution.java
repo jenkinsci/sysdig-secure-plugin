@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class RemoteInlineScanningExecution implements Callable<ImageScanningSubmission, Exception>, Serializable {
@@ -95,6 +96,9 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
     }
     imageID = Iterables.getLast(Arrays.asList(imageID.split(":")));
     String imageDigest = getDigestIDFromImage(dockerClient, imageName);
+    if (imageDigest == null || imageDigest.trim().isEmpty()) {
+      throw new ImageScanningException("Unable to retrieve digest from the image, can't continue the scanning.");
+    }
 
     logger.logInfo(String.format("%s image ID to scan: %s", imageName, imageID));
 
@@ -147,7 +151,7 @@ public class RemoteInlineScanningExecution implements Callable<ImageScanningSubm
 
     Bind dockerSocket = Bind.parse("/var/run/docker.sock:/var/run/docker.sock");
     CreateContainerResponse containerCreated = dockerClient.createContainerCmd(imageToRetrieveDigest)
-      .withHostConfig(HostConfig.newHostConfig().withBinds(dockerSocket))
+      .withHostConfig(HostConfig.newHostConfig().withBinds(dockerSocket).withSecurityOpts(Collections.singletonList("label:disable")))
       .withCmd("-c", "sleep 60") // 1 minute to retrieve the digest should be enough
       .withEntrypoint("/bin/sh")
       .withAttachStdout(true)
