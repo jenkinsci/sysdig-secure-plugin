@@ -89,7 +89,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
         String responseBody = EntityUtils.toString(response.getEntity());
         return JSONObject.fromObject(JSONArray.fromObject(responseBody).get(0)).getString("imageDigest");
       }
-    } catch (Exception e) {
+    } catch (IOException e) {
       throw new ImageScanningException(e);
     }
   }
@@ -104,7 +104,6 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       httpget.addHeader("Content-Type", "application/json");
       httpget.addHeader("Authorization", String.format("Bearer %s", token));
 
-      JSONArray dataJson = new JSONArray();
       try (CloseableHttpResponse response = httpclient.execute(httpget)) {
         if (response.getStatusLine().getStatusCode() != 200) {
           String responseStr = EntityUtils.toString(response.getEntity());
