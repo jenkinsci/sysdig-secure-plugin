@@ -19,7 +19,6 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningSubmission;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.File;
 import java.security.InvalidParameterException;
 
 public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
@@ -57,10 +56,10 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents) throws ImageScanningException {
     return (String)
       executeWithRetriesAndBackoff(() ->
-        sysdigSecureClient.submitImageForScanning(tag, dockerFile)
+        sysdigSecureClient.submitImageForScanning(tag, dockerFileContents)
       );
   }
 

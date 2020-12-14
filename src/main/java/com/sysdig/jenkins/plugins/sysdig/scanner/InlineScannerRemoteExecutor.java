@@ -26,7 +26,10 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.FilePath;
+import hudson.model.TaskListener;
 import net.sf.json.JSONObject;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
@@ -40,15 +43,15 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
 
   private final String imageName;
-  private final String dockerfileContents;
+  private final FilePath dockerFile;
   private final BuildConfig config;
   private final SysdigLogger logger;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerfileContents, SysdigLogger logger, BuildConfig config) {
+  public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config) {
     this.imageName = imageName;
-    this.dockerfileContents = dockerfileContents;
+    this.dockerFile = dockerFile;
     this.config = config;
-    this.logger = logger;
+    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
   }
 
   @Override
@@ -57,7 +60,7 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
       .getInstance()
       .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
       .build();
-    return scanImage(dockerClient, imageName, dockerfileContents);
+    return scanImage(dockerClient);
   }
 
   @Override
@@ -65,7 +68,7 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
   }
 
-  private JSONObject scanImage(DockerClient dockerClient, String imageName, String dockerFileContents) throws InterruptedException, ImageScanningException {
+  public JSONObject scanImage(DockerClient dockerClient) throws InterruptedException, ImageScanningException {
     //TODO(airadier): dockerFileContents
     logger.logInfo(String.format("Pulling inline-scan image %s", INLINE_SCAN_IMAGE));
     dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();
@@ -119,8 +122,8 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
   /**
    * Creates a container with the Inline Scan image
-   * @param dockerClient
-   * @param args
+   * @param dockerClient Docker client
+   * @param args args to the inline-scan command
    * @return The created container ID.
    */
   private String createScanningContainer(DockerClient dockerClient, List<String> args) {

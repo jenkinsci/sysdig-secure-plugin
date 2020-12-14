@@ -16,7 +16,10 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.remoting.*;
@@ -29,22 +32,26 @@ import java.util.Map;
 
 public class InlineScanner extends Scanner {
 
-  private Map<String, JSONObject> scanOutputs;
+  private final Map<String, JSONObject> scanOutputs;
+  private final SysdigLogger logger;
+  private final TaskListener listener;
 
-  public InlineScanner(Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
+  public InlineScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
     super(launcher, listener, config);
-    this.scanOutputs = new HashMap<String, JSONObject>();
+    this.scanOutputs = new HashMap<>();
+    this.listener = listener;
+    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, FilePath dockerFile) throws AbortException {
     VirtualChannel channel = launcher.getChannel();
     if (channel == null) {
       throw new AbortException("There's no channel to communicate with the worker");
     }
 
     try {
-      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag, dockerfile, logger, config);
+      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag, dockerFile, listener, config);
       JSONObject scanOutput = channel.call(task);
 
       String digest = scanOutput.getString("digest");

@@ -1,17 +1,16 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningVulnerabilities;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 public abstract class Scanner {
@@ -20,24 +19,24 @@ public abstract class Scanner {
   protected final BuildConfig config;
   protected final SysdigLogger logger;
 
-  public Scanner(Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
+  public Scanner(Launcher launcher, TaskListener listener, BuildConfig config) {
     this.launcher = launcher;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
     this.config = config;
+    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
   }
 
-  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;
+  public abstract ImageScanningSubmission scanImage(String imageTag, FilePath dockerfile) throws AbortException;
   public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws AbortException;
   public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException;
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, FilePath> imagesAndDockerfiles) throws AbortException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
 
     ArrayList<ImageScanningResult> resultList = new ArrayList<>();
 
-    for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
+    for (Map.Entry<String, FilePath> entry : imagesAndDockerfiles.entrySet()) {
       ImageScanningSubmission submission = this.scanImage(entry.getKey(), entry.getValue());
 
       JSONArray scanReport = this.getGateResults(submission);

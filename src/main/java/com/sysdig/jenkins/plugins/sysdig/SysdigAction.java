@@ -18,7 +18,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 import hudson.model.Action;
 import hudson.model.Run;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import jenkins.model.Jenkins;
@@ -31,11 +30,11 @@ import net.sf.json.JSONObject;
  */
 public class SysdigAction implements Action {
 
-  private Run<?, ?> build;
-  private String gateStatus;
-  private String gateOutputUrl;
-  private String gateSummary;
-  private String cveListingUrl;
+  private final Run<?, ?> build;
+  private final String gateStatus;
+  private final String gateOutputUrl;
+  private final String gateSummary;
+  private final String cveListingUrl;
 
   // For backwards compatibility
   @Deprecated
@@ -49,9 +48,7 @@ public class SysdigAction implements Action {
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
     this.gateSummary = gateSummary;
-    if (null != cveListingFileName && cveListingFileName.trim().length() > 0) {
-      this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
-    }
+    this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
   }
 
   @Override

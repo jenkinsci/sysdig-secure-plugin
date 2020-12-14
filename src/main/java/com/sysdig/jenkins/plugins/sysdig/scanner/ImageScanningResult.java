@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningSubmission;
 import net.sf.json.JSONObject;
 
 import java.io.Serializable;

@@ -30,7 +30,6 @@ import hudson.tasks.ArtifactArchiver;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.codec.binary.Base64;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -109,7 +108,7 @@ public class BuildWorker {
   }
 
   public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException {
-    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
+    Map<String, FilePath> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
@@ -368,8 +367,7 @@ public class BuildWorker {
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(),
-        CVE_LISTING_FILENAME));
+      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
@@ -439,9 +437,9 @@ public class BuildWorker {
     }
   }
 
-  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
+  public Map<String, FilePath> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
-    Map<String, String> imageDockerfileMap = new HashMap<>();
+    Map<String, FilePath> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
 
     // get the input and store it in tag/dockerfile map
@@ -451,8 +449,8 @@ public class BuildWorker {
       for (String line : fileLines) {
         String[] lineSplit = line.split(" ", 1);
         String tag = lineSplit[0];
-        String dockerFileContents = (lineSplit.length > 1) ? new String(Base64.encodeBase64(new FilePath(workspace, lineSplit[1]).readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : "";
-        imageDockerfileMap.put(tag, dockerFileContents);
+        FilePath dockerFile = (lineSplit.length > 1) ? new FilePath(workspace, lineSplit[1]) : null;
+        imageDockerfileMap.put(tag,  dockerFile);
       }
 
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it

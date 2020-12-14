@@ -18,21 +18,21 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.codec.binary.Base64;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
 
 
 public class BackendScanner extends Scanner {
 
   private SysdigSecureClient sysdigSecureClient;
 
-  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
+  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
     super(launcher, listener, config);
 
     String sysdigToken = config.getSysdigToken();
@@ -40,15 +40,16 @@ public class BackendScanner extends Scanner {
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
     this.sysdigSecureClient = new SysdigSecureClientImplWithRetries(this.sysdigSecureClient, 10);
-
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, FilePath dockerfile) throws AbortException {
 
     try {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
-      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerfile);
+      String dockerFileContents = dockerfile != null ? new String(Base64.encodeBase64(dockerfile.readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : null;
+
+      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents);
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {
@@ -66,7 +67,7 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Waiting for analysis of %s with digest %s", tag, imageDigest));
       return sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
     } catch (ImageScanningException e) {
-      logger.logError("Unable to retrieve image scanning result for tag "+ tag + " digest " + imageDigest, e);
+      logger.logError("Unable to retrieve image scanning result for tag " + tag + " digest " + imageDigest, e);
       throw new AbortException("Failed to retrieve policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
   }
@@ -76,11 +77,11 @@ public class BackendScanner extends Scanner {
     String tag = submission.getTag();
     String imageDigest = submission.getImageDigest();
 
-      try {
-        logger.logInfo(String.format("Querying vulnerability listing of %s width digest %s", tag, imageDigest));
-        return sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest);
+    try {
+      logger.logInfo(String.format("Querying vulnerability listing of %s width digest %s", tag, imageDigest));
+      return sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest);
     } catch (ImageScanningException e) {
-      logger.logError("Unable to retrieve vulnerabilities report for tag "+ tag + " digest " + imageDigest, e);
+      logger.logError("Unable to retrieve vulnerabilities report for tag " + tag + " digest " + imageDigest, e);
       throw new AbortException("Failed to retrieve vulnerabilities report due to an unexpected error. Please refer to above logs for more information");
     }
   }

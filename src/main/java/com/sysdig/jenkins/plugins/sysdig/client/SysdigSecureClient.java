@@ -15,15 +15,13 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningSubmission;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.File;
 import java.io.Serializable;
 
 public interface SysdigSecureClient extends Serializable {
-  String submitImageForScanning(String tag, String dockerFile) throws ImageScanningException;
+  String submitImageForScanning(String tag, String dockerFileContents) throws ImageScanningException;
 
   JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException;
   JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException;

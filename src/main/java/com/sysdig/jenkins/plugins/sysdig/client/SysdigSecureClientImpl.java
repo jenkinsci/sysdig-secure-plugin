@@ -15,11 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningSubmission;
-import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -28,14 +25,11 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
   private final String token;
@@ -61,13 +55,13 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents) throws ImageScanningException {
     String imagesUrl = String.format("%s/api/scanning/v1/anchore/images", apiURL);
 
     JSONObject jsonBody = new JSONObject();
     jsonBody.put("tag", tag);
-    if (null != dockerFile) {
-      jsonBody.put("dockerfile", dockerFile);
+    if (null != dockerFileContents) {
+      jsonBody.put("dockerfile", dockerFileContents);
     }
 
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {

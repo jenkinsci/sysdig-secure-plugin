@@ -1,7 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.log;
 
-import hudson.AbortException;
-
 import java.io.PrintStream;
 import java.util.Date;
 
@@ -22,15 +20,10 @@ public class ConsoleLog implements SysdigLogger {
     return logger;
   }
 
-    public ConsoleLog(String name, PrintStream logger, boolean enableDebug) throws AbortException {
-    if (null != logger) {
-      this.name = name;
-      this.logger = logger;
-      this.enableDebug = enableDebug;
-    } else {
-      LOG.warning("Cannot instantiate console logger");
-      throw new AbortException("Cannot instantiate console logger");
-    }
+  public ConsoleLog(String name, PrintStream logger, boolean enableDebug) {
+    this.name = name;
+    this.logger = logger;
+    this.enableDebug = enableDebug;
   }
 
   @Override

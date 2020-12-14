@@ -33,16 +33,18 @@ public class SysdigBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
   private static final Logger LOG = Logger.getLogger(SysdigBuilderExecutor.class.getName());
 
-  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, AbortException {
+  private final ConsoleLog logger;
+
+  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
     boolean failedByGate = false;
     BuildConfig config = null;
     BuildWorker worker = null;
-    Scanner scanner = null;
     SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
-    ConsoleLog console = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
+
+    logger = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
 
     try {
       // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
@@ -53,9 +55,9 @@ public class SysdigBuilderExecutor {
 
 
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-      String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run, console);
+      String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
 
-      String engineurl = getEngineurl(builder, globalConfig, console);
+      String engineurl = getEngineurl(builder, globalConfig);
 
       boolean isInlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
 
@@ -68,7 +70,7 @@ public class SysdigBuilderExecutor {
       );
 
       worker = new BuildWorker(run, workspace, listener, config);
-      scanner = isInlineScanning ?
+      Scanner scanner = isInlineScanning ?
         new InlineScanner(launcher, listener, config) :
         new BackendScanner(launcher, listener, config);
 
@@ -77,24 +79,24 @@ public class SysdigBuilderExecutor {
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
         if ((config.getBailOnFail() && Util.GATE_ACTION.FAIL.equals(finalAction))) {
-          console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
+          logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
           failedByGate = true;
           throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
         } else {
-          console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
+          logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
         }
       } else {
-        console.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
+        logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
       }
 
     } catch (AbortException e) {
       if (failedByGate) {
         throw e;
       } else if ((null != config && config.getBailOnPluginFail()) || builder.getBailOnPluginFail()) {
-        console.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
+        logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
         throw e;
       } else {
-        console.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
+        logger.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
       }
     } finally {
       // Wrap cleanup in try catch block to ensure this finally block does not throw an exception
@@ -102,27 +104,27 @@ public class SysdigBuilderExecutor {
         try {
           worker.cleanup();
         } catch (Exception e) {
-          console.logDebug("Failed to cleanup after the plugin, ignoring the errors", e);
+          logger.logDebug("Failed to cleanup after the plugin, ignoring the errors", e);
         }
       }
-      console.logInfo("Completed Sysdig Secure Container Image Scanner step");
+      logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
         .getNumber());
     }
   }
 
-  private String getEngineurl(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, ConsoleLog console) {
+  private String getEngineurl(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig) {
     String engineurl = globalConfig.getEngineurl();
     if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      console.logInfo("Build override set for Sysdig Secure Engine URL");
+      logger.logInfo("Build override set for Sysdig Secure Engine URL");
       engineurl = builder.getEngineurl();
     }
     return engineurl;
   }
 
-  private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run, ConsoleLog console) throws AbortException {
+  private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
     String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();
-    console.logDebug("Processing Jenkins credential ID " + credID);
+    logger.logDebug("Processing Jenkins credential ID " + credID);
 
     String sysdigToken;
     try {
@@ -137,7 +139,7 @@ public class SysdigBuilderExecutor {
     } catch (AbortException e) {
       throw e;
     } catch (Exception e) {
-      console.logError(String.format("Error looking up Jenkins credentials by ID: '%s'", credID), e);
+      logger.logError(String.format("Error looking up Jenkins credentials by ID: '%s'", credID), e);
       throw new AbortException(String.format("Error looking up Jenkins credentials by ID: '%s", credID));
     }
     return sysdigToken;
