@@ -45,13 +45,13 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
   private final String imageName;
   private final FilePath dockerFile;
   private final BuildConfig config;
-  private final SysdigLogger logger;
+  private final TaskListener listener;
 
   public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
+    this.listener = listener;
     this.config = config;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
   }
 
   @Override
@@ -60,7 +60,8 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
       .getInstance()
       .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
       .build();
-    return scanImage(dockerClient);
+    SysdigLogger logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
+    return scanImage(dockerClient, logger);
   }
 
   @Override
@@ -68,7 +69,7 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
   }
 
-  public JSONObject scanImage(DockerClient dockerClient) throws InterruptedException, ImageScanningException {
+  public JSONObject scanImage(DockerClient dockerClient, SysdigLogger logger) throws InterruptedException, ImageScanningException {
     //TODO(airadier): dockerFileContents
     logger.logInfo(String.format("Pulling inline-scan image %s", INLINE_SCAN_IMAGE));
     dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();

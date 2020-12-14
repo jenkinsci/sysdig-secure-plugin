@@ -1,9 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.log;
 
 import java.io.PrintStream;
-import java.io.Serializable;
 
-public interface SysdigLogger extends Serializable {
+public interface SysdigLogger {
   PrintStream getLogger();
 
   void logDebug(String msg);
