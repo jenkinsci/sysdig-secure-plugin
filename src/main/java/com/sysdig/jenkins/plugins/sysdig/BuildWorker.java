@@ -16,9 +16,9 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.client.*;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -63,7 +63,7 @@ public class BuildWorker {
   private String jenkinsOutputDirName;
   private JSONObject gateSummary;
 
-  // FIXME can we get rid of this config? Also the launcher is not being used...
+  // FIXME can we get rid of this config?
   public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, BuildConfig config)
     throws AbortException {
     try {
@@ -94,7 +94,6 @@ public class BuildWorker {
 
       initializeJenkinsWorkspace();
 
-
       logger.logDebug("Build worker initialized");
     } catch (Exception e) {
       try {
@@ -109,7 +108,7 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException, InterruptedException {
+  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException {
     Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
     /* Run analysis */
@@ -118,15 +117,15 @@ public class BuildWorker {
     /* Run gates */
     Util.GATE_ACTION finalAction = this.processPolicyEvaluation(scanResults);
 
-    /* Run queries and continue even if it fails */
     try {
-      this.retrieveVulnerabilityEvaluation(scanResults);
-    } catch (AbortException e) {
-      logger.logWarn("Recording failure to execute Sysdig Secure queries and moving on with plugin operation", e);
-    }
+      this.processVulnerabilities(scanResults);
 
-    /* Setup reports */
-    this.setupBuildReports(finalAction);
+      /* Setup reports */
+      this.setupBuildReports(finalAction);
+
+    } catch (AbortException e) {
+      logger.logWarn("Recording failure to build reports and moving on with plugin operation", e);
+    }
 
     return finalAction;
   }
@@ -145,14 +144,15 @@ public class BuildWorker {
       JSONObject fullGateResults = new JSONObject();
 
       for (ImageScanningResult result : resultList) {
-
         JSONObject gateResult = result.getGateResult();
         String evalStatus = result.getEvalStatus();
         if (!"pass".equals(evalStatus)) {
           finalAction = Util.GATE_ACTION.FAIL;
         }
+
         logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
         logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
+
         for (Object key : gateResult.keySet()) {
           try {
             fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
@@ -308,53 +308,54 @@ public class BuildWorker {
     return gateSummary;
   }
 
-  public void retrieveVulnerabilityEvaluation(List<ImageScanningResult> submissionList) throws AbortException {
-    if (submissionList.isEmpty()) {
-      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
-      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
+  public JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+    JSONArray dataJson = new JSONArray();
+    JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
+    for (int i = 0; i < vulList.size(); i++) {
+      JSONObject vulnJson = vulList.getJSONObject(i);
+      JSONArray vulnArray = new JSONArray();
+      vulnArray.addAll(Arrays.asList(
+        tag,
+        vulnJson.getString("vuln"),
+        vulnJson.getString("severity"),
+        vulnJson.getString("package"),
+        vulnJson.getString("fix"),
+        String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+      dataJson.add(vulnArray);
     }
 
-    String sysdigToken = config.getSysdigToken();
-    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
+    return dataJson;
+  }
+
+  public void processVulnerabilities(List<ImageScanningResult> submissionList) throws AbortException {
+    JSONArray dataJson = new JSONArray();
+    for (ImageScanningResult entry : submissionList) {
+      String tag = entry.getTag();
+      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
+    }
+
+    JSONObject securityJson = new JSONObject();
+    JSONArray columnsJson = new JSONArray();
+
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
+      JSONObject columnJson = new JSONObject();
+      columnJson.put("title", column);
+      columnsJson.add(columnJson);
+    }
+
+    securityJson.put("columns", columnsJson);
+    securityJson.put("data", dataJson);
+
+    FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
 
     try {
-      JSONObject securityJson = new JSONObject();
-      JSONArray columnsJson = new JSONArray();
-      for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
-        JSONObject columnJson = new JSONObject();
-        columnJson.put("title", column);
-        columnsJson.add(columnJson);
-      }
-      JSONArray dataJson = new JSONArray();
-
-      for (ImageScanningSubmission entry : submissionList) {
-        String tag = entry.getTag();
-        String digest = entry.getImageDigest();
-        logger.logInfo(String.format("Querying vulnerability listing for %s", tag));
-
-        ImageScanningVulnerabilities imageScanningVulnerabilities = sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, digest);
-        dataJson.addAll(imageScanningVulnerabilities.getDataJson());
-      }
-      securityJson.put("columns", columnsJson);
-      securityJson.put("data", dataJson);
-
-
-      FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
-      try {
-        logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
-        jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
-      } catch (IOException | InterruptedException e) {
-        logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
-        throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
-      }
-
-    } catch (ImageScanningException e) {
-      logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
+      logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
+      jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
+    } catch (IOException | InterruptedException e) {
+      logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
+      throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
     }
+
   }
 
   public void setupBuildReports(Util.GATE_ACTION finalAction) throws AbortException {

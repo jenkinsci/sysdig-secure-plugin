@@ -16,46 +16,66 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
 import hudson.Launcher;
 import hudson.model.TaskListener;
 import hudson.remoting.*;
-import org.antlr.v4.runtime.misc.NotNull;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class InlineScanner extends Scanner {
 
+  private Map<String, JSONObject> scanOutputs;
+
   public InlineScanner(Launcher launcher, TaskListener listener, BuildConfig config) throws AbortException {
     super(launcher, listener, config);
+    this.scanOutputs = new HashMap<String, JSONObject>();
   }
 
   @Override
-  public @NotNull
-  ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
-    if (imagesAndDockerfiles == null) {
-      return new ArrayList<>();
+  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException {
+    VirtualChannel channel = launcher.getChannel();
+    if (channel == null) {
+      throw new AbortException("There's no channel to communicate with the worker");
     }
 
-    ArrayList<ImageScanningResult> resultList = new ArrayList<>();
     try {
-      VirtualChannel channel = launcher.getChannel();
-      if (channel == null) {
-        throw new AbortException("There's no channel to communicate with the worker");
-      }
+      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag, dockerfile, logger, config);
+      JSONObject scanOutput = channel.call(task);
 
-      for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
-        InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(entry.getKey(), entry.getValue(), logger, config);
+      String digest = scanOutput.getString("digest");
+      String tag = scanOutput.getString("tag");
+      this.scanOutputs.put(digest, scanOutput);
 
-        ImageScanningResult result = channel.call(task);
-        resultList.add(result);
-      }
+      return new ImageScanningSubmission(tag, digest);
+
     } catch (Exception e) {
-      throw new AbortException(e.toString());
+      logger.logError("Failed to perform inline-scan due to an unexpected error", e);
+      throw new AbortException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
     }
 
-    return resultList;
   }
 
+  @Override
+  public JSONArray getGateResults(ImageScanningSubmission submission) {
+    if (this.scanOutputs.containsKey(submission.getImageDigest())) {
+      return this.scanOutputs.get(submission.getImageDigest()).getJSONArray("scanReport");
+    }
+
+    return null;
+  }
+
+  @Override
+  public JSONObject getVulnsReport(ImageScanningSubmission submission) {
+    if (this.scanOutputs.containsKey(submission.getImageDigest())) {
+      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("vulnsReport");
+    }
+
+    return null;
+  }
 }
+

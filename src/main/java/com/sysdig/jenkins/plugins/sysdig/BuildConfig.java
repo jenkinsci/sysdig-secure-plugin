@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 
 import java.io.Serializable;
@@ -34,8 +33,8 @@ public class BuildConfig implements Serializable {
 
   // Global configuration
   private final boolean debug;
+  //TODO: inlineScanning Unused?
   private final boolean inlineScanning;
-  private final String containerRunMethod;
   private final String engineurl;
   private final String sysdigToken;
   private final boolean engineverify;
@@ -49,7 +48,6 @@ public class BuildConfig implements Serializable {
     this.bailOnPluginFail = bailOnPluginFail;
     this.debug = debug;
     this.inlineScanning = inlineScanning;
-    this.containerRunMethod = "TO-DO";
     this.engineurl = engineurl;
     this.sysdigToken = sysdigToken;
     this.engineverify = engineverify;

@@ -21,7 +21,6 @@ public class ImageScanningVulnerabilities {
   private JSONArray dataJson;
 
   public ImageScanningVulnerabilities(JSONArray dataJson) {
-
     this.dataJson = dataJson;
   }
 

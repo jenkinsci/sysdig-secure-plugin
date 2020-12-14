@@ -76,7 +76,7 @@ public class SysdigBuilderExecutor {
 
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
-        if ((config.getBailOnFail() && (Util.GATE_ACTION.STOP.equals(finalAction) || Util.GATE_ACTION.FAIL.equals(finalAction)))) {
+        if ((config.getBailOnFail() && Util.GATE_ACTION.FAIL.equals(finalAction))) {
           console.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
           failedByGate = true;
           throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);

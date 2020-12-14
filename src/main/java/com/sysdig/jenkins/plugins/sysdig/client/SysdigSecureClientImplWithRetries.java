@@ -15,6 +15,10 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningSubmission;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
 import java.io.File;
 import java.security.InvalidParameterException;
 
@@ -53,42 +57,31 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   @Override
-  public ImageScanningSubmission submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
-    return (ImageScanningSubmission)
+  public String submitImageForScanning(String tag, String dockerFile) throws ImageScanningException {
+    return (String)
       executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.submitImageForScanning(tag, dockerFile)
       );
   }
 
   @Override
-  public ImageScanningSubmission submitImageForScanning(String imageID, String imageName, String imageDigest, File scanningResult) throws ImageScanningException {
-    return (ImageScanningSubmission)
-      executeWithRetriesAndBackoff(() ->
-        sysdigSecureClient.submitImageForScanning(imageID, imageName, imageDigest, scanningResult)
-      );
-  }
-
-  @Override
-  public ImageScanningResult retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
-    return (ImageScanningResult)
+  public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+    return (JSONArray)
       executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest)
       );
   }
 
   @Override
-  public ImageScanningVulnerabilities retrieveImageScanningVulnerabilities(String tag, String imageDigest) throws ImageScanningException {
-    return (ImageScanningVulnerabilities)
+  public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException {
+    return (JSONObject)
       executeWithRetriesAndBackoff(() ->
-       sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, imageDigest)
+        sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest)
       );
   }
 
   @Override
   public String getScanningAccount() throws ImageScanningException {
-    return (String)
-    executeWithRetriesAndBackoff(() ->
-      sysdigSecureClient.getScanningAccount()
-    );
+    return (String)executeWithRetriesAndBackoff(sysdigSecureClient::getScanningAccount);
   }
 }

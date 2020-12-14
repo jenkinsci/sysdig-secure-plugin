@@ -22,11 +22,7 @@ public class ConsoleLog implements SysdigLogger {
     return logger;
   }
 
-  public boolean isEnableDebug() {
-    return enableDebug;
-  }
-
-  public ConsoleLog(String name, PrintStream logger, boolean enableDebug) throws AbortException {
+    public ConsoleLog(String name, PrintStream logger, boolean enableDebug) throws AbortException {
     if (null != logger) {
       this.name = name;
       this.logger = logger;
