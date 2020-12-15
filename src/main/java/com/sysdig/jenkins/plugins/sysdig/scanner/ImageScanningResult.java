@@ -13,33 +13,33 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.client;
+package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import net.sf.json.JSONObject;
 
-public class ImageScanningResult {
-  private String evalStatus;
-  private JSONObject gateResult;
+import java.io.Serializable;
 
-  public ImageScanningResult(String evalStatus, JSONObject gateResult) {
+public class ImageScanningResult extends ImageScanningSubmission implements Serializable {
+  private final String evalStatus;
+  private final JSONObject gateResult;
+  private final JSONObject vulnsReport;
 
+  public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult, JSONObject vulnsReport) {
+    super(tag, imageDigest);
     this.evalStatus = evalStatus;
     this.gateResult = gateResult;
+    this.vulnsReport = vulnsReport;
   }
 
   public String getEvalStatus() {
     return evalStatus;
   }
 
-  public void setEvalStatus(String evalStatus) {
-    this.evalStatus = evalStatus;
-  }
-
   public JSONObject getGateResult() {
     return gateResult;
   }
 
-  public void setGateResult(JSONObject gateResult) {
-    this.gateResult = gateResult;
+  public JSONObject getVulnerabilityReport() {
+    return vulnsReport;
   }
 }

@@ -16,9 +16,10 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.client.*;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -29,22 +30,21 @@ import hudson.tasks.ArtifactArchiver;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
 
-public abstract class BuildWorker {
+/**
+ * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
+ * for each individual job i.e. invocation of perform(). Global and project configuration at the time of execution is loaded into
+ * worker instance via its constructor. That specific worker instance is responsible for the bulk of the plugin operations for a given
+ * job.
+ */
+public class BuildWorker {
 
-  private static final Logger LOG = Logger.getLogger(BuildWorkerBackend.class.getName());
-
+  private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
@@ -56,16 +56,14 @@ public abstract class BuildWorker {
   TaskListener listener;
   BuildConfig config;
 
-
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
 
   private String jenkinsOutputDirName;
-  private Util.GATE_ACTION finalAction;
   private JSONObject gateSummary;
 
-  // FIXME can we get rid of this config? Also the launcher is not being used...
-  public BuildWorker(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, BuildConfig config)
+  // FIXME can we get rid of this config?
+  public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, BuildConfig config)
     throws AbortException {
     try {
       if (listener == null) {
@@ -92,10 +90,8 @@ public abstract class BuildWorker {
       this.launcher = workspace.createLauncher(listener);
 
       printConfig();
-//      checkConfig();
 
       initializeJenkinsWorkspace();
-
 
       logger.logDebug("Build worker initialized");
     } catch (Exception e) {
@@ -111,80 +107,59 @@ public abstract class BuildWorker {
     }
   }
 
+  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException {
+    Map<String, FilePath> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
-  public abstract ArrayList<ImageScanningSubmission> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException;
+    /* Run analysis */
+    ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
 
-  // FIXME: Remove this method and move to a client
-  private static CloseableHttpClient makeHttpClient(boolean verify) {
-    CloseableHttpClient httpclient = null;
-    if (verify) {
-      httpclient = HttpClients.createDefault();
-    } else {
-      try {
-        SSLContextBuilder builder = new SSLContextBuilder();
-        builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(),
-          SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-        httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
-      } catch (Exception e) {
-        System.out.println(e.toString());
-      }
+    /* Run gates */
+    Util.GATE_ACTION finalAction = this.processPolicyEvaluation(scanResults);
+
+    try {
+      this.processVulnerabilities(scanResults);
+
+      /* Setup reports */
+      this.setupBuildReports(finalAction);
+
+    } catch (AbortException e) {
+      logger.logWarn("Recording failure to build reports and moving on with plugin operation", e);
     }
-    return (httpclient);
+
+    return finalAction;
   }
 
-  public Util.GATE_ACTION retrievePolicyEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
-    String sysdigToken = config.getSysdigToken();
-    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
-
-
+  public Util.GATE_ACTION processPolicyEvaluation(List<ImageScanningResult> resultList) throws AbortException {
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, GATE_OUTPUT_FILENAME);
 
-    finalAction = Util.GATE_ACTION.PASS;
-    if (submissionList.isEmpty()) {
+    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
+    if (resultList.isEmpty()) {
       logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
     }
 
-
     try {
       JSONObject fullGateResults = new JSONObject();
 
-      for (ImageScanningSubmission submission : submissionList) {
-        String tag = submission.getTag();
-        String imageDigest = submission.getImageDigest();
+      for (ImageScanningResult result : resultList) {
+        JSONObject gateResult = result.getGateResult();
+        String evalStatus = result.getEvalStatus();
+        if (!"pass".equals(evalStatus)) {
+          finalAction = Util.GATE_ACTION.FAIL;
+        }
 
-        logger.logInfo(String.format("Waiting for analysis of %s with digest %s, polling status periodically...", tag, imageDigest));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
 
-        for (int i = 0; i < Integer.parseInt(config.getEngineRetries()); i++) {
-          Thread.sleep(i * 5000);
-
-          Optional<ImageScanningResult> imageScanningResult = sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-          if (!imageScanningResult.isPresent()) continue;
-
-          ImageScanningResult result = imageScanningResult.get();
-          JSONObject gateResult = result.getGateResult();
-          String evalStatus = result.getEvalStatus();
-          if (!"pass".equals(evalStatus)) {
-            finalAction = Util.GATE_ACTION.FAIL;
+        for (Object key : gateResult.keySet()) {
+          try {
+            fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
+          } catch (Exception e) {
+            logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
           }
-          logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
-          logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
-          for (Object key : gateResult.keySet()) {
-            try {
-              fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
-            } catch (Exception e) {
-              logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
-            }
-          }
-          break;
         }
       }
-
 
       logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
       jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -193,7 +168,7 @@ public abstract class BuildWorker {
       logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
       return finalAction;
 
-    } catch (InterruptedException | IOException | ImageScanningException e) {
+    } catch (InterruptedException | IOException e) {
       logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
       throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
@@ -332,53 +307,54 @@ public abstract class BuildWorker {
     return gateSummary;
   }
 
-  public void retrieveVulnerabilityEvaluation(List<ImageScanningSubmission> submissionList) throws AbortException {
-    if (submissionList.isEmpty()) {
-      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting vulnerability listing");
-      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting vulnerability listing");
+  public JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+    JSONArray dataJson = new JSONArray();
+    JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
+    for (int i = 0; i < vulList.size(); i++) {
+      JSONObject vulnJson = vulList.getJSONObject(i);
+      JSONArray vulnArray = new JSONArray();
+      vulnArray.addAll(Arrays.asList(
+        tag,
+        vulnJson.getString("vuln"),
+        vulnJson.getString("severity"),
+        vulnJson.getString("package"),
+        vulnJson.getString("fix"),
+        String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+      dataJson.add(vulnArray);
     }
 
-    String sysdigToken = config.getSysdigToken();
-    SysdigSecureClient sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    sysdigSecureClient = new SysdigSecureClientImplWithRetries(sysdigSecureClient, 10);
+    return dataJson;
+  }
+
+  public void processVulnerabilities(List<ImageScanningResult> submissionList) throws AbortException {
+    JSONArray dataJson = new JSONArray();
+    for (ImageScanningResult entry : submissionList) {
+      String tag = entry.getTag();
+      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
+    }
+
+    JSONObject securityJson = new JSONObject();
+    JSONArray columnsJson = new JSONArray();
+
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
+      JSONObject columnJson = new JSONObject();
+      columnJson.put("title", column);
+      columnsJson.add(columnJson);
+    }
+
+    securityJson.put("columns", columnsJson);
+    securityJson.put("data", dataJson);
+
+    FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
 
     try {
-      JSONObject securityJson = new JSONObject();
-      JSONArray columnsJson = new JSONArray();
-      for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
-        JSONObject columnJson = new JSONObject();
-        columnJson.put("title", column);
-        columnsJson.add(columnJson);
-      }
-      JSONArray dataJson = new JSONArray();
-
-      for (ImageScanningSubmission entry : submissionList) {
-        String tag = entry.getTag();
-        String digest = entry.getImageDigest();
-        logger.logInfo(String.format("Querying vulnerability listing for %s", tag));
-
-        ImageScanningVulnerabilities imageScanningVulnerabilities = sysdigSecureClient.retrieveImageScanningVulnerabilities(tag, digest);
-        dataJson.addAll(imageScanningVulnerabilities.getDataJson());
-      }
-      securityJson.put("columns", columnsJson);
-      securityJson.put("data", dataJson);
-
-
-      FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
-      try {
-        logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
-        jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
-      } catch (IOException | InterruptedException e) {
-        logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
-        throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
-      }
-
-    } catch (ImageScanningException e) {
-      logger.logError("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to fetch vulnerability listing from sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
+      logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
+      jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
+    } catch (IOException | InterruptedException e) {
+      logger.logWarn(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()), e);
+      throw new AbortException(String.format("Failed to write vulnerability listing to %s", jenkinsQueryOutputFP.getRemote()));
     }
+
   }
 
   public void setupBuildReports(Util.GATE_ACTION finalAction) throws AbortException {
@@ -391,8 +367,7 @@ public abstract class BuildWorker {
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(),
-        CVE_LISTING_FILENAME));
+      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
@@ -424,7 +399,7 @@ public abstract class BuildWorker {
   private void printConfig() {
     logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
-    if (Jenkins.getActiveInstance().getPluginManager() != null && (plugins = Jenkins.getActiveInstance().getPluginManager().getPlugins()) != null) {
+    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
@@ -433,30 +408,6 @@ public abstract class BuildWorker {
       }
     }
     config.print(logger);
-  }
-
-  /**
-   * Checks for minimum required config for executing step
-   */
-  // FIXME: Is this really necessary? Can't we check if the config is correct at the moment of the creation?
-  private void checkConfig() throws AbortException {
-    if (Strings.isNullOrEmpty(config.getName())) {
-      logger.logError("Image list file not found");
-      throw new AbortException(
-        "Image list file not specified. Please provide a valid image list file name in the Sysdig Secure Container Image Scanner step and try again");
-    }
-
-    try {
-      if (!new FilePath(workspace, config.getName()).exists()) {
-        logger.logError(String.format("Cannot find image list file \"%s\" under %s", config.getName(), workspace));
-        throw new AbortException(String.format("Cannot find image list file '%s'. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
-      }
-    } catch (AbortException e) {
-      throw e;
-    } catch (Exception e) {
-      logger.logWarn(String.format("Unable to access image list file \"%s\" under %s", config.getName(), workspace), e);
-      throw new AbortException(String.format("Unable to access image list file %s. Please ensure that image list file is created prior to Sysdig Secure Container Image Scanner step", config.getName()));
-    }
   }
 
   private void initializeJenkinsWorkspace() throws AbortException {
@@ -486,9 +437,9 @@ public abstract class BuildWorker {
     }
   }
 
-  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
+  public Map<String, FilePath> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
-    Map<String, String> imageDockerfileMap = new HashMap<>();
+    Map<String, FilePath> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
 
     // get the input and store it in tag/dockerfile map
@@ -498,8 +449,8 @@ public abstract class BuildWorker {
       for (String line : fileLines) {
         String[] lineSplit = line.split(" ", 1);
         String tag = lineSplit[0];
-        String dockerFileContents = (lineSplit.length > 1) ? new String(Base64.encodeBase64(new FilePath(workspace, lineSplit[1]).readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : "";
-        imageDockerfileMap.put(tag, dockerFileContents);
+        FilePath dockerFile = (lineSplit.length > 1) ? new FilePath(workspace, lineSplit[1]) : null;
+        imageDockerfileMap.put(tag,  dockerFile);
       }
 
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
@@ -525,4 +476,5 @@ public abstract class BuildWorker {
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     jenkinsOutputDirFP.deleteRecursive();
   }
+
 }

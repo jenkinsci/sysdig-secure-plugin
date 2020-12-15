@@ -59,7 +59,6 @@ import java.util.Collections;
  */
 public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
-
   // Assigning the defaults here for pipeline builds
   private final String name;
   private String engineRetries = DescriptorImpl.DEFAULT_ENGINE_RETRIES;
@@ -264,7 +263,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
       StandardListBoxModel result = new StandardListBoxModel();
 
-      if (!Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER)) {
+      if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
         return result.includeCurrentValue(credentialsId);
       }
 

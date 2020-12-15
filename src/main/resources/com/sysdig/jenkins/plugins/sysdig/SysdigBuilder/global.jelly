@@ -19,7 +19,7 @@
       <f:checkbox name="debug" checked="${descriptor.debug}" default="${false}"/>
     </f:entry>
 
-    <f:entry title="Inline Scanning (Experimental)" field="inlineScanning">
+    <f:entry title="Inline Scanning" field="inlineScanning">
       <f:checkbox name="inlineScanning" checked="${descriptor.inlineScanning}" default="${false}"/>
     </f:entry>
 
