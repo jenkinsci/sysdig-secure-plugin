@@ -30,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 
 public class BackendScanner extends Scanner {
 
+  private final static int CLIENT_RETRIES = 10;
+
   private SysdigSecureClient sysdigSecureClient;
 
   public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
@@ -39,7 +41,7 @@ public class BackendScanner extends Scanner {
     this.sysdigSecureClient = config.getEngineverify() ?
       SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
       SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    this.sysdigSecureClient = new SysdigSecureClientImplWithRetries(this.sysdigSecureClient, 10);
+    this.sysdigSecureClient = new SysdigSecureClientImplWithRetries(this.sysdigSecureClient, CLIENT_RETRIES);
   }
 
   @Override

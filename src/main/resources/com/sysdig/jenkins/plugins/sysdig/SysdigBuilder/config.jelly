@@ -19,10 +19,6 @@
           <f:checkbox name="inlineScanning" checked="${it.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
     </f:entry>
 
-    <f:entry title="Sysdig Secure Engine operation retries" field="engineRetries">
-        <f:textbox default="${descriptor.DEFAULT_ENGINE_RETRIES}"/>
-    </f:entry>
-
     <f:section title="Override Global Configuration">
         <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
             <f:textbox name="engineurl" default=""/>

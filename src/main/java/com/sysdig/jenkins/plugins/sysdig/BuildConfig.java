@@ -27,7 +27,6 @@ public class BuildConfig implements Serializable {
 
   // Build configuration
   private final String name;
-  private final String engineRetries;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
 
@@ -39,11 +38,10 @@ public class BuildConfig implements Serializable {
   private final String sysdigToken;
   private final boolean engineverify;
 
-  public BuildConfig(String name, String engineRetries, boolean bailOnFail, boolean bailOnPluginFail,
+  public BuildConfig(String name, boolean bailOnFail, boolean bailOnPluginFail,
                      boolean debug, boolean inlineScanning, String engineurl, String sysdigToken,
                      boolean engineverify) {
     this.name = name;
-    this.engineRetries = engineRetries;
     this.bailOnFail = bailOnFail;
     this.bailOnPluginFail = bailOnPluginFail;
     this.debug = debug;
@@ -55,10 +53,6 @@ public class BuildConfig implements Serializable {
 
   public String getName() {
     return name;
-  }
-
-  public String getEngineRetries() {
-    return engineRetries;
   }
 
   public boolean getBailOnFail() {
@@ -92,7 +86,6 @@ public class BuildConfig implements Serializable {
     consoleLog.logInfo(String.format("[build] engineverify: %s", engineverify));
     consoleLog.logInfo(String.format("[build] name: %s", name));
     consoleLog.logInfo(String.format("[build] bailOnFail: %s", bailOnFail));
-    consoleLog.logInfo(String.format("[build] engineRetries: %s", engineRetries));
     consoleLog.logInfo(String.format("[build] bailOnPluginFail: %s", bailOnPluginFail));
   }
 }

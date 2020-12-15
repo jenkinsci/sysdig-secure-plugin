@@ -40,7 +40,7 @@ public class InlineScanner extends Scanner {
     super(launcher, listener, config);
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
+    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), config.getDebug());
   }
 
   @Override

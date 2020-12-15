@@ -61,7 +61,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
   // Assigning the defaults here for pipeline builds
   private final String name;
-  private String engineRetries = DescriptorImpl.DEFAULT_ENGINE_RETRIES;
   private boolean bailOnFail = DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
   private boolean bailOnPluginFail = DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
   private boolean inlineScanning = DescriptorImpl.DEFAULT_INLINE_SCANNING;
@@ -75,10 +74,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   // Getters are used by config.jelly
   public String getName() {
     return name;
-  }
-
-  public String getEngineRetries() {
-    return engineRetries;
   }
 
   public boolean getBailOnFail() {
@@ -103,11 +98,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
   public boolean isInlineScanning() {
     return inlineScanning;
-  }
-
-  @DataBoundSetter
-  public void setEngineRetries(String engineRetries) {
-    this.engineRetries = engineRetries;
   }
 
   @DataBoundSetter
@@ -157,7 +147,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     // Default job level config that may be used both by config.jelly and an instance of SysdigBuilder
     public static final String DEFAULT_NAME = "sysdig_secure_images";
-    public static final String DEFAULT_ENGINE_RETRIES = "15";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final boolean DEFAULT_INLINE_SCANNING = false;

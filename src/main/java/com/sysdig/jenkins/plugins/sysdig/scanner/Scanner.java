@@ -22,7 +22,7 @@ public abstract class Scanner {
   public Scanner(Launcher launcher, TaskListener listener, BuildConfig config) {
     this.launcher = launcher;
     this.config = config;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
+    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), config.getDebug());
   }
 
   public abstract ImageScanningSubmission scanImage(String imageTag, FilePath dockerfile) throws AbortException;

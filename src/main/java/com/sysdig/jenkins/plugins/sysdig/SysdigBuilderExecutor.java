@@ -62,7 +62,7 @@ public class SysdigBuilderExecutor {
       boolean isInlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
 
       /* Instantiate config and a new build worker */
-      config = new BuildConfig(builder.getName(), builder.getEngineRetries(), builder.getBailOnFail(), builder.getBailOnPluginFail(), globalConfig.getDebug(),
+      config = new BuildConfig(builder.getName(), builder.getBailOnFail(), builder.getBailOnPluginFail(), globalConfig.getDebug(),
         isInlineScanning,
         engineurl,
         sysdigToken,
