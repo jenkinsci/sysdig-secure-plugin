@@ -22,7 +22,6 @@ public class InlineScannerTests {
 
   private final BuildConfig config = new BuildConfig("name", true, true, false, true, "", "foo", false);
   private Launcher launcher = null;
-  private TaskListener listener = null;
   private Scanner scanner = null;
 
   //TODO: Handle exception in channel.call
@@ -31,7 +30,7 @@ public class InlineScannerTests {
   @Before
   public void BeforeEach() {
     this.launcher = mock(Launcher.class);
-    this.listener = mock(TaskListener.class);
+    TaskListener listener = mock(TaskListener.class);
     PrintStream logger = mock(PrintStream.class);
     when(listener.getLogger()).thenReturn((logger));
     this.scanner = new InlineScanner(launcher, listener, config);
@@ -48,7 +47,7 @@ public class InlineScannerTests {
     when(this.launcher.getChannel()).thenReturn(channel);
     when(channel.call(any())).thenReturn(output);
 
-    // Do
+    // When
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
     // Then
@@ -57,9 +56,7 @@ public class InlineScannerTests {
 
   @Test
   public void testAbortIfNoChannel() {
-    // Given
-
-    // Do
+    // When
     AbortException thrown = assertThrows(
       AbortException.class,
       () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
@@ -72,11 +69,6 @@ public class InlineScannerTests {
   @Test
   public void testNoTagInOutput() throws IOException, InterruptedException {
     // Given
-    JSONArray returnedGateResults = new JSONArray();
-    JSONObject someJSON = new JSONObject();
-    someJSON.put("foo-key", "foo-value");
-    returnedGateResults.add(someJSON);
-
     JSONObject output = new JSONObject();
     output.put("digest", "foo-digest");
 
@@ -84,7 +76,7 @@ public class InlineScannerTests {
     when(this.launcher.getChannel()).thenReturn(channel);
     when(channel.call(any())).thenReturn(output);
 
-    // Do
+    // When
     AbortException thrown = assertThrows(
       AbortException.class,
       () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
@@ -97,11 +89,6 @@ public class InlineScannerTests {
   @Test
   public void testNoDigestInOutput() throws IOException, InterruptedException {
     // Given
-    JSONArray returnedGateResults = new JSONArray();
-    JSONObject someJSON = new JSONObject();
-    someJSON.put("foo-key", "foo-value");
-    returnedGateResults.add(someJSON);
-
     JSONObject output = new JSONObject();
     output.put("tag", IMAGE_TO_SCAN);
 
@@ -109,7 +96,7 @@ public class InlineScannerTests {
     when(this.launcher.getChannel()).thenReturn(channel);
     when(channel.call(any())).thenReturn(output);
 
-    // Do
+    // When
     AbortException thrown = assertThrows(
       AbortException.class,
       () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
@@ -136,7 +123,7 @@ public class InlineScannerTests {
     when(this.launcher.getChannel()).thenReturn(channel);
     when(channel.call(any())).thenReturn(output);
 
-    // Do
+    // When
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
     JSONArray gateResults = this.scanner.getGateResults(submission);
 

@@ -29,17 +29,23 @@ import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class InlineScannerRemoteExecutor implements Callable<JSONObject, Exception>, Serializable {
+
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
-  private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
   private static final String[] MKDIR_COMMAND = new String[]{"mkdir", "/tmp/sysdig-inline-scan"};
   private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/info.log"};
   private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/info.log"};
+  private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
+  private static final String[] SCAN_ARGS = new String[] {
+    "--storage-type=docker-daemon",
+    "--format=JSON"};
+
   private static final int STOP_SECONDS = 1;
 
   private final String imageName;
@@ -75,10 +81,14 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
   public JSONObject scanImage(ContainerRunner containerRunner, SysdigLogger logger) throws InterruptedException, ImageScanningException {
 
     //TODO(airadier): dockerFileContents
-    List<String> args = Arrays.asList(SCAN_COMMAND, "--storage-type=docker-daemon", "--format=JSON", imageName);
-    List<String> envVars = Collections.singletonList("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
+    List<String> args = new ArrayList<String>();
+    args.add(SCAN_COMMAND);
+    args.addAll(Arrays.asList(SCAN_ARGS));
+    args.add(imageName);
 
-    logger.logInfo("Creating container");
+    List<String> envVars = new ArrayList<String>();
+    envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
+    envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
 
     Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars);
     final StringBuilder builder = new StringBuilder();
@@ -90,7 +100,6 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
       inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, null);
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, null);
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame) );
-      //TODO: Wait for tail to finish?
 
       inlineScanContainer.exec(args, null, builder::append);
     } finally {

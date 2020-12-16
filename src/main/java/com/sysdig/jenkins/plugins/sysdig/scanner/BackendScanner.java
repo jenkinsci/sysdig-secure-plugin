@@ -26,22 +26,22 @@ import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
 
 
 public class BackendScanner extends Scanner {
 
-  private final static int CLIENT_RETRIES = 10;
+  private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
+  private final SysdigSecureClient sysdigSecureClient;
 
-  private SysdigSecureClient sysdigSecureClient;
-
-  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
+  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
     super(launcher, listener, config);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    this.sysdigSecureClient = new SysdigSecureClientImplWithRetries(this.sysdigSecureClient, CLIENT_RETRIES);
+      factory.newClient(sysdigToken, config.getEngineurl(), logger) :
+      factory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
   }
 
   @Override
@@ -51,7 +51,7 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
       String dockerFileContents = dockerfile != null ? new String(Base64.encodeBase64(dockerfile.readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : null;
 
-      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents);
+      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations);
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {

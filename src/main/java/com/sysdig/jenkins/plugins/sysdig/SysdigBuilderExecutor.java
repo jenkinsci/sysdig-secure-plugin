@@ -18,6 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
@@ -72,7 +73,7 @@ public class SysdigBuilderExecutor {
       worker = new BuildWorker(run, workspace, listener, config);
       Scanner scanner = isInlineScanning ?
         new InlineScanner(launcher, listener, config) :
-        new BackendScanner(launcher, listener, config);
+        new BackendScanner(launcher, listener, config, new SysdigSecureClientFactory());
 
       Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner);
 

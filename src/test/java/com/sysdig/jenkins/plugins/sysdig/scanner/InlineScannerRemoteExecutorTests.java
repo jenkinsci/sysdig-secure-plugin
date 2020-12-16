@@ -60,19 +60,19 @@ public class InlineScannerRemoteExecutorTests {
     doReturn(container).when(runner).createContainer(any(), any(), any(), any());
 
     // Mock async executions of "tail", to simulate some log output
-    doNothing().when(container).execAsync(argThat(args -> args.get(0) == "tail"), any(), argThat(matcher -> {
+    doNothing().when(container).execAsync(argThat(args -> args.get(0).equals("tail")), any(), argThat(matcher -> {
       matcher.accept(logOutput);
       return true;
     }));
 
     // Mock sync execution of the inline scan script. Mock the JSON output
-    doNothing().when(container).exec(argThat(args -> args.get(0) == "/sysdig-inline-scan.sh"), any(), argThat(matcher -> {
+    doNothing().when(container).exec(argThat(args -> args.get(0).equals("/sysdig-inline-scan.sh")), any(), argThat(matcher -> {
       matcher.accept(outputObject.toString());
       return true;
     }));
 
     // Mock execution of the touch or mkdir commands
-    doNothing().when(container).exec(argThat(args -> args.get(0) == "touch" || args.get(0) == "mkdir"), any(), any());
+    doNothing().when(container).exec(argThat(args -> args.get(0).equals("touch") || args.get(0).equals("mkdir")), any(), any());
   }
 
   @Test
@@ -117,6 +117,15 @@ public class InlineScannerRemoteExecutorTests {
 
     // Then
     assertEquals(scanOutput.toString(), outputObject.toString());
+  }
+
+  @Test
+  public void addedByAnnotationsAreIncluded() throws ImageScanningException, InterruptedException {
+    // When
+    scannerRemoteExecutor.scanImage(runner, logger);
+
+    // Then
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("SYSDIG_ADDED_BY=cicd-inline-scan")));
   }
 
   @Test
