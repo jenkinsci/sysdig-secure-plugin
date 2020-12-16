@@ -21,15 +21,13 @@ public class InlineScannerRemoteExecutorTests {
   private static final String IMAGE_TO_SCAN = "foo:latest";
   private static final String SYSDIG_TOKEN = "foo-token";
 
-  private final BuildConfig config = new BuildConfig(null, null, SYSDIG_TOKEN);
-
   private InlineScannerRemoteExecutor scannerRemoteExecutor = null;
 
   //TODO: Sysdig URL
 
-  //TODO: Dockerfile
-
   //TODO: Skip TLS
+
+  //TODO: Dockerfile
 
   //TODO: Throw exception on container run
 
@@ -47,6 +45,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Before
   public void beforeEach() throws InterruptedException {
+    BuildConfig config = mock(BuildConfig.class);
+    when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
+
     scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null,null, config);
 
     runner = mock(ContainerRunner.class);

@@ -63,7 +63,7 @@ public class SysdigBuilderExecutor {
       config.print(logger);
 
       worker = new BuildWorker(run, workspace, listener, logger);
-      Scanner scanner = config.isInlineScanning() ?
+      Scanner scanner = config.getInlineScanning() ?
         new InlineScanner(launcher, listener, config) :
         new BackendScanner(launcher, listener, config, new SysdigSecureClientFactory());
 

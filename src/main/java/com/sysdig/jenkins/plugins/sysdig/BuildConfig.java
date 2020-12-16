@@ -29,38 +29,49 @@ import java.util.List;
  */
 public class BuildConfig implements Serializable {
 
-  private final SysdigBuilder builder;
-  private final SysdigBuilder.DescriptorImpl globalConfig;
+
+  private final String name;
+  private final boolean bailOnFail;
+  private final boolean bailOnPluginFail;
+  private final boolean debug;
+  private final String engineurl;
+  private final boolean engineverify;
+  private final boolean inlineScanning;
   private final String sysdigToken;
 
-
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
-    this.builder = builder;
-    this.globalConfig = globalConfig;
+    name = builder.getName();
+    bailOnFail = builder.getBailOnFail();
+    bailOnPluginFail =  builder.getBailOnPluginFail();
+    debug = globalConfig.getDebug();
+    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
+      engineurl = builder.getEngineurl();
+    } else {
+      engineurl = globalConfig.getEngineurl();
+    }
+    engineverify = builder.getEngineverify();
+    inlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
     this.sysdigToken = sysdigToken;
   }
 
   public String getName() {
-    return builder.getName();
+    return name;
   }
 
   public boolean getBailOnFail() {
-    return builder.getBailOnFail();
+    return bailOnFail;
   }
 
   public boolean getBailOnPluginFail() {
-    return builder.getBailOnPluginFail();
+    return bailOnPluginFail;
   }
 
   public boolean getDebug() {
-    return globalConfig.getDebug();
+    return debug;
   }
 
   public String getEngineurl() {
-    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      return builder.getEngineurl();
-    }
-    return globalConfig.getEngineurl();
+    return engineurl;
   }
 
   public String getSysdigToken() {
@@ -68,12 +79,13 @@ public class BuildConfig implements Serializable {
   }
 
   public boolean getEngineverify() {
-    return builder.getEngineverify();
+    return engineverify;
   }
 
-  public boolean isInlineScanning() {
-    return builder.isInlineScanning() || globalConfig.getInlineScanning();
+  public boolean getInlineScanning() {
+    return inlineScanning;
   }
+
   /**
    * Print versions info and configuration
    */
@@ -89,14 +101,13 @@ public class BuildConfig implements Serializable {
       }
     }
 
-    logger.logInfo(String.format("[global] debug: %s", globalConfig.getDebug()));
-    logger.logInfo(String.format("[global] inlineScanning: %s", globalConfig.getInlineScanning()));
-    logger.logInfo(String.format("[build] inlineScanning: %s", builder.isInlineScanning()));
-    logger.logInfo(String.format("[build] engineurl: %s", this.getEngineurl()));
-    logger.logInfo(String.format("[build] engineverify: %s", this.getEngineverify()));
-    logger.logInfo(String.format("[build] name: %s", this.getName()));
-    logger.logInfo(String.format("[build] bailOnFail: %s", this.getBailOnFail()));
-    logger.logInfo(String.format("[build] bailOnPluginFail: %s", this.getBailOnPluginFail()));
+    logger.logInfo(String.format("debug: %s", this.getDebug()));
+    logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
+    logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
+    logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
+    logger.logInfo(String.format("name: %s", this.getName()));
+    logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
+    logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
   }
 
 }
