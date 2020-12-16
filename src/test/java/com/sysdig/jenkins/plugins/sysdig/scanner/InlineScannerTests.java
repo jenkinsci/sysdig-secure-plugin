@@ -20,7 +20,7 @@ public class InlineScannerTests {
 
   private final String IMAGE_TO_SCAN = "foo:latest";
 
-  private final BuildConfig config = new BuildConfig("name", true, true, false, true, "", "foo", false);
+  private BuildConfig config;
   private Launcher launcher = null;
   private Scanner scanner = null;
 
@@ -30,6 +30,7 @@ public class InlineScannerTests {
   @Before
   public void BeforeEach() {
     this.launcher = mock(Launcher.class);
+    this.config = mock(BuildConfig.class);
     TaskListener listener = mock(TaskListener.class);
     PrintStream logger = mock(PrintStream.class);
     when(listener.getLogger()).thenReturn((logger));
@@ -37,7 +38,7 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testImageIsScanned() throws IOException, InterruptedException {
+  public void testImageIsScanned() throws IOException, InterruptedException, Throwable {
     // Given
     JSONObject output = new JSONObject();
     output.put("digest", "foo-digest");
@@ -67,7 +68,7 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testNoTagInOutput() throws IOException, InterruptedException {
+  public void testNoTagInOutput() throws Throwable {
     // Given
     JSONObject output = new JSONObject();
     output.put("digest", "foo-digest");
@@ -87,7 +88,7 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testNoDigestInOutput() throws IOException, InterruptedException {
+  public void testNoDigestInOutput() throws Throwable {
     // Given
     JSONObject output = new JSONObject();
     output.put("tag", IMAGE_TO_SCAN);
@@ -107,7 +108,7 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testGetGateResults() throws IOException, InterruptedException {
+  public void testGetGateResults() throws Throwable {
     // Given
     JSONArray returnedGateResults = new JSONArray();
     JSONObject someJSON = new JSONObject();
@@ -132,7 +133,7 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testGetVulnsReport() throws IOException, InterruptedException {
+  public void testGetVulnsReport() throws Throwable {
     // Given
     JSONObject returnedVulnsReport = new JSONObject();
     returnedVulnsReport.put("foo-key", "foo-value");

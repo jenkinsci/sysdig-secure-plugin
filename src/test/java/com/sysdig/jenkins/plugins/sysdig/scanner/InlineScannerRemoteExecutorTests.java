@@ -14,13 +14,14 @@ import org.mockito.quality.Strictness;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static com.github.stefanbirkner.systemlambda.SystemLambda.*;
 
 public class InlineScannerRemoteExecutorTests {
   private static final String SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String IMAGE_TO_SCAN = "foo:latest";
   private static final String SYSDIG_TOKEN = "foo-token";
 
-  private final BuildConfig config = new BuildConfig("name", true, true, false, true, "", SYSDIG_TOKEN, false);
+  private final BuildConfig config = new BuildConfig(null, null, SYSDIG_TOKEN);
 
   private InlineScannerRemoteExecutor scannerRemoteExecutor = null;
 
@@ -29,8 +30,6 @@ public class InlineScannerRemoteExecutorTests {
   //TODO: Dockerfile
 
   //TODO: Skip TLS
-
-  //TODO: Proxy
 
   //TODO: Throw exception on container run
 
@@ -147,4 +146,36 @@ public class InlineScannerRemoteExecutorTests {
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("SYSDIG_API_TOKEN=" + SYSDIG_TOKEN)));
   }
 
+  @Test
+  @Ignore
+  public void applyProxyEnvVarsFrom_http_proxy() throws Exception {
+    withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
+      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+
+    // Then
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("http_proxy=http://httpproxy:1234")));
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("https_proxy=http://httpproxy:1234")));
+  }
+
+  @Test
+  @Ignore
+  public void applyProxyEnvVarsFrom_https_proxy() throws Exception {
+    withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
+      .and("https_proxy", "http://httpsproxy:1234")
+      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+
+    // Then
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("http_proxy=http://httpproxy:1234")));
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("https_proxy=http://httpsproxy:1234")));
+  }
+
+  @Test
+  @Ignore
+  public void applyProxyEnvVarsFrom_no_proxy() throws Exception {
+    withEnvironmentVariable("no", "1.2.3.4,5.6.7.8")
+      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+
+    // Then
+    verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("no_proxy=1.2.3.4,5.6.7.8")));
+  }
 }

@@ -25,6 +25,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class BackendScanner extends Scanner {
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
+      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
     }
   }
 

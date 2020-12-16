@@ -26,7 +26,9 @@ import static org.mockito.Mockito.times;
 public class BackendScannerTests {
   //TODO: Mock the client (inject as dependency?) and check it posts image, checks results, retrieves reports
   //TODO: Test error handling on API
-  //TODO: Secure client
+  //TODO: Secure client is received at factory
+  //TODO: Verify Token is received at factory
+  //TODO: Verify URL is received at factory
 
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
@@ -34,7 +36,6 @@ public class BackendScannerTests {
   private final static String IMAGE_TO_SCAN = "foo:latest";
   private final static String IMAGE_DIGEST = "foo-digest";
 
-  private final BuildConfig config = new BuildConfig("name", true, true, false, true, "", "foo", true);
   private Scanner scanner = null;
   private SysdigSecureClient client;
 
@@ -42,9 +43,10 @@ public class BackendScannerTests {
   public void BeforeEach() throws ImageScanningException {
     Launcher launcher = mock(Launcher.class);
     TaskListener listener = mock(TaskListener.class);
+    BuildConfig config = mock(BuildConfig.class);
     BackendScanningClientFactory clientFactory = mock(BackendScanningClientFactory.class);
     this.client = mock(SysdigSecureClient.class);
-    when(clientFactory.newClient(any(), any(), any())).thenReturn(client);
+    when(clientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
     PrintStream logger = mock(PrintStream.class);
     when(listener.getLogger()).thenReturn((logger));

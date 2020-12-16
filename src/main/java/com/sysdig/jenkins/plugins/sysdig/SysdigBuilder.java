@@ -132,7 +132,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException, InterruptedException {
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
     new SysdigBuilderExecutor(this, run, workspace, launcher, listener);
   }
 
@@ -180,12 +180,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       this.engineCredentialsId = engineCredentialsId;
     }
 
-    public void setEngineuser(String engineuser) {
-    }
-
-    public void setEnginepass(Secret enginepass) {
-    }
-
+    //TODO(airadier): are we missing assigning to the member in here?
     public void setEngineverify(boolean engineverify) {
     }
 

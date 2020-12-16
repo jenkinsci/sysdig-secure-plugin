@@ -54,28 +54,20 @@ public class SysdigBuilderExecutor {
       }
       //Prefer the job credentials set by the user and fallback to the global ones
 
-
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
       String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
 
-      String engineurl = getEngineurl(builder, globalConfig);
-
-      boolean isInlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
-
       /* Instantiate config and a new build worker */
-      config = new BuildConfig(builder.getName(), builder.getBailOnFail(), builder.getBailOnPluginFail(), globalConfig.getDebug(),
-        isInlineScanning,
-        engineurl,
-        sysdigToken,
-        builder.getEngineverify()
-      );
+      config = new BuildConfig(globalConfig, builder, sysdigToken);
 
-      worker = new BuildWorker(run, workspace, listener, config);
-      Scanner scanner = isInlineScanning ?
+      config.print(logger);
+
+      worker = new BuildWorker(run, workspace, listener, logger);
+      Scanner scanner = config.isInlineScanning() ?
         new InlineScanner(launcher, listener, config) :
         new BackendScanner(launcher, listener, config, new SysdigSecureClientFactory());
 
-      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner);
+      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner, config);
 
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
