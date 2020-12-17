@@ -215,6 +215,8 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       clientBuilder.setSSLSocketFactory(sslsf);
     }
 
+    clientBuilder = clientBuilder.useSystemProperties();
+
     // Add proxy configuration to the client
     ProxyConfiguration proxyConfiguration = Jenkins.get().proxy;
     if (proxyConfiguration != null && !Strings.isNullOrEmpty(proxyConfiguration.name)) {
