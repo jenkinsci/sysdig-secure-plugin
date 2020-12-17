@@ -89,18 +89,16 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       logger.logDebug("Body:\n" + body);
 
       try (CloseableHttpResponse response = httpclient.execute(httppost)) {
+        String responseBody = EntityUtils.toString(response.getEntity());
         logger.logDebug("Response: " + response.getStatusLine().toString());
-        logger.logDebug("Response body:\n" + EntityUtils.toString(response.getEntity()));
+        logger.logDebug("Response body:\n" + responseBody);
 
         int statusCode = response.getStatusLine().getStatusCode();
 
         if (statusCode != 200) {
-          String serverMessage = EntityUtils.toString(response.getEntity());
-          throw new ImageScanningException(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", imagesUrl, response.getStatusLine(), serverMessage));
+          throw new ImageScanningException(String.format("sysdig-secure-engine add image failed. URL: %s, status: %s, error: %s", imagesUrl, response.getStatusLine(), responseBody));
         }
 
-
-        String responseBody = EntityUtils.toString(response.getEntity());
         return JSONObject.fromObject(JSONArray.fromObject(responseBody).get(0)).getString("imageDigest");
       }
     } catch (RuntimeException e) {
@@ -123,15 +121,14 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       logger.logDebug("Sending request: " + httpget.toString());
 
       try (CloseableHttpResponse response = httpclient.execute(httpget)) {
+        String responseBody = EntityUtils.toString(response.getEntity());
         logger.logDebug("Response: " + response.getStatusLine().toString());
-        logger.logDebug("Response body:\n" + EntityUtils.toString(response.getEntity()));
+        logger.logDebug("Response body:\n" + responseBody);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-          String responseStr = EntityUtils.toString(response.getEntity());
-          throw new ImageScanningException(String.format("Error while retrieving the image vulnerabilities: %s", responseStr));
+          throw new ImageScanningException(String.format("Error while retrieving the image vulnerabilities: %s", responseBody));
         }
 
-        String responseBody = EntityUtils.toString(response.getEntity());
         return JSONObject.fromObject(responseBody);
       }
     } catch (RuntimeException e) {
@@ -154,15 +151,15 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       logger.logDebug("Sending request: " + httpget.toString());
 
       try (CloseableHttpResponse response = httpclient.execute(httpget)) {
+        String responseBody = EntityUtils.toString(response.getEntity());
+
         logger.logDebug("Response: " + response.getStatusLine().toString());
-        logger.logDebug("Response body:\n" + EntityUtils.toString(response.getEntity()));
+        logger.logDebug("Response body:\n" + responseBody);
 
         if (response.getStatusLine().getStatusCode() != 200) {
-          String responseStr = EntityUtils.toString(response.getEntity());
-          throw new ImageScanningException(String.format("Error while retrieving the image scanning results: %s", responseStr));
+          throw new ImageScanningException(String.format("Error while retrieving the image scanning results: %s", responseBody));
         }
 
-        String responseBody = EntityUtils.toString(response.getEntity());
         return JSONArray.fromObject(responseBody);
       }
     } catch (RuntimeException e) {
@@ -182,8 +179,14 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       httpget.addHeader("Content-Type", "application/json");
       httpget.addHeader("Authorization", String.format("Bearer %s", token));
 
+      logger.logDebug("Sending request: " + httpget.toString());
+
       try (CloseableHttpResponse response = httpClient.execute(httpget)) {
         String responseBody = EntityUtils.toString(response.getEntity());
+
+        logger.logDebug("Response: " + response.getStatusLine().toString());
+        logger.logDebug("Response body:\n" + responseBody);
+
         if (response.getStatusLine().getStatusCode() != 200) {
           throw new ImageScanningException(String.format("Unable to retrieve the Scanning Account: %s", responseBody));
         }

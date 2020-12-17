@@ -16,7 +16,7 @@
     </f:entry>
 
     <f:entry title="Inline Scanning" field="inlineScanning" help="/plugin/sysdig-secure/help/help-inlineScanning.html">
-          <f:checkbox name="inlineScanning" checked="${it.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
+          <f:checkbox name="inlineScanning" checked="${instance.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
     </f:entry>
 
     <f:section title="Override Global Configuration">
