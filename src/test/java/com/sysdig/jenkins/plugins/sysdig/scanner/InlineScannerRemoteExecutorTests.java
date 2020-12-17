@@ -148,7 +148,6 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  @Ignore
   public void applyProxyEnvVarsFrom_http_proxy() throws Exception {
     withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
       .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
@@ -159,7 +158,6 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  @Ignore
   public void applyProxyEnvVarsFrom_https_proxy() throws Exception {
     withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
       .and("https_proxy", "http://httpsproxy:1234")
@@ -171,9 +169,8 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  @Ignore
   public void applyProxyEnvVarsFrom_no_proxy() throws Exception {
-    withEnvironmentVariable("no", "1.2.3.4,5.6.7.8")
+    withEnvironmentVariable("no_proxy", "1.2.3.4,5.6.7.8")
       .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
 
     // Then

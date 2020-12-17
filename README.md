@@ -26,6 +26,7 @@ Table of Contents
 - [Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project](#example-1-integrate-the-sysdig-secure-plugin-with-a-freestyle-project)
 - [Example 2: Executing the Sysdig plugin inside a pipeline](#example-2-executing-the-sysdig-plugin-inside-a-pipeline)
 - [Configuration Options](#configuration-options)
+- [Proxy Configuration](#proxy-configuration)
 - [Plugin outputs](#plugin-outputs)
 - [Local development and installation](#local-development-and-installation)                                                                                                                             
 
@@ -113,8 +114,6 @@ myimage:3.11 ./build/Dockerfile
 alpine:latest 
 ```
 
-
-
 # Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project
 
 1.  Using the Jenkins Docker plugin for this example, you could start by building the image and writing the image name to the `sysdig_secure_images` file
@@ -159,9 +158,7 @@ stages {
 
 The table below describes each of the configuration options.
 
-
 # Configuration Options
-
 
 | Option                                 | Description                                                                                                                                                                                                                                                      | Default |
 |----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| -------|
@@ -175,6 +172,11 @@ The following is an example of executing the Sysdig Secure plugin as a Jenkinsfi
 ```
 sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineurl: 'https://api.sysdigcloud.com', inlineScanning: true, name: 'sysdig_secure_images'
 ```
+
+# Proxy configuration
+
+* Backend scan connects to Sysdig Secure backend from the Jenkins master node, so it will use the [Jenkins proxy configuration](https://wiki.jenkins.io/display/JENKINS/JenkinsBehindProxy).
+* Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
 
 # Plugin outputs
 
@@ -200,4 +202,3 @@ docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /us
 ```
 
 You can then install the plugin via the Jenkins UI, or by copying it into $JENKINS_HOME/plugins.
-

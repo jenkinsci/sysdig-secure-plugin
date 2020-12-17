@@ -50,7 +50,7 @@ public class BuildConfig implements Serializable {
       engineurl = globalConfig.getEngineurl();
     }
     engineverify = builder.getEngineverify();
-    inlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
+    inlineScanning = builder.isInlineScanning();
     this.sysdigToken = sysdigToken;
   }
 

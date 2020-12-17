@@ -149,7 +149,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public static final String DEFAULT_NAME = "sysdig_secure_images";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
-    public static final boolean DEFAULT_INLINE_SCANNING = false;
+    public static final boolean DEFAULT_INLINE_SCANNING = true;
     public static final String EMPTY_STRING = "";
     public static final String DEFAULT_ENGINE_URL = "https://api.sysdigcloud.com";
 
@@ -157,7 +157,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     private boolean debug;
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
-    private boolean inlineScanning = DEFAULT_INLINE_SCANNING;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -184,10 +183,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public void setEngineverify(boolean engineverify) {
     }
 
-    public void setInlineScanning(boolean inlineScanning) {
-      this.inlineScanning = inlineScanning;
-    }
-
     public boolean getDebug() {
       return debug;
     }
@@ -203,10 +198,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     public String getEngineCredentialsId() {
       return engineCredentialsId;
-    }
-
-    public boolean getInlineScanning() {
-      return inlineScanning;
     }
 
     public DescriptorImpl() {

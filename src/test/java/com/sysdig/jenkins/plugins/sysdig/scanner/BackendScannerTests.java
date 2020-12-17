@@ -24,7 +24,6 @@ import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
 public class BackendScannerTests {
-  //TODO: Mock the client (inject as dependency?) and check it posts image, checks results, retrieves reports
   //TODO: Test error handling on API
   //TODO: Secure client is received at factory
   //TODO: Verify Token is received at factory
