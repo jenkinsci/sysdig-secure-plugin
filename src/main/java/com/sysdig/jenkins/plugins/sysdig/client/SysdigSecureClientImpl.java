@@ -15,12 +15,12 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -214,7 +214,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
     // Add proxy configuration to the client
     ProxyConfiguration proxyConfiguration = Jenkins.get().proxy;
-    if (StringUtils.isNotEmpty(proxyConfiguration.name)) {
+    if (proxyConfiguration != null && !Strings.isNullOrEmpty(proxyConfiguration.name)) {
       HttpHost proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port, "http");
 
       if (proxyConfiguration.getNoProxyHostPatterns().size() > 0) {
@@ -241,7 +241,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
 
       clientBuilder.setProxy(proxy);
 
-      if (StringUtils.isNotEmpty(proxyConfiguration.getUserName())) {
+      if (!Strings.isNullOrEmpty(proxyConfiguration.getUserName())) {
         Credentials credentials = new UsernamePasswordCredentials(proxyConfiguration.getUserName(),proxyConfiguration.getPassword());
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials( new AuthScope(proxyConfiguration.name, proxyConfiguration.port), credentials);

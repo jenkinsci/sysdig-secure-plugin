@@ -46,10 +46,12 @@ public class BuildConfig implements Serializable {
     debug = globalConfig.getDebug();
     if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
       engineurl = builder.getEngineurl();
+      engineverify = builder.getEngineverify();
     } else {
       engineurl = globalConfig.getEngineurl();
+      engineverify = globalConfig.getEngineverify();
+
     }
-    engineverify = builder.getEngineverify();
     inlineScanning = builder.isInlineScanning();
     this.sysdigToken = sysdigToken;
   }

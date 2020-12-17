@@ -68,7 +68,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   // Override global config. Supported for sysdig-secure-engine mode config only
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
-  private boolean engineverify = false;
+  private boolean engineverify = DescriptorImpl.DEFAULT_ENGINE_VERIFY;
   // More flags to indicate boolean override, ugh!
 
   // Getters are used by config.jelly
@@ -121,6 +121,11 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
+  public void setEngineverify(boolean engineverify) {
+    this.engineverify = engineverify;
+  }
+
+  @DataBoundSetter
   public void setInlineScanning(boolean inlineScanning) {
     this.inlineScanning = inlineScanning;
   }
@@ -150,25 +155,27 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final boolean DEFAULT_INLINE_SCANNING = true;
+    public static final boolean DEFAULT_ENGINE_VERIFY = true;
     public static final String EMPTY_STRING = "";
     public static final String DEFAULT_ENGINE_URL = "https://api.sysdigcloud.com";
 
     // Global configuration
-    private boolean debug;
+    private boolean debug = false;
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
+    private boolean engineverify = DEFAULT_ENGINE_VERIFY;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
     private boolean enabled;
 
-    public void setDebug(boolean debug) {
-      this.debug = debug;
-    }
-
     @Deprecated
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+    }
+
+    public void setDebug(boolean debug) {
+      this.debug = debug;
     }
 
     public void setEngineurl(String engineurl) {
@@ -179,17 +186,17 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       this.engineCredentialsId = engineCredentialsId;
     }
 
-    //TODO(airadier): are we missing assigning to the member in here?
     public void setEngineverify(boolean engineverify) {
-    }
-
-    public boolean getDebug() {
-      return debug;
+      this.engineverify = engineverify;
     }
 
     @Deprecated
     public boolean getEnabled() {
       return enabled;
+    }
+
+    public boolean getDebug() {
+      return debug;
     }
 
     public String getEngineurl() {
@@ -198,6 +205,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     public String getEngineCredentialsId() {
       return engineCredentialsId;
+    }
+
+    public boolean getEngineverify() {
+      return engineverify;
     }
 
     public DescriptorImpl() {

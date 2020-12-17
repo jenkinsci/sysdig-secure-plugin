@@ -81,7 +81,7 @@ To configure the Sysdig Secure plugin:
 2.  From the main Jenkins menu, select `Manage Jenkins`.
 3.  Click the `Configure System` link.  
     ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
-4.  Scroll to the `Sysdig Secure Plugin Mode` section.
+4.  Scroll to the `Sysdig Secure Plugin` section.
 5.  Create a new credential containing the Sysdig API key found here (You just need to fill the password field): <https://secure.sysdig.com/#/settings/user>
 
     ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)

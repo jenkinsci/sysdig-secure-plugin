@@ -15,6 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
@@ -26,7 +27,6 @@ import hudson.FilePath;
 import hudson.model.TaskListener;
 import net.sf.json.JSONObject;
 import hudson.remoting.Callable;
-import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
@@ -122,35 +122,35 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
     Map<String,String> currentEnv = System.getenv();
     String http_proxy = currentEnv.get("http_proxy");
 
-    if (StringUtils.isEmpty(http_proxy)) {
+    if (Strings.isNullOrEmpty(http_proxy)) {
       http_proxy = currentEnv.get("HTTP_PROXY");
     }
 
-    if (StringUtils.isNotEmpty(http_proxy)) {
+    if (!Strings.isNullOrEmpty(http_proxy)) {
       envVars.add("http_proxy=" + http_proxy);
     }
 
     String https_proxy = currentEnv.get("https_proxy");
 
-    if (StringUtils.isEmpty(https_proxy)) {
+    if (Strings.isNullOrEmpty(https_proxy)) {
       https_proxy = currentEnv.get("HTTPS_PROXY");
     }
 
-    if (StringUtils.isEmpty(https_proxy)) {
+    if (Strings.isNullOrEmpty(https_proxy)) {
       https_proxy = http_proxy;
     }
 
-    if (StringUtils.isNotEmpty(https_proxy)) {
+    if (!Strings.isNullOrEmpty(https_proxy)) {
       envVars.add("https_proxy=" + https_proxy);
     }
 
     String no_proxy = currentEnv.get("no_proxy");
 
-    if (StringUtils.isEmpty(no_proxy)) {
+    if (Strings.isNullOrEmpty(no_proxy)) {
       no_proxy = currentEnv.get("NO_PROXY");
     }
 
-    if (StringUtils.isNotEmpty(no_proxy)) {
+    if (!Strings.isNullOrEmpty(no_proxy)) {
       envVars.add("no_proxy=" + no_proxy);
     }
   }
