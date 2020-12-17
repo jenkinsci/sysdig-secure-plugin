@@ -16,18 +16,21 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.Launcher;
+import hudson.model.Computer;
 import hudson.model.TaskListener;
-import hudson.remoting.*;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 public class InlineScanner extends Scanner {
@@ -35,27 +38,50 @@ public class InlineScanner extends Scanner {
   private final Map<String, JSONObject> scanOutputs;
   private final SysdigLogger logger;
   private final TaskListener listener;
+  private final FilePath workspace;
 
-  public InlineScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
-    super(launcher, listener, config);
+  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace) {
+    super(listener, config);
+
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
     this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), config.getDebug());
+    this.workspace = workspace;
   }
 
   @Override
   public ImageScanningSubmission scanImage(String imageTag, FilePath dockerFile) throws AbortException {
-    VirtualChannel channel = launcher.getChannel();
-    if (channel == null) {
-      throw new AbortException("There's no channel to communicate with the worker");
+
+    if (this.workspace == null) {
+      throw new AbortException("Inline-scan failed. No workspace available");
     }
 
     try {
-      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag, dockerFile, listener, config);
-      JSONObject scanOutput = channel.call(task);
+      final EnvVars nodeEnvVars = new EnvVars(System.getenv());
+
+      Computer computer = this.workspace.toComputer();
+      if (computer != null) {
+        nodeEnvVars.putAll(computer.buildEnvironment(listener));
+      }
+
+      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag,
+        dockerFile,
+        listener,
+        config,
+        nodeEnvVars);
+
+      String scanRawOutput = workspace.act(task);
+
+      JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
+
+      //TODO: Only if exit code 0 or 1 or 3.
+      if (scanOutput.has("error")) {
+        throw new ImageScanningException(scanOutput.getString("error"));
+      }
 
       String digest = scanOutput.getString("digest");
       String tag = scanOutput.getString("tag");
+
       this.scanOutputs.put(digest, scanOutput);
 
       return new ImageScanningSubmission(tag, digest);
@@ -64,7 +90,6 @@ public class InlineScanner extends Scanner {
       logger.logError("Failed to perform inline-scan due to an unexpected error", e);
       throw new AbortException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
     }
-
   }
 
   @Override

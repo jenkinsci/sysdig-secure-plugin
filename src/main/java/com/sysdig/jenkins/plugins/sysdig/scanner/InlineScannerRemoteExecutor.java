@@ -23,6 +23,7 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import net.sf.json.JSONObject;
@@ -32,7 +33,7 @@ import org.jenkinsci.remoting.RoleChecker;
 import java.io.*;
 import java.util.*;
 
-public class InlineScannerRemoteExecutor implements Callable<JSONObject, Exception>, Serializable {
+public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
 
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
@@ -50,16 +51,18 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
   private final FilePath dockerFile;
   private final BuildConfig config;
   private final TaskListener listener;
+  private final EnvVars nodeEnvVars;
 
-  public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config) {
+  public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.listener = listener;
     this.config = config;
+    this.nodeEnvVars = nodeEnvVars;
   }
 
   @Override
-  public JSONObject call() throws Exception {
+  public String call() throws Exception {
 
     SysdigLogger logger = new ConsoleLog(
       "InlineScanner",
@@ -68,7 +71,7 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
     ContainerRunner runner = new DockerClientRunner(logger, config.getDebug());
 
-    return scanImage(runner, logger);
+    return scanImage(runner, logger, nodeEnvVars);
   }
 
   @Override
@@ -76,20 +79,22 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
   }
 
-  public JSONObject scanImage(ContainerRunner containerRunner, SysdigLogger logger) throws InterruptedException, ImageScanningException {
-
+  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException, ImageScanningException {
     //TODO(airadier): dockerFileContents
-    List<String> args = new ArrayList<String>();
+    List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
     args.addAll(Arrays.asList(SCAN_ARGS));
     args.add(imageName);
 
-    List<String> envVars = new ArrayList<String>();
+    List<String> envVars = new ArrayList<>();
     envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
     envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
 
-    addProxyVars(envVars);
+    addProxyVars(nodeEnvVars, envVars, logger);
 
+    logger.logDebug("System environment: " + System.getenv().toString());
+    logger.logDebug("Node environment: " + nodeEnvVars.toString());
+    logger.logDebug("Creating container with environment: " + envVars.toString());
     Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars);
     final StringBuilder builder = new StringBuilder();
 
@@ -101,29 +106,27 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, null);
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame) );
 
+      logger.logDebug("Executing command in container: " + args.toString());
       inlineScanContainer.exec(args, null, builder::append);
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
 
-    JSONObject scanOutput = JSONObject.fromObject(builder.toString());
-
     //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
 
-    //TODO: Only if exit code 0 or 1 or 3.
-    if (scanOutput.has("error")) {
-      throw new ImageScanningException(scanOutput.getString("error"));
-    }
-
-    return scanOutput;
+    return builder.toString();
   }
 
-  private void addProxyVars(List<String> envVars) {
-    Map<String,String> currentEnv = System.getenv();
+  private void addProxyVars(EnvVars currentEnv, List<String> envVars, SysdigLogger logger) {
     String http_proxy = currentEnv.get("http_proxy");
 
     if (Strings.isNullOrEmpty(http_proxy)) {
       http_proxy = currentEnv.get("HTTP_PROXY");
+      if (!Strings.isNullOrEmpty(http_proxy)) {
+        logger.logDebug("HTTP proxy setting from env var HTTP_PROXY (http_proxy empty): " + http_proxy);
+      }
+    } else {
+      logger.logDebug("HTTP proxy setting from env var http_proxy: " + http_proxy);
     }
 
     if (!Strings.isNullOrEmpty(http_proxy)) {
@@ -134,10 +137,18 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
     if (Strings.isNullOrEmpty(https_proxy)) {
       https_proxy = currentEnv.get("HTTPS_PROXY");
+      if (!Strings.isNullOrEmpty(https_proxy)) {
+        logger.logDebug("HTTPS proxy setting from env var HTTPS_PROXY (https_proxy empty): " + https_proxy);
+      }
+    } else {
+      logger.logDebug("HTTPS proxy setting from env var https_proxy: " + https_proxy);
     }
 
     if (Strings.isNullOrEmpty(https_proxy)) {
       https_proxy = http_proxy;
+      if (!Strings.isNullOrEmpty(https_proxy)) {
+        logger.logDebug("HTTPS proxy setting from env var http_proxy (https_proxy and HTTPS_PROXY empty): " + https_proxy);
+      }
     }
 
     if (!Strings.isNullOrEmpty(https_proxy)) {
@@ -148,6 +159,11 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
     if (Strings.isNullOrEmpty(no_proxy)) {
       no_proxy = currentEnv.get("NO_PROXY");
+      if (!Strings.isNullOrEmpty(no_proxy)) {
+        logger.logDebug("NO proxy setting from env var NO_PROXY (no_proxy empty): " + no_proxy);
+      }
+    } else {
+      logger.logDebug("NO proxy setting from env var no_proxy: " + no_proxy);
     }
 
     if (!Strings.isNullOrEmpty(no_proxy)) {

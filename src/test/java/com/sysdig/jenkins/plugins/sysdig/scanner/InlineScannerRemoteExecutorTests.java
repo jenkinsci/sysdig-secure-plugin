@@ -5,6 +5,7 @@ import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.EnvVars;
 import net.sf.json.JSONObject;
 import org.junit.*;
 import org.mockito.junit.MockitoJUnit;
@@ -14,7 +15,6 @@ import org.mockito.quality.Strictness;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static com.github.stefanbirkner.systemlambda.SystemLambda.*;
 
 public class InlineScannerRemoteExecutorTests {
   private static final String SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
@@ -42,17 +42,19 @@ public class InlineScannerRemoteExecutorTests {
   private SysdigLogger logger;
   private JSONObject outputObject;
   private String logOutput;
+  private EnvVars nodeEnvVars;
 
   @Before
   public void beforeEach() throws InterruptedException {
     BuildConfig config = mock(BuildConfig.class);
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
 
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null,null, config);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null,null, config, null);
 
     runner = mock(ContainerRunner.class);
     container = mock(Container.class);
     logger = mock(SysdigLogger.class);
+    nodeEnvVars = new EnvVars();
     outputObject = new JSONObject();
     logOutput = "";
 
@@ -78,7 +80,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void containerIsCreatedAndExecuted() throws ImageScanningException, InterruptedException {
     // When
-    scannerRemoteExecutor.scanImage(runner, logger);
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(
@@ -101,7 +103,7 @@ public class InlineScannerRemoteExecutorTests {
     logOutput = "foo-output";
 
     // When
-    scannerRemoteExecutor.scanImage(runner, logger);
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(logger, atLeastOnce()).logInfo(argThat(msg -> msg.contains("foo-output")));
@@ -113,16 +115,16 @@ public class InlineScannerRemoteExecutorTests {
     outputObject.put("foo-key", "foo-value");
 
     // When
-    JSONObject scanOutput = scannerRemoteExecutor.scanImage(runner, logger);
+    String scanOutput = scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
-    assertEquals(scanOutput.toString(), outputObject.toString());
+    assertEquals(scanOutput, outputObject.toString());
   }
 
   @Test
   public void addedByAnnotationsAreIncluded() throws ImageScanningException, InterruptedException {
     // When
-    scannerRemoteExecutor.scanImage(runner, logger);
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("SYSDIG_ADDED_BY=cicd-inline-scan")));
@@ -131,7 +133,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void containerExecutionContainsExpectedParameters() throws ImageScanningException, InterruptedException {
     // When
-    scannerRemoteExecutor.scanImage(runner, logger);
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--format=JSON")), isNull(), any());
@@ -141,7 +143,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void setSysdigTokenIsProvidedAsEnvironmentVariable() throws ImageScanningException, InterruptedException {
     // When
-    scannerRemoteExecutor.scanImage(runner, logger);
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("SYSDIG_API_TOKEN=" + SYSDIG_TOKEN)));
@@ -149,8 +151,11 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_http_proxy() throws Exception {
-    withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
-      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+    // Given
+    nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
+
+    // When
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("http_proxy=http://httpproxy:1234")));
@@ -159,9 +164,12 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_https_proxy() throws Exception {
-    withEnvironmentVariable("http_proxy", "http://httpproxy:1234")
-      .and("https_proxy", "http://httpsproxy:1234")
-      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+    // Given
+    nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
+    nodeEnvVars.put("https_proxy", "http://httpsproxy:1234");
+
+    // When
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("http_proxy=http://httpproxy:1234")));
@@ -170,8 +178,11 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_no_proxy() throws Exception {
-    withEnvironmentVariable("no_proxy", "1.2.3.4,5.6.7.8")
-      .execute(() -> scannerRemoteExecutor.scanImage(runner, logger));
+    // Given
+    nodeEnvVars.put("no_proxy", "1.2.3.4,5.6.7.8");
+
+    // When
+    scannerRemoteExecutor.scanImage(runner, logger, nodeEnvVars);
 
     // Then
     verify(runner, times(1)).createContainer(any(), any(), any(), argThat(env -> env.contains("no_proxy=1.2.3.4,5.6.7.8")));

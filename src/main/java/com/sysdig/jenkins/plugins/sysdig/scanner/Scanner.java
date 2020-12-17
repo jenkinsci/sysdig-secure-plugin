@@ -5,7 +5,6 @@ import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -15,12 +14,10 @@ import java.util.Map;
 
 public abstract class Scanner {
 
-  protected final Launcher launcher;
   protected final BuildConfig config;
   protected final SysdigLogger logger;
 
-  public Scanner(Launcher launcher, TaskListener listener, BuildConfig config) {
-    this.launcher = launcher;
+  public Scanner(TaskListener listener, BuildConfig config) {
     this.config = config;
     this.logger = new ConsoleLog("Scanner", listener.getLogger(), config.getDebug());
   }

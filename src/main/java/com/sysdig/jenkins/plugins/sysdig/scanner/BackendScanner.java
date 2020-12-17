@@ -25,7 +25,6 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
@@ -36,8 +35,8 @@ public class BackendScanner extends Scanner {
   private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
   private final SysdigSecureClient sysdigSecureClient;
 
-  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
-    super(launcher, listener, config);
+  public BackendScanner(TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
+    super(listener, config);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?
