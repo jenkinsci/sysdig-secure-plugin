@@ -9,6 +9,7 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DockerClientRunner implements ContainerRunner {
@@ -16,7 +17,7 @@ public class DockerClientRunner implements ContainerRunner {
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
 
-  public DockerClientRunner(SysdigLogger logger, boolean enableDebug) {
+  public DockerClientRunner(SysdigLogger logger) {
     this.dockerClient = DockerClientBuilder
       .getInstance()
       .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
@@ -26,16 +27,20 @@ public class DockerClientRunner implements ContainerRunner {
   }
 
   @Override
-  public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars) throws InterruptedException {
+  public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars, List<String> volumeBinds) throws InterruptedException {
 
     logger.logInfo(String.format("Pulling image %s", imageName));
     dockerClient.pullImageCmd(imageName).start().awaitCompletion();
 
     logger.logInfo(String.format("Creating container for image: %s", imageName));
 
-    HostConfig hostConfig = HostConfig.newHostConfig()
-      .withBinds(
-        Bind.parse("/var/run/docker.sock:/var/run/docker.sock"));
+    HostConfig hostConfig = HostConfig.newHostConfig();
+
+    if (volumeBinds != null) {
+      List<Bind> binds = new ArrayList<>();
+      volumeBinds.forEach(rawBind -> binds.add(Bind.parse(rawBind)));
+      hostConfig = hostConfig.withBinds(binds);
+    }
 
     CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(imageName)
       .withStdinOpen(true)

@@ -92,7 +92,7 @@ public class BuildWorker {
   }
 
   public Util.GATE_ACTION scanAndBuildReports(Scanner scanner, BuildConfig config) throws AbortException {
-    Map<String, FilePath> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
+    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
@@ -404,20 +404,23 @@ public class BuildWorker {
     }
   }
 
-  public Map<String, FilePath> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
-    Map<String, FilePath> imageDockerfileMap = new HashMap<>();
+    Map<String, String> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
 
     // get the input and store it in tag/dockerfile map
     FilePath filePath = new FilePath(workspace, manifestFile);
+    logger.logDebug("Processing images file '" + filePath.getRemote() + "'");
     try {
       String[] fileLines = filePath.readToString().split("\\r?\\n");
       for (String line : fileLines) {
-        String[] lineSplit = line.split(" ", 1);
+        logger.logDebug("Processing line: " + line);
+        String[] lineSplit = line.split("\\s+", 2);
         String tag = lineSplit[0];
-        FilePath dockerFile = (lineSplit.length > 1) ? new FilePath(workspace, lineSplit[1]) : null;
-        imageDockerfileMap.put(tag, dockerFile);
+        String dockerfile = lineSplit.length > 1 ? lineSplit[1] : null;
+        logger.logDebug("Adding tag '" + lineSplit[0] + "' with Dockerfile '" + dockerfile + "'");
+        imageDockerfileMap.put(tag, dockerfile == null ? null : new FilePath(workspace, dockerfile).getRemote());
       }
 
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it

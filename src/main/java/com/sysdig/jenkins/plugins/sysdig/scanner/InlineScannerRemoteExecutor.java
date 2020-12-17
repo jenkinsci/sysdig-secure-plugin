@@ -17,16 +17,13 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
-import hudson.FilePath;
 import hudson.model.TaskListener;
-import net.sf.json.JSONObject;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
@@ -44,16 +41,18 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String[] SCAN_ARGS = new String[] {
     "--storage-type=docker-daemon",
     "--format=JSON"};
+  private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/Dockerfile";
+  private static final String DOCKERFILE_MOUNTPOINT = "/tmp/Dockerfile";
 
   private static final int STOP_SECONDS = 1;
 
   private final String imageName;
-  private final FilePath dockerFile;
+  private final String dockerFile;
   private final BuildConfig config;
   private final TaskListener listener;
   private final EnvVars nodeEnvVars;
 
-  public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.listener = listener;
@@ -69,7 +68,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       listener.getLogger(),
       config.getDebug());
 
-    ContainerRunner runner = new DockerClientRunner(logger, config.getDebug());
+    ContainerRunner runner = new DockerClientRunner(logger);
 
     return scanImage(runner, logger, nodeEnvVars);
   }
@@ -79,7 +78,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   }
 
-  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException, ImageScanningException {
+  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
     //TODO(airadier): dockerFileContents
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
@@ -89,13 +88,22 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     List<String> envVars = new ArrayList<>();
     envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
     envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
-
     addProxyVars(nodeEnvVars, envVars, logger);
+
+    List<String> bindMounts = new ArrayList<>();
+    bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
+
+    if (!Strings.isNullOrEmpty(dockerFile)) {
+      args.add(DOCKERFILE_ARG);
+      bindMounts.add(String.format("%s:%s", dockerFile, DOCKERFILE_MOUNTPOINT));
+    }
 
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Node environment: " + nodeEnvVars.toString());
     logger.logDebug("Creating container with environment: " + envVars.toString());
-    Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars);
+    logger.logDebug("Bind mounts: " + bindMounts.toString());
+
+    Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
     final StringBuilder builder = new StringBuilder();
 
     try {

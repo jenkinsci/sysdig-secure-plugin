@@ -30,8 +30,6 @@ import net.sf.json.JSONObject;
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-
 
 public class InlineScanner extends Scanner {
 
@@ -50,7 +48,7 @@ public class InlineScanner extends Scanner {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, FilePath dockerFile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException {
 
     if (this.workspace == null) {
       throw new AbortException("Inline-scan failed. No workspace available");

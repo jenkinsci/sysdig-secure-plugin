@@ -40,7 +40,6 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -136,7 +135,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
-    new SysdigBuilderExecutor(this, run, workspace, launcher, listener);
+    new SysdigBuilderExecutor(this, run, workspace, listener);
   }
 
   @Override

@@ -36,7 +36,7 @@ public class SysdigBuilderExecutor {
 
   private final ConsoleLog logger;
 
-  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws AbortException {
+  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, TaskListener listener) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -104,15 +104,6 @@ public class SysdigBuilderExecutor {
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
         .getNumber());
     }
-  }
-
-  private String getEngineurl(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig) {
-    String engineurl = globalConfig.getEngineurl();
-    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      logger.logInfo("Build override set for Sysdig Secure Engine URL");
-      engineurl = builder.getEngineurl();
-    }
-    return engineurl;
   }
 
   private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {

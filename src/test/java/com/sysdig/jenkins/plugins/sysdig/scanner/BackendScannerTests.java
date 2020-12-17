@@ -8,6 +8,8 @@ import hudson.AbortException;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -15,7 +17,10 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,8 +60,6 @@ public class BackendScannerTests {
 
   @Test
   public void testImageIsScanned() throws ImageScanningException, AbortException {
-    //Given
-
     // When
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -64,6 +67,25 @@ public class BackendScannerTests {
     verify(client, times(1)).submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any());
     assertEquals(IMAGE_TO_SCAN, submission.getTag());
     assertEquals(IMAGE_DIGEST, submission.getImageDigest());
+  }
+
+  @Test
+  public void testDockerfilePosted() throws ImageScanningException, IOException {
+    //Given
+    byte[] dockerfileBytes = "foo content of dockerfile".getBytes(StandardCharsets.UTF_8);
+    //Given
+    File f = File.createTempFile("test", "");
+    FileUtils.writeByteArrayToFile(f, dockerfileBytes);
+
+    // When
+    this.scanner.scanImage(IMAGE_TO_SCAN, f.getAbsolutePath());
+
+    // Then
+    verify(client, times(1)).submitImageForScanning(
+      eq(IMAGE_TO_SCAN),
+      eq( new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
+      any());
+
   }
 
   @Test
@@ -97,9 +119,6 @@ public class BackendScannerTests {
     // Then
     assertEquals(returnedVulnsReport.toString(), vulnsReport.toString());
   }
-
-
-  //TODO: Annotation added-by=cicd-scan-request is added
 
   @Test
   public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException {
