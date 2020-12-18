@@ -20,6 +20,10 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientFactory;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
@@ -55,6 +59,11 @@ import java.util.Collections;
  * </ol>
  */
 public class SysdigBuilder extends Builder implements SimpleBuildStep {
+
+  // Default backend client factory
+  private transient BackendScanningClientFactory backendClientFactory = new SysdigSecureClientFactory();
+  // Default container runner factory, for inline scan
+  private transient ContainerRunnerFactory containerRunnerFactory = new DockerClientContainerFactory();
 
   // Assigning the defaults here for pipeline builds
   private final String name;
@@ -135,12 +144,22 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
-    new SysdigBuilderExecutor(this, run, workspace, listener);
+    new SysdigBuilderExecutor(this, run, workspace, listener, backendClientFactory, containerRunnerFactory);
   }
 
   @Override
   public DescriptorImpl getDescriptor() {
     return (DescriptorImpl) super.getDescriptor();
+  }
+
+  // For Jenkins full flow test, in order to mock the backend client
+  public void setBackendClientFactory(BackendScanningClientFactory backendClientFactory) {
+    this.backendClientFactory = backendClientFactory;
+  }
+
+  // For Jenkins full flow test, in order to mock the container runtime
+  public void setContainerRunnerFactory(ContainerRunnerFactory containerRunnerFactory) {
+    this.containerRunnerFactory = containerRunnerFactory;
   }
 
   @Symbol("sysdig") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier

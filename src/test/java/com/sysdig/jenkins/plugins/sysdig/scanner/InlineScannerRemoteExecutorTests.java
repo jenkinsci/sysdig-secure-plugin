@@ -51,10 +51,11 @@ public class InlineScannerRemoteExecutorTests {
     config = mock(BuildConfig.class);
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
+    // new String in here is not redundant, as we want to make sure that internally we compare by value, not by ref
     when(config.getEngineurl()).thenReturn(new String(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL));
     when(config.getDebug()).thenReturn(false);
 
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
 
     containerRunner = mock(ContainerRunner.class);
     container = mock(Container.class);
@@ -203,7 +204,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void customURLIsProvidedAsParameter() throws Exception {
     when(config.getEngineurl()).thenReturn("https://my-foo-url");
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
 
     // When
     scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
@@ -216,7 +217,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void verboseIsEnabledWhenDebug() throws Exception {
     when(config.getDebug()).thenReturn(true);
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
 
     // When
     scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
@@ -228,7 +229,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void skipTLSFlagWhenInsecure() throws Exception {
     when(config.getEngineverify()).thenReturn(false);
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
 
     // When
     scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
@@ -239,7 +240,7 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsProvidedAsParameter() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null, null);
 
     // When
     scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
@@ -250,7 +251,7 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsMountedAtTmp() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null, null);
 
     // When
     scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);

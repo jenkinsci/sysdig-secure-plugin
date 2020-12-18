@@ -20,7 +20,7 @@ import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
-import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
@@ -56,13 +56,15 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private final BuildConfig config;
   private final TaskListener listener;
   private final EnvVars nodeEnvVars;
+  private final ContainerRunnerFactory containerRunnerFactory;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars, ContainerRunnerFactory containerRunnerFactory) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.listener = listener;
     this.config = config;
     this.nodeEnvVars = nodeEnvVars;
+    this.containerRunnerFactory = containerRunnerFactory;
   }
 
   @Override
@@ -73,7 +75,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       listener.getLogger(),
       config.getDebug());
 
-    ContainerRunner runner = new DockerClientRunner(logger);
+    ContainerRunner runner = containerRunnerFactory.getContainerRunner(logger);
 
     return scanImage(runner, logger, nodeEnvVars);
   }

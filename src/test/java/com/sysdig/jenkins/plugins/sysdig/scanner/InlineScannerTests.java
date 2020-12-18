@@ -1,6 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.TaskListener;
@@ -35,8 +36,9 @@ public class InlineScannerTests {
     listener = mock(TaskListener.class);
     PrintStream logger = mock(PrintStream.class);
     when(listener.getLogger()).thenReturn((logger));
+    ContainerRunnerFactory containerRunnerFactory = mock(ContainerRunnerFactory.class);
 
-    this.scanner = new InlineScanner(listener, config, workspace);
+    this.scanner = new InlineScanner(listener, config, workspace, containerRunnerFactory);
   }
 
   @Test
@@ -58,7 +60,7 @@ public class InlineScannerTests {
   @Test
   public void testAbortIfNoWorkspace() {
     //Given
-    this.scanner = new InlineScanner(listener, mock(BuildConfig.class), null);
+    this.scanner = new InlineScanner(listener, mock(BuildConfig.class), null, mock(ContainerRunnerFactory.class));
 
     // When
     AbortException thrown = assertThrows(

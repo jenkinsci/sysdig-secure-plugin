@@ -18,12 +18,12 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientFactory;
+import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
 import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
@@ -36,7 +36,12 @@ public class SysdigBuilderExecutor {
 
   private final ConsoleLog logger;
 
-  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, TaskListener listener) throws AbortException {
+  public SysdigBuilderExecutor(SysdigBuilder builder,
+                               Run<?, ?> run,
+                               FilePath workspace,
+                               TaskListener listener,
+                               BackendScanningClientFactory backendClientFactory,
+                               ContainerRunnerFactory containerRunnerFactory) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -64,8 +69,8 @@ public class SysdigBuilderExecutor {
 
       worker = new BuildWorker(run, workspace, listener, logger);
       Scanner scanner = config.getInlineScanning() ?
-        new InlineScanner(listener, config, workspace) :
-        new BackendScanner(listener, config, new SysdigSecureClientFactory());
+        new InlineScanner(listener, config, workspace, containerRunnerFactory) :
+        new BackendScanner(listener, config, backendClientFactory);
 
       Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner, config);
 
