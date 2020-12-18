@@ -12,9 +12,12 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.tasks.BatchFile;
+import hudson.tasks.CommandInterpreter;
 import hudson.tasks.Shell;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.SystemUtils;
 import org.junit.*;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -114,8 +117,13 @@ public class SysdigBuilderTests {
 
     FreeStyleProject project = jenkins.createFreeStyleProject();
 
-    Shell shell = new Shell("echo my-image:latest > images_file");
-    project.getBuildersList().add(shell);
+    if (SystemUtils.IS_OS_WINDOWS) {
+      BatchFile batch = new BatchFile("echo my-image:latest > images_file");
+      project.getBuildersList().add(batch);
+    } else {
+      Shell shell = new Shell("echo my-image:latest > images_file");
+      project.getBuildersList().add(shell);
+    }
 
     SysdigBuilder builder = new SysdigBuilder("images_file");
     builder.setBackendClientFactory(backendClientFactory);
