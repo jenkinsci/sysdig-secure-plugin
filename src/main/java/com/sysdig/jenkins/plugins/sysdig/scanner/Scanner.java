@@ -1,43 +1,49 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
 public abstract class Scanner {
 
-  protected final Launcher launcher;
   protected final BuildConfig config;
   protected final SysdigLogger logger;
 
-  public Scanner(Launcher launcher, TaskListener listener, BuildConfig config) {
-    this.launcher = launcher;
+  public Scanner(TaskListener listener, BuildConfig config) {
     this.config = config;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
+    this.logger = new ConsoleLog("Scanner", listener.getLogger(), config.getDebug());
   }
 
-  public abstract ImageScanningSubmission scanImage(String imageTag, FilePath dockerfile) throws AbortException;
+  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;
   public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws AbortException;
   public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException;
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, FilePath> imagesAndDockerfiles) throws AbortException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
 
     ArrayList<ImageScanningResult> resultList = new ArrayList<>();
 
-    for (Map.Entry<String, FilePath> entry : imagesAndDockerfiles.entrySet()) {
-      ImageScanningSubmission submission = this.scanImage(entry.getKey(), entry.getValue());
+    for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
+      String dockerfile = entry.getValue();
+      if (!Strings.isNullOrEmpty(dockerfile)) {
+        File f = new File(dockerfile);
+        if (!f.exists()) {
+          throw new AbortException("Dockerfile '" + dockerfile + "' does not exist");
+        }
+      }
+
+      ImageScanningSubmission submission = this.scanImage(entry.getKey(), dockerfile);
 
       JSONArray scanReport = this.getGateResults(submission);
       JSONObject vulnsReport = this.getVulnsReport(submission);

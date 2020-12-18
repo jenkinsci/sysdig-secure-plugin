@@ -26,6 +26,7 @@ Table of Contents
 - [Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project](#example-1-integrate-the-sysdig-secure-plugin-with-a-freestyle-project)
 - [Example 2: Executing the Sysdig plugin inside a pipeline](#example-2-executing-the-sysdig-plugin-inside-a-pipeline)
 - [Configuration Options](#configuration-options)
+- [Proxy Configuration](#proxy-configuration)
 - [Plugin outputs](#plugin-outputs)
 - [Local development and installation](#local-development-and-installation)                                                                                                                             
 
@@ -57,6 +58,7 @@ CON:
 * The job performing the inline scanning needs to have access to the host-local Docker daemon
 
 ## Pre-requisites
+## Pre-requisites
 
 Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/find-the-super-admin-credentials-and-api-token.html#al_UUID-be84a2f1-b996-c30c-b5d8-5b8e4663146a_UUID-87bc65c6-ef79-6225-3910-39f619617a2c)
 
@@ -79,7 +81,7 @@ To configure the Sysdig Secure plugin:
 2.  From the main Jenkins menu, select `Manage Jenkins`.
 3.  Click the `Configure System` link.  
     ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
-4.  Scroll to the `Sysdig Secure Plugin Mode` section.
+4.  Scroll to the `Sysdig Secure Plugin` section.
 5.  Create a new credential containing the Sysdig API key found here (You just need to fill the password field): <https://secure.sysdig.com/#/settings/user>
 
     ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
@@ -111,8 +113,6 @@ Example:
 myimage:3.11 ./build/Dockerfile
 alpine:latest 
 ```
-
-
 
 # Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project
 
@@ -158,23 +158,25 @@ stages {
 
 The table below describes each of the configuration options.
 
-
 # Configuration Options
-
 
 | Option                                 | Description                                                                                                                                                                                                                                                      | Default |
 |----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| -------|
 | Image list file                        | The name of the file, present in the workspace that contains the image(s) name, and optionally the Dockerfile location.                                                                                                                                             | `sysdig_secure_images`
 | Fail build on policy check STOP result | If the Sysdig Secure policy evaluate returns a fail (STOP) then the Jenkins job should be failed. If this is not selected then a failed policy evaluation will allow the build to continue.                                                                      | `true` | 
 | Fail build on critical plugin error    | If selected, and the Sysdig Secure Plugin experiences a critical error, the the build will be failed. This is typically used to ensure that a fault with Sysdig Secure (eg. service not available) does not permit a failing image to be promoted to production. | `true` | 
-| Inline Scanning                        | **Experimental feature.** Executes the scanning in the same host where the image has been built without needing to push it to an staging registry. Requires a runner with access to the Docker socket at `/var/run/docker.sock` and read-write privileges in it. | `false` | 
-| Sysdig Secure operation retries        | The number of retries that the plugin will execute in case of an error while scanning the image.                                                                                                                                                                 | 15 | 
+| Inline Scanning                        | Executes the scanning in the same host where the image has been built without needing to push it to an staging registry. Requires a runner with access to the Docker socket at `/var/run/docker.sock` and read-write privileges in it. | `false` | 
 
 The following is an example of executing the Sysdig Secure plugin as a Jenkinsfile step, modifying the default parameters
 
 ```
-sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineRetries: '10', engineurl: 'https://api.sysdigcloud.com', inlineScanning: true, name: 'sysdig_secure_images'
+sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineurl: 'https://api.sysdigcloud.com', inlineScanning: true, name: 'sysdig_secure_images'
 ```
+
+# Proxy configuration
+
+* Backend scan connects to Sysdig Secure backend from the Jenkins master node, so it will use the [Jenkins proxy configuration](https://wiki.jenkins.io/display/JENKINS/JenkinsBehindProxy).
+* Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
 
 # Plugin outputs
 
@@ -200,4 +202,3 @@ docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /us
 ```
 
 You can then install the plugin via the Jenkins UI, or by copying it into $JENKINS_HOME/plugins.
-

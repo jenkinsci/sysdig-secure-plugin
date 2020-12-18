@@ -18,6 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
@@ -35,7 +36,7 @@ public class SysdigBuilderExecutor {
 
   private final ConsoleLog logger;
 
-  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws AbortException {
+  public SysdigBuilderExecutor(SysdigBuilder builder, Run<?, ?> run, FilePath workspace, TaskListener listener) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -53,28 +54,20 @@ public class SysdigBuilderExecutor {
       }
       //Prefer the job credentials set by the user and fallback to the global ones
 
-
       /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
       String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
 
-      String engineurl = getEngineurl(builder, globalConfig);
-
-      boolean isInlineScanning = builder.isInlineScanning() || globalConfig.getInlineScanning();
-
       /* Instantiate config and a new build worker */
-      config = new BuildConfig(builder.getName(), builder.getEngineRetries(), builder.getBailOnFail(), builder.getBailOnPluginFail(), globalConfig.getDebug(),
-        isInlineScanning,
-        engineurl,
-        sysdigToken,
-        builder.getEngineverify()
-      );
+      config = new BuildConfig(globalConfig, builder, sysdigToken);
 
-      worker = new BuildWorker(run, workspace, listener, config);
-      Scanner scanner = isInlineScanning ?
-        new InlineScanner(launcher, listener, config) :
-        new BackendScanner(launcher, listener, config);
+      config.print(logger);
 
-      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner);
+      worker = new BuildWorker(run, workspace, listener, logger);
+      Scanner scanner = config.getInlineScanning() ?
+        new InlineScanner(listener, config, workspace) :
+        new BackendScanner(listener, config, new SysdigSecureClientFactory());
+
+      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner, config);
 
       /* Evaluate result of step based on gate action */
       if (null != finalAction) {
@@ -111,15 +104,6 @@ public class SysdigBuilderExecutor {
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
         .getNumber());
     }
-  }
-
-  private String getEngineurl(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig) {
-    String engineurl = globalConfig.getEngineurl();
-    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      logger.logInfo("Build override set for Sysdig Secure Engine URL");
-      engineurl = builder.getEngineurl();
-    }
-    return engineurl;
   }
 
   private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {

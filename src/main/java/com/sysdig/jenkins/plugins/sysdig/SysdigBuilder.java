@@ -24,15 +24,12 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.Secret;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
@@ -61,7 +58,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
   // Assigning the defaults here for pipeline builds
   private final String name;
-  private String engineRetries = DescriptorImpl.DEFAULT_ENGINE_RETRIES;
   private boolean bailOnFail = DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
   private boolean bailOnPluginFail = DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
   private boolean inlineScanning = DescriptorImpl.DEFAULT_INLINE_SCANNING;
@@ -69,16 +65,12 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   // Override global config. Supported for sysdig-secure-engine mode config only
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
-  private boolean engineverify = false;
+  private boolean engineverify = DescriptorImpl.DEFAULT_ENGINE_VERIFY;
   // More flags to indicate boolean override, ugh!
 
   // Getters are used by config.jelly
   public String getName() {
     return name;
-  }
-
-  public String getEngineRetries() {
-    return engineRetries;
   }
 
   public boolean getBailOnFail() {
@@ -106,11 +98,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
-  public void setEngineRetries(String engineRetries) {
-    this.engineRetries = engineRetries;
-  }
-
-  @DataBoundSetter
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
   }
@@ -131,6 +118,11 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @DataBoundSetter
+  public void setEngineverify(boolean engineverify) {
+    this.engineverify = engineverify;
+  }
+
+  @DataBoundSetter
   public void setInlineScanning(boolean inlineScanning) {
     this.inlineScanning = inlineScanning;
   }
@@ -142,8 +134,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException, InterruptedException {
-    new SysdigBuilderExecutor(this, run, workspace, launcher, listener);
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
+    new SysdigBuilderExecutor(this, run, workspace, listener);
   }
 
   @Override
@@ -157,30 +149,30 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     // Default job level config that may be used both by config.jelly and an instance of SysdigBuilder
     public static final String DEFAULT_NAME = "sysdig_secure_images";
-    public static final String DEFAULT_ENGINE_RETRIES = "15";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
-    public static final boolean DEFAULT_INLINE_SCANNING = false;
+    public static final boolean DEFAULT_INLINE_SCANNING = true;
+    public static final boolean DEFAULT_ENGINE_VERIFY = true;
     public static final String EMPTY_STRING = "";
     public static final String DEFAULT_ENGINE_URL = "https://api.sysdigcloud.com";
 
     // Global configuration
-    private boolean debug;
+    private boolean debug = false;
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
-    private boolean inlineScanning = DEFAULT_INLINE_SCANNING;
+    private boolean engineverify = DEFAULT_ENGINE_VERIFY;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
     private boolean enabled;
 
-    public void setDebug(boolean debug) {
-      this.debug = debug;
-    }
-
     @Deprecated
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+    }
+
+    public void setDebug(boolean debug) {
+      this.debug = debug;
     }
 
     public void setEngineurl(String engineurl) {
@@ -191,26 +183,17 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       this.engineCredentialsId = engineCredentialsId;
     }
 
-    public void setEngineuser(String engineuser) {
-    }
-
-    public void setEnginepass(Secret enginepass) {
-    }
-
     public void setEngineverify(boolean engineverify) {
-    }
-
-    public void setInlineScanning(boolean inlineScanning) {
-      this.inlineScanning = inlineScanning;
-    }
-
-    public boolean getDebug() {
-      return debug;
+      this.engineverify = engineverify;
     }
 
     @Deprecated
     public boolean getEnabled() {
       return enabled;
+    }
+
+    public boolean getDebug() {
+      return debug;
     }
 
     public String getEngineurl() {
@@ -221,8 +204,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       return engineCredentialsId;
     }
 
-    public boolean getInlineScanning() {
-      return inlineScanning;
+    public boolean getEngineverify() {
+      return engineverify;
     }
 
     public DescriptorImpl() {

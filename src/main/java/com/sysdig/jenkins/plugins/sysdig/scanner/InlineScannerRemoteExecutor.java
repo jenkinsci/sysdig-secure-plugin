@@ -15,53 +15,62 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.async.ResultCallbackTemplate;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Frame;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import hudson.FilePath;
+import hudson.EnvVars;
 import hudson.model.TaskListener;
-import net.sf.json.JSONObject;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-public class InlineScannerRemoteExecutor implements Callable<JSONObject, Exception>, Serializable {
+public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
+
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
+  private static final String DUMMY_ENTRYPOINT = "cat";
+  private static final String[] MKDIR_COMMAND = new String[]{"mkdir", "/tmp/sysdig-inline-scan"};
+  private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/info.log"};
+  private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/info.log"};
+  private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
+  private static final String[] SCAN_ARGS = new String[] {
+    "--storage-type=docker-daemon",
+    "--format=JSON"};
+  private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/Dockerfile";
+  private static final String DOCKERFILE_MOUNTPOINT = "/tmp/Dockerfile";
+
+  private static final int STOP_SECONDS = 1;
 
   private final String imageName;
-  private final FilePath dockerFile;
+  private final String dockerFile;
   private final BuildConfig config;
   private final TaskListener listener;
+  private final EnvVars nodeEnvVars;
 
-  public InlineScannerRemoteExecutor(String imageName, FilePath dockerFile, TaskListener listener, BuildConfig config) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.listener = listener;
     this.config = config;
+    this.nodeEnvVars = nodeEnvVars;
   }
 
   @Override
-  public JSONObject call() throws Exception {
-    DockerClient dockerClient = DockerClientBuilder
-      .getInstance()
-      .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
-      .build();
-    SysdigLogger logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), false);
-    return scanImage(dockerClient, logger);
+  public String call() throws Exception {
+
+    SysdigLogger logger = new ConsoleLog(
+      "InlineScanner",
+      listener.getLogger(),
+      config.getDebug());
+
+    ContainerRunner runner = new DockerClientRunner(logger);
+
+    return scanImage(runner, logger, nodeEnvVars);
   }
 
   @Override
@@ -69,77 +78,110 @@ public class InlineScannerRemoteExecutor implements Callable<JSONObject, Excepti
 
   }
 
-  public JSONObject scanImage(DockerClient dockerClient, SysdigLogger logger) throws InterruptedException, ImageScanningException {
+  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
     //TODO(airadier): dockerFileContents
-    logger.logInfo(String.format("Pulling inline-scan image %s", INLINE_SCAN_IMAGE));
-    dockerClient.pullImageCmd(INLINE_SCAN_IMAGE).start().awaitCompletion();
+    List<String> args = new ArrayList<>();
+    args.add(SCAN_COMMAND);
+    args.addAll(Arrays.asList(SCAN_ARGS));
+    args.add(imageName);
 
-    logger.logInfo(String.format("Creating container for scanning with image: %s", INLINE_SCAN_IMAGE));
-    List<String> args = Arrays.asList("--storage-type=docker-daemon", "--format=JSON", imageName);
-    String scanningContainerID = this.createScanningContainer(dockerClient, args);
+    List<String> envVars = new ArrayList<>();
+    envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
+    envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
+    addProxyVars(nodeEnvVars, envVars, logger);
 
-    logger.logInfo("Executing Inline Scanning...");
-    String scanRawOutput = this.performScanInContainer(dockerClient, scanningContainerID);
+    List<String> bindMounts = new ArrayList<>();
+    bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
 
-    JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
-
-    logger.logInfo("Inline Scanning output:\n" + scanOutput.getString("log"));
-    if (scanOutput.has("error")) {
-      throw new ImageScanningException(scanOutput.getString("error"));
+    if (!Strings.isNullOrEmpty(dockerFile)) {
+      args.add(DOCKERFILE_ARG);
+      bindMounts.add(String.format("%s:%s", dockerFile, DOCKERFILE_MOUNTPOINT));
     }
 
-    return scanOutput;
+    logger.logDebug("System environment: " + System.getenv().toString());
+    logger.logDebug("Node environment: " + nodeEnvVars.toString());
+    logger.logDebug("Creating container with environment: " + envVars.toString());
+    logger.logDebug("Bind mounts: " + bindMounts.toString());
+
+    Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    final StringBuilder builder = new StringBuilder();
+
+    try {
+      //TODO: Get exit code in run and exec?
+      inlineScanContainer.runAsync(null);
+
+      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, null);
+      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, null);
+      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame) );
+
+      logger.logDebug("Executing command in container: " + args.toString());
+      inlineScanContainer.exec(args, null, builder::append);
+    } finally {
+      inlineScanContainer.stop(STOP_SECONDS);
+    }
+
+    //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
+
+    return builder.toString();
   }
 
-  private String performScanInContainer(DockerClient dockerClient, String scanningContainerID) throws InterruptedException {
-    ResultCallbackTemplate<?, Frame> logCallback = new ResultCallback.Adapter<Frame>() {
-      final StringBuilder builder = new StringBuilder();
+  private void addProxyVars(EnvVars currentEnv, List<String> envVars, SysdigLogger logger) {
+    String http_proxy = currentEnv.get("http_proxy");
 
-      @Override
-      public void onNext(Frame item) {
-        builder.append(new String(item.getPayload(), StandardCharsets.UTF_8).replaceAll("\\s+$", ""));
-        super.onNext(item);
+    if (Strings.isNullOrEmpty(http_proxy)) {
+      http_proxy = currentEnv.get("HTTP_PROXY");
+      if (!Strings.isNullOrEmpty(http_proxy)) {
+        logger.logDebug("HTTP proxy setting from env var HTTP_PROXY (http_proxy empty): " + http_proxy);
       }
+    } else {
+      logger.logDebug("HTTP proxy setting from env var http_proxy: " + http_proxy);
+    }
 
-      @Override
-      public String toString() {
-        return builder.toString();
+    if (!Strings.isNullOrEmpty(http_proxy)) {
+      envVars.add("http_proxy=" + http_proxy);
+    }
+
+    String https_proxy = currentEnv.get("https_proxy");
+
+    if (Strings.isNullOrEmpty(https_proxy)) {
+      https_proxy = currentEnv.get("HTTPS_PROXY");
+      if (!Strings.isNullOrEmpty(https_proxy)) {
+        logger.logDebug("HTTPS proxy setting from env var HTTPS_PROXY (https_proxy empty): " + https_proxy);
       }
-    };
+    } else {
+      logger.logDebug("HTTPS proxy setting from env var https_proxy: " + https_proxy);
+    }
 
-    dockerClient.startContainerCmd(scanningContainerID)
-      .exec();
+    if (Strings.isNullOrEmpty(https_proxy)) {
+      https_proxy = http_proxy;
+      if (!Strings.isNullOrEmpty(https_proxy)) {
+        logger.logDebug("HTTPS proxy setting from env var http_proxy (https_proxy and HTTPS_PROXY empty): " + https_proxy);
+      }
+    }
 
-    dockerClient.logContainerCmd(scanningContainerID)
-      .withStdOut(true)
-      .withStdErr(true)
-      .withFollowStream(true)
-      .withTailAll()
-      .exec(logCallback)
-      .awaitCompletion();
+    if (!Strings.isNullOrEmpty(https_proxy)) {
+      envVars.add("https_proxy=" + https_proxy);
+    }
 
-    return logCallback.toString();
+    String no_proxy = currentEnv.get("no_proxy");
+
+    if (Strings.isNullOrEmpty(no_proxy)) {
+      no_proxy = currentEnv.get("NO_PROXY");
+      if (!Strings.isNullOrEmpty(no_proxy)) {
+        logger.logDebug("NO proxy setting from env var NO_PROXY (no_proxy empty): " + no_proxy);
+      }
+    } else {
+      logger.logDebug("NO proxy setting from env var no_proxy: " + no_proxy);
+    }
+
+    if (!Strings.isNullOrEmpty(no_proxy)) {
+      envVars.add("no_proxy=" + no_proxy);
+    }
   }
 
-  /**
-   * Creates a container with the Inline Scan image
-   * @param dockerClient Docker client
-   * @param args args to the inline-scan command
-   * @return The created container ID.
-   */
-  private String createScanningContainer(DockerClient dockerClient, List<String> args) {
-    HostConfig hostConfig = HostConfig.newHostConfig()
-      .withAutoRemove(true)
-      .withBinds(
-        Bind.parse("/var/run/docker.sock:/var/run/docker.sock"));
-
-    CreateContainerResponse createdScanningContainer = dockerClient.createContainerCmd(INLINE_SCAN_IMAGE)
-      .withCmd(args.toArray(new String[0]))
-      .withEnv("SYSDIG_API_TOKEN="+ this.config.getSysdigToken())
-      .withHostConfig(hostConfig)
-      .exec();
-
-    return createdScanningContainer.getId();
+  private void sendToLog(SysdigLogger logger, String frame) {
+    for (String line: frame.split("[\n\r]")) {
+      logger.logInfo(line);
+    }
   }
-
 }

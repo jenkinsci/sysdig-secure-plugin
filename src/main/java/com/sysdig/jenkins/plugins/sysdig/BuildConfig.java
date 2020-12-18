@@ -15,9 +15,13 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.PluginWrapper;
+import jenkins.model.Jenkins;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Holder for all Sysdig Secure configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
@@ -25,40 +29,35 @@ import java.io.Serializable;
  */
 public class BuildConfig implements Serializable {
 
-  // Build configuration
+
   private final String name;
-  private final String engineRetries;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
-
-  // Global configuration
   private final boolean debug;
-  //TODO: inlineScanning Unused?
-  private final boolean inlineScanning;
   private final String engineurl;
-  private final String sysdigToken;
   private final boolean engineverify;
+  private final boolean inlineScanning;
+  private final String sysdigToken;
 
-  public BuildConfig(String name, String engineRetries, boolean bailOnFail, boolean bailOnPluginFail,
-                     boolean debug, boolean inlineScanning, String engineurl, String sysdigToken,
-                     boolean engineverify) {
-    this.name = name;
-    this.engineRetries = engineRetries;
-    this.bailOnFail = bailOnFail;
-    this.bailOnPluginFail = bailOnPluginFail;
-    this.debug = debug;
-    this.inlineScanning = inlineScanning;
-    this.engineurl = engineurl;
+  public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
+    name = builder.getName();
+    bailOnFail = builder.getBailOnFail();
+    bailOnPluginFail =  builder.getBailOnPluginFail();
+    debug = globalConfig.getDebug();
+    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
+      engineurl = builder.getEngineurl();
+      engineverify = builder.getEngineverify();
+    } else {
+      engineurl = globalConfig.getEngineurl();
+      engineverify = globalConfig.getEngineverify();
+    }
+
+    inlineScanning = builder.isInlineScanning();
     this.sysdigToken = sysdigToken;
-    this.engineverify = engineverify;
   }
 
   public String getName() {
     return name;
-  }
-
-  public String getEngineRetries() {
-    return engineRetries;
   }
 
   public boolean getBailOnFail() {
@@ -85,14 +84,32 @@ public class BuildConfig implements Serializable {
     return engineverify;
   }
 
-  public void print(SysdigLogger consoleLog) {
-    consoleLog.logInfo(String.format("[global] debug: %s", debug));
-    consoleLog.logInfo(String.format("[global] inlineScanning: %s", inlineScanning));
-    consoleLog.logInfo(String.format("[build] engineurl: %s", engineurl));
-    consoleLog.logInfo(String.format("[build] engineverify: %s", engineverify));
-    consoleLog.logInfo(String.format("[build] name: %s", name));
-    consoleLog.logInfo(String.format("[build] bailOnFail: %s", bailOnFail));
-    consoleLog.logInfo(String.format("[build] engineRetries: %s", engineRetries));
-    consoleLog.logInfo(String.format("[build] bailOnPluginFail: %s", bailOnPluginFail));
+  public boolean getInlineScanning() {
+    return inlineScanning;
   }
+
+  /**
+   * Print versions info and configuration
+   */
+  public void print(SysdigLogger logger) {
+    logger.logInfo("Jenkins version: " + Jenkins.VERSION);
+    List<PluginWrapper> plugins;
+    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
+      for (PluginWrapper plugin : plugins) {
+        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
+          logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
+          break;
+        }
+      }
+    }
+
+    logger.logInfo(String.format("debug: %s", this.getDebug()));
+    logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
+    logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
+    logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
+    logger.logInfo(String.format("name: %s", this.getName()));
+    logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
+    logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
+  }
+
 }

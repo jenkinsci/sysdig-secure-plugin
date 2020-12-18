@@ -16,18 +16,15 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.PluginWrapper;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.ArtifactArchiver;
-import jenkins.model.Jenkins;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -54,7 +51,6 @@ public class BuildWorker {
   FilePath workspace;
   Launcher launcher;
   TaskListener listener;
-  BuildConfig config;
 
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
@@ -62,53 +58,41 @@ public class BuildWorker {
   private String jenkinsOutputDirName;
   private JSONObject gateSummary;
 
-  // FIXME can we get rid of this config?
-  public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, BuildConfig config)
+  public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, SysdigLogger logger)
     throws AbortException {
     try {
       if (listener == null) {
         LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
         throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
       }
-      if (config == null) {
-        LOG.warning("Sysdig Secure Container Image Scanner cannot find the required configuration");
-        throw new AbortException("Configuration for the plugin is invalid. Configure the plugin under Manage Jenkins->Configure System->Sysdig Secure Configuration first. Add the Sysdig Secure Container Image Scanner step in your project and retry");
-      }
 
       this.build = build;
       this.workspace = workspace;
       this.listener = listener;
-      this.config = config;
+      this.logger = logger;
 
-      // FIXME receive it as dependency injection
-      // Initialize build logger to log output to consoleLog, use local logging methods only after this initializer completes
-      logger = new ConsoleLog("SysdigWorker", this.listener.getLogger(), this.config.getDebug());
       logger.logDebug("Initializing build worker");
 
       // Verify and initialize Jenkins launcher for executing processes
-      // TODO is this necessary? Can't we use the launcher reference that was passed in
       this.launcher = workspace.createLauncher(listener);
-
-      printConfig();
 
       initializeJenkinsWorkspace();
 
       logger.logDebug("Build worker initialized");
+
     } catch (Exception e) {
       try {
         if (logger != null) {
           logger.logError("Failed to initialize worker for plugin execution", e);
         }
         cleanJenkinsWorkspaceQuietly();
-      } catch (Exception innere) {
-        // FIXME Why are we ignoring this exception?
-      }
+      } catch (Exception inner) { }
       throw new AbortException("Failed to initialize worker for plugin execution, check logs for corrective action");
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner) throws AbortException {
-    Map<String, FilePath> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
+  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner, BuildConfig config) throws AbortException {
+    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
@@ -393,23 +377,6 @@ public class BuildWorker {
     }
   }
 
-  /**
-   * Print versions info and configuration
-   */
-  private void printConfig() {
-    logger.logInfo("Jenkins version: " + Jenkins.VERSION);
-    List<PluginWrapper> plugins;
-    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
-      for (PluginWrapper plugin : plugins) {
-        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
-          logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
-          break;
-        }
-      }
-    }
-    config.print(logger);
-  }
-
   private void initializeJenkinsWorkspace() throws AbortException {
     try {
       logger.logDebug("Initializing Jenkins workspace");
@@ -437,20 +404,23 @@ public class BuildWorker {
     }
   }
 
-  public Map<String, FilePath> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
+  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
-    Map<String, FilePath> imageDockerfileMap = new HashMap<>();
+    Map<String, String> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
 
     // get the input and store it in tag/dockerfile map
     FilePath filePath = new FilePath(workspace, manifestFile);
+    logger.logDebug("Processing images file '" + filePath.getRemote() + "'");
     try {
       String[] fileLines = filePath.readToString().split("\\r?\\n");
       for (String line : fileLines) {
-        String[] lineSplit = line.split(" ", 1);
+        logger.logDebug("Processing line: " + line);
+        String[] lineSplit = line.split("\\s+", 2);
         String tag = lineSplit[0];
-        FilePath dockerFile = (lineSplit.length > 1) ? new FilePath(workspace, lineSplit[1]) : null;
-        imageDockerfileMap.put(tag,  dockerFile);
+        String dockerfile = lineSplit.length > 1 ? lineSplit[1] : null;
+        logger.logDebug("Adding tag '" + lineSplit[0] + "' with Dockerfile '" + dockerfile + "'");
+        imageDockerfileMap.put(tag, dockerfile == null ? null : new FilePath(workspace, dockerfile).getRemote());
       }
 
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it

@@ -15,46 +15,53 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import hudson.AbortException;
-import hudson.FilePath;
-import hudson.Launcher;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Map;
 
 
 public class BackendScanner extends Scanner {
 
-  private SysdigSecureClient sysdigSecureClient;
+  private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
+  private final SysdigSecureClient sysdigSecureClient;
 
-  public BackendScanner(Launcher launcher, TaskListener listener, BuildConfig config) {
-    super(launcher, listener, config);
+  public BackendScanner(TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
+    super(listener, config);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?
-      SysdigSecureClientImpl.newClient(sysdigToken, config.getEngineurl()) :
-      SysdigSecureClientImpl.newInsecureClient(sysdigToken, config.getEngineurl());
-    this.sysdigSecureClient = new SysdigSecureClientImplWithRetries(this.sysdigSecureClient, 10);
+      factory.newClient(sysdigToken, config.getEngineurl(), logger) :
+      factory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, FilePath dockerfile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException {
 
     try {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
-      String dockerFileContents = dockerfile != null ? new String(Base64.encodeBase64(dockerfile.readToString().getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8) : null;
+      String dockerFileContents = null;
+      if (!Strings.isNullOrEmpty(dockerfile)) {
+        byte[] dockerfileBytes = Files.readAllBytes(Paths.get(dockerfile));
+        dockerFileContents = new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8);
+      }
 
-      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents);
+      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations);
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information");
+      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
     }
   }
 
