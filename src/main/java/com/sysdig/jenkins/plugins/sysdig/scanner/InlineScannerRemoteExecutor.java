@@ -17,6 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
@@ -41,6 +42,10 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String[] SCAN_ARGS = new String[] {
     "--storage-type=docker-daemon",
     "--format=JSON"};
+  private static final String VERBOSE_ARG = "--verbose";
+  private static final String SKIP_TLS_ARG = "--sysdig-skip-tls";
+  private static final String SYSDIG_URL_ARG = "--sysdig-url=%s";
+  private static final String ON_PREM_ARG = "--on-prem";
   private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/Dockerfile";
   private static final String DOCKERFILE_MOUNTPOINT = "/tmp/Dockerfile";
 
@@ -83,7 +88,17 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
     args.addAll(Arrays.asList(SCAN_ARGS));
+    if (config.getDebug()) {
+      args.add(VERBOSE_ARG);
+    }
+    if (!config.getEngineverify()) {
+      args.add(SKIP_TLS_ARG);
+    }
     args.add(imageName);
+    if (!config.getEngineurl().equals(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL)) {
+      args.add(String.format(SYSDIG_URL_ARG, config.getEngineurl()));
+      args.add(ON_PREM_ARG);
+    }
 
     List<String> envVars = new ArrayList<>();
     envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
@@ -108,14 +123,14 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
     try {
       //TODO: Get exit code in run and exec?
-      inlineScanContainer.runAsync(null);
+      inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
-      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, null);
-      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, null);
-      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame) );
+      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
       logger.logDebug("Executing command in container: " + args.toString());
-      inlineScanContainer.exec(args, null, builder::append);
+      inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
