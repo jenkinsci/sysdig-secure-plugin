@@ -4,6 +4,7 @@ import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
 import net.sf.json.JSONObject;
@@ -25,10 +26,6 @@ public class InlineScannerRemoteExecutorTests {
 
   private InlineScannerRemoteExecutor scannerRemoteExecutor = null;
 
-  //TODO: Sysdig URL
-
-  //TODO: Skip TLS
-
   //TODO: Throw exception on container run
 
   //TODO: Handle errors on plugin execution
@@ -38,7 +35,7 @@ public class InlineScannerRemoteExecutorTests {
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
-  private ContainerRunner containerRunner;
+  ContainerRunner containerRunner;
   private Container container;
   private SysdigLogger logger;
   private JSONObject outputObject;
@@ -55,9 +52,13 @@ public class InlineScannerRemoteExecutorTests {
     when(config.getEngineurl()).thenReturn(new String(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL));
     when(config.getDebug()).thenReturn(false);
 
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
-
     containerRunner = mock(ContainerRunner.class);
+    ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
+    when(containerRunnerFactory.getContainerRunner(any())).thenReturn(containerRunner);
+
+    InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
+
     container = mock(Container.class);
     logger = mock(SysdigLogger.class);
     nodeEnvVars = new EnvVars();
@@ -100,7 +101,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void containerIsCreatedAndExecuted() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -122,7 +123,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void containerDoesNotHaveAnyAdditionalParameters() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -142,7 +143,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void dockerSocketIsMounted() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -159,7 +160,7 @@ public class InlineScannerRemoteExecutorTests {
     logOutput = "foo-output";
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(logger, atLeastOnce()).logInfo(argThat(msg -> msg.contains("foo-output")));
@@ -171,7 +172,7 @@ public class InlineScannerRemoteExecutorTests {
     outputObject.put("foo-key", "foo-value");
 
     // When
-    String scanOutput = scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    String scanOutput = scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     assertEquals(scanOutput, outputObject.toString());
@@ -180,7 +181,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void addedByAnnotationsAreIncluded() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -194,7 +195,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void containerExecutionContainsExpectedParameters() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--format=JSON")), isNull(), any(), any());
@@ -204,10 +205,10 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void customURLIsProvidedAsParameter() throws Exception {
     when(config.getEngineurl()).thenReturn("https://my-foo-url");
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--sysdig-url=https://my-foo-url")), isNull(), any(), any());
@@ -217,10 +218,10 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void verboseIsEnabledWhenDebug() throws Exception {
     when(config.getDebug()).thenReturn(true);
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--verbose")), isNull(), any(), any());
@@ -229,10 +230,10 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void skipTLSFlagWhenInsecure() throws Exception {
     when(config.getEngineverify()).thenReturn(false);
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, null, null, config, null);
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--sysdig-skip-tls")), isNull(), any(), any());
@@ -240,10 +241,10 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsProvidedAsParameter() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null);
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(container, times(1)).exec(argThat(args -> args.contains("--dockerfile=/tmp/Dockerfile")), isNull(), any(), any());
@@ -251,10 +252,10 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsMountedAtTmp() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null, null);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", null, config, null);
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     verify(containerRunner, times(1)).createContainer(
       eq(SCAN_IMAGE),
@@ -268,7 +269,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void setSysdigTokenIsProvidedAsEnvironmentVariable() throws Exception {
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -285,7 +286,7 @@ public class InlineScannerRemoteExecutorTests {
     nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -309,7 +310,7 @@ public class InlineScannerRemoteExecutorTests {
     nodeEnvVars.put("https_proxy", "http://httpsproxy:1234");
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(
@@ -332,7 +333,7 @@ public class InlineScannerRemoteExecutorTests {
     nodeEnvVars.put("no_proxy", "1.2.3.4,5.6.7.8");
 
     // When
-    scannerRemoteExecutor.scanImage(containerRunner, logger, nodeEnvVars);
+    scannerRemoteExecutor.scanImage(logger, nodeEnvVars);
 
     // Then
     verify(containerRunner, times(1)).createContainer(

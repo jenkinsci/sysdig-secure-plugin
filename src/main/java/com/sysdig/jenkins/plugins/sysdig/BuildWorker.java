@@ -413,6 +413,10 @@ public class BuildWorker {
     FilePath filePath = new FilePath(workspace, manifestFile);
     logger.logDebug("Processing images file '" + filePath.getRemote() + "'");
     try {
+      if (!filePath.exists()) {
+        throw new AbortException("Image list file '" + manifestFile + "' not found at: " + filePath.getRemote());
+      }
+
       String[] fileLines = filePath.readToString().split("\\r?\\n");
       for (String line : fileLines) {
         logger.logDebug("Processing line: " + line);
@@ -422,7 +426,8 @@ public class BuildWorker {
         logger.logDebug("Adding tag '" + lineSplit[0] + "' with Dockerfile '" + dockerfile + "'");
         imageDockerfileMap.put(tag, dockerfile == null ? null : new FilePath(workspace, dockerfile).getRemote());
       }
-
+    } catch (AbortException e) {
+      throw e;
     } catch (Exception e) { // caught unknown exception, console.log it and wrap it
       logger.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
       throw new AbortException("Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");

@@ -21,6 +21,7 @@ import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
@@ -51,20 +52,24 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   private static final int STOP_SECONDS = 1;
 
+  // Use a default container runner factory, but allow overriding for mocks in tests
+  private static ContainerRunnerFactory containerRunnerFactory = new DockerClientContainerFactory();
+  public static void setContainerRunnerFactory(ContainerRunnerFactory containerRunnerFactory) {
+    InlineScannerRemoteExecutor.containerRunnerFactory = containerRunnerFactory;
+  }
+
   private final String imageName;
   private final String dockerFile;
   private final BuildConfig config;
   private final TaskListener listener;
   private final EnvVars nodeEnvVars;
-  private final ContainerRunnerFactory containerRunnerFactory;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars, ContainerRunnerFactory containerRunnerFactory) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.listener = listener;
     this.config = config;
     this.nodeEnvVars = nodeEnvVars;
-    this.containerRunnerFactory = containerRunnerFactory;
   }
 
   @Override
@@ -75,9 +80,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       listener.getLogger(),
       config.getDebug());
 
-    ContainerRunner runner = containerRunnerFactory.getContainerRunner(logger);
-
-    return scanImage(runner, logger, nodeEnvVars);
+    return scanImage(logger, nodeEnvVars);
   }
 
   @Override
@@ -85,8 +88,9 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   }
 
-  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
-    //TODO(airadier): dockerFileContents
+  public String scanImage(SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
+
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
     args.addAll(Arrays.asList(SCAN_ARGS));

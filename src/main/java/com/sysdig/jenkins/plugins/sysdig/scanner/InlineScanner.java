@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
-import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
@@ -38,16 +37,14 @@ public class InlineScanner extends Scanner {
   private final SysdigLogger logger;
   private final TaskListener listener;
   private final FilePath workspace;
-  private final ContainerRunnerFactory containerRunnerFactory;
 
-  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace, ContainerRunnerFactory containerRunnerFactory) {
+  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace) {
     super(listener, config);
 
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
     this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), config.getDebug());
     this.workspace = workspace;
-    this.containerRunnerFactory = containerRunnerFactory;
   }
 
   @Override
@@ -69,8 +66,7 @@ public class InlineScanner extends Scanner {
         dockerFile,
         listener,
         config,
-        nodeEnvVars,
-        containerRunnerFactory);
+        nodeEnvVars);
 
       String scanRawOutput = workspace.act(task);
 

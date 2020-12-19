@@ -36,13 +36,19 @@ public class BackendScanner extends Scanner {
   private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
   private final SysdigSecureClient sysdigSecureClient;
 
-  public BackendScanner(TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
+  // Use a default container runner factory, but allow overriding for mocks in tests
+  private static BackendScanningClientFactory backendScanningClientFactory = new SysdigSecureClientFactory();
+  public static void setBackendScanningClientFactory(BackendScanningClientFactory backendScanningClientFactory) {
+    BackendScanner.backendScanningClientFactory = backendScanningClientFactory;
+  }
+
+  public BackendScanner(TaskListener listener, BuildConfig config) {
     super(listener, config);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?
-      factory.newClient(sysdigToken, config.getEngineurl(), logger) :
-      factory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
+      backendScanningClientFactory.newClient(sysdigToken, config.getEngineurl(), logger) :
+      backendScanningClientFactory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
   }
 
   @Override

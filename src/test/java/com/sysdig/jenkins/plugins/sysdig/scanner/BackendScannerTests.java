@@ -55,7 +55,8 @@ public class BackendScannerTests {
 
     when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any())).thenReturn(IMAGE_DIGEST);
 
-    this.scanner = new BackendScanner(listener, config, clientFactory);
+    BackendScanner.setBackendScanningClientFactory(clientFactory);
+    this.scanner = new BackendScanner(listener, config);
   }
 
   @Test

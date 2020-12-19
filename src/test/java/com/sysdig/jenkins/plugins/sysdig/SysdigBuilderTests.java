@@ -9,11 +9,13 @@ import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
+import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScannerRemoteExecutor;
+import hudson.model.*;
 import hudson.tasks.BatchFile;
-import hudson.tasks.CommandInterpreter;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import hudson.tasks.Shell;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -24,22 +26,13 @@ import org.jvnet.hudson.test.JenkinsRule;
 import static org.mockito.Mockito.*;
 
 public class SysdigBuilderTests {
+  //TODO: Test (pipeline?) docker daemon not available
 
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
 
-  //TODO: Test declarative pipeline backend scan
-  //TODO: Test declarative pipeline inline scan
-  //TODO: Test scripted pipeline backend scan
-  //TODO: Test scripted pipeline  inline scan
-
-  //TODO: Test (pipeline?) missing image_file
-  //TODO: Test (pipeline?) docker daemon not available
-
   private BackendScanningClientFactory backendClientFactory;
-  private SysdigSecureClient client;
   private ContainerRunnerFactory containerRunnerFactory;
-  private ContainerRunner containerRunner;
 
   private static final String IMAGE_TO_SCAN = "my-image:tag";
   private static final String MOCK_GATES_REPORT = "[ {\"foo-digest\": { \"" + IMAGE_TO_SCAN + "\": [ { \"status\": \"pass\", \"detail\": { \"result\": { \"result\": {} } }} ] } } ]";
@@ -47,7 +40,7 @@ public class SysdigBuilderTests {
 
   @Before
   public void BeforeEach() throws ImageScanningException, InterruptedException {
-    client = mock(SysdigSecureClient.class);
+    SysdigSecureClient client = mock(SysdigSecureClient.class);
     when(client.submitImageForScanning(any(), any(), any())).thenReturn("foo-digest");
     JSONArray gates = JSONArray.fromObject(MOCK_GATES_REPORT);
     when(client.retrieveImageScanningResults(any(), eq("foo-digest"))).thenReturn(gates);
@@ -58,9 +51,12 @@ public class SysdigBuilderTests {
     when(backendClientFactory.newClient(any(), any(), any())).thenReturn(client);
     when(backendClientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
-    containerRunner = mock(ContainerRunner.class);
+    ContainerRunner containerRunner = mock(ContainerRunner.class);
     containerRunnerFactory = mock (ContainerRunnerFactory.class);
     when(containerRunnerFactory.getContainerRunner(any())).thenReturn(containerRunner);
+
+    InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
+    BackendScanner.setBackendScanningClientFactory(backendClientFactory);
 
     Container container = mock(Container.class);
     doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any());
@@ -81,6 +77,10 @@ public class SysdigBuilderTests {
       }),
       any()
     );
+
+    SysdigBuilder.DescriptorImpl desc = new SysdigBuilder("temp").getDescriptor();
+    desc.setDebug(true);
+    desc.save();
   }
 
   @Test
@@ -110,10 +110,55 @@ public class SysdigBuilderTests {
     jenkins.assertLogContains("Cannot find Jenkins credentials by ID", build);
   }
 
+  @Test
+  public void freestyleBackendScan() throws Exception {
+    performFreestyleScanJob(false);
+  }
+
+  @Test
+  public void freestyleInlineScan() throws Exception {
+    performFreestyleScanJob(true);
+  }
+
+  @Test
+  public void scriptedPipelineBackendScan() throws Exception {
+    performScriptedPipelineScanJob(false);
+  }
+
+  @Test
+  public void scriptedPipelineInlineScan() throws Exception {
+    performScriptedPipelineScanJob(true);
+  }
+
+  @Test
+  public void declarativePipelineBackendScan() throws Exception {
+    performDeclarativePipelineScanJob(false);
+  }
+
+  @Test
+  public void declarativePipelineInlineScan() throws Exception {
+    performDeclarativePipelineScanJob(true);
+  }
+
+  @Test
+  public void missingImagesFile() throws Exception {
+    // Given
+    configureCredentials();
+    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "no-images-file");
+    String pipelineScript
+      = "node {\n"
+      + "  sysdig engineCredentialsId: 'sysdig-secure', name: 'images_file'\n"
+      + "}";
+    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
+    WorkflowRun build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
+
+    // Then
+    jenkins.assertLogContains("Image list file 'images_file' not found", build);
+  }
+
   private void performFreestyleScanJob(boolean inline) throws Exception {
     // Given
-    UsernamePasswordCredentials creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
-    SystemCredentialsProvider.getInstance().getCredentials().add(creds);
+    configureCredentials();
 
     FreeStyleProject project = jenkins.createFreeStyleProject();
 
@@ -126,8 +171,6 @@ public class SysdigBuilderTests {
     }
 
     SysdigBuilder builder = new SysdigBuilder("images_file");
-    builder.setBackendClientFactory(backendClientFactory);
-    builder.setContainerRunnerFactory(containerRunnerFactory);
     builder.setEngineCredentialsId("sysdig-secure");
     builder.setInlineScanning(inline);
     project.getBuildersList().add(builder);
@@ -139,15 +182,52 @@ public class SysdigBuilderTests {
     jenkins.assertLogContains("final result PASS", build);
   }
 
-  @Test
-  public void freestyleBackendScan() throws Exception {
-    performFreestyleScanJob(false);
+  private void performScriptedPipelineScanJob(boolean inline) throws Exception {
+    // Given
+    configureCredentials();
+    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
+    String pipelineScript
+      = "node {\n"
+      + (SystemUtils.IS_OS_WINDOWS
+      ? "  bat 'echo my-image:latest > images_file'\n"
+      : "  sh 'echo my-image:latest > images_file'\n")
+      + "  sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "}";
+    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
+    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
+
+    // Then
+    jenkins.assertLogContains("final result PASS", build);
   }
 
-  @Test
-  public void freestyleInlineScan() throws Exception {
-    performFreestyleScanJob(true);
+  private void performDeclarativePipelineScanJob(boolean inline) throws Exception {
+    // Given
+    configureCredentials();
+    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-declarative-pipeline");
+    String pipelineScript
+      = "pipeline {\n"
+      + "  agent any\n"
+      + "  stages {\n"
+      + "    stage('Test') {\n"
+      + "      steps {\n"
+      + (SystemUtils.IS_OS_WINDOWS
+      ? "        bat 'echo my-image:latest > images_file'\n"
+      : "        sh 'echo my-image:latest > images_file'\n")
+      + "        sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "      }\n"
+      + "    }\n"
+      + "  }\n"
+      + "}\n";
+    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
+    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
+
+    // Then
+    jenkins.assertLogContains("final result PASS", build);
   }
 
+  private void configureCredentials() {
+    UsernamePasswordCredentials creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
+    SystemCredentialsProvider.getInstance().getCredentials().add(creds);
+  }
 
 }
