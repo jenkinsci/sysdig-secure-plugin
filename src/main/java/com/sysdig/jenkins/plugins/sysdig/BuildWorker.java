@@ -424,7 +424,7 @@ public class BuildWorker {
         String tag = lineSplit[0];
         String dockerfile = lineSplit.length > 1 ? lineSplit[1] : null;
         logger.logDebug("Adding tag '" + lineSplit[0] + "' with Dockerfile '" + dockerfile + "'");
-        imageDockerfileMap.put(tag, dockerfile == null ? null : new FilePath(workspace, dockerfile).getRemote());
+        imageDockerfileMap.put(tag, Strings.isNullOrEmpty(dockerfile) ? null : new FilePath(workspace, dockerfile).getRemote());
       }
     } catch (AbortException e) {
       throw e;
