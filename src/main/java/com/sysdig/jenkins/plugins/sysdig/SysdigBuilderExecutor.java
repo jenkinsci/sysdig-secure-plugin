@@ -48,19 +48,14 @@ public class SysdigBuilderExecutor {
 
     logger = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
 
+    /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
+    final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
+
+    Util.GATE_ACTION finalAction = null;
+
     try {
-      // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
-      if (Strings.isNullOrEmpty(builder.getEngineCredentialsId()) && Strings.isNullOrEmpty(globalConfig.getEngineCredentialsId())) {
-        throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", builder.getEngineCredentialsId()));
-      }
-      //Prefer the job credentials set by the user and fallback to the global ones
-
-      /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-      String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
-
       /* Instantiate config and a new build worker */
       config = new BuildConfig(globalConfig, builder, sysdigToken);
-
       config.print(logger);
 
       worker = new BuildWorker(run, workspace, listener, logger);
@@ -68,25 +63,10 @@ public class SysdigBuilderExecutor {
         new InlineScanner(listener, config, workspace) :
         new BackendScanner(listener, config);
 
-      Util.GATE_ACTION finalAction = worker.scanAndBuildReports(scanner, config);
-
-      /* Evaluate result of step based on gate action */
-      if (null != finalAction) {
-        if ((config.getBailOnFail() && Util.GATE_ACTION.FAIL.equals(finalAction))) {
-          logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
-          failedByGate = true;
-          throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
-        } else {
-          logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
-        }
-      } else {
-        logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-      }
+      finalAction = worker.scanAndBuildReports(scanner, config);
 
     } catch (AbortException e) {
-      if (failedByGate) {
-        throw e;
-      } else if ((null != config && config.getBailOnPluginFail()) || builder.getBailOnPluginFail()) {
+      if ((null != config && config.getBailOnPluginFail()) || builder.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
         throw e;
       } else {
@@ -102,31 +82,38 @@ public class SysdigBuilderExecutor {
         }
       }
       logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
-      LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: " + run.getParent().getDisplayName() + ", job: " + run
-        .getNumber());
+      LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: "
+        + run.getParent().getDisplayName() +
+        ", job: " + run.getNumber());
+    }
+
+    /* Evaluate result of step based on gate action */
+    if (null == finalAction) {
+      logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
+    } else if (((null != config && config.getBailOnFail()) || builder.getBailOnPluginFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
+      logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
+      throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
+    } else {
+      logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
     }
   }
 
   private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
+
+    //Prefer the job credentials set by the user and fallback to the global ones
     String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();
     logger.logDebug("Processing Jenkins credential ID " + credID);
 
-    String sysdigToken;
-    try {
-      StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
-      if (null != creds) {
-        //This is to maintain backward compatibility with how the API layer is fetching the information. This will be changed in the next version to use
-        //the Authorization header instead.
-        sysdigToken = creds.getPassword().getPlainText();
-      } else {
-        throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
-      }
-    } catch (AbortException e) {
-      throw e;
-    } catch (Exception e) {
-      logger.logError(String.format("Error looking up Jenkins credentials by ID: '%s'", credID), e);
-      throw new AbortException(String.format("Error looking up Jenkins credentials by ID: '%s", credID));
+    // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
+    if (Strings.isNullOrEmpty(credID)) {
+      throw new AbortException(String.format("API Credentials not defined. Make sure credentials are defined globally or in job."));
     }
-    return sysdigToken;
+
+    StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
+    if (null == creds) {
+      throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
+    }
+
+    return creds.getPassword().getPlainText();
   }
 }

@@ -97,10 +97,25 @@ public class SysdigBuilderTests {
   }
 
   @Test
-  public void noCredentialsError() throws Exception {
+  public void noCredentialsSetError() throws Exception {
     // Given
     FreeStyleProject project = jenkins.createFreeStyleProject();
     SysdigBuilder builder = new SysdigBuilder("images_file");
+    project.getBuildersList().add(builder);
+
+    // When
+    FreeStyleBuild build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+    // Then
+    jenkins.assertLogContains("API Credentials not defined", build);
+  }
+
+  @Test
+  public void credentialsNotFoundError() throws Exception {
+    // Given
+    FreeStyleProject project = jenkins.createFreeStyleProject();
+    SysdigBuilder builder = new SysdigBuilder("images_file");
+    builder.setEngineCredentialsId("non-existing");
     project.getBuildersList().add(builder);
 
     // When
