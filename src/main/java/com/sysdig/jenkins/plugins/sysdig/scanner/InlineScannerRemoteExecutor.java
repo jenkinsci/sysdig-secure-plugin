@@ -22,10 +22,8 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
-import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
@@ -54,6 +52,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   // Use a default container runner factory, but allow overriding for mocks in tests
   private static ContainerRunnerFactory containerRunnerFactory = new DockerClientContainerFactory();
+
   public static void setContainerRunnerFactory(ContainerRunnerFactory containerRunnerFactory) {
     InlineScannerRemoteExecutor.containerRunnerFactory = containerRunnerFactory;
   }
@@ -61,34 +60,22 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private final String imageName;
   private final String dockerFile;
   private final BuildConfig config;
-  private final TaskListener listener;
+  private final SysdigLogger logger;
   private final EnvVars nodeEnvVars;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, BuildConfig config, SysdigLogger logger, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
-    this.listener = listener;
     this.config = config;
+    this.logger = logger;
     this.nodeEnvVars = nodeEnvVars;
   }
 
   @Override
-  public String call() throws Exception {
-
-    SysdigLogger logger = new ConsoleLog(
-      "InlineScanner",
-      listener.getLogger(),
-      config.getDebug());
-
-    return scanImage(logger, nodeEnvVars);
-  }
-
+  public void checkRoles(RoleChecker checker) throws SecurityException { }
   @Override
-  public void checkRoles(RoleChecker checker) throws SecurityException {
 
-  }
-
-  public String scanImage(SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
+  public String call() throws InterruptedException {
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
 
     List<String> args = new ArrayList<>();

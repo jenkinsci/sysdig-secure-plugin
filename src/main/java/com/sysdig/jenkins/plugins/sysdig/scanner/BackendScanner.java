@@ -18,8 +18,8 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -42,8 +42,8 @@ public class BackendScanner extends Scanner {
     BackendScanner.backendScanningClientFactory = backendScanningClientFactory;
   }
 
-  public BackendScanner(TaskListener listener, BuildConfig config) {
-    super(listener, config);
+  public BackendScanner(BuildConfig config, SysdigLogger logger) {
+    super(config, logger);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?

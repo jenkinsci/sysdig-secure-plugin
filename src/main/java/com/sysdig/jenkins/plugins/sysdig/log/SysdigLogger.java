@@ -3,8 +3,6 @@ package com.sysdig.jenkins.plugins.sysdig.log;
 import java.io.PrintStream;
 
 public interface SysdigLogger {
-  PrintStream getLogger();
-
   void logDebug(String msg);
 
   void logDebug(String msg, Throwable t);

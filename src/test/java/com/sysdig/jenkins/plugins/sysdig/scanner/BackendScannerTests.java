@@ -4,8 +4,8 @@ import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -44,19 +44,17 @@ public class BackendScannerTests {
 
   @Before
   public void BeforeEach() throws ImageScanningException {
-    TaskListener listener = mock(TaskListener.class);
     BuildConfig config = mock(BuildConfig.class);
     BackendScanningClientFactory clientFactory = mock(BackendScanningClientFactory.class);
     this.client = mock(SysdigSecureClient.class);
     when(clientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
-    PrintStream logger = mock(PrintStream.class);
-    when(listener.getLogger()).thenReturn((logger));
+    SysdigLogger logger = mock(SysdigLogger.class);
 
     when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any())).thenReturn(IMAGE_DIGEST);
 
     BackendScanner.setBackendScanningClientFactory(clientFactory);
-    this.scanner = new BackendScanner(listener, config);
+    this.scanner = new BackendScanner(config, logger);
   }
 
   @Test

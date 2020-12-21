@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -34,16 +33,14 @@ import java.util.Map;
 public class InlineScanner extends Scanner {
 
   private final Map<String, JSONObject> scanOutputs;
-  private final SysdigLogger logger;
   private final TaskListener listener;
   private final FilePath workspace;
 
-  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace) {
-    super(listener, config);
+  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace, SysdigLogger logger) {
+    super(config, logger);
 
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
-    this.logger = new ConsoleLog(this.getClass().getSimpleName(), listener.getLogger(), config.getDebug());
     this.workspace = workspace;
   }
 
@@ -57,6 +54,7 @@ public class InlineScanner extends Scanner {
     try {
       final EnvVars nodeEnvVars = new EnvVars(System.getenv());
 
+
       Computer computer = this.workspace.toComputer();
       if (computer != null) {
         nodeEnvVars.putAll(computer.buildEnvironment(listener));
@@ -64,8 +62,8 @@ public class InlineScanner extends Scanner {
 
       InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag,
         dockerFile,
-        listener,
         config,
+        logger,
         nodeEnvVars);
 
       String scanRawOutput = workspace.act(task);

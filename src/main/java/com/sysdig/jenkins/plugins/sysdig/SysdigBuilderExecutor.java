@@ -46,7 +46,7 @@ public class SysdigBuilderExecutor {
     BuildWorker worker = null;
     SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
 
-    logger = new ConsoleLog("SysdigSecurePlugin", listener.getLogger(), globalConfig.getDebug());
+    logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
     final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
@@ -60,8 +60,8 @@ public class SysdigBuilderExecutor {
 
       worker = new BuildWorker(run, workspace, listener, logger);
       Scanner scanner = config.getInlineScanning() ?
-        new InlineScanner(listener, config, workspace) :
-        new BackendScanner(listener, config);
+        new InlineScanner(listener, config, workspace, logger) :
+        new BackendScanner(config, logger);
 
       finalAction = worker.scanAndBuildReports(scanner, config);
 
