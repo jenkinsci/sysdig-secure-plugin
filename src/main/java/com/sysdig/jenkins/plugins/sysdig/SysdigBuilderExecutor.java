@@ -56,12 +56,15 @@ public class SysdigBuilderExecutor {
     Util.GATE_ACTION finalAction = null;
     try {
 
-      worker = new BuildWorker(run, workspace, listener, logger);
       Scanner scanner = config.getInlineScanning() ?
         new InlineScanner(listener, config, workspace, logger) :
         new BackendScanner(config, logger);
 
-      finalAction = worker.scanAndBuildReports(scanner, config);
+      ReportConverter reporter = new ReportConverter(logger);
+
+      worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
+
+      finalAction = worker.scanAndBuildReports(config);
 
     } catch (Exception e) {
       if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {

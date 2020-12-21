@@ -47,7 +47,7 @@ public class BuildWorker {
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
 
   // Private members
-  Run<?, ?> build;
+  Run<?, ?> run;
   FilePath workspace;
   Launcher launcher;
   TaskListener listener;
@@ -58,16 +58,16 @@ public class BuildWorker {
   private String jenkinsOutputDirName;
   private JSONObject gateSummary;
   private final ReportConverter reportConverter;
+  private final Scanner scanner;
 
-  public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, SysdigLogger logger)
-    throws IOException, InterruptedException {
+  public BuildWorker(Run<?,?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, Scanner scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
     try {
       if (listener == null) {
         LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
         throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
       }
 
-      this.build = build;
+      this.run = run;
       this.workspace = workspace;
       this.listener = listener;
       this.logger = logger;
@@ -81,7 +81,8 @@ public class BuildWorker {
 
       logger.logDebug("Build worker initialized");
 
-      this.reportConverter = new ReportConverter(logger);
+      this.scanner = scanner;
+      this.reportConverter = reportConverter;
 
     } catch (Exception e) {
       try {
@@ -95,7 +96,7 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(Scanner scanner, BuildConfig config) throws AbortException {
+  public Util.GATE_ACTION scanAndBuildReports(BuildConfig config) throws AbortException {
     Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
 
     /* Run analysis */
@@ -110,23 +111,25 @@ public class BuildWorker {
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
-      this.processPolicyEvaluation(scanResults);
-      this.processVulnerabilities(scanResults);
+      FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
+
+      FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
+      this.processPolicyEvaluation(scanResults, jenkinsGatesOutputFP);
+
+      FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
+      this.processVulnerabilities(scanResults, jenkinsQueryOutputFP);
 
       /* Setup reports */
       this.setupBuildReports(finalAction);
 
-    } catch (AbortException e) {
-      logger.logWarn("Recording failure to build reports and moving on with plugin operation", e);
+    } catch (Exception e) {
+      logger.logError("Recording failure to build reports and moving on with plugin operation", e);
     }
 
     return finalAction;
   }
 
-  public void processPolicyEvaluation(List<ImageScanningResult> resultList) throws AbortException {
-    FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
-    FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, GATE_OUTPUT_FILENAME);
-
+  public void processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
 
     JSONObject fullGateResults = new JSONObject();
 
@@ -144,16 +147,10 @@ public class BuildWorker {
       }
     }
 
-    try {
-      logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
-      jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
+    logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
+    jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
-      gateSummary = generateGatesSummary(fullGateResults);
-
-    } catch (InterruptedException | IOException e) {
-      logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
-      throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
-    }
+    gateSummary = generateGatesSummary(fullGateResults);
 
   }
 
@@ -283,33 +280,13 @@ public class BuildWorker {
 
     }
 
-
     gateSummary.put("header", generateDataTablesColumnsForGateSummary());
     gateSummary.put("rows", summaryRows);
 
     return gateSummary;
   }
 
-  public JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
-    JSONArray dataJson = new JSONArray();
-    JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
-    for (int i = 0; i < vulList.size(); i++) {
-      JSONObject vulnJson = vulList.getJSONObject(i);
-      JSONArray vulnArray = new JSONArray();
-      vulnArray.addAll(Arrays.asList(
-        tag,
-        vulnJson.getString("vuln"),
-        vulnJson.getString("severity"),
-        vulnJson.getString("package"),
-        vulnJson.getString("fix"),
-        String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
-      dataJson.add(vulnArray);
-    }
-
-    return dataJson;
-  }
-
-  public void processVulnerabilities(List<ImageScanningResult> submissionList) throws AbortException {
+  public void processVulnerabilities(List<ImageScanningResult> submissionList, FilePath jenkinsQueryOutputFP) throws AbortException {
     JSONArray dataJson = new JSONArray();
     for (ImageScanningResult entry : submissionList) {
       String tag = entry.getTag();
@@ -328,8 +305,6 @@ public class BuildWorker {
     securityJson.put("columns", columnsJson);
     securityJson.put("data", dataJson);
 
-    FilePath jenkinsQueryOutputFP = new FilePath(new FilePath(workspace, jenkinsOutputDirName), CVE_LISTING_FILENAME);
-
     try {
       logger.logDebug(String.format("Writing vulnerability listing result to %s", jenkinsQueryOutputFP.getRemote()));
       jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -340,17 +315,36 @@ public class BuildWorker {
 
   }
 
-  public void setupBuildReports(Util.GATE_ACTION finalAction) throws AbortException {
+  private JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+    JSONArray dataJson = new JSONArray();
+    JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
+    for (int i = 0; i < vulList.size(); i++) {
+      JSONObject vulnJson = vulList.getJSONObject(i);
+      JSONArray vulnArray = new JSONArray();
+      vulnArray.addAll(Arrays.asList(
+        tag,
+        vulnJson.getString("vuln"),
+        vulnJson.getString("severity"),
+        vulnJson.getString("package"),
+        vulnJson.getString("fix"),
+        String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+      dataJson.add(vulnArray);
+    }
+
+    return dataJson;
+  }
+
+  private void setupBuildReports(Util.GATE_ACTION finalAction) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
       ArtifactArchiver artifactArchiver = new ArtifactArchiver(jenkinsOutputDirName + "/");
-      artifactArchiver.perform(build, workspace, launcher, listener);
+      artifactArchiver.perform(run, workspace, launcher, listener);
 
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      build.addAction(new SysdigAction(build, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
+      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
@@ -380,7 +374,7 @@ public class BuildWorker {
     try {
       logger.logDebug("Initializing Jenkins workspace");
 
-      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + build.getNumber();
+      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + run.getNumber();
       FilePath jenkinsReportDir = new FilePath(workspace, jenkinsOutputDirName);
 
       // Create output directories
@@ -394,7 +388,7 @@ public class BuildWorker {
     }
   }
 
-  public Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
+  private Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
 
     Map<String, String> imageDockerfileMap = new HashMap<>();
     logger.logDebug("Initializing Sysdig Secure workspace");
