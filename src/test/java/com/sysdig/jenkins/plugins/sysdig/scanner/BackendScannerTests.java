@@ -19,7 +19,6 @@ import org.mockito.quality.Strictness;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
@@ -29,8 +28,11 @@ import static org.mockito.Mockito.times;
 
 public class BackendScannerTests {
   //TODO: Test error handling on API
+
   //TODO: Secure client is received at factory
+
   //TODO: Verify Token is received at factory
+
   //TODO: Verify URL is received at factory
 
   @Rule
@@ -66,6 +68,19 @@ public class BackendScannerTests {
     verify(client, times(1)).submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any());
     assertEquals(IMAGE_TO_SCAN, submission.getTag());
     assertEquals(IMAGE_DIGEST, submission.getImageDigest());
+  }
+
+
+  @Test
+  public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+    // When
+    this.scanner.scanImage(IMAGE_TO_SCAN, null);
+
+    // Then
+    verify(client, times(1)).submitImageForScanning(
+      eq(IMAGE_TO_SCAN),
+      isNull(),
+      any());
   }
 
   @Test
