@@ -25,18 +25,15 @@ import static org.mockito.Mockito.when;
 
 public class ReportConverterTests {
 
-  private BuildWorker worker;
   private ReportConverter converter;
 
   @Before
-  public void BeforeEach() throws Exception {
-    TaskListener listener = mock(TaskListener.class);
+  public void BeforeEach() {
     SysdigLogger logger = mock(SysdigLogger.class);
     Run<?,?> build = mock(Run.class);
     when(build.getNumber()).thenReturn(0);
     FilePath ws = mock(FilePath.class);
     converter = new ReportConverter(logger);
-    worker = new BuildWorker(build, ws, listener, logger, null, converter);
   }
 
   @Test
@@ -47,7 +44,7 @@ public class ReportConverterTests {
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), new JSONObject()));
 
     // Then
-    assertEquals(Util.GATE_ACTION.PASS, converter.processPolicyEvaluation(results));
+    assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(results));
   }
 
   @Test
@@ -58,7 +55,7 @@ public class ReportConverterTests {
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject()));
 
     // Then
-    assertEquals(Util.GATE_ACTION.FAIL, converter.processPolicyEvaluation(results));
+    assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(results));
   }
 
   @Test
@@ -78,8 +75,7 @@ public class ReportConverterTests {
     tmp.deleteOnExit();
 
     // When
-    worker.processPolicyEvaluation(results, new FilePath(tmp));
-
+    converter.processPolicyEvaluation(results, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
@@ -108,8 +104,7 @@ public class ReportConverterTests {
     tmp.deleteOnExit();
 
     // When
-    worker.processVulnerabilities(results, new FilePath(tmp));
-
+    converter.processVulnerabilities(results, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));

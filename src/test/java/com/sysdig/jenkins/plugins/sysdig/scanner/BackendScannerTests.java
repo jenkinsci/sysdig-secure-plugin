@@ -35,6 +35,8 @@ public class BackendScannerTests {
 
   //TODO: Verify URL is received at factory
 
+  //TODO: Verify client is created with proxy if master is configured to use proxy
+
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
