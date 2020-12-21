@@ -5,9 +5,9 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,10 +62,12 @@ public class ReportConverterTests {
   public void generateGatesArtifact() throws IOException, InterruptedException {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
-    ClassLoader classLoader = getClass().getClassLoader();
-    byte[] data = Files.readAllBytes(Paths.get(classLoader.getResource("com/sysdig/jenkins/plugins/sysdig/ReportConverterTests/gates.json").getFile()));
+
+    // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
+
+    byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates1.json"));
     JSONObject gatesReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    data = Files.readAllBytes(Paths.get(classLoader.getResource("com/sysdig/jenkins/plugins/sysdig/ReportConverterTests/gates2.json").getFile()));
+    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates2.json"));
     JSONObject gatesReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
 
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject()));
@@ -90,13 +92,13 @@ public class ReportConverterTests {
 
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
-    ClassLoader classLoader = getClass().getClassLoader();
 
-    data = Files.readAllBytes(Paths.get(classLoader.getResource("com/sysdig/jenkins/plugins/sysdig/ReportConverterTests/vulns1.json").getFile()));
+    // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
+    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns1.json"));
     JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport));
 
-    data = Files.readAllBytes(Paths.get(classLoader.getResource("com/sysdig/jenkins/plugins/sysdig/ReportConverterTests/vulns2.json").getFile()));
+    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns2.json"));
     JSONObject vulnsReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), vulnsReport2));
 
