@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 public class BuildWorker {
 
   private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
-  private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport.";
+  private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport_";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
 
@@ -57,9 +57,10 @@ public class BuildWorker {
 
   private String jenkinsOutputDirName;
   private JSONObject gateSummary;
+  private final ReportConverter reportConverter;
 
   public BuildWorker(Run<?, ?> build, FilePath workspace, TaskListener listener, SysdigLogger logger)
-    throws AbortException {
+    throws IOException, InterruptedException {
     try {
       if (listener == null) {
         LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
@@ -80,6 +81,8 @@ public class BuildWorker {
 
       logger.logDebug("Build worker initialized");
 
+      this.reportConverter = new ReportConverter(logger);
+
     } catch (Exception e) {
       try {
         if (logger != null) {
@@ -87,7 +90,8 @@ public class BuildWorker {
         }
         cleanJenkinsWorkspaceQuietly();
       } catch (Exception inner) { }
-      throw new AbortException("Failed to initialize worker for plugin execution, check logs for corrective action");
+      throw e;
+      //throw new AbortException("Failed to initialize worker for plugin execution, check logs for corrective action");
     }
   }
 
@@ -97,10 +101,16 @@ public class BuildWorker {
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
 
-    /* Run gates */
-    Util.GATE_ACTION finalAction = this.processPolicyEvaluation(scanResults);
+    if (scanResults.isEmpty()) {
+      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
+      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
+    }
+
+    Util.GATE_ACTION finalAction = reportConverter.processPolicyEvaluation(scanResults);
+    logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
+      this.processPolicyEvaluation(scanResults);
       this.processVulnerabilities(scanResults);
 
       /* Setup reports */
@@ -113,49 +123,38 @@ public class BuildWorker {
     return finalAction;
   }
 
-  public Util.GATE_ACTION processPolicyEvaluation(List<ImageScanningResult> resultList) throws AbortException {
+  public void processPolicyEvaluation(List<ImageScanningResult> resultList) throws AbortException {
     FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
     FilePath jenkinsGatesOutputFP = new FilePath(jenkinsOutputDirFP, GATE_OUTPUT_FILENAME);
 
-    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
-    if (resultList.isEmpty()) {
-      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
-      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
+
+    JSONObject fullGateResults = new JSONObject();
+
+    for (ImageScanningResult result : resultList) {
+      JSONObject gateResult = result.getGateResult();
+
+      logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s", result.getTag(), gateResult.toString()));
+
+      for (Object key : gateResult.keySet()) {
+        try {
+          fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
+        } catch (Exception e) {
+          logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
+        }
+      }
     }
 
     try {
-      JSONObject fullGateResults = new JSONObject();
-
-      for (ImageScanningResult result : resultList) {
-        JSONObject gateResult = result.getGateResult();
-        String evalStatus = result.getEvalStatus();
-        if (!"pass".equals(evalStatus)) {
-          finalAction = Util.GATE_ACTION.FAIL;
-        }
-
-        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation status: %s", evalStatus));
-        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result: %s", gateResult.toString()));
-
-        for (Object key : gateResult.keySet()) {
-          try {
-            fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
-          } catch (Exception e) {
-            logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
-          }
-        }
-      }
-
       logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
       jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
       gateSummary = generateGatesSummary(fullGateResults);
-      logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
-      return finalAction;
 
     } catch (InterruptedException | IOException e) {
       logger.logError("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error", e);
       throw new AbortException("Failed to execute sysdig-secure-engine policy evaluation due to an unexpected error. Please refer to above logs for more information");
     }
+
   }
 
   private JSONObject generateGatesSummary(JSONObject gatesJson) {
@@ -377,18 +376,11 @@ public class BuildWorker {
     }
   }
 
-  private void initializeJenkinsWorkspace() throws AbortException {
+  private void initializeJenkinsWorkspace() throws IOException, InterruptedException {
     try {
       logger.logDebug("Initializing Jenkins workspace");
 
-      // Initialized by Jenkins workspace prep
-      String buildId;
-      if (Strings.isNullOrEmpty(buildId = build.getParent().getDisplayName() + "_" + build.getNumber())) {
-        logger.logWarn("Unable to generate a unique identifier for this build due to invalid configuration");
-        throw new AbortException("Unable to generate a unique identifier for this build due to invalid configuration");
-      }
-
-      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + buildId;
+      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + build.getNumber();
       FilePath jenkinsReportDir = new FilePath(workspace, jenkinsOutputDirName);
 
       // Create output directories
@@ -396,11 +388,9 @@ public class BuildWorker {
         logger.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
         jenkinsReportDir.mkdirs();
       }
-    } catch (AbortException e) { // probably caught one of the thrown exceptions, let it pass through
-      throw e;
-    } catch (Exception e) { // caught unknown exception, log it and wrap it
+    } catch (IOException | InterruptedException e) { // probably caught one of the thrown exceptions, let it pass through
       logger.logWarn("Failed to initialize Jenkins workspace", e);
-      throw new AbortException("Failed to initialize Jenkins workspace due to to an unexpected error");
+      throw e;
     }
   }
 

@@ -1,8 +1,7 @@
-package com.sysdig.jenkins.plugins.sysdig;
-
 import com.cloudbees.plugins.credentials.*;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
@@ -25,7 +24,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.mockito.Mockito.*;
 
-public class SysdigBuilderTests {
+public class FullWorkflowTests {
   //TODO: Test (pipeline?) docker daemon not available
 
   @Rule

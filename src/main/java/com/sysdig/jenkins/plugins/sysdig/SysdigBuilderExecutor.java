@@ -41,22 +41,20 @@ public class SysdigBuilderExecutor {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
-    boolean failedByGate = false;
-    BuildConfig config = null;
-    BuildWorker worker = null;
-    SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
 
+    /* Instantiate config and a new build worker */
+    SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
     logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
     final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
 
-    Util.GATE_ACTION finalAction = null;
+    BuildConfig config = new BuildConfig(globalConfig, builder, sysdigToken);
+    config.print(logger);
 
+    BuildWorker worker = null;
+    Util.GATE_ACTION finalAction = null;
     try {
-      /* Instantiate config and a new build worker */
-      config = new BuildConfig(globalConfig, builder, sysdigToken);
-      config.print(logger);
 
       worker = new BuildWorker(run, workspace, listener, logger);
       Scanner scanner = config.getInlineScanning() ?
@@ -65,10 +63,10 @@ public class SysdigBuilderExecutor {
 
       finalAction = worker.scanAndBuildReports(scanner, config);
 
-    } catch (AbortException e) {
-      if ((null != config && config.getBailOnPluginFail()) || builder.getBailOnPluginFail()) {
+    } catch (Exception e) {
+      if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
-        throw e;
+        throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
       } else {
         logger.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
       }
@@ -90,7 +88,7 @@ public class SysdigBuilderExecutor {
     /* Evaluate result of step based on gate action */
     if (null == finalAction) {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if (((null != config && config.getBailOnFail()) || builder.getBailOnPluginFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
+    } else if ((config.getBailOnFail() || builder.getBailOnPluginFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
       logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
       throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
     } else {
@@ -106,7 +104,7 @@ public class SysdigBuilderExecutor {
 
     // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
     if (Strings.isNullOrEmpty(credID)) {
-      throw new AbortException(String.format("API Credentials not defined. Make sure credentials are defined globally or in job."));
+      throw new AbortException("API Credentials not defined. Make sure credentials are defined globally or in job.");
     }
 
     StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
