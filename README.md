@@ -123,10 +123,9 @@ alpine:latest
 2.  Open the `Add build step` drop-down menu, and select
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
-    ![](docs/images/FreestyleAddStep.png)
+    ![Add step in Freestyle Job](docs/images/FreestyleAddStep.png)
 3.  Configure the available options, and click `Save`.  
     <img src="docs/images/FreestyleConfigStep.png" height="400px" />
-
 
 :speech_balloon: Take into account that this example is using the Inline scanning mode, in case you want to use Backend scanning, you would need to push the image to a registry that is pulleable by the Sysdig Backend.
 
@@ -175,8 +174,63 @@ sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-
 
 # Proxy configuration
 
-* Backend scan connects to Sysdig Secure backend from the Jenkins master node, so it will use the [Jenkins proxy configuration](https://wiki.jenkins.io/display/JENKINS/JenkinsBehindProxy).
-* Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
+## Backend scan
+
+Backend scan connects to Sysdig Secure backend from the Jenkins master node, so it will use the [Jenkins proxy configuration](https://wiki.jenkins.io/display/JENKINS/JenkinsBehindProxy).
+
+## Inline scan
+
+Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
+
+### Static agent configuration
+
+For static agents, go to *Manage Jenkins -> Manage Nodes* and select the corresponding agent, then the *Configure* option.
+
+Check *Environment variables* and define the `http_proxy`, `https_proxy` and `no_proxy` variables in there as required.
+
+![Static agent proxy configuration](docs/images/StaticAgentProxyConfig.png)
+
+### Kubernetes cloud configuration (pod templates)
+
+For agents using pods and containers provided by the Kubernetes cloud plugin, the environment variables are defined in the pod template.
+
+Go to the Kubernetes plugin configuration (*Manage Jenkins -> Manage Nodes and Clouds -> Configure Clouds).
+
+There, check the *Pod template details** to display the available pod templates:
+
+![Pod template details](docs/images/PodTemplateConfig.png)
+
+Edit the desired pod template, and add the environment variables to the container where the Inline scan will run:
+
+![Container environment variables](docs/images/PodTemplateContainerProxyConfig.png)
+
+For pod templates defined in the pipeline, you can add the environment variables directly in the YAML:
+
+```yaml
+pipeline {
+    agent {
+       kubernetes {
+           yaml """
+apiVersion: v
+kind: Pod
+metadata:
+    name: custom-pod
+spec:
+    containers:
+      - name: builder
+        image: docker:dind
+        securityContext:
+          privileged: true
+        ...
+        env:
+        # Set the environment variables for the DinD container
+        - name: http_proxy
+          value: http://my-proxy:8080
+...
+"""
+       }
+   }
+```
 
 # Plugin outputs
 
