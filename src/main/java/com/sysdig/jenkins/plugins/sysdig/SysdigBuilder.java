@@ -154,7 +154,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public static final String DEFAULT_NAME = "sysdig_secure_images";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
-    public static final boolean DEFAULT_INLINE_SCANNING = true;
+    public static final boolean DEFAULT_INLINE_SCANNING = false;
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
     public static final boolean DEFAULT_ENGINE_VERIFY = true;
 
