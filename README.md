@@ -86,7 +86,7 @@ To configure the Sysdig Secure plugin:
 
     ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
     
-6.  Configure the Sysdig Backend URL, `https://api.sysdigcloud.com` if you are using SaaS or your own if you are using an on-prem installation, and select the previously created credential.
+6.  Configure the Sysdig Backend URL, `https://secure.sysdig.com` if you are using SaaS or your own if you are using an on-prem installation, and select the previously created credential.
 
     Mark the Inline scanning option in case you have decided to use Inline scanning:
 
@@ -170,7 +170,7 @@ The table below describes each of the configuration options.
 The following is an example of executing the Sysdig Secure plugin as a Jenkinsfile step, modifying the default parameters
 
 ```
-sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineurl: 'https://api.sysdigcloud.com', inlineScanning: true, name: 'sysdig_secure_images'
+sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineurl: 'https://secure.sysdig.com', inlineScanning: true, name: 'sysdig_secure_images'
 ```
 
 # Proxy configuration

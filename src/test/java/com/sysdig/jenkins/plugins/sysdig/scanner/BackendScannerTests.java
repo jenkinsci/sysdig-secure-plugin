@@ -4,8 +4,8 @@ import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -19,7 +19,6 @@ import org.mockito.quality.Strictness;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
@@ -29,9 +28,14 @@ import static org.mockito.Mockito.times;
 
 public class BackendScannerTests {
   //TODO: Test error handling on API
+
   //TODO: Secure client is received at factory
+
   //TODO: Verify Token is received at factory
+
   //TODO: Verify URL is received at factory
+
+  //TODO: Verify client is created with proxy if master is configured to use proxy
 
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
@@ -44,18 +48,17 @@ public class BackendScannerTests {
 
   @Before
   public void BeforeEach() throws ImageScanningException {
-    TaskListener listener = mock(TaskListener.class);
     BuildConfig config = mock(BuildConfig.class);
     BackendScanningClientFactory clientFactory = mock(BackendScanningClientFactory.class);
     this.client = mock(SysdigSecureClient.class);
     when(clientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
-    PrintStream logger = mock(PrintStream.class);
-    when(listener.getLogger()).thenReturn((logger));
+    SysdigLogger logger = mock(SysdigLogger.class);
 
     when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any())).thenReturn(IMAGE_DIGEST);
 
-    this.scanner = new BackendScanner(listener, config, clientFactory);
+    BackendScanner.setBackendScanningClientFactory(clientFactory);
+    this.scanner = new BackendScanner(config, logger);
   }
 
   @Test
@@ -67,6 +70,19 @@ public class BackendScannerTests {
     verify(client, times(1)).submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any());
     assertEquals(IMAGE_TO_SCAN, submission.getTag());
     assertEquals(IMAGE_DIGEST, submission.getImageDigest());
+  }
+
+
+  @Test
+  public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+    // When
+    this.scanner.scanImage(IMAGE_TO_SCAN, null);
+
+    // Then
+    verify(client, times(1)).submitImageForScanning(
+      eq(IMAGE_TO_SCAN),
+      isNull(),
+      any());
   }
 
   @Test

@@ -2,10 +2,8 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -18,9 +16,9 @@ public abstract class Scanner {
   protected final BuildConfig config;
   protected final SysdigLogger logger;
 
-  public Scanner(TaskListener listener, BuildConfig config) {
+  public Scanner(BuildConfig config, SysdigLogger logger) {
     this.config = config;
-    this.logger = new ConsoleLog("Scanner", listener.getLogger(), config.getDebug());
+    this.logger = logger;
   }
 
   public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;

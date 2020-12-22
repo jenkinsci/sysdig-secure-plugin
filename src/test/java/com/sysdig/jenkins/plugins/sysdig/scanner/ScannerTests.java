@@ -6,4 +6,6 @@ public class ScannerTests {
 
   //TODO: Test scan multiple images and collect the results (scanner.scanImages)
 
+  //TODO: Error if dockerfile specified and it does not exist
+
 }

@@ -1,6 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.TaskListener;
@@ -24,7 +25,6 @@ public class InlineScannerTests {
   private Scanner scanner = null;
 
   //TODO: Handle exception in channel.call
-  //TODO: Check that tag in ImageSubmission result should match the requested tag, otherwise fail
 
   TaskListener listener;
 
@@ -35,8 +35,7 @@ public class InlineScannerTests {
     listener = mock(TaskListener.class);
     PrintStream logger = mock(PrintStream.class);
     when(listener.getLogger()).thenReturn((logger));
-
-    this.scanner = new InlineScanner(listener, config, workspace);
+    this.scanner = new InlineScanner(listener, config, workspace, mock(SysdigLogger.class));
   }
 
   @Test
@@ -58,7 +57,7 @@ public class InlineScannerTests {
   @Test
   public void testAbortIfNoWorkspace() {
     //Given
-    this.scanner = new InlineScanner(listener, mock(BuildConfig.class), null);
+    this.scanner = new InlineScanner(listener, mock(BuildConfig.class), null, mock(SysdigLogger.class));
 
     // When
     AbortException thrown = assertThrows(

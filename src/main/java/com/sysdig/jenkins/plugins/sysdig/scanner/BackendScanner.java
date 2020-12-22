@@ -18,8 +18,8 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
-import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -36,13 +36,19 @@ public class BackendScanner extends Scanner {
   private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
   private final SysdigSecureClient sysdigSecureClient;
 
-  public BackendScanner(TaskListener listener, BuildConfig config, BackendScanningClientFactory factory) {
-    super(listener, config);
+  // Use a default container runner factory, but allow overriding for mocks in tests
+  private static BackendScanningClientFactory backendScanningClientFactory = new SysdigSecureClientFactory();
+  public static void setBackendScanningClientFactory(BackendScanningClientFactory backendScanningClientFactory) {
+    BackendScanner.backendScanningClientFactory = backendScanningClientFactory;
+  }
+
+  public BackendScanner(BuildConfig config, SysdigLogger logger) {
+    super(config, logger);
 
     String sysdigToken = config.getSysdigToken();
     this.sysdigSecureClient = config.getEngineverify() ?
-      factory.newClient(sysdigToken, config.getEngineurl(), logger) :
-      factory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
+      backendScanningClientFactory.newClient(sysdigToken, config.getEngineurl(), logger) :
+      backendScanningClientFactory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
   }
 
   @Override

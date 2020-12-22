@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.StreamType;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -20,16 +21,16 @@ public class DockerClientContainer implements Container {
   }
 
   @Override
-  public void run(Consumer<String> logFrameCallback) throws InterruptedException {
-    runAsyncWithAdapter(logFrameCallback).awaitCompletion();
+  public void run(Consumer<String> stdoutCallback, Consumer<String> stderrCallback) throws InterruptedException {
+    runAsyncWithAdapter(stdoutCallback, stderrCallback).awaitCompletion();
   }
 
   @Override
-  public void runAsync(Consumer<String> logFrameCallback) {
-    runAsyncWithAdapter(logFrameCallback);
+  public void runAsync(Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
+    runAsyncWithAdapter(stdoutCallback, stderrCallback);
   }
 
-  private ResultCallback.Adapter<Frame> runAsyncWithAdapter(Consumer<String> logFrameCallback) {
+  private ResultCallback.Adapter<Frame> runAsyncWithAdapter(Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
     dockerClient.startContainerCmd(this.containerId)
       .exec();
 
@@ -41,8 +42,11 @@ public class DockerClientContainer implements Container {
       .exec(new ResultCallback.Adapter<Frame>() {
         @Override
         public void onNext(Frame item) {
-          if (logFrameCallback != null){
-            logFrameCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
+          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null){
+            stdoutCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
+          }
+          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null){
+            stderrCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
           super.onNext(item);
         }
@@ -50,16 +54,16 @@ public class DockerClientContainer implements Container {
   }
 
   @Override
-  public void exec(List<String> cmd, List<String> envVars, Consumer<String> logFrameCallback) throws InterruptedException {
-     execAsyncWithAdapter(cmd, envVars, logFrameCallback).awaitCompletion();
+  public void exec(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) throws InterruptedException {
+     execAsyncWithAdapter(cmd, envVars, stdoutCallback, stderrCallback).awaitCompletion();
   }
 
   @Override
-  public void execAsync(List<String> cmd, List<String> envVars, Consumer<String> logFrameCallback) {
-    execAsyncWithAdapter(cmd, envVars, logFrameCallback);
+  public void execAsync(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
+    execAsyncWithAdapter(cmd, envVars, stdoutCallback, stderrCallback);
   }
 
-  private ResultCallback.Adapter<Frame>  execAsyncWithAdapter(List<String> cmd, List<String> envVars, Consumer<String> logFrameCallback) {
+  private ResultCallback.Adapter<Frame>  execAsyncWithAdapter(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
     ExecCreateCmd execCmd = dockerClient.execCreateCmd(this.containerId)
       .withAttachStderr(true)
       .withAttachStdin(true)
@@ -77,8 +81,11 @@ public class DockerClientContainer implements Container {
       .exec(new ResultCallback.Adapter<Frame>() {
         @Override
         public void onNext(Frame item) {
-          if (logFrameCallback != null){
-            logFrameCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
+          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null){
+            stdoutCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
+          }
+          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null){
+            stderrCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
           super.onNext(item);
         }

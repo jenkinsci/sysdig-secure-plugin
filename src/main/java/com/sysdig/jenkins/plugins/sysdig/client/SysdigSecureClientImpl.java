@@ -170,38 +170,6 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     }
   }
 
-  @Override
-  public String getScanningAccount() throws ImageScanningException {
-    try (CloseableHttpClient httpClient = makeHttpClient(verifySSL)) {
-      String url = String.format("%s/api/scanning/v1/account", apiURL);
-
-      HttpGet httpget = new HttpGet(url);
-      httpget.addHeader("Content-Type", "application/json");
-      httpget.addHeader("Authorization", String.format("Bearer %s", token));
-
-      logger.logDebug("Sending request: " + httpget.toString());
-
-      try (CloseableHttpResponse response = httpClient.execute(httpget)) {
-        String responseBody = EntityUtils.toString(response.getEntity());
-
-        logger.logDebug("Response: " + response.getStatusLine().toString());
-        logger.logDebug("Response body:\n" + responseBody);
-
-        if (response.getStatusLine().getStatusCode() != 200) {
-          throw new ImageScanningException(String.format("Unable to retrieve the Scanning Account: %s", responseBody));
-        }
-
-        JSONObject responseJSON = JSONObject.fromObject(responseBody);
-        return responseJSON.getString("name");
-      }
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ImageScanningException(e);
-    }
-  }
-
-
   private static CloseableHttpClient makeHttpClient(boolean verifySSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
     HttpClientBuilder clientBuilder = HttpClients.custom();
 

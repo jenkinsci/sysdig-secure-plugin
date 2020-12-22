@@ -79,8 +79,4 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
       );
   }
 
-  @Override
-  public String getScanningAccount() throws ImageScanningException {
-    return (String)executeWithRetriesAndBackoff(sysdigSecureClient::getScanningAccount);
-  }
 }

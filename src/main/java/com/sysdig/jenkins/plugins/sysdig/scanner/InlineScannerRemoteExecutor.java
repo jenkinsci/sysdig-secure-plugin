@@ -17,13 +17,13 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
-import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientRunner;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
+import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
-import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
 
@@ -41,49 +41,57 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String[] SCAN_ARGS = new String[] {
     "--storage-type=docker-daemon",
     "--format=JSON"};
+  private static final String VERBOSE_ARG = "--verbose";
+  private static final String SKIP_TLS_ARG = "--sysdig-skip-tls";
+  private static final String SYSDIG_URL_ARG = "--sysdig-url=%s";
+  private static final String ON_PREM_ARG = "--on-prem";
   private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/Dockerfile";
   private static final String DOCKERFILE_MOUNTPOINT = "/tmp/Dockerfile";
 
   private static final int STOP_SECONDS = 1;
 
+  // Use a default container runner factory, but allow overriding for mocks in tests
+  private static ContainerRunnerFactory containerRunnerFactory = new DockerClientContainerFactory();
+
+  public static void setContainerRunnerFactory(ContainerRunnerFactory containerRunnerFactory) {
+    InlineScannerRemoteExecutor.containerRunnerFactory = containerRunnerFactory;
+  }
+
   private final String imageName;
   private final String dockerFile;
   private final BuildConfig config;
-  private final TaskListener listener;
+  private final SysdigLogger logger;
   private final EnvVars nodeEnvVars;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerFile, TaskListener listener, BuildConfig config, EnvVars nodeEnvVars) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, BuildConfig config, SysdigLogger logger, EnvVars nodeEnvVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
-    this.listener = listener;
     this.config = config;
+    this.logger = logger;
     this.nodeEnvVars = nodeEnvVars;
   }
 
   @Override
-  public String call() throws Exception {
-
-    SysdigLogger logger = new ConsoleLog(
-      "InlineScanner",
-      listener.getLogger(),
-      config.getDebug());
-
-    ContainerRunner runner = new DockerClientRunner(logger);
-
-    return scanImage(runner, logger, nodeEnvVars);
-  }
-
+  public void checkRoles(RoleChecker checker) throws SecurityException { }
   @Override
-  public void checkRoles(RoleChecker checker) throws SecurityException {
 
-  }
+  public String call() throws InterruptedException {
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
 
-  public String scanImage(ContainerRunner containerRunner, SysdigLogger logger, EnvVars nodeEnvVars) throws InterruptedException {
-    //TODO(airadier): dockerFileContents
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
     args.addAll(Arrays.asList(SCAN_ARGS));
+    if (config.getDebug()) {
+      args.add(VERBOSE_ARG);
+    }
+    if (!config.getEngineverify()) {
+      args.add(SKIP_TLS_ARG);
+    }
     args.add(imageName);
+    if (!config.getEngineurl().equals(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL)) {
+      args.add(String.format(SYSDIG_URL_ARG, config.getEngineurl()));
+      args.add(ON_PREM_ARG);
+    }
 
     List<String> envVars = new ArrayList<>();
     envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
@@ -108,14 +116,14 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
     try {
       //TODO: Get exit code in run and exec?
-      inlineScanContainer.runAsync(null);
+      inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
-      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, null);
-      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, null);
-      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame) );
+      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
       logger.logDebug("Executing command in container: " + args.toString());
-      inlineScanContainer.exec(args, null, builder::append);
+      inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
