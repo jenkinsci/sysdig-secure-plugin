@@ -184,9 +184,9 @@ Inline scan is executed in the worker node, so proxy is configured with the stan
 
 ### Static agent configuration
 
-For static agents, go to *Manage Jenkins -> Manage Nodes* and select the corresponding agent, then the *Configure* option.
+For static agents, go to *Manage Jenkins -> Manage Nodes* and select the corresponding agent, then click *Configure*.
 
-Check *Environment variables* and define the `http_proxy`, `https_proxy` and `no_proxy` variables in there as required.
+Check *Environment variables* under *Node Properties* and define the `http_proxy`, `https_proxy` and `no_proxy` variables in there as required.
 
 ![Static agent proxy configuration](docs/images/StaticAgentProxyConfig.png)
 
@@ -194,9 +194,9 @@ Check *Environment variables* and define the `http_proxy`, `https_proxy` and `no
 
 For agents using pods and containers provided by the Kubernetes cloud plugin, the environment variables are defined in the pod template.
 
-Go to the Kubernetes plugin configuration (*Manage Jenkins -> Manage Nodes and Clouds -> Configure Clouds).
+Go to the Kubernetes plugin configuration (*Manage Jenkins -> Manage Nodes and Clouds -> Configure Clouds*).
 
-There, check the *Pod template details** to display the available pod templates:
+There, check the *Pod Template details* to display the available pod templates:
 
 ![Pod template details](docs/images/PodTemplateConfig.png)
 
