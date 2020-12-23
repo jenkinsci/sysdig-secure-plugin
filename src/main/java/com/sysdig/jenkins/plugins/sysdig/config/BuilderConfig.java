@@ -13,11 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.client;
 
-import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+package com.sysdig.jenkins.plugins.sysdig.config;
 
-public interface BackendScanningClientFactory {
-  SysdigSecureClient newClient(String token, String apiURL, SysdigLogger logger);
-  SysdigSecureClient newInsecureClient(String token, String apiURL, SysdigLogger logger);
+public interface BuilderConfig extends CommonConfig {
+  String getImagesFile();
+  boolean getBailOnFail();
+  boolean getBailOnPluginFail();
+  boolean isInlineScanning();
 }

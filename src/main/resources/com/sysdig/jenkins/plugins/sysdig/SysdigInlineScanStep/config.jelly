@@ -1,9 +1,9 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
 
-  <f:section title="Sysdig Secure Plugin Build Options">
+  <f:section title="Sysdig Secure Inline Scan Options">
 
-    <f:entry title="Image list file" field="name">
+    <f:entry title="Image list file" field="imagesFile">
       <f:textbox default="${descriptor.DEFAULT_NAME}"/>
     </f:entry>
 
@@ -15,21 +15,17 @@
       <f:checkbox checked="${instance.bailOnPluginFail}" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
     </f:entry>
 
-    <f:entry title="Inline Scanning" field="inlineScanning" help="/plugin/sysdig-secure/help/help-inlineScanning.html">
-          <f:checkbox checked="${instance.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
-    </f:entry>
-
     <f:section title="Override Global Configuration">
         <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideURL.html">
             <f:textbox default=""/>
         </f:entry>
 
         <f:entry field="engineCredentialsId" title="Sysdig Secure API credentials" help="/plugin/sysdig-secure/help/help-OverrideCredentials.html">
-            <c:select />
+            <c:select/>
         </f:entry>
 
         <f:entry title="Verify SSL" field="engineverify">
-            <f:checkbox checked="${instance.engineTLSVerify}" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
+            <f:checkbox checked="${instance.engineverify}" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
         </f:entry>
 
     </f:section>

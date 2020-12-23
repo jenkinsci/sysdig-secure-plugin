@@ -15,6 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
@@ -25,56 +27,59 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
 
   private final SysdigSecureClient sysdigSecureClient;
   private final int retries;
+  private final int sleepSeconds;
+  private final SysdigLogger logger;
 
-  public SysdigSecureClientImplWithRetries(SysdigSecureClient sysdigSecureClient, int retries) {
+  public SysdigSecureClientImplWithRetries(SysdigSecureClient sysdigSecureClient, SysdigLogger logger, int retries, int sleepSeconds) {
     if (retries <= 0) {
       throw new InvalidParameterException("the number of retries must be higher than 0");
     }
     this.sysdigSecureClient = sysdigSecureClient;
     this.retries = retries;
+    this.sleepSeconds = sleepSeconds;
+    this.logger = logger;
   }
 
-  private interface RunnableFunction {
-    Object run() throws ImageScanningException;
+  private interface RunnableFunction<T> {
+    T run() throws ImageScanningException;
   }
 
-  private Object executeWithRetriesAndBackoff(RunnableFunction function) throws ImageScanningException {
+  private <T> T executeWithRetriesAndBackoff(RunnableFunction<T> function) throws ImageScanningException {
     ImageScanningException lastException = new ImageScanningException("the number of retries is negative or 0");
     long sleepTime = 0;
     for (int i = 0; i < retries; i++) {
       try {
         Thread.sleep(sleepTime);
-        sleepTime += 5000;
+        sleepTime += 1000 * sleepSeconds;
         return function.run();
       } catch (ImageScanningException e) {
+        logger.logDebug("SysdigClient error in retry number " + i, e);
         lastException = e;
       } catch (InterruptedException e) {
-        lastException = new ImageScanningException(e);
+        throw new ImageScanningException("Interrupted", e);
       }
+      logger.logDebug("SysdigClient retrying in " + sleepTime + "ms");
     }
     throw lastException;
   }
 
   @Override
   public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException {
-    return (String)
-      executeWithRetriesAndBackoff(() ->
+    return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.submitImageForScanning(tag, dockerFileContents, annotations)
       );
   }
 
   @Override
   public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
-    return (JSONArray)
-      executeWithRetriesAndBackoff(() ->
+    return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest)
       );
   }
 
   @Override
   public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException {
-    return (JSONObject)
-      executeWithRetriesAndBackoff(() ->
+    return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest)
       );
   }

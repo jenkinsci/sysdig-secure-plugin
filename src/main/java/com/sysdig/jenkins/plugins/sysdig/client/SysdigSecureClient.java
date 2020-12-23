@@ -15,6 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.client;
 
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 

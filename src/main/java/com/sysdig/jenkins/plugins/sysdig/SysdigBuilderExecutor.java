@@ -15,17 +15,17 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.config.BuilderConfig;
+import com.sysdig.jenkins.plugins.sysdig.config.GlobalConfig;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
 import hudson.FilePath;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
-import java.util.Collections;
 import java.util.logging.Logger;
 
 public class SysdigBuilderExecutor {
@@ -34,26 +34,35 @@ public class SysdigBuilderExecutor {
 
   private final ConsoleLog logger;
 
-  public SysdigBuilderExecutor(SysdigBuilder builder,
+  public SysdigBuilderExecutor(BuilderConfig builderConfig,
+                               GlobalConfig globalConfig,
                                Run<?, ?> run,
                                FilePath workspace,
                                TaskListener listener) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
-
     /* Instantiate config and a new build worker */
-    SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
     logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
-    /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-    final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
+    if (workspace == null) {
+      throw new AbortException("Workspace not available. This plugin must run inside a workspace.");
+    }
 
-    BuildConfig config = new BuildConfig(globalConfig, builder, sysdigToken);
+    BuildConfig config = new BuildConfig(globalConfig, builderConfig, run);
     config.print(logger);
 
+    // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
+    if (Strings.isNullOrEmpty(config.getCredentialsID())) {
+      throw new AbortException("API Credentials not defined. Make sure credentials are defined globally or in job.");
+    }
+
+    if (Strings.isNullOrEmpty(config.getSysdigToken())) {
+      throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", config.getCredentialsID()));
+    }
+
     BuildWorker worker = null;
-    Util.GATE_ACTION finalAction = null;
+    ReportConverter.GATE_ACTION finalAction = null;
     try {
 
       Scanner scanner = config.getInlineScanning() ?
@@ -65,14 +74,15 @@ public class SysdigBuilderExecutor {
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
 
       finalAction = worker.scanAndBuildReports(config);
-
+    } catch (AbortException e) {
+      throw e;
     } catch (Exception e) {
-      if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {
-        logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
+      logger.logError("Error when executing Sysdig Secure Container Image Scanner Plugin", e);
+      if (config.getBailOnPluginFail()) {
         throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
-      } else {
-        logger.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
       }
+
+      logger.logWarn("Ignoring errors in plugin execution");
     } finally {
       // Wrap cleanup in try catch block to ensure this finally block does not throw an exception
       if (null != worker) {
@@ -82,39 +92,25 @@ public class SysdigBuilderExecutor {
           logger.logDebug("Failed to cleanup after the plugin, ignoring the errors", e);
         }
       }
+
       logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: "
         + run.getParent().getDisplayName() +
         ", job: " + run.getNumber());
     }
 
+    //TODO(airadier): Option to mark as unstable build?
     /* Evaluate result of step based on gate action */
     if (null == finalAction) {
-      logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if ((config.getBailOnFail() || builder.getBailOnPluginFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
-      logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
-      throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
+      logger.logWarn("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
+    } else if (config.getBailOnFail() && ReportConverter.GATE_ACTION.FAIL.equals(finalAction)) {
+      logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
+      run.setResult(Result.FAILURE);
     } else {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction);
+      run.setResult(Result.SUCCESS);
     }
   }
 
-  private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
 
-    //Prefer the job credentials set by the user and fallback to the global ones
-    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();
-    logger.logDebug("Processing Jenkins credential ID " + credID);
-
-    // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
-    if (Strings.isNullOrEmpty(credID)) {
-      throw new AbortException("API Credentials not defined. Make sure credentials are defined globally or in job.");
-    }
-
-    StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
-    if (null == creds) {
-      throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
-    }
-
-    return creds.getPassword().getPlainText();
-  }
 }

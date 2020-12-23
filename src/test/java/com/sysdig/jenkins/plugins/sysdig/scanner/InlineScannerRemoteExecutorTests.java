@@ -47,9 +47,9 @@ public class InlineScannerRemoteExecutorTests {
   public void beforeEach() throws InterruptedException {
     config = mock(BuildConfig.class);
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
-    when(config.getEngineverify()).thenReturn(true);
+    when(config.getEngineTLSVerify()).thenReturn(true);
     // new String in here is not redundant, as we want to make sure that internally we compare by value, not by ref
-    when(config.getEngineurl()).thenReturn(new String(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL));
+    when(config.getEngineURL()).thenReturn(new String(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL));
     when(config.getDebug()).thenReturn(false);
 
     containerRunner = mock(ContainerRunner.class);
@@ -209,7 +209,7 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void customURLIsProvidedAsParameter() throws Exception {
-    when(config.getEngineurl()).thenReturn("https://my-foo-url");
+    when(config.getEngineURL()).thenReturn("https://my-foo-url");
 
     // When
     scannerRemoteExecutor.call();
@@ -232,7 +232,7 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void skipTLSFlagWhenInsecure() throws Exception {
-    when(config.getEngineverify()).thenReturn(false);
+    when(config.getEngineTLSVerify()).thenReturn(false);
 
     // When
     scannerRemoteExecutor.call();

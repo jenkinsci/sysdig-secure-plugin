@@ -1,9 +1,23 @@
+/*
+Copyright (C) 2016-2020 Sysdig
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.AbortException;
 import hudson.FilePath;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -14,22 +28,25 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ReportConverter {
+  public enum GATE_ACTION {PASS, FAIL}
+  private enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
+
   private final SysdigLogger logger;
 
   public ReportConverter(SysdigLogger logger) {
     this.logger = logger;
   }
 
-  public Util.GATE_ACTION getFinalAction(List<ImageScanningResult> results) throws AbortException {
-    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
+  public GATE_ACTION getFinalAction(List<ImageScanningResult> results) {
+    GATE_ACTION finalAction = GATE_ACTION.PASS;
 
     for (ImageScanningResult result : results) {
       String evalStatus = result.getEvalStatus();
 
-      logger.logDebug(String.format("Get policy evaluation status for image 's': %s", result.getTag(), evalStatus));
+      logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
       if (!"pass".equals(evalStatus)) {
-        finalAction = Util.GATE_ACTION.FAIL;
+        finalAction = GATE_ACTION.FAIL;
       }
     }
 
@@ -57,6 +74,29 @@ public class ReportConverter {
     jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
     return generateGatesSummary(fullGateResults);
+  }
+
+  public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
+
+    JSONArray dataJson = new JSONArray();
+    for (ImageScanningResult entry : scanResults) {
+      String tag = entry.getTag();
+      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
+    }
+
+    JSONObject securityJson = new JSONObject();
+    JSONArray columnsJson = new JSONArray();
+
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
+      JSONObject columnJson = new JSONObject();
+      columnJson.put("title", column);
+      columnsJson.add(columnJson);
+    }
+
+    securityJson.put("columns", columnsJson);
+    securityJson.put("data", dataJson);
+
+    jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
   }
 
   private JSONObject generateGatesSummary(JSONObject gatesJson) {
@@ -160,20 +200,20 @@ public class ReportConverter {
           logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
 
           JSONObject summaryRow = new JSONObject();
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), repoTag);
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Repo_Tag.toString(), repoTag);
+          summaryRow.put(GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
           summaryRows.add(summaryRow);
         } else {
           logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
           JSONObject summaryRow = new JSONObject();
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
+          summaryRow.put(GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
+          summaryRow.put(GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
           summaryRows.add(summaryRow);
 
           //console.logWarn("Repo_Tag element not found in gate output, skipping summary computation for " + imageKey);
@@ -193,7 +233,7 @@ public class ReportConverter {
 
   private static JSONArray generateDataTablesColumnsForGateSummary() {
     JSONArray headers = new JSONArray();
-    for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
+    for (GATE_SUMMARY_COLUMN column : GATE_SUMMARY_COLUMN.values()) {
       JSONObject header = new JSONObject();
       header.put("data", column.toString());
       header.put("title", column.toString().replaceAll("_", " "));
@@ -202,28 +242,6 @@ public class ReportConverter {
     return headers;
   }
 
-  public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
-
-    JSONArray dataJson = new JSONArray();
-    for (ImageScanningResult entry : scanResults) {
-      String tag = entry.getTag();
-      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
-    }
-
-    JSONObject securityJson = new JSONObject();
-    JSONArray columnsJson = new JSONArray();
-
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
-      JSONObject columnJson = new JSONObject();
-      columnJson.put("title", column);
-      columnsJson.add(columnJson);
-    }
-
-    securityJson.put("columns", columnsJson);
-    securityJson.put("data", dataJson);
-
-    jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
-  }
 
   private JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
     JSONArray dataJson = new JSONArray();

@@ -13,26 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.client;
 
-public class ImageScanningException extends Exception {
-  public ImageScanningException() {
-    super();
-  }
+package com.sysdig.jenkins.plugins.sysdig.config;
 
-  public ImageScanningException(String s) {
-    super(s);
-  }
-
-  public ImageScanningException(String s, Throwable throwable) {
-    super(s, throwable);
-  }
-
-  public ImageScanningException(Throwable throwable) {
-    super(throwable);
-  }
-
-  protected ImageScanningException(String s, Throwable throwable, boolean b, boolean b1) {
-    super(s, throwable, b, b1);
-  }
+public interface GlobalConfig extends CommonConfig {
+  boolean getDebug();
 }

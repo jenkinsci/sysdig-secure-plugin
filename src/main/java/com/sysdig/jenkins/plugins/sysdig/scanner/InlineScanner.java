@@ -16,9 +16,8 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Computer;
@@ -45,15 +44,10 @@ public class InlineScanner extends Scanner {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException {
-
-    if (this.workspace == null) {
-      throw new AbortException("Inline-scan failed. No workspace available");
-    }
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws ImageScanningException {
 
     try {
       final EnvVars nodeEnvVars = new EnvVars(System.getenv());
-
 
       Computer computer = this.workspace.toComputer();
       if (computer != null) {
@@ -70,7 +64,8 @@ public class InlineScanner extends Scanner {
 
       JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
 
-      //TODO: Only if exit code 0 or 1 or 3.
+      //TODO: Get exit code, and get "error" from JSON only if exit code 0 or 1 or 3.
+      //TODO: If exit code 2, show the standard output and error (should be already in the logs)
       if (scanOutput.has("error")) {
         throw new ImageScanningException(scanOutput.getString("error"));
       }
@@ -81,10 +76,10 @@ public class InlineScanner extends Scanner {
       this.scanOutputs.put(digest, scanOutput);
 
       return new ImageScanningSubmission(tag, digest);
-
+    } catch (ImageScanningException e) {
+      throw e;
     } catch (Exception e) {
-      logger.logError("Failed to perform inline-scan due to an unexpected error", e);
-      throw new AbortException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
+      throw new ImageScanningException("Failed to perform inline-scan due to an unexpected error", e);
     }
   }
 

@@ -17,9 +17,9 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.*;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -46,13 +46,13 @@ public class BackendScanner extends Scanner {
     super(config, logger);
 
     String sysdigToken = config.getSysdigToken();
-    this.sysdigSecureClient = config.getEngineverify() ?
-      backendScanningClientFactory.newClient(sysdigToken, config.getEngineurl(), logger) :
-      backendScanningClientFactory.newInsecureClient(sysdigToken, config.getEngineurl(), logger);
+    this.sysdigSecureClient = config.getEngineTLSVerify() ?
+      backendScanningClientFactory.newClient(sysdigToken, config.getEngineURL(), logger) :
+      backendScanningClientFactory.newInsecureClient(sysdigToken, config.getEngineURL(), logger);
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException {
 
     try {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
@@ -66,13 +66,12 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {
-      logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
+      throw new ImageScanningException("Failed to add image '" + imageTag + "' due to an unexpected error", e);
     }
   }
 
   @Override
-  public JSONArray getGateResults(ImageScanningSubmission submission) throws AbortException {
+  public JSONArray getGateResults(ImageScanningSubmission submission) throws ImageScanningException {
     String tag = submission.getTag();
     String imageDigest = submission.getImageDigest();
 
@@ -80,13 +79,12 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Waiting for analysis of %s with digest %s", tag, imageDigest));
       return sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
     } catch (ImageScanningException e) {
-      logger.logError("Unable to retrieve image scanning result for tag " + tag + " digest " + imageDigest, e);
-      throw new AbortException("Failed to retrieve policy evaluation due to an unexpected error. Please refer to above logs for more information");
+      throw new ImageScanningException("Failed to retrieve policy evaluation for image '" + tag + "' digest '" + imageDigest + "' due to an unexpected error", e);
     }
   }
 
   @Override
-  public JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException {
+  public JSONObject getVulnsReport(ImageScanningSubmission submission) throws ImageScanningException {
     String tag = submission.getTag();
     String imageDigest = submission.getImageDigest();
 
@@ -94,8 +92,7 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Querying vulnerability listing of %s width digest %s", tag, imageDigest));
       return sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest);
     } catch (ImageScanningException e) {
-      logger.logError("Unable to retrieve vulnerabilities report for tag " + tag + " digest " + imageDigest, e);
-      throw new AbortException("Failed to retrieve vulnerabilities report due to an unexpected error. Please refer to above logs for more information");
+      throw new ImageScanningException("Unable to retrieve vulnerabilities report for tag " + tag + " digest " + imageDigest, e);
     }
   }
 

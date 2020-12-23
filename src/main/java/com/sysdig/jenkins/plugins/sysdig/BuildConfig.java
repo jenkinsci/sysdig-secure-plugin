@@ -15,12 +15,18 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.config.BuilderConfig;
+import com.sysdig.jenkins.plugins.sysdig.config.GlobalConfig;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.PluginWrapper;
+import hudson.model.Run;
 import jenkins.model.Jenkins;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,35 +35,50 @@ import java.util.List;
  */
 public class BuildConfig implements Serializable {
 
-
-  private final String name;
+  private final String imagesFile;
+  private final boolean debug;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
-  private final boolean debug;
-  private final String engineurl;
-  private final boolean engineverify;
   private final boolean inlineScanning;
+  private final String engineURL;
+  private final boolean engineTLSVerify;
+  private final String credentialsID;
   private final String sysdigToken;
 
-  public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
-    name = builder.getName();
+  public BuildConfig(GlobalConfig globalConfig, BuilderConfig builder, Run<?, ?> run) {
+    imagesFile = builder.getImagesFile();
+    debug = globalConfig.getDebug();
     bailOnFail = builder.getBailOnFail();
     bailOnPluginFail =  builder.getBailOnPluginFail();
-    debug = globalConfig.getDebug();
+    inlineScanning = builder.isInlineScanning();
+
     if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      engineurl = builder.getEngineurl();
-      engineverify = builder.getEngineverify();
+      engineURL = builder.getEngineurl();
+      engineTLSVerify = builder.getEngineverify();
     } else {
-      engineurl = globalConfig.getEngineurl();
-      engineverify = globalConfig.getEngineverify();
+      engineURL = globalConfig.getEngineurl();
+      engineTLSVerify = globalConfig.getEngineverify();
     }
 
-    inlineScanning = builder.isInlineScanning();
-    this.sysdigToken = sysdigToken;
+    if (!Strings.isNullOrEmpty(builder.getEngineCredentialsId())) {
+      this.credentialsID = builder.getEngineCredentialsId();
+    } else {
+      this.credentialsID = globalConfig.getEngineCredentialsId();
+    }
+
+    if (!Strings.isNullOrEmpty(this.credentialsID)) {
+      this.sysdigToken = getSysdigTokenFromCredentials(run, this.credentialsID);
+    } else {
+      this.sysdigToken = null;
+    }
   }
 
-  public String getName() {
-    return name;
+  public String getImagesFile() {
+    return imagesFile;
+  }
+
+  public boolean getDebug() {
+    return debug;
   }
 
   public boolean getBailOnFail() {
@@ -68,24 +89,24 @@ public class BuildConfig implements Serializable {
     return bailOnPluginFail;
   }
 
-  public boolean getDebug() {
-    return debug;
+  public boolean getInlineScanning() {
+    return inlineScanning;
   }
 
-  public String getEngineurl() {
-    return engineurl;
+  public String getEngineURL() {
+    return engineURL;
+  }
+
+  public boolean getEngineTLSVerify() {
+    return engineTLSVerify;
+  }
+
+  public String getCredentialsID() {
+    return credentialsID;
   }
 
   public String getSysdigToken() {
     return sysdigToken;
-  }
-
-  public boolean getEngineverify() {
-    return engineverify;
-  }
-
-  public boolean getInlineScanning() {
-    return inlineScanning;
   }
 
   /**
@@ -103,13 +124,29 @@ public class BuildConfig implements Serializable {
       }
     }
 
+    logger.logInfo(String.format("imagesFile: %s", this.getImagesFile()));
     logger.logInfo(String.format("debug: %s", this.getDebug()));
-    logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
-    logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
-    logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
-    logger.logInfo(String.format("name: %s", this.getName()));
     logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
+    logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
+    logger.logInfo(String.format("engineurl: %s", this.getEngineURL()));
+    logger.logInfo(String.format("engineverify: %s", this.getEngineTLSVerify()));
+    logger.logInfo(String.format("credentialsID: %s", this.getCredentialsID()));
+  }
+
+  public static String getSysdigTokenFromCredentials(Run<?, ?> run, String credentialsID) {
+
+    StandardUsernamePasswordCredentials credentials = CredentialsProvider.findCredentialById(
+      credentialsID,
+      StandardUsernamePasswordCredentials.class,
+      run,
+      Collections.emptyList());
+
+    if (null == credentials) {
+      return null;
+    }
+
+    return credentials.getPassword().getPlainText();
   }
 
 }

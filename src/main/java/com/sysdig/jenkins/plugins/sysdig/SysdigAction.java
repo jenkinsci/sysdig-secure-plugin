@@ -42,7 +42,6 @@ public class SysdigAction implements Action {
   @Deprecated
   private Map<String, String> queries;
 
-
   public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
@@ -70,14 +69,17 @@ public class SysdigAction implements Action {
     return this.build;
   }
 
+  @SuppressWarnings("unused")
   public String getGateStatus() {
     return gateStatus;
   }
 
+  @SuppressWarnings("unused")
   public String getGateOutputUrl() {
     return this.gateOutputUrl;
   }
 
+  @SuppressWarnings("unused")
   public JSONObject getGateSummary() {
     // gateSummary was a JSON object in plugin version <= 1.0.12. Jenkins does not handle this type change correctly post upgrade.
     // Summary data from the previous versions is lost during deserialization due to the type change and plugin versions > 1.0.12
@@ -90,14 +92,19 @@ public class SysdigAction implements Action {
     }
   }
 
+  @SuppressWarnings("unused")
   public String getCveListingUrl() {
     return cveListingUrl;
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
   public String getGateReportUrl() {
     return this.gateReportUrl;
   }
 
+  @Deprecated
+  @SuppressWarnings("unused")
   public Map<String, String> getQueries() {
     return this.queries;
   }

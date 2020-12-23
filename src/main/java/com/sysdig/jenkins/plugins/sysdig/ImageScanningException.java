@@ -13,11 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.client;
+package com.sysdig.jenkins.plugins.sysdig;
 
-import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+public class ImageScanningException extends Exception {
 
-public interface BackendScanningClientFactory {
-  SysdigSecureClient newClient(String token, String apiURL, SysdigLogger logger);
-  SysdigSecureClient newInsecureClient(String token, String apiURL, SysdigLogger logger);
+  public ImageScanningException(String s) {
+    super(s);
+  }
+
+  public ImageScanningException(String s, Throwable throwable) {
+    super(s, throwable);
+  }
+
+  public ImageScanningException(Throwable throwable) {
+    super(throwable);
+  }
+
 }

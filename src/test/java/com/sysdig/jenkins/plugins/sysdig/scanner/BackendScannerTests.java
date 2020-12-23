@@ -2,7 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;

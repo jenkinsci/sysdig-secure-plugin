@@ -2,7 +2,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
 import net.sf.json.JSONObject;
@@ -32,30 +31,29 @@ public class ReportConverterTests {
     SysdigLogger logger = mock(SysdigLogger.class);
     Run<?,?> build = mock(Run.class);
     when(build.getNumber()).thenReturn(0);
-    FilePath ws = mock(FilePath.class);
     converter = new ReportConverter(logger);
   }
 
   @Test
-  public void reportFinalActionPass() throws AbortException {
+  public void reportFinalActionPass() {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject()));
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), new JSONObject()));
 
     // Then
-    assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(results));
+    assertEquals(ReportConverter.GATE_ACTION.PASS, converter.getFinalAction(results));
   }
 
   @Test
-  public void reportFinalActionFail() throws AbortException {
+  public void reportFinalActionFail() {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject()));
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject()));
 
     // Then
-    assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(results));
+    assertEquals(ReportConverter.GATE_ACTION.FAIL, converter.getFinalAction(results));
   }
 
   @Test

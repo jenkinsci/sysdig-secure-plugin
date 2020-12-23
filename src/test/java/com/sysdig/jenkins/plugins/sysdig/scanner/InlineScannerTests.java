@@ -1,21 +1,24 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
 import java.io.PrintStream;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.*;
 
 public class InlineScannerTests {
 
@@ -34,7 +37,6 @@ public class InlineScannerTests {
     BuildConfig config = mock(BuildConfig.class);
     listener = mock(TaskListener.class);
     PrintStream logger = mock(PrintStream.class);
-    when(listener.getLogger()).thenReturn((logger));
     this.scanner = new InlineScanner(listener, config, workspace, mock(SysdigLogger.class));
   }
 
@@ -55,21 +57,6 @@ public class InlineScannerTests {
   }
 
   @Test
-  public void testAbortIfNoWorkspace() {
-    //Given
-    this.scanner = new InlineScanner(listener, mock(BuildConfig.class), null, mock(SysdigLogger.class));
-
-    // When
-    AbortException thrown = assertThrows(
-      AbortException.class,
-      () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
-
-    // Then
-    assertTrue(thrown.getMessage().contains("workspace"));
-    //TODO: Check exception registered in log
-  }
-
-  @Test
   public void testNoTagInOutput() throws Throwable {
     // Given
     JSONObject output = new JSONObject();
@@ -78,12 +65,13 @@ public class InlineScannerTests {
     when(workspace.act(ArgumentMatchers.<Callable<String, Exception>>any())).thenReturn(output.toString());
 
     // When
-    AbortException thrown = assertThrows(
-      AbortException.class,
+    ImageScanningException thrown = assertThrows(
+      ImageScanningException.class,
       () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
 
     // Then
-    assertTrue(thrown.getMessage().contains("Failed to perform"));
+    assertThat(thrown.getMessage(), CoreMatchers.containsString("Failed to perform inline-scan due to an unexpected error"));
+    assertThat(thrown.getCause().getMessage(), CoreMatchers.containsString("JSONObject[\"tag\"] not found"));
     //TODO: Check exception registered in log
   }
 
@@ -96,12 +84,13 @@ public class InlineScannerTests {
     when(workspace.act(ArgumentMatchers.<Callable<String, Exception>>any())).thenReturn(output.toString());
 
     // When
-    AbortException thrown = assertThrows(
-      AbortException.class,
+    ImageScanningException thrown = assertThrows(
+      ImageScanningException.class,
       () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
 
     // Then
-    assertTrue(thrown.getMessage().contains("Failed to perform"));
+    assertThat(thrown.getMessage(), CoreMatchers.containsString("Failed to perform inline-scan due to an unexpected error"));
+    assertThat(thrown.getCause().getMessage(), CoreMatchers.containsString("JSONObject[\"digest\"] not found"));
     //TODO: Check exception registered in log
   }
 

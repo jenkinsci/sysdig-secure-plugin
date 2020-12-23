@@ -3,7 +3,7 @@ import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
-import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
@@ -161,7 +161,7 @@ public class FullWorkflowTests {
     WorkflowJob job = jenkins.createProject(WorkflowJob.class, "no-images-file");
     String pipelineScript
       = "node {\n"
-      + "  sysdig engineCredentialsId: 'sysdig-secure', name: 'images_file'\n"
+      + "  sysdig name: 'images_file', engineCredentialsId: 'sysdig-secure'\n"
       + "}";
     job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
     WorkflowRun build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
@@ -205,7 +205,7 @@ public class FullWorkflowTests {
       + (SystemUtils.IS_OS_WINDOWS
       ? "  bat 'echo my-image:latest > images_file'\n"
       : "  sh 'echo my-image:latest > images_file'\n")
-      + "  sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "  sysdig name: 'images_file', engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + "\n"
       + "}";
     job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
     WorkflowRun build = jenkins.buildAndAssertSuccess(job);
@@ -227,7 +227,7 @@ public class FullWorkflowTests {
       + (SystemUtils.IS_OS_WINDOWS
       ? "        bat 'echo my-image:latest > images_file'\n"
       : "        sh 'echo my-image:latest > images_file'\n")
-      + "        sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "        sysdig name: 'images_file', engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + "\n"
       + "      }\n"
       + "    }\n"
       + "  }\n"

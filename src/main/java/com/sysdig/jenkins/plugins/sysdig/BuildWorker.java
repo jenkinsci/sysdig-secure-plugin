@@ -29,7 +29,6 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
@@ -39,7 +38,6 @@ import java.util.logging.Logger;
  */
 public class BuildWorker {
 
-  private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport_";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
@@ -58,43 +56,37 @@ public class BuildWorker {
   private final Scanner scanner;
 
   public BuildWorker(Run<?,?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, Scanner scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
+
+    if (listener == null) {
+      throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
+    }
+
+    this.run = run;
+    this.workspace = workspace;
+    this.listener = listener;
+    this.logger = logger;
+    this.scanner = scanner;
+    this.reportConverter = reportConverter;
+
+    logger.logDebug("Initializing build worker");
+
+    // Verify and initialize Jenkins launcher for executing processes
+    this.launcher = workspace.createLauncher(listener);
+
     try {
-      if (listener == null) {
-        LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
-        throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
-      }
-
-      this.run = run;
-      this.workspace = workspace;
-      this.listener = listener;
-      this.logger = logger;
-
-      logger.logDebug("Initializing build worker");
-
-      // Verify and initialize Jenkins launcher for executing processes
-      this.launcher = workspace.createLauncher(listener);
-
       initializeJenkinsWorkspace();
-
       logger.logDebug("Build worker initialized");
-
-      this.scanner = scanner;
-      this.reportConverter = reportConverter;
-
-    } catch (Exception e) {
+    } catch (IOException | InterruptedException e) {
       try {
-        if (logger != null) {
-          logger.logError("Failed to initialize worker for plugin execution", e);
-        }
+        logger.logError("Failed to initialize worker for plugin execution.");
         cleanJenkinsWorkspaceQuietly();
       } catch (Exception inner) { }
       throw e;
-      //throw new AbortException("Failed to initialize worker for plugin execution, check logs for corrective action");
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(BuildConfig config) throws AbortException {
-    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getName());
+  public ReportConverter.GATE_ACTION scanAndBuildReports(BuildConfig config) throws AbortException, ImageScanningException {
+    Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getImagesFile());
 
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
@@ -104,7 +96,7 @@ public class BuildWorker {
       throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
     }
 
-    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(scanResults);
+    ReportConverter.GATE_ACTION finalAction = reportConverter.getFinalAction(scanResults);
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
@@ -126,7 +118,7 @@ public class BuildWorker {
     return finalAction;
   }
 
-  private void setupBuildReports(Util.GATE_ACTION finalAction, JSONObject gateSummary) throws AbortException {
+  private void setupBuildReports(ReportConverter.GATE_ACTION finalAction, JSONObject gateSummary) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
@@ -175,7 +167,7 @@ public class BuildWorker {
         jenkinsReportDir.mkdirs();
       }
     } catch (IOException | InterruptedException e) { // probably caught one of the thrown exceptions, let it pass through
-      logger.logWarn("Failed to initialize Jenkins workspace", e);
+      logger.logError("Failed to initialize Jenkins workspace", e);
       throw e;
     }
   }

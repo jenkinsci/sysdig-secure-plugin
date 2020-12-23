@@ -13,13 +13,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
 
-import com.google.common.base.Splitter;
-import java.util.regex.Pattern;
+package com.sysdig.jenkins.plugins.sysdig.config;
 
-public class Util {
-
-  public enum GATE_ACTION {PASS, FAIL}
-  public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
+public interface CommonConfig {
+  String getEngineurl();
+  boolean getEngineverify();
+  String getEngineCredentialsId();
 }

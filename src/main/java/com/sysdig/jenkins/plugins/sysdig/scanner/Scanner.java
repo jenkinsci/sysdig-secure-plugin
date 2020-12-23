@@ -1,7 +1,24 @@
+/*
+Copyright (C) 2016-2020 Sysdig
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
@@ -21,23 +38,24 @@ public abstract class Scanner {
     this.logger = logger;
   }
 
-  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;
-  public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws AbortException;
-  public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException;
+  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException;
+  public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws ImageScanningException;
+  public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws ImageScanningException;
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, ImageScanningException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
 
     ArrayList<ImageScanningResult> resultList = new ArrayList<>();
 
+    //TODO(airadier): We could run this in parallel
     for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
       String dockerfile = entry.getValue();
       if (!Strings.isNullOrEmpty(dockerfile)) {
         File f = new File(dockerfile);
         if (!f.exists()) {
-          throw new AbortException("Dockerfile '" + dockerfile + "' does not exist");
+          throw new AbortException("Dockerfile '" + dockerfile + "' for image '" + entry.getKey() + "' does not exist");
         }
       }
 
@@ -53,7 +71,7 @@ public abstract class Scanner {
     return resultList;
   }
 
-  private ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
+  private ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
     JSONObject tagEvalObj = JSONObject.fromObject(scanReport.get(0)).getJSONObject(imageDigest);
     JSONArray tagEvals = null;
     for (Object key : tagEvalObj.keySet()) {
@@ -61,14 +79,17 @@ public abstract class Scanner {
       break;
     }
 
+    String evalStatus = null;
+    JSONObject gateResult;
     if (tagEvals == null || tagEvals.size() < 1) {
-      throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
+      gateResult = new JSONObject();
+      logger.logError("Failed to analyze image '" + tag + "' due to missing tag eval records in sysdig-secure-engine policy evaluation response");
+    } else {
+      gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
+      evalStatus = tagEvals.getJSONObject(0).getString("status");
     }
-
-    String evalStatus = tagEvals.getJSONObject(0).getString("status");
-    JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
 
     return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport);
   }
-  
+
 }

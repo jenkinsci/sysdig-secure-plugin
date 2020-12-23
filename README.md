@@ -12,59 +12,48 @@ step to a Freestyle job to automate the process of running an image
 analysis, evaluating custom policies against images, and performing
 security scans.
 
-Table of Contents
-=================
-
-- [Getting Started](#getting-started)
-  * [Backend scanning or Inline scanning](#backend-scanning-or-inline-scanning)
-    + [Backend Scanning](#backend-scanning)
-    + [Inline Scanning](#inline-scanning)
-  * [Pre-requisites](#pre-requisites)
-  * [Installation](#installation)
-  * [Configuration](#configuration)
-- [Images file](#images-file)
-- [Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project](#example-1-integrate-the-sysdig-secure-plugin-with-a-freestyle-project)
-- [Example 2: Executing the Sysdig plugin inside a pipeline](#example-2-executing-the-sysdig-plugin-inside-a-pipeline)
-- [Configuration Options](#configuration-options)
-- [Proxy Configuration](#proxy-configuration)
-- [Plugin outputs](#plugin-outputs)
-- [Local development and installation](#local-development-and-installation)                                                                                                                             
-
-
 # Getting Started
 
-## Backend scanning or Inline scanning
+##  Operation mode: backend / inline scanning
 
 The Sysdig Secure plugin supports two different operation modes:
 * **Backend Scanning**: Image scanning happens in the Sysdig Secure Backend
 * **Inline Scanning**: Image scanning happens in the Jenkins worker nodes
 
+### Backend
+
+In this mode, the image is pulled from Sysdig Secure backend and analyzed within Sysdig Secure.
+
+Sysdig Secure Backend needs to have network visibility in order to fetch and scan the images during the pipeline.
+If you are using a private or internal registry, you need to make sure that the registry is reachable from Sysdig Secure,
+and you might need to provide credentials by configuring the registry in Sysdig Secure UI.
+
+### Inline
+
+Inline scanning is performed directly in your Jenkins worker node, and only metadata is sent to Sysdig Secure backend
+in order to evaluate it against the policies you define in the UI.
+
+Pros:
+* No need to configure registry credentials in the Sysdig Secure Backend
+* No need to expose your registry externally, so it can be reached by Sysdig Secure
+* Image contents are never transmitted outside the pipeline, just the image metadata
+
+## Prerequisites
+
+Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/find-the-super-admin-credentials-and-api-token.html#al_UUID-be84a2f1-b996-c30c-b5d8-5b8e4663146a_UUID-87bc65c6-ef79-6225-3910-39f619617a2c) and configuring Sysdig Secure URL for On-Prem or regions other than default SaaS.
+
 ### Backend Scanning
 
-PRO:
-* Jenkins workers do not need to communicate with the host-local Docker daemon
-
-CON:
-* Sysdig Secure Backend needs to have network visibility in order to fetch and scan the images during the pipeline
+For Backend scan mode, the Sysdig Backend (SaaS or Onprem) needs to be able to fetch the images produced by this pipeline,
+usually accessing a buffer Docker repository before the image is pushed to the final production registry.
 
 ### Inline Scanning
 
-PRO:
-* No need to configure registry credentials in the Sysdig Secure Backend
-* No need to expose your registry externally, so it can be reached by Sysdig Secure (see CON in the section above)
-* Image contents are never transmitted outside the pipeline, just the image metadata
+For Inline scan mode, Jenkins workers need to have access to a Docker daemon or some container runtime, as the inline scanner
+executes as a container. 
 
-CON:
-* The job performing the inline scanning needs to have access to the host-local Docker daemon
-
-## Pre-requisites
-## Pre-requisites
-
-Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/find-the-super-admin-credentials-and-api-token.html#al_UUID-be84a2f1-b996-c30c-b5d8-5b8e4663146a_UUID-87bc65c6-ef79-6225-3910-39f619617a2c)
-
-For Backend mode, the Sysdig Backend (SaaS or Onprem) needs to be able to fetch the images produced by this pipeline, usually accessing a buffer Docker repository.
-
-For Inline mode, Jenkins workers need to have access to the host-local Docker daemon, in the most common case, by mounting or linking the Docker socket. The Jenkins worker user needs to be able to read and write the socket.
+When using Docker, in some cases you might need to mount or link the Docker socket so it is available inside the worker. 
+The Jenkins worker user needs to be able to read and write the socket.
 
 ## Installation
 
@@ -118,14 +107,14 @@ alpine:latest
 
 1.  Using the Jenkins Docker plugin for this example, you could start by building the image and writing the image name to the `sysdig_secure_images` file
 
-    <img src="docs/images/FreestyleDockerBuild.png" height="500px" />
+    ![](docs/images/FreestyleDockerBuild.png)
 
 2.  Open the `Add build step` drop-down menu, and select
     `Sysdig Secure Container Image Scanner`. This creates a new build
     step labeled `Sysdig Secure Build Options`.  
     ![Add step in Freestyle Job](docs/images/FreestyleAddStep.png)
 3.  Configure the available options, and click `Save`.  
-    <img src="docs/images/FreestyleConfigStep.png" height="400px" />
+    ![](docs/images/FreestyleConfigStep.png)
 
 :speech_balloon: Take into account that this example is using the Inline scanning mode, in case you want to use Backend scanning, you would need to push the image to a registry that is pulleable by the Sysdig Backend.
 
@@ -236,7 +225,7 @@ spec:
 
 Once the scanning and evaluation is complete, you will have the following build artifacts and reports in the workspace
 
-<img src="docs/images/AfterExecution.png" height="500px" />
+![](docs/images/AfterExecution.png)
 
 `sysdig_secure_gates.json` Scanning results for the Sysdig [policy evaluation](https://docs.sysdig.com/en/manage-scanning-policies.html).
 
@@ -244,7 +233,7 @@ Once the scanning and evaluation is complete, you will have the following build 
 
 Additionally, the plugin offers you an HTML formatted table output that you can directly display from the interface (`Sysdig Secure Report (FAIL)` in the image above)
 
-<img src="docs/images/ScanCompleteResults.png" height="600px" />
+![](docs/images/ScanCompleteResults.png)
 
 
 # Local development and installation

@@ -17,6 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
@@ -30,7 +31,7 @@ import org.jenkinsci.remoting.RoleChecker;
 import java.io.*;
 import java.util.*;
 
-public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
+public class InlineScannerRemoteExecutor implements Callable<String, ImageScanningException>, Serializable {
 
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
@@ -38,9 +39,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/info.log"};
   private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/info.log"};
   private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
-  private static final String[] SCAN_ARGS = new String[] {
-    "--storage-type=docker-daemon",
-    "--format=JSON"};
+  private static final String[] SCAN_ARGS = new String[] {"--storage-type=docker-daemon","--format=JSON"};
   private static final String VERBOSE_ARG = "--verbose";
   private static final String SKIP_TLS_ARG = "--sysdig-skip-tls";
   private static final String SYSDIG_URL_ARG = "--sysdig-url=%s";
@@ -73,9 +72,9 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   @Override
   public void checkRoles(RoleChecker checker) throws SecurityException { }
-  @Override
 
-  public String call() throws InterruptedException {
+  @Override
+  public String call() throws ImageScanningException {
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
 
     List<String> args = new ArrayList<>();
@@ -84,12 +83,12 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     if (config.getDebug()) {
       args.add(VERBOSE_ARG);
     }
-    if (!config.getEngineverify()) {
+    if (!config.getEngineTLSVerify()) {
       args.add(SKIP_TLS_ARG);
     }
     args.add(imageName);
-    if (!config.getEngineurl().equals(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL)) {
-      args.add(String.format(SYSDIG_URL_ARG, config.getEngineurl()));
+    if (!config.getEngineURL().equals(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL)) {
+      args.add(String.format(SYSDIG_URL_ARG, config.getEngineURL()));
       args.add(ON_PREM_ARG);
     }
 
@@ -111,25 +110,33 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     logger.logDebug("Creating container with environment: " + envVars.toString());
     logger.logDebug("Bind mounts: " + bindMounts.toString());
 
-    Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
-    final StringBuilder builder = new StringBuilder();
+    Container inlineScanContainer;
+    try {
+      inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    } catch (InterruptedException e) {
+      throw new ImageScanningException("Error creating inline-scan container", e);
+    }
 
+    final StringBuilder builder = new StringBuilder();
     try {
       //TODO: Get exit code in run and exec?
       inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
+      logger.logDebug("Creating TMP dir in container: " + Arrays.asList(MKDIR_COMMAND).toString());
       inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      logger.logDebug("Creating log file: " + Arrays.asList(TOUCH_COMMAND).toString());
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      logger.logDebug("Tailing log file output: " + Arrays.asList(TAIL_COMMAND).toString());
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-
-      logger.logDebug("Executing command in container: " + args.toString());
+      logger.logDebug("Executing inline-scan script in container: " + args.toString());
       inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
+    } catch (InterruptedException e) {
+      throw new ImageScanningException("Error executing command in inline-scan container", e);
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
 
-    //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
-
+    //TODO(airadier): return an exit code too
     return builder.toString();
   }
 
