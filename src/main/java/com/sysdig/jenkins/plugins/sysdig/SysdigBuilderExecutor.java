@@ -32,8 +32,6 @@ public class SysdigBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
   private static final Logger LOG = Logger.getLogger(SysdigBuilderExecutor.class.getName());
 
-  private final ConsoleLog logger;
-
   public SysdigBuilderExecutor(BuilderConfig builderConfig,
                                GlobalConfig globalConfig,
                                Run<?, ?> run,
@@ -43,7 +41,7 @@ public class SysdigBuilderExecutor {
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
     /* Instantiate config and a new build worker */
-    logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
+    ConsoleLog logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
     if (workspace == null) {
       throw new AbortException("Workspace not available. This plugin must run inside a workspace.");
@@ -74,6 +72,10 @@ public class SysdigBuilderExecutor {
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
 
       finalAction = worker.scanAndBuildReports(config);
+    } catch (InterruptedException e) {
+      logger.logWarn("Interrupted when executing Sysdig Secure Container Image Scanner Plugin", e);
+      run.setResult(Result.ABORTED);
+      return;
     } catch (AbortException e) {
       throw e;
     } catch (Exception e) {

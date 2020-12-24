@@ -30,8 +30,12 @@ import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-public class InlineScannerRemoteExecutor implements Callable<String, ImageScanningException>, Serializable {
+public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
 
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
@@ -74,7 +78,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, ImageScanni
   public void checkRoles(RoleChecker checker) throws SecurityException { }
 
   @Override
-  public String call() throws ImageScanningException {
+  public String call() throws ImageScanningException, InterruptedException {
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
 
     List<String> args = new ArrayList<>();
@@ -117,26 +121,43 @@ public class InlineScannerRemoteExecutor implements Callable<String, ImageScanni
       throw new ImageScanningException("Error creating inline-scan container", e);
     }
 
-    final StringBuilder builder = new StringBuilder();
     try {
       //TODO: Get exit code in run and exec?
-      inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-
-      logger.logDebug("Creating TMP dir in container: " + Arrays.asList(MKDIR_COMMAND).toString());
-      inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-      logger.logDebug("Creating log file: " + Arrays.asList(TOUCH_COMMAND).toString());
-      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-      logger.logDebug("Tailing log file output: " + Arrays.asList(TAIL_COMMAND).toString());
-      inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-      logger.logDebug("Executing inline-scan script in container: " + args.toString());
-      inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
+      prepareInlineScanExecution(inlineScanContainer);
     } catch (InterruptedException e) {
+      throw new ImageScanningException("Error executing command in inline-scan container", e);
+    }
+
+    try {
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      Future<String> scanTask = executor.submit(() -> executeInlineScan(inlineScanContainer, args));
+
+      //TODO(airadier): return an exit code too
+
+      // This way the main thread can be interrupted to abort the scanning
+      return scanTask.get();
+    } catch (ExecutionException e) {
       throw new ImageScanningException("Error executing command in inline-scan container", e);
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
+  }
 
-    //TODO(airadier): return an exit code too
+  private void prepareInlineScanExecution(Container inlineScanContainer) throws InterruptedException {
+    inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+
+    logger.logDebug("Creating TMP dir in container: " + Arrays.asList(MKDIR_COMMAND).toString());
+    inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+    logger.logDebug("Creating log file: " + Arrays.asList(TOUCH_COMMAND).toString());
+    inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+    logger.logDebug("Tailing log file output: " + Arrays.asList(TAIL_COMMAND).toString());
+    inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+  }
+
+  private String executeInlineScan(Container inlineScanContainer, List<String> args) throws InterruptedException {
+    logger.logDebug("Executing inline-scan script in container: " + args.toString());
+    final StringBuilder builder = new StringBuilder();
+    inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
     return builder.toString();
   }
 

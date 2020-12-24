@@ -13,9 +13,13 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -72,6 +76,12 @@ public class InlineScannerRemoteExecutorTests {
 
     // Mock container creation to return our mock
     doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any());
+    // Mock execution of the touch or mkdir commands
+    doNothing().when(container).exec(
+      argThat(args -> args.get(0).equals("touch") || args.get(0).equals("mkdir")),
+      any(),
+      any(),
+      any());
 
     // Mock async executions of "tail", to simulate some log output
     doNothing().when(container).execAsync(
@@ -84,6 +94,9 @@ public class InlineScannerRemoteExecutorTests {
       any()
     );
 
+  }
+
+  private void execInlineScanDoesNothing() throws InterruptedException {
     // Mock sync execution of the inline scan script. Mock the JSON output
     doNothing().when(container).exec(
       argThat(args -> args.get(0).equals("/sysdig-inline-scan.sh")),
@@ -94,17 +107,13 @@ public class InlineScannerRemoteExecutorTests {
       }),
       any()
     );
-
-    // Mock execution of the touch or mkdir commands
-    doNothing().when(container).exec(
-      argThat(args -> args.get(0).equals("touch") || args.get(0).equals("mkdir")),
-      any(),
-      any(),
-      any());
   }
 
   @Test
   public void containerIsCreatedAndExecuted() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -127,6 +136,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void containerDoesNotHaveAnyAdditionalParameters() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -147,6 +159,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerSocketIsMounted() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -163,6 +178,7 @@ public class InlineScannerRemoteExecutorTests {
   public void logOutputIsSentToTheLogger() throws Exception {
     // Given
     logOutput = "foo-output";
+    execInlineScanDoesNothing();
 
     // When
     scannerRemoteExecutor.call();
@@ -175,6 +191,7 @@ public class InlineScannerRemoteExecutorTests {
   public void scanJSONOutputIsReturned() throws Exception {
     // Given
     outputObject.put("foo-key", "foo-value");
+    execInlineScanDoesNothing();
 
     // When
     String scanOutput = scannerRemoteExecutor.call();
@@ -185,6 +202,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void addedByAnnotationsAreIncluded() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -199,6 +219,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void containerExecutionContainsExpectedParameters() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -209,6 +232,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void customURLIsProvidedAsParameter() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
     when(config.getEngineURL()).thenReturn("https://my-foo-url");
 
     // When
@@ -221,6 +246,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void verboseIsEnabledWhenDebug() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
     when(config.getDebug()).thenReturn(true);
 
     // When
@@ -232,6 +259,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void skipTLSFlagWhenInsecure() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
     when(config.getEngineTLSVerify()).thenReturn(false);
 
     // When
@@ -243,6 +272,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsProvidedAsParameter() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
     scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", config, logger, nodeEnvVars);
 
     // When
@@ -254,6 +285,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsMountedAtTmp() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
     scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", config, logger, nodeEnvVars);
 
     // When
@@ -270,6 +303,9 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void setSysdigTokenIsProvidedAsEnvironmentVariable() throws Exception {
+    // Given
+    execInlineScanDoesNothing();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -285,6 +321,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void applyProxyEnvVarsFrom_http_proxy() throws Exception {
     // Given
+    execInlineScanDoesNothing();
     nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
 
     // When
@@ -308,6 +345,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void applyProxyEnvVarsFrom_https_proxy() throws Exception {
     // Given
+    execInlineScanDoesNothing();
     nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
     nodeEnvVars.put("https_proxy", "http://httpsproxy:1234");
 
@@ -332,6 +370,7 @@ public class InlineScannerRemoteExecutorTests {
   @Test
   public void applyProxyEnvVarsFrom_no_proxy() throws Exception {
     // Given
+    execInlineScanDoesNothing();
     nodeEnvVars.put("no_proxy", "1.2.3.4,5.6.7.8");
 
     // When
@@ -344,5 +383,25 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       argThat(env -> env.contains("no_proxy=1.2.3.4,5.6.7.8")),
       any());
+  }
+
+  @Test
+  public void interruptThreadAbortsClient() throws InterruptedException {
+    // Given
+    doAnswer(invocation -> { Thread.sleep(10000); return null; }).
+      when(container).exec(
+      argThat(args -> args.get(0).equals("/sysdig-inline-scan.sh")),
+      any(),
+      any(),
+      any());
+
+    Thread t = Thread.currentThread();
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    executor.schedule(t::interrupt , 1, TimeUnit.SECONDS);
+
+    // When
+    assertThrows(
+      InterruptedException.class,
+      () -> scannerRemoteExecutor.call());
   }
 }

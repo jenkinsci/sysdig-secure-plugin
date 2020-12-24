@@ -44,7 +44,7 @@ public class InlineScanner extends Scanner {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws ImageScanningException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws ImageScanningException, InterruptedException {
 
     try {
       final EnvVars nodeEnvVars = new EnvVars(System.getenv());
@@ -76,6 +76,8 @@ public class InlineScanner extends Scanner {
       this.scanOutputs.put(digest, scanOutput);
 
       return new ImageScanningSubmission(tag, digest);
+    } catch (InterruptedException e) {
+      throw e;
     } catch (ImageScanningException e) {
       throw e;
     } catch (Exception e) {

@@ -41,22 +41,20 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   private interface RunnableFunction<T> {
-    T run() throws ImageScanningException;
+    T run() throws ImageScanningException, InterruptedException;
   }
 
-  private <T> T executeWithRetriesAndBackoff(RunnableFunction<T> function) throws ImageScanningException {
+  private <T> T executeWithRetriesAndBackoff(RunnableFunction<T> function) throws ImageScanningException, InterruptedException {
     ImageScanningException lastException = new ImageScanningException("the number of retries is negative or 0");
     long sleepTime = 0;
     for (int i = 0; i < retries; i++) {
       try {
         Thread.sleep(sleepTime);
-        sleepTime += 1000 * sleepSeconds;
+        sleepTime += 1000L * sleepSeconds;
         return function.run();
       } catch (ImageScanningException e) {
         logger.logDebug("SysdigClient error in retry number " + i, e);
         lastException = e;
-      } catch (InterruptedException e) {
-        throw new ImageScanningException("Interrupted", e);
       }
       logger.logDebug("SysdigClient retrying in " + sleepTime + "ms");
     }
@@ -64,21 +62,21 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException, InterruptedException {
     return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.submitImageForScanning(tag, dockerFileContents, annotations)
       );
   }
 
   @Override
-  public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+  public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException, InterruptedException {
     return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest)
       );
   }
 
   @Override
-  public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException {
+  public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException, InterruptedException {
     return executeWithRetriesAndBackoff(() ->
         sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest)
       );

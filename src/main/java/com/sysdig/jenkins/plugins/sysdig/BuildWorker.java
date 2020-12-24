@@ -80,12 +80,14 @@ public class BuildWorker {
       try {
         logger.logError("Failed to initialize worker for plugin execution.");
         cleanJenkinsWorkspaceQuietly();
-      } catch (Exception inner) { }
+      } catch (Exception inner) {
+        logger.logWarn("Errors cleaning up workspace.", inner);
+      }
       throw e;
     }
   }
 
-  public ReportConverter.GATE_ACTION scanAndBuildReports(BuildConfig config) throws AbortException, ImageScanningException {
+  public ReportConverter.GATE_ACTION scanAndBuildReports(BuildConfig config) throws AbortException, ImageScanningException, InterruptedException {
     Map<String, String> imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, config.getImagesFile());
 
     /* Run analysis */

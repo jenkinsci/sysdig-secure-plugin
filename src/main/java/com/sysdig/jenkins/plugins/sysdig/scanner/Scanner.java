@@ -38,11 +38,11 @@ public abstract class Scanner {
     this.logger = logger;
   }
 
-  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException;
+  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException, InterruptedException;
   public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws ImageScanningException;
   public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws ImageScanningException;
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, ImageScanningException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, ImageScanningException, InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }

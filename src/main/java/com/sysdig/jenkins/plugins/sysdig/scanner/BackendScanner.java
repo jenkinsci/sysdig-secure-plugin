@@ -52,7 +52,7 @@ public class BackendScanner extends Scanner {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws ImageScanningException, InterruptedException {
 
     try {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
@@ -65,6 +65,8 @@ public class BackendScanner extends Scanner {
       String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations);
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
+    } catch (InterruptedException e) {
+      throw e;
     } catch (Exception e) {
       throw new ImageScanningException("Failed to add image '" + imageTag + "' due to an unexpected error", e);
     }
@@ -78,7 +80,7 @@ public class BackendScanner extends Scanner {
     try {
       logger.logInfo(String.format("Waiting for analysis of %s with digest %s", tag, imageDigest));
       return sysdigSecureClient.retrieveImageScanningResults(tag, imageDigest);
-    } catch (ImageScanningException e) {
+    } catch (ImageScanningException | InterruptedException e) {
       throw new ImageScanningException("Failed to retrieve policy evaluation for image '" + tag + "' digest '" + imageDigest + "' due to an unexpected error", e);
     }
   }
@@ -91,7 +93,7 @@ public class BackendScanner extends Scanner {
     try {
       logger.logInfo(String.format("Querying vulnerability listing of %s width digest %s", tag, imageDigest));
       return sysdigSecureClient.retrieveImageScanningVulnerabilities(imageDigest);
-    } catch (ImageScanningException e) {
+    } catch (ImageScanningException | InterruptedException e) {
       throw new ImageScanningException("Unable to retrieve vulnerabilities report for tag " + tag + " digest " + imageDigest, e);
     }
   }

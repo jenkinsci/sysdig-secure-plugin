@@ -45,10 +45,15 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 public class SysdigSecureClientImpl implements SysdigSecureClient {
@@ -64,7 +69,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     this.logger = logger;
   }
 
-  private String sendRequest(String url, String body) throws ImageScanningException {
+  private String sendRequest(String url, String body) throws ImageScanningException, InterruptedException {
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
 
       HttpRequestBase httpRequest;
@@ -80,28 +85,47 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       logger.logDebug("Sending request: " + httpRequest.toString());
       logger.logDebug("Body:\n" + body);
 
-      try (CloseableHttpResponse response = httpclient.execute(httpRequest)) {
-        String responseBody = EntityUtils.toString(response.getEntity());
-        logger.logDebug("Response: " + response.getStatusLine().toString());
-        logger.logDebug("Response body:\n" + responseBody);
+      ExecutorService executor = Executors.newSingleThreadExecutor();
+      //Run in a thread to allow aborting with httpRequest.abort()
+      Future<String> scanTask = executor.submit(() -> {
+        try (CloseableHttpResponse response = httpclient.execute(httpRequest)) {
+          String responseBody = EntityUtils.toString(response.getEntity());
+          logger.logDebug("Response: " + response.getStatusLine().toString());
+          logger.logDebug("Response body:\n" + responseBody);
 
-        int statusCode = response.getStatusLine().getStatusCode();
+          int statusCode = response.getStatusLine().getStatusCode();
 
-        if (statusCode != 200) {
-          throw new ImageScanningException(String.format("Submit image - HTTP %d: %s", response.getStatusLine().getStatusCode(), responseBody));
+          if (statusCode != 200) {
+            throw new ImageScanningException(String.format("Submit image - HTTP %d: %s", response.getStatusLine().getStatusCode(), responseBody));
+          }
+
+          return responseBody;
+        }
+      });
+
+
+      try {
+        return scanTask.get();
+      } catch (InterruptedException e) {
+        // This way the main thread can be interrupted and we abort the Http client cleanly
+        httpRequest.abort();
+        throw e;
+      } catch (ExecutionException e) {
+        // An exception was thrown inside the thread. Just propage
+        if (e.getCause().getClass() == ImageScanningException.class) {
+          throw (ImageScanningException) e.getCause();
         }
 
-        return responseBody;
+        throw new ImageScanningException("Error sending request to '" + url + "' - Unexpected error", e);
       }
-    } catch (ImageScanningException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ImageScanningException("Error sending request to '" + url + "' - Unexpected error", e);
+
+    } catch (IOException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+      throw new ImageScanningException("Error preparing Http client for '" + url + "'", e);
     }
   }
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException, InterruptedException {
     String imagesUrl = String.format("%s/api/scanning/v1/anchore/images", apiURL);
 
     JSONObject jsonBody = new JSONObject();
@@ -120,19 +144,20 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   }
 
   @Override
-  public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException {
+  public JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException, InterruptedException {
     String url = String.format("%s/api/scanning/v1/anchore/images/%s/vuln/all", apiURL, imageDigest);
     return JSONObject.fromObject(sendRequest(url, null));
   }
 
   @Override
-  public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
+  public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException, InterruptedException {
     String url = String.format("%s/api/scanning/v1/anchore/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
     return JSONArray.fromObject(sendRequest(url, null));
   }
 
   private static CloseableHttpClient makeHttpClient(boolean verifySSL) throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
     HttpClientBuilder clientBuilder = HttpClients.custom();
+
 
     // Option to skip TLS certificate verification
     if (!verifySSL) {

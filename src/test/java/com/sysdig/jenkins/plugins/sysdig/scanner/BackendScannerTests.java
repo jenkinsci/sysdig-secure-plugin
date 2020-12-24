@@ -5,7 +5,6 @@ import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
@@ -20,8 +19,12 @@ import org.mockito.quality.Strictness;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
@@ -47,7 +50,7 @@ public class BackendScannerTests {
   private SysdigSecureClient client;
 
   @Before
-  public void BeforeEach() throws ImageScanningException {
+  public void BeforeEach() throws ImageScanningException, InterruptedException {
     BuildConfig config = mock(BuildConfig.class);
     BackendScanningClientFactory clientFactory = mock(BackendScanningClientFactory.class);
     this.client = mock(SysdigSecureClient.class);
@@ -62,7 +65,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testImageIsScanned() throws ImageScanningException, AbortException {
+  public void testImageIsScanned() throws ImageScanningException, InterruptedException  {
     // When
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -74,7 +77,7 @@ public class BackendScannerTests {
 
 
   @Test
-  public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+  public void testNoDockerfilePosted() throws ImageScanningException, InterruptedException  {
     // When
     this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -86,7 +89,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testDockerfilePosted() throws ImageScanningException, IOException {
+  public void testDockerfilePosted() throws ImageScanningException, IOException, InterruptedException  {
     //Given
     byte[] dockerfileBytes = "foo content of dockerfile".getBytes(StandardCharsets.UTF_8);
     //Given
@@ -105,7 +108,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testGetGateResults() throws ImageScanningException, AbortException {
+  public void testGetGateResults() throws ImageScanningException, InterruptedException  {
     //Given
     JSONArray returnedGateResults = new JSONArray();
     JSONObject someJSON = new JSONObject();
@@ -122,7 +125,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testGetVulnsReport() throws ImageScanningException, AbortException {
+  public void testGetVulnsReport() throws ImageScanningException, InterruptedException  {
     // Given
     JSONObject returnedVulnsReport = new JSONObject();
     returnedVulnsReport.put("foo-key", "foo-value");
@@ -137,7 +140,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException {
+  public void addedByAnnotationsAreIncluded() throws ImageScanningException, InterruptedException  {
     // When
     this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -147,6 +150,25 @@ public class BackendScannerTests {
       any(),
       argThat(annotations ->
         annotations.containsKey("added-by") && annotations.get("added-by").equals("cicd-scan-request")));
+  }
+
+  @Test
+  public void interruptThreadAbortsClient() throws InterruptedException, ImageScanningException {
+
+    reset(client);
+    when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any())).thenAnswer((invocation) -> {
+      Thread.sleep(10000);
+      return "";
+    });
+
+    Thread t = Thread.currentThread();
+    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    executor.schedule(t::interrupt , 1, TimeUnit.SECONDS);
+
+    // When
+    assertThrows(
+      InterruptedException.class,
+      () -> this.scanner.scanImage(IMAGE_TO_SCAN, null));
   }
 
 }
