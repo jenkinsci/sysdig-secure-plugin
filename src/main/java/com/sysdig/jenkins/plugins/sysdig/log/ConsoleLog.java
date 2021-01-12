@@ -45,7 +45,7 @@ public class ConsoleLog implements SysdigLogger, Serializable {
   @Override
   public void logDebug(String msg, Throwable t) {
     logDebug(msg);
-    if (null != t) {
+    if (enableDebug && null != t) {
       t.printStackTrace(getLogger());
     }
   }

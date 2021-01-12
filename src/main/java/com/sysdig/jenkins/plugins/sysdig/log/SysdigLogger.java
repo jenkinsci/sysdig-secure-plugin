@@ -1,7 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.log;
 
-import java.io.PrintStream;
-
 public interface SysdigLogger {
   void logDebug(String msg);
 
