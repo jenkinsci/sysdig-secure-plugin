@@ -111,7 +111,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     logger.logDebug("Creating container with environment: " + envVars.toString());
     logger.logDebug("Bind mounts: " + bindMounts.toString());
 
-    Container inlineScanContainer = containerRunner.createContainer(INLINE_SCAN_IMAGE, Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    Container inlineScanContainer = containerRunner.createContainer(nodeEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", INLINE_SCAN_IMAGE), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
     final StringBuilder builder = new StringBuilder();
 
     try {
