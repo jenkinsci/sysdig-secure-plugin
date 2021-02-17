@@ -75,7 +75,12 @@
     <dependency>
       <groupId>com.github.docker-java</groupId>
       <artifactId>docker-java</artifactId>
-      <version>3.2.1</version>
+      <version>3.2.7</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.docker-java</groupId>
+      <artifactId>docker-java-transport-httpclient5</artifactId>
+      <version>3.2.7</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -106,6 +111,11 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>19.0</version>
+    </dependency>
+    <dependency> <!-- required by docker-java-transport-httpclient5 -->
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.13</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

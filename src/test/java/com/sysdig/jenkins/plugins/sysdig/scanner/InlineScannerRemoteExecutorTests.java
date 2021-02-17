@@ -54,7 +54,7 @@ public class InlineScannerRemoteExecutorTests {
 
     containerRunner = mock(ContainerRunner.class);
     ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
-    when(containerRunnerFactory.getContainerRunner(any())).thenReturn(containerRunner);
+    when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
 
     nodeEnvVars = new EnvVars();
     logger = mock(SysdigLogger.class);

@@ -76,7 +76,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   @Override
 
   public String call() throws InterruptedException {
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger);
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, this.nodeEnvVars);
 
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);

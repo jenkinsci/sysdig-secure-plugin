@@ -5,23 +5,42 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.EnvVars;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class DockerClientRunner implements ContainerRunner {
 
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
 
-  public DockerClientRunner(SysdigLogger logger) {
-    this.dockerClient = DockerClientBuilder
-      .getInstance()
-      .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
+  public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv) {
+
+    Properties properties = new Properties();
+    currentEnv.forEach(properties::put);
+
+    DockerClientConfig config = DefaultDockerClientConfig
+      .createDefaultConfigBuilder()
+      .withProperties(properties)
       .build();
+
+    this.dockerClient = DockerClientBuilder
+      .getInstance(config)
+      .withDockerHttpClient(
+        new ApacheDockerHttpClient.Builder()
+          .dockerHost(config.getDockerHost())
+          .sslConfig(config.getSSLConfig())
+          .build())
+      .build();
+
+    logger.logInfo(String.format("DOCKER_HOST=%s", config.getDockerHost()));
 
     this.logger = logger;
   }
