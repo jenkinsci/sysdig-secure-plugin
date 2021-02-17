@@ -34,9 +34,9 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
-  private static final String[] MKDIR_COMMAND = new String[]{"mkdir", "/tmp/sysdig-inline-scan"};
-  private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/info.log"};
-  private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/info.log"};
+  private static final String[] MKDIR_COMMAND = new String[]{"mkdir", "-p", "/tmp/sysdig-inline-scan/logs"};
+  private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/logs/info.log"};
+  private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/logs/info.log"};
   private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
   private static final String[] SCAN_ARGS = new String[] {
     "--storage-type=docker-daemon",
