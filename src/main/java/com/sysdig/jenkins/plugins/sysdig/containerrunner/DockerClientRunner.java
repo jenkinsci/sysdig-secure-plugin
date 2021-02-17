@@ -5,23 +5,57 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.EnvVars;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class DockerClientRunner implements ContainerRunner {
 
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
 
-  public DockerClientRunner(SysdigLogger logger) {
+  public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv) {
+
+
+    DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
+    if (currentEnv.get("DOCKER_HOST") != null) {
+      configBuilder.withDockerHost(currentEnv.get("DOCKER_HOST"));
+    }
+
+    if (currentEnv.get("DOCKER_TLS_VERIFY") != null) {
+      configBuilder.withDockerTlsVerify(currentEnv.get("DOCKER_TLS_VERIFY"));
+    }
+
+    if (currentEnv.get("DOCKER_CERT_PATH") != null) {
+      configBuilder.withDockerCertPath(currentEnv.get("DOCKER_CERT_PATH"));
+    }
+
+    DockerClientConfig config = configBuilder.build();
+
+    ApacheDockerHttpClient.Builder clientBuilder = new ApacheDockerHttpClient.Builder();
+
+    if (config.getDockerHost() != null) {
+      clientBuilder.dockerHost(config.getDockerHost());
+    }
+
+    if (config.getSSLConfig() != null) {
+      clientBuilder.sslConfig(config.getSSLConfig());
+    }
+
     this.dockerClient = DockerClientBuilder
-      .getInstance()
-      .withDockerCmdExecFactory(new NettyDockerCmdExecFactory())
+      .getInstance(config)
+      .withDockerHttpClient(clientBuilder.build())
       .build();
+
+    logger.logInfo(String.format("DOCKER_HOST=%s", config.getDockerHost()));
 
     this.logger = logger;
   }
