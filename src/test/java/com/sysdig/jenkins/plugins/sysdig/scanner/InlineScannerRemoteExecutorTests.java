@@ -345,4 +345,21 @@ public class InlineScannerRemoteExecutorTests {
       argThat(env -> env.contains("no_proxy=1.2.3.4,5.6.7.8")),
       any());
   }
+
+  @Test
+  public void inlineScanImageCanBeOverridden() throws Exception {
+    // Given
+    nodeEnvVars.put("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", "my-repo/my-custom-image:foo");
+
+    // When
+    scannerRemoteExecutor.call();
+
+    // Then
+    verify(containerRunner, times(1)).createContainer(
+      eq("my-repo/my-custom-image:foo"),
+      argThat(args -> args.contains("cat")),
+      any(),
+      any(),
+      any());
+  }
 }
