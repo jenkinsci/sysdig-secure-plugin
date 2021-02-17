@@ -55,7 +55,7 @@ PRO:
 * Image contents are never transmitted outside the pipeline, just the image metadata
 
 CON:
-* The job performing the inline scanning needs to have access to the host-local Docker daemon
+* The job performing the inline scanning needs to have access to the Docker daemon
 
 ## Pre-requisites
 ## Pre-requisites
@@ -64,7 +64,7 @@ Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/
 
 For Backend mode, the Sysdig Backend (SaaS or Onprem) needs to be able to fetch the images produced by this pipeline, usually accessing a buffer Docker repository.
 
-For Inline mode, Jenkins workers need to have access to the host-local Docker daemon, in the most common case, by mounting or linking the Docker socket. The Jenkins worker user needs to be able to read and write the socket.
+For Inline mode, Jenkins workers need to have access to the Docker daemon, in the most common case, by mounting or linking the Docker socket or connecting as specified by DOCKER_HOST environment variable. The Jenkins worker user needs to be able to read and write the socket, and for TCP connections TLS and certificated might be required, depending on the daemon configuration.
 
 ## Installation
 
@@ -182,15 +182,41 @@ Backend scan connects to Sysdig Secure backend from the Jenkins master node, so 
 
 Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
 
-### Static agent configuration
+Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
+
+## Docker connection configuration
+
+Connection to the Docker daemon uses the FIFO socket at /var/run/docker.sock by default, but you can use the following standard Docker environment variables to override the default connection:
+
+* DOCKER_HOST: Daemon socket to connect to. i.e. `unix:///var/run/docker.sock` or `tcp://192.168.59.106`
+* DOCKER_TLS_VERIFY: When set Docker uses TLS and verifies the remote
+* DOCKER_CERT_PATH: The location of your authentication keys
+
+See [Docker environment variables documentation](https://docs.docker.com/engine/reference/commandline/cli/#environment-variables) for more information.
+
+Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
+
+### Inline-scan container image override (air-gapped environments)
+
+By default, the plugin uses the image `quay.io/sysdig/secure-inline-scan:2` to execute in the inline scan. This tag points to the latest 2.x available version.
+
+If the environment variable `SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE` is set, its value will override the default inline-scan image.
+
+This can be useful in situations where you want to use a version different to the latest 2.x, or for air-gapped environments, where the inline-scan is pulled from a private registry.
+
+Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
+
+# Configuring environment variables in workers
+
+## Static agent configuration
 
 For static agents, go to *Manage Jenkins -> Manage Nodes* and select the corresponding agent, then click *Configure*.
 
-Check *Environment variables* under *Node Properties* and define the `http_proxy`, `https_proxy` and `no_proxy` variables in there as required.
+Check *Environment variables* under *Node Properties* and define the variables in there as required, for example `http_proxy`, `https_proxy` and `no_proxy`, or `DOCKER_HOST`.
 
 ![Static agent proxy configuration](docs/images/StaticAgentProxyConfig.png)
 
-### Kubernetes cloud configuration (pod templates)
+## Kubernetes cloud configuration (pod templates)
 
 For agents using pods and containers provided by the Kubernetes cloud plugin, the environment variables are defined in the pod template.
 
@@ -217,15 +243,21 @@ metadata:
     name: custom-pod
 spec:
     containers:
-      - name: builder
-        image: docker:dind
+      - name: my-worker
+        image: custom-jenkins-builder:latest
         securityContext:
           privileged: true
         ...
         env:
-        # Set the environment variables for the DinD container
+        # Set the environment variables for the container
         - name: http_proxy
           value: http://my-proxy:8080
+        - name: DOCKER_HOST
+          value: tcp://didn-jenkins:2376
+        - name: DOCKER_TLS_VERIFY
+          value: true
+        - name: DOCKER_CERT_PATH
+          value: /mounted_certs
 ...
 """
        }
