@@ -9,6 +9,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
 
@@ -23,21 +24,35 @@ public class DockerClientRunner implements ContainerRunner {
 
   public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv) {
 
-    Properties properties = new Properties();
-    currentEnv.forEach(properties::put);
 
-    DockerClientConfig config = DefaultDockerClientConfig
-      .createDefaultConfigBuilder()
-      .withProperties(properties)
-      .build();
+    DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
+    if (currentEnv.get("DOCKER_HOST") != null) {
+      configBuilder.withDockerHost(currentEnv.get("DOCKER_HOST"));
+    }
+
+    if (currentEnv.get("DOCKER_TLS_VERIFY") != null) {
+      configBuilder.withDockerTlsVerify(currentEnv.get("DOCKER_TLS_VERIFY"));
+    }
+
+    if (currentEnv.get("DOCKER_CERT_PATH") != null) {
+      configBuilder.withDockerCertPath(currentEnv.get("DOCKER_CERT_PATH"));
+    }
+
+    DockerClientConfig config = configBuilder.build();
+
+    ApacheDockerHttpClient.Builder clientBuilder = new ApacheDockerHttpClient.Builder();
+
+    if (config.getDockerHost() != null) {
+      clientBuilder.dockerHost(config.getDockerHost());
+    }
+
+    if (config.getSSLConfig() != null) {
+      clientBuilder.sslConfig(config.getSSLConfig());
+    }
 
     this.dockerClient = DockerClientBuilder
       .getInstance(config)
-      .withDockerHttpClient(
-        new ApacheDockerHttpClient.Builder()
-          .dockerHost(config.getDockerHost())
-          .sslConfig(config.getSSLConfig())
-          .build())
+      .withDockerHttpClient(clientBuilder.build())
       .build();
 
     logger.logInfo(String.format("DOCKER_HOST=%s", config.getDockerHost()));
