@@ -15,21 +15,29 @@ security scans.
 Table of Contents
 =================
 
+- [Sysdig Secure Jenkins Plugin](#sysdig-secure-jenkins-plugin)
+- [Table of Contents](#table-of-contents)
 - [Getting Started](#getting-started)
-  * [Backend scanning or Inline scanning](#backend-scanning-or-inline-scanning)
-    + [Backend Scanning](#backend-scanning)
-    + [Inline Scanning](#inline-scanning)
-  * [Pre-requisites](#pre-requisites)
-  * [Installation](#installation)
-  * [Configuration](#configuration)
+  - [Backend scanning or Inline scanning](#backend-scanning-or-inline-scanning)
+    - [Backend Scanning](#backend-scanning)
+    - [Inline Scanning](#inline-scanning)
+  - [Pre-requisites](#pre-requisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
 - [Images file](#images-file)
 - [Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project](#example-1-integrate-the-sysdig-secure-plugin-with-a-freestyle-project)
 - [Example 2: Executing the Sysdig plugin inside a pipeline](#example-2-executing-the-sysdig-plugin-inside-a-pipeline)
 - [Configuration Options](#configuration-options)
-- [Proxy Configuration](#proxy-configuration)
+- [Proxy configuration](#proxy-configuration)
+  - [Backend scan](#backend-scan)
+  - [Inline scan](#inline-scan)
+  - [Docker connection configuration](#docker-connection-configuration)
+    - [Inline-scan container image override (air-gapped environments)](#inline-scan-container-image-override-air-gapped-environments)
+- [Configuring environment variables in workers](#configuring-environment-variables-in-workers)
+  - [Static agent configuration](#static-agent-configuration)
+  - [Kubernetes cloud configuration (pod templates)](#kubernetes-cloud-configuration-pod-templates)
 - [Plugin outputs](#plugin-outputs)
-- [Local development and installation](#local-development-and-installation)                                                                                                                             
-
+- [Local development and installation](#local-development-and-installation)
 
 # Getting Started
 
@@ -58,7 +66,6 @@ CON:
 * The job performing the inline scanning needs to have access to the Docker daemon
 
 ## Pre-requisites
-## Pre-requisites
 
 Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/find-the-super-admin-credentials-and-api-token.html#al_UUID-be84a2f1-b996-c30c-b5d8-5b8e4663146a_UUID-87bc65c6-ef79-6225-3910-39f619617a2c)
 
@@ -68,10 +75,11 @@ For Inline mode, Jenkins workers need to have access to the Docker daemon, in th
 
 ## Installation
 
-The Sysdig Secure plugin is published in the Jenkins plugin registry,
-and is available for installation on any Jenkins server.
+The Sysdig Secure plugin is published as a Jenkins plugin and is available for installation on any Jenkins server
+using the *Plugin Manager* in the web UI through the *Manage Jenkins > Manage Plugins* view, available to
+administrators of a Jenkins environment.
 
-1.  <https://github.com/jenkinsci/sysdig-secure-plugin>
+See https://www.jenkins.io/doc/book/managing/plugins/
 
 ## Configuration
 
