@@ -123,7 +123,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
       logger.logDebug("Executing command in container: " + args.toString());
-      inlineScanContainer.exec(args, null, builder::append, frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
     }
@@ -187,9 +187,24 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     }
   }
 
+  private void sendToBuilder(StringBuilder builder, String frame) {
+    for (String line: frame.split("[\n\r]")) {
+      // Workaround for older versions of inline-scan which can include some verbose output from "set -x", starting with "+ " in the stdout
+      if (!line.startsWith("+ ")) {
+        builder.append(line);
+      }
+    }
+  }
+
   private void sendToLog(SysdigLogger logger, String frame) {
     for (String line: frame.split("[\n\r]")) {
       logger.logInfo(line);
+    }
+  }
+
+  private void sendToDebugLog(SysdigLogger logger, String frame) {
+    for (String line: frame.split("[\n\r]")) {
+      logger.logDebug(line);
     }
   }
 }
