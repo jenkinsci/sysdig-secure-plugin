@@ -56,10 +56,10 @@ public class SysdigSecureClientImplWithRetries implements SysdigSecureClient {
   }
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations, boolean forceDockerImage) throws ImageScanningException {
     return (String)
       executeWithRetriesAndBackoff(() ->
-        sysdigSecureClient.submitImageForScanning(tag, dockerFileContents, annotations)
+        sysdigSecureClient.submitImageForScanning(tag, dockerFileContents, annotations, forceDockerImage)
       );
   }
 
