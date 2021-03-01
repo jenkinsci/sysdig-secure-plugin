@@ -62,7 +62,7 @@ public class BackendScanner extends Scanner {
         dockerFileContents = new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8);
       }
 
-      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations);
+      String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations, config.getForceDockerImage());
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
     } catch (Exception e) {

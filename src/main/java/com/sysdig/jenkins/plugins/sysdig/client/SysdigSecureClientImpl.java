@@ -63,9 +63,9 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
   }
 
   @Override
-  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations) throws ImageScanningException {
+  public String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations, boolean forceDockerImage) throws ImageScanningException {
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
-      String imagesUrl = String.format("%s/api/scanning/v1/anchore/images", apiURL);
+      String imagesUrl = String.format("%s/api/scanning/v1/anchore/images?force=%b", apiURL, forceDockerImage);
 
       JSONObject jsonBody = new JSONObject();
       jsonBody.put("tag", tag);
