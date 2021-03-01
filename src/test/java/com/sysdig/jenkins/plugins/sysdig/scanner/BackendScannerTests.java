@@ -55,7 +55,7 @@ public class BackendScannerTests {
 
     SysdigLogger logger = mock(SysdigLogger.class);
 
-    when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any())).thenReturn(IMAGE_DIGEST);
+    when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean())).thenReturn(IMAGE_DIGEST);
 
     BackendScanner.setBackendScanningClientFactory(clientFactory);
     this.scanner = new BackendScanner(config, logger);
@@ -67,7 +67,7 @@ public class BackendScannerTests {
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
     // Then
-    verify(client, times(1)).submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any());
+    verify(client, times(1)).submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean());
     assertEquals(IMAGE_TO_SCAN, submission.getTag());
     assertEquals(IMAGE_DIGEST, submission.getImageDigest());
   }
@@ -82,7 +82,8 @@ public class BackendScannerTests {
     verify(client, times(1)).submitImageForScanning(
       eq(IMAGE_TO_SCAN),
       isNull(),
-      any());
+      any(),
+      anyBoolean());
   }
 
   @Test
@@ -100,7 +101,8 @@ public class BackendScannerTests {
     verify(client, times(1)).submitImageForScanning(
       eq(IMAGE_TO_SCAN),
       eq( new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
-      any());
+      any(),
+      anyBoolean());
 
   }
 
@@ -146,7 +148,8 @@ public class BackendScannerTests {
       any(),
       any(),
       argThat(annotations ->
-        annotations.containsKey("added-by") && annotations.get("added-by").equals("cicd-scan-request")));
+        annotations.containsKey("added-by") && annotations.get("added-by").equals("cicd-scan-request")),
+      anyBoolean());
   }
 
 }

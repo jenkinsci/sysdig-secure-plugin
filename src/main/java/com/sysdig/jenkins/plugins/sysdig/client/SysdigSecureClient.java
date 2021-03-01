@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.Map;
 
 public interface SysdigSecureClient extends Serializable {
-  String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations, boolean forceDockerImage) throws ImageScanningException;
+  String submitImageForScanning(String tag, String dockerFileContents, Map<String, String> annotations, boolean forceScan) throws ImageScanningException;
   JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException;
   JSONObject retrieveImageScanningVulnerabilities(String imageDigest) throws ImageScanningException;
 }

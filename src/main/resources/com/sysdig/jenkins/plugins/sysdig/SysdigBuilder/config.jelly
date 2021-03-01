@@ -7,31 +7,36 @@
       <f:textbox default="${descriptor.DEFAULT_NAME}"/>
     </f:entry>
 
-    <f:entry title="Fail build on policy evaluation FAIL result" field="bailOnFail">
-      <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}" default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
+    <f:entry help="/plugin/sysdig-secure/help/help-inlineScanning.html">
+      <f:checkbox name="inlineScanning" checked="${instance.inlineScanning}" title="Inline Scanning" onclick="javascript:toggleForceScan()" />
     </f:entry>
 
-    <f:entry title="Fail build on critical plugin error" field="bailOnPluginFail">
-      <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
+    <f:entry help="/plugin/sysdig-secure/help/help-forceScan.html">
+     <f:checkbox name="forceScan" checked="${instance.forceScan}" title="Force re-scanning of the image. Only for backend scanning" field="forceScan" />
     </f:entry>
 
-    <f:entry title="Inline Scanning" field="inlineScanning" help="/plugin/sysdig-secure/help/help-inlineScanning.html">
-          <f:checkbox name="inlineScanning" checked="${instance.inlineScanning}" default="${descriptor.DEFAULT_INLINE_SCANNING}"/>
+    <f:entry>
+      <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}" title="Fail build on policy evaluation FAIL result"  default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
     </f:entry>
 
-    <f:section title="Override Global Configuration">
-        <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
-            <f:textbox name="engineurl" default=""/>
-        </f:entry>
+    <f:entry>
+      <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" title="Fail build on critical plugin error" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
+    </f:entry>
 
-        <f:entry field="engineCredentialsId" title="Sysdig Secure API credentials" help="/plugin/sysdig-secure/help/help-OverrideAECredentials.html">
-            <c:select/>
-        </f:entry>
+  </f:section>
 
-        <f:entry title="Verify SSL" field="engineverify">
-            <f:checkbox name="engineverify" checked="${instance.engineverify}" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
-        </f:entry>
+  <f:section title="Override Global Configuration">
+    <f:entry title="Sysdig Secure Engine URL" field="engineurl" help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
+        <f:textbox name="engineurl" default=""/>
+    </f:entry>
 
-    </f:section>
+    <f:entry field="engineCredentialsId" title="Sysdig Secure API credentials" help="/plugin/sysdig-secure/help/help-OverrideAECredentials.html">
+        <c:select/>
+    </f:entry>
+
+    <f:entry>
+        <f:checkbox name="engineverify" checked="${instance.engineverify}" title="Verify SSL" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
+    </f:entry>
+
   </f:section>
 </j:jelly>
