@@ -61,6 +61,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   private boolean bailOnFail = DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
   private boolean bailOnPluginFail = DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
   private boolean inlineScanning = DescriptorImpl.DEFAULT_INLINE_SCANNING;
+  private boolean forceScan = DescriptorImpl.DEFAULT_FORCE_SCAN;
 
   // Override global config. Supported for sysdig-secure-engine mode config only
   private String engineurl = DescriptorImpl.EMPTY_STRING;
@@ -97,6 +98,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     return inlineScanning;
   }
 
+  public boolean getForceScan() {
+    return forceScan;
+  }
+
   @DataBoundSetter
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
@@ -127,6 +132,11 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     this.inlineScanning = inlineScanning;
   }
 
+  @DataBoundSetter
+  public void setForceScan(boolean forceScan) {
+    this.forceScan = forceScan;
+  }
+
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
   @DataBoundConstructor
   public SysdigBuilder(String name) {
@@ -155,6 +165,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final boolean DEFAULT_INLINE_SCANNING = false;
+    public static final boolean DEFAULT_FORCE_SCAN = false;
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
     public static final boolean DEFAULT_ENGINE_VERIFY = true;
 

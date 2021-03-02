@@ -38,6 +38,7 @@ public class BuildConfig implements Serializable {
   private final boolean engineverify;
   private final boolean inlineScanning;
   private final String sysdigToken;
+  private final boolean forceScan;
 
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
     name = builder.getName();
@@ -53,6 +54,7 @@ public class BuildConfig implements Serializable {
     }
 
     inlineScanning = builder.isInlineScanning();
+    forceScan = builder.getForceScan();
     this.sysdigToken = sysdigToken;
   }
 
@@ -88,6 +90,10 @@ public class BuildConfig implements Serializable {
     return inlineScanning;
   }
 
+  public boolean getForceScan() {
+    return forceScan;
+  }
+
   /**
    * Print versions info and configuration
    */
@@ -110,6 +116,7 @@ public class BuildConfig implements Serializable {
     logger.logInfo(String.format("name: %s", this.getName()));
     logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
+    logger.logInfo(String.format("forceScan: %b", this.getForceScan()));
   }
 
 }

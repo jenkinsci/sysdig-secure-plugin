@@ -30,9 +30,6 @@ public class FullWorkflowTests {
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
 
-  private BackendScanningClientFactory backendClientFactory;
-  private ContainerRunnerFactory containerRunnerFactory;
-
   private static final String IMAGE_TO_SCAN = "my-image:tag";
   private static final String MOCK_GATES_REPORT = "[ {\"foo-digest\": { \"" + IMAGE_TO_SCAN + "\": [ { \"status\": \"pass\", \"detail\": { \"result\": { \"result\": {} } }} ] } } ]";
   private static final String MOCK_VULNS_REPORT = "{ \"vulnerabilities\": [] }";
@@ -40,18 +37,18 @@ public class FullWorkflowTests {
   @Before
   public void BeforeEach() throws ImageScanningException, InterruptedException {
     SysdigSecureClient client = mock(SysdigSecureClient.class);
-    when(client.submitImageForScanning(any(), any(), any())).thenReturn("foo-digest");
+    when(client.submitImageForScanning(any(), any(), any(), anyBoolean())).thenReturn("foo-digest");
     JSONArray gates = JSONArray.fromObject(MOCK_GATES_REPORT);
     when(client.retrieveImageScanningResults(any(), eq("foo-digest"))).thenReturn(gates);
     JSONObject vulns = JSONObject.fromObject(MOCK_VULNS_REPORT);
     when(client.retrieveImageScanningVulnerabilities(eq("foo-digest"))).thenReturn(vulns);
 
-    backendClientFactory = mock(BackendScanningClientFactory.class);
+    BackendScanningClientFactory backendClientFactory = mock(BackendScanningClientFactory.class);
     when(backendClientFactory.newClient(any(), any(), any())).thenReturn(client);
     when(backendClientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
     ContainerRunner containerRunner = mock(ContainerRunner.class);
-    containerRunnerFactory = mock (ContainerRunnerFactory.class);
+    ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
     when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
 
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
