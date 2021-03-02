@@ -12,33 +12,6 @@ step to a Freestyle job to automate the process of running an image
 analysis, evaluating custom policies against images, and performing
 security scans.
 
-Table of Contents
-=================
-
-- [Sysdig Secure Jenkins Plugin](#sysdig-secure-jenkins-plugin)
-- [Table of Contents](#table-of-contents)
-- [Getting Started](#getting-started)
-  - [Backend scanning or Inline scanning](#backend-scanning-or-inline-scanning)
-    - [Backend Scanning](#backend-scanning)
-    - [Inline Scanning](#inline-scanning)
-  - [Pre-requisites](#pre-requisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-- [Images file](#images-file)
-- [Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project](#example-1-integrate-the-sysdig-secure-plugin-with-a-freestyle-project)
-- [Example 2: Executing the Sysdig plugin inside a pipeline](#example-2-executing-the-sysdig-plugin-inside-a-pipeline)
-- [Configuration Options](#configuration-options)
-- [Proxy configuration](#proxy-configuration)
-  - [Backend scan](#backend-scan)
-  - [Inline scan](#inline-scan)
-  - [Docker connection configuration](#docker-connection-configuration)
-    - [Inline-scan container image override (air-gapped environments)](#inline-scan-container-image-override-air-gapped-environments)
-- [Configuring environment variables in workers](#configuring-environment-variables-in-workers)
-  - [Static agent configuration](#static-agent-configuration)
-  - [Kubernetes cloud configuration (pod templates)](#kubernetes-cloud-configuration-pod-templates)
-- [Plugin outputs](#plugin-outputs)
-- [Local development and installation](#local-development-and-installation)
-
 # Getting Started
 
 ## Backend scanning or Inline scanning
@@ -81,7 +54,7 @@ administrators of a Jenkins environment.
 
 See https://www.jenkins.io/doc/book/managing/plugins/
 
-## Configuration
+## Global configuration
 
 To configure the Sysdig Secure plugin:
 
@@ -102,7 +75,9 @@ To configure the Sysdig Secure plugin:
     
 7.  Click `Save`.
 
-# Images file
+# Usage
+
+## Images file
 
 The Sysdig Secure plugin reads a file called `sysdig_secure_images` (by default) for the list of images to scan.
 
@@ -122,7 +97,7 @@ myimage:3.11 ./build/Dockerfile
 alpine:latest 
 ```
 
-# Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project
+## Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project
 
 1.  Using the Jenkins Docker plugin for this example, you could start by building the image and writing the image name to the `sysdig_secure_images` file
 
@@ -138,7 +113,7 @@ alpine:latest
 :speech_balloon: Take into account that this example is using the Inline scanning mode, in case you want to use Backend scanning, you would need to push the image to a registry that is pulleable by the Sysdig Backend.
 
 
-# Example 2: Executing the Sysdig plugin inside a pipeline
+## Example 2: Executing the Sysdig plugin inside a pipeline
 
 The following is a simplified example executing the Sysdig plugin as a stage inside a pipeline
 
@@ -165,7 +140,7 @@ stages {
 
 The table below describes each of the configuration options.
 
-# Configuration Options
+## Execution options
 
 | Option                                 | Description                                                                                                                                                                                                                                                      | Default |
 |----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| -------|
@@ -180,13 +155,15 @@ The following is an example of executing the Sysdig Secure plugin as a Jenkinsfi
 sysdig bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineurl: 'https://secure.sysdig.com', inlineScanning: true, name: 'sysdig_secure_images'
 ```
 
-# Proxy configuration
+# Other settings
 
-## Backend scan
+## Proxy configuration
+
+### Backend scan
 
 Backend scan connects to Sysdig Secure backend from the Jenkins master node, so it will use the [Jenkins proxy configuration](https://wiki.jenkins.io/display/JENKINS/JenkinsBehindProxy).
 
-## Inline scan
+### Inline scan
 
 Inline scan is executed in the worker node, so proxy is configured with the standard environment variables `http_proxy`, `https_proxy` and `no_proxy`.
 
@@ -204,7 +181,7 @@ See [Docker environment variables documentation](https://docs.docker.com/engine/
 
 Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
 
-### Inline-scan container image override (air-gapped environments)
+## Inline-scan container image override (air-gapped environments)
 
 By default, the plugin uses the image `quay.io/sysdig/secure-inline-scan:2` to execute in the inline scan. This tag points to the latest 2.x available version.
 
