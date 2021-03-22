@@ -45,8 +45,8 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String SKIP_TLS_ARG = "--sysdig-skip-tls";
   private static final String SYSDIG_URL_ARG = "--sysdig-url=%s";
   private static final String ON_PREM_ARG = "--on-prem";
-  private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/Dockerfile";
-  private static final String DOCKERFILE_MOUNTPOINT = "/tmp/Dockerfile";
+  private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/";
+  private static final String DOCKERFILE_MOUNTPOINT = "/tmp/";
 
   private static final int STOP_SECONDS = 1;
 
@@ -101,17 +101,20 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     List<String> bindMounts = new ArrayList<>();
     bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
 
-    if (!Strings.isNullOrEmpty(dockerFile)) {
-      args.add(DOCKERFILE_ARG);
-      bindMounts.add(String.format("%s:%s", dockerFile, DOCKERFILE_MOUNTPOINT));
-    }
-
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Node environment: " + nodeEnvVars.toString());
     logger.logDebug("Creating container with environment: " + envVars.toString());
     logger.logDebug("Bind mounts: " + bindMounts.toString());
 
     Container inlineScanContainer = containerRunner.createContainer(nodeEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", INLINE_SCAN_IMAGE), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+
+    if (!Strings.isNullOrEmpty(dockerFile)) {
+      File f = new File(dockerFile);
+      logger.logDebug("Copying Dockerfile from " + f.getAbsolutePath() + " to " + DOCKERFILE_MOUNTPOINT + f.getName() + " inside container");
+      inlineScanContainer.copy(dockerFile, DOCKERFILE_MOUNTPOINT);
+      args.add(DOCKERFILE_ARG + f.getName());
+    }
+
     final StringBuilder builder = new StringBuilder();
 
     try {

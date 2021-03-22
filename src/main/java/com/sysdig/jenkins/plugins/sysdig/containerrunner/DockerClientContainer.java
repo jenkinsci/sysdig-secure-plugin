@@ -93,6 +93,14 @@ public class DockerClientContainer implements Container {
   }
 
   @Override
+  public void copy(String source, String destinationFolder) {
+    dockerClient.copyArchiveToContainerCmd(this.containerId)
+      .withHostResource(source)
+      .withRemotePath(destinationFolder)
+      .exec();
+  }
+
+  @Override
   public void stop(int timeout) {
     dockerClient.stopContainerCmd(this.containerId)
       .withTimeout(timeout)
