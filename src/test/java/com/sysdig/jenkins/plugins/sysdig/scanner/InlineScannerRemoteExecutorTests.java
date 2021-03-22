@@ -249,22 +249,24 @@ public class InlineScannerRemoteExecutorTests {
     scannerRemoteExecutor.call();
 
     // Then
-    verify(container, times(1)).exec(argThat(args -> args.contains("--dockerfile=/tmp/Dockerfile")), isNull(), any(), any());
+    verify(container, times(1)).exec(argThat(args -> args.contains("--dockerfile=/tmp/foo-dockerfile")), isNull(), any(), any());
   }
 
   @Test
-  public void dockerfileIsMountedAtTmp() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", config, logger, nodeEnvVars);
+  public void dockerfileIsCopiedInsideContainer() throws Exception {
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/some/path/foo-dockerfile", config, logger, nodeEnvVars);
 
     // When
     scannerRemoteExecutor.call();
+
+    verify(container, times(1)).copy("/some/path/foo-dockerfile", "/tmp/");
 
     verify(containerRunner, times(1)).createContainer(
       eq(SCAN_IMAGE),
       any(),
       any(),
       any(),
-      argThat(arg -> arg.contains("/tmp/foo-dockerfile:/tmp/Dockerfile")));
+      any());
   }
 
 
