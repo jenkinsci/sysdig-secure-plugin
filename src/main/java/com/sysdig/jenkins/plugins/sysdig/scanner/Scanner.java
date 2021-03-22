@@ -9,6 +9,7 @@ import net.sf.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public abstract class Scanner {
@@ -54,10 +55,20 @@ public abstract class Scanner {
   }
 
   private ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
-    JSONObject tagEvalObj = JSONObject.fromObject(scanReport.get(0)).getJSONObject(imageDigest);
+    JSONObject reportDigests = JSONObject.fromObject(scanReport.get(0));
+    JSONObject firstReport = null;
+    for (Object key : reportDigests.keySet()) {
+      firstReport = reportDigests.getJSONObject((String) key);
+      break;
+    }
+
+    if (firstReport == null || firstReport.size() < 1) {
+      throw new AbortException(String.format("Failed to analyze %s due to missing digest eval records in sysdig-secure-engine policy evaluation response", tag));
+    }
+
     JSONArray tagEvals = null;
-    for (Object key : tagEvalObj.keySet()) {
-      tagEvals = tagEvalObj.getJSONArray((String) key);
+    for (Object key : firstReport.keySet()) {
+      tagEvals = firstReport.getJSONArray((String) key);
       break;
     }
 
