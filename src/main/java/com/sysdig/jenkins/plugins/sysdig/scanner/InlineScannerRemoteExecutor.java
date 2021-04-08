@@ -76,7 +76,8 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   @Override
 
   public String call() throws InterruptedException {
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, this.nodeEnvVars);
+    EnvVars finalEnvVars = this.getMergedEnvVars();
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, finalEnvVars);
 
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
@@ -96,17 +97,18 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     List<String> envVars = new ArrayList<>();
     envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
     envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
-    addProxyVars(nodeEnvVars, envVars, logger);
+    addProxyVars(finalEnvVars, envVars, logger);
 
     List<String> bindMounts = new ArrayList<>();
     bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
 
-    logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Node environment: " + nodeEnvVars.toString());
+    logger.logDebug("System environment: " + System.getenv().toString());
+    logger.logDebug("Final environment: " + finalEnvVars.toString());
     logger.logDebug("Creating container with environment: " + envVars.toString());
     logger.logDebug("Bind mounts: " + bindMounts.toString());
 
-    Container inlineScanContainer = containerRunner.createContainer(nodeEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", INLINE_SCAN_IMAGE), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    Container inlineScanContainer = containerRunner.createContainer(finalEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", INLINE_SCAN_IMAGE), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
       File f = new File(dockerFile);
@@ -134,6 +136,12 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
 
     return builder.toString();
+  }
+
+  private EnvVars getMergedEnvVars() {
+    EnvVars vars = new EnvVars(this.nodeEnvVars);
+    vars.putAll(System.getenv());
+    return vars;
   }
 
   private void addProxyVars(EnvVars currentEnv, List<String> envVars, SysdigLogger logger) {
