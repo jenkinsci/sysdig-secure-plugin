@@ -91,7 +91,7 @@ public class SysdigBuilderExecutor {
     /* Evaluate result of step based on gate action */
     if (null == finalAction) {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if ((config.getBailOnFail() || builder.getBailOnPluginFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
+    } else if ((config.getBailOnFail() || builder.getBailOnFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
       logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
       throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
     } else {

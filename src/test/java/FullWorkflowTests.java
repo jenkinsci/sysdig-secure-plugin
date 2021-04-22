@@ -31,14 +31,16 @@ public class FullWorkflowTests {
   public JenkinsRule jenkins = new JenkinsRule();
 
   private static final String IMAGE_TO_SCAN = "my-image:tag";
-  private static final String MOCK_GATES_REPORT = "[ {\"foo-digest\": { \"" + IMAGE_TO_SCAN + "\": [ { \"status\": \"pass\", \"detail\": { \"result\": { \"result\": {} } }} ] } } ]";
+  private static final String MOCK_GATES_REPORT_PASS = "[ {\"foo-digest\": { \"" + IMAGE_TO_SCAN + "\": [ { \"status\": \"pass\", \"detail\": { \"result\": { \"result\": {} } }} ] } } ]";
+  private static final String MOCK_GATES_REPORT_FAIL = "[ {\"foo-digest\": { \"" + IMAGE_TO_SCAN + "\": [ { \"status\": \"fail\", \"detail\": { \"result\": { \"result\": {} } }} ] } } ]";
   private static final String MOCK_VULNS_REPORT = "{ \"vulnerabilities\": [] }";
+  private SysdigSecureClient client;
 
   @Before
   public void BeforeEach() throws ImageScanningException, InterruptedException {
-    SysdigSecureClient client = mock(SysdigSecureClient.class);
+    client = mock(SysdigSecureClient.class);
     when(client.submitImageForScanning(any(), any(), any(), anyBoolean())).thenReturn("foo-digest");
-    JSONArray gates = JSONArray.fromObject(MOCK_GATES_REPORT);
+    JSONArray gates = JSONArray.fromObject(MOCK_GATES_REPORT_PASS);
     when(client.retrieveImageScanningResults(any(), eq("foo-digest"))).thenReturn(gates);
     JSONObject vulns = JSONObject.fromObject(MOCK_VULNS_REPORT);
     when(client.retrieveImageScanningVulnerabilities(eq("foo-digest"))).thenReturn(vulns);
@@ -133,12 +135,36 @@ public class FullWorkflowTests {
 
   @Test
   public void scriptedPipelineBackendScan() throws Exception {
-    performScriptedPipelineScanJob(false);
+    WorkflowJob job = performScriptedPipelineScanJob(false, true);
+    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
+    // Then
+    jenkins.assertLogContains("final result PASS", build);
   }
 
   @Test
-  public void scriptedPipelineInlineScan() throws Exception {
-    performScriptedPipelineScanJob(true);
+  public void scriptedPipelineInlineScanPass() throws Exception {
+    WorkflowJob job = performScriptedPipelineScanJob(true, true);
+    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
+    // Then
+    jenkins.assertLogContains("final result PASS", build);
+  }
+
+  @Test
+  public void scriptedPipelineBackendScanFail() throws Exception {
+    when(client.retrieveImageScanningResults(any(), eq("foo-digest"))).thenReturn(JSONArray.fromObject(MOCK_GATES_REPORT_FAIL));
+    WorkflowJob job = performScriptedPipelineScanJob(false, true);
+    WorkflowRun build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
+    // Then
+    jenkins.assertLogContains("final result FAIL", build);
+  }
+
+  @Test
+  public void scriptedPipelineBackendScanFailButIgnore() throws Exception {
+    when(client.retrieveImageScanningResults(any(), eq("foo-digest"))).thenReturn(JSONArray.fromObject(MOCK_GATES_REPORT_FAIL));
+    WorkflowJob job = performScriptedPipelineScanJob(false, false);
+    WorkflowRun build = jenkins.buildAndAssertStatus(Result.SUCCESS, job);
+    // Then
+    jenkins.assertLogContains("final result FAIL", build);
   }
 
   @Test
@@ -193,7 +219,7 @@ public class FullWorkflowTests {
     jenkins.assertLogContains("final result PASS", build);
   }
 
-  private void performScriptedPipelineScanJob(boolean inline) throws Exception {
+  private WorkflowJob performScriptedPipelineScanJob(boolean inline, boolean bailOnFail) throws Exception {
     // Given
     configureCredentials();
     WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
@@ -202,13 +228,12 @@ public class FullWorkflowTests {
       + (SystemUtils.IS_OS_WINDOWS
       ? "  bat 'echo my-image:latest > images_file'\n"
       : "  sh 'echo my-image:latest > images_file'\n")
-      + "  sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "  sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'"
+      + (!bailOnFail ? ", bailOnFail: false" : "")
+      + "\n"
       + "}";
     job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
-    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
-
-    // Then
-    jenkins.assertLogContains("final result PASS", build);
+    return job;
   }
 
   private void performDeclarativePipelineScanJob(boolean inline) throws Exception {
