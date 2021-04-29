@@ -59,14 +59,15 @@ See https://www.jenkins.io/doc/book/managing/plugins/
 To configure the Sysdig Secure plugin:
 
 1.  Complete these steps after installing the hpi file from the installation link above.
+
 2.  From the main Jenkins menu, select `Manage Jenkins`.
+
 3.  Click the `Configure System` link.
+
     ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
-4.  Scroll to the `Sysdig Secure Plugin` section.
+4.  Scroll down to the `Sysdig Secure Plugin` section.
 
-5.  Under Jenkins Global Configuratton, find the Sysdig Secure Plugin section
-
-6.  In the `Sysdig Secure API Credentials` drop-down, click `Add` button to create a new credential containing the Sysdig Secure API Token that you can find in Sysdig Secure -> Settings -> User Profile. You only need to fill the password field and keep the user blank. Oncre created, select the new credential in the `Sysdig Secure API Credentials` drop-down.
+5.  In the `Sysdig Secure API Credentials` drop-down, click `Add` button to create a new credential containing the Sysdig Secure API Token that you can find in Sysdig Secure -> Settings -> User Profile. You only need to fill the password field and keep the user blank. Oncre created, select the new credential in the `Sysdig Secure API Credentials` drop-down.
 
   ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
 
