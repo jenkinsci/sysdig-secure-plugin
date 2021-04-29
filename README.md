@@ -71,7 +71,7 @@ To configure the Sysdig Secure plugin:
 
   ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
 
-7.  Enter the Sysdig Secure API endpoint in the `Sysdig Secure Engine URL` field. For On-Prem installations, this is the URL where your Secure API is exposed. For SaaS service:
+6.  Enter the Sysdig Secure API endpoint in the `Sysdig Secure Engine URL` field. For On-Prem installations, this is the URL where your Secure API is exposed. For SaaS service:
 
     * Default region US East (North Virginia): `https://secure.sysdig.com`
     * US West (Oregon): `https://us2.app.sysdig.com`
@@ -80,10 +80,10 @@ To configure the Sysdig Secure plugin:
 
   ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
 
-8.  If you are connecting to an On-Prem instance using an invalid TLS certificate, then you need to either
+7.  If you are connecting to an On-Prem instance using an invalid TLS certificate, then you need to either
 configure Jenkins to trust the certificate, or uncheck the `Verify SSL` checkbox.
 
-9.  Click `Save`.
+8.  Click `Save`.
 
 # Usage
 
