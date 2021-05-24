@@ -59,21 +59,31 @@ See https://www.jenkins.io/doc/book/managing/plugins/
 To configure the Sysdig Secure plugin:
 
 1.  Complete these steps after installing the hpi file from the installation link above.
+
 2.  From the main Jenkins menu, select `Manage Jenkins`.
+
 3.  Click the `Configure System` link.
+
     ![Confgure Jenkins](https://wiki.jenkins.io/download/attachments/145359144/image_5.png?version=1&modificationDate=1535691769000&api=v2)
-4.  Scroll to the `Sysdig Secure Plugin` section.
-5.  Create a new credential containing the Sysdig API key found here (You just need to fill the password field): <https://secure.sysdig.com/#/settings/user>
+4.  Scroll down to the `Sysdig Secure Plugin` section.
 
-    ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
-    
-6.  Configure the Sysdig Backend URL, `https://secure.sysdig.com` if you are using SaaS or your own if you are using an on-prem installation, and select the previously created credential.
+5.  In the `Sysdig Secure API Credentials` drop-down, click `Add` button to create a new credential containing the Sysdig Secure API Token that you can find in Sysdig Secure -> Settings -> User Profile. You only need to fill the password field and keep the user blank. Oncre created, select the new credential in the `Sysdig Secure API Credentials` drop-down.
 
-    Mark the Inline scanning option in case you have decided to use Inline scanning:
+  ![Sysdig Token Configuration](docs/images/SysdigTokenConfiguration.png)
 
-    ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
-    
-7.  Click `Save`.
+6.  Enter the Sysdig Secure API endpoint in the `Sysdig Secure Engine URL` field. For On-Prem installations, this is the URL where your Secure API is exposed. For SaaS service:
+
+    * Default region US East (North Virginia): `https://secure.sysdig.com`
+    * US West (Oregon): `https://us2.app.sysdig.com`
+    * European Union: `https://eu1.app.sysdig.com`
+    * Check [SaaS Regions and IP Ranges](https://docs.sysdig.com/en/saas-regions-and-ip-ranges.html) for a complete list of regions
+
+  ![Sysdig Plugin Configuration](docs/images/SysdigPluginConfig.png)
+
+7.  If you are connecting to an On-Prem instance using an invalid TLS certificate, then you need to either
+configure Jenkins to trust the certificate, or uncheck the `Verify SSL` checkbox.
+
+8.  Click `Save`.
 
 # Usage
 
