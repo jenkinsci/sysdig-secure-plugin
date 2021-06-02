@@ -196,7 +196,7 @@ Environment variables must be defined in **the worker node**. See *Configuring e
 
 By default, the plugin uses the image `quay.io/sysdig/secure-inline-scan:2` to execute in the inline scan. This tag points to the latest 2.x available version.
 
-If the environment variable `SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE` is set, its value will override the default inline-scan image.
+The default container image can be overridden in the plugin global configuration, or by setting the environment variable `SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE`.
 
 This can be useful in situations where you want to use a version different to the latest 2.x, or for air-gapped environments, where the inline-scan is pulled from a private registry.
 

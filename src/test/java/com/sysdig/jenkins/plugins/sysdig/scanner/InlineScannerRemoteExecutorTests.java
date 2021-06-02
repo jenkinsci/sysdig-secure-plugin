@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 
 public class InlineScannerRemoteExecutorTests {
-  private static final String SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
+  private static final String SCAN_IMAGE = "quay.io/sysdig/test-secure-inline-scan:2";
   private static final String IMAGE_TO_SCAN = "foo:latest";
   private static final String SYSDIG_TOKEN = "foo-token";
 
@@ -49,6 +49,7 @@ public class InlineScannerRemoteExecutorTests {
     config = mock(BuildConfig.class);
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
+    when(config.getInlineScanImage()).thenReturn(SCAN_IMAGE);
     // new String in here is not redundant, as we want to make sure that internally we compare by value, not by ref
     when(config.getEngineurl()).thenReturn(new String(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL));
     when(config.getDebug()).thenReturn(false);

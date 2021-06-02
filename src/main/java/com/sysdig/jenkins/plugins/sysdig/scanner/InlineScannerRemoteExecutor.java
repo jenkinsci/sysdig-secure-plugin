@@ -32,7 +32,6 @@ import java.util.*;
 
 public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
 
-  private static final String INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
   private static final String DUMMY_ENTRYPOINT = "cat";
   private static final String[] MKDIR_COMMAND = new String[]{"mkdir", "-p", "/tmp/sysdig-inline-scan/logs"};
   private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/logs/info.log"};
@@ -108,7 +107,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     logger.logDebug("Creating container with environment: " + envVars.toString());
     logger.logDebug("Bind mounts: " + bindMounts.toString());
 
-    Container inlineScanContainer = containerRunner.createContainer(finalEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", INLINE_SCAN_IMAGE), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    Container inlineScanContainer = containerRunner.createContainer(finalEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
       File f = new File(dockerFile);

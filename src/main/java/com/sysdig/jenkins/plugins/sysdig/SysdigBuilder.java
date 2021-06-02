@@ -174,6 +174,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
     private boolean engineverify = DEFAULT_ENGINE_VERIFY;
+    private String inlinescanimage = "";
+    private boolean forceinlinescan = false;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -200,6 +202,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       this.engineverify = engineverify;
     }
 
+    public void setInlinescanimage(String inlinescanimage) {
+      this.inlinescanimage = inlinescanimage;
+    }
+
+    public void setForceinlinescan(boolean forceinlinescan) {
+      this.forceinlinescan = forceinlinescan;
+    }
+
     @Deprecated
     public boolean getEnabled() {
       return enabled;
@@ -219,6 +229,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     public boolean getEngineverify() {
       return engineverify;
+    }
+
+    public String getInlinescanimage() {
+      return inlinescanimage;
+    }
+
+    public boolean getForceinlinescan() {
+      return forceinlinescan;
     }
 
     public DescriptorImpl() {
@@ -269,6 +287,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
         Collections.emptyList(),
         CredentialsMatchers.always());
     }
+
   }
 }
 
