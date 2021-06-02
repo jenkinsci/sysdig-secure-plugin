@@ -29,6 +29,7 @@ import java.util.List;
  */
 public class BuildConfig implements Serializable {
 
+  private static final String DEFAULT_INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
 
   private final String name;
   private final boolean bailOnFail;
@@ -39,6 +40,7 @@ public class BuildConfig implements Serializable {
   private final boolean inlineScanning;
   private final String sysdigToken;
   private final boolean forceScan;
+  private final String inlineScanImage;
 
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
     name = builder.getName();
@@ -53,9 +55,19 @@ public class BuildConfig implements Serializable {
       engineverify = globalConfig.getEngineverify();
     }
 
-    inlineScanning = builder.isInlineScanning();
+    if (globalConfig.getForceinlinescan()) {
+      inlineScanning = true;
+    } else {
+      inlineScanning = builder.isInlineScanning();
+    }
+
     forceScan = builder.getForceScan();
     this.sysdigToken = sysdigToken;
+    if (!Strings.isNullOrEmpty(globalConfig.getInlinescanimage())) {
+      inlineScanImage = globalConfig.getInlinescanimage();
+    } else {
+      inlineScanImage = DEFAULT_INLINE_SCAN_IMAGE;
+    }
   }
 
   public String getName() {
@@ -92,6 +104,10 @@ public class BuildConfig implements Serializable {
 
   public boolean getForceScan() {
     return forceScan;
+  }
+
+  public String getInlineScanImage() {
+    return inlineScanImage;
   }
 
   /**

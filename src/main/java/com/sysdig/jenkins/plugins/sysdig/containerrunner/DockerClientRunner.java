@@ -61,7 +61,7 @@ public class DockerClientRunner implements ContainerRunner {
   @Override
   public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars, List<String> volumeBinds) throws InterruptedException {
 
-    logger.logInfo(String.format("Pulling image %s", imageName));
+    logger.logInfo(String.format("Pulling image: %s", imageName));
     dockerClient.pullImageCmd(imageName).start().awaitCompletion();
 
     logger.logInfo(String.format("Creating container for image: %s", imageName));

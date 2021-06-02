@@ -19,6 +19,14 @@
       <f:checkbox name="debug" checked="${descriptor.debug}" default="${false}"/>
     </f:entry>
 
+    <f:entry title="Force inline-scan" field="forceinlinescan">
+      <f:checkbox name="forceinlinescan" checked="${descriptor.forceinlinescan}" default="${false}"/>
+    </f:entry>
+
+    <f:entry title="Override inline-scan container image" field="inlinescanimage">
+      <f:textbox name="inlinescanimage" default=""/>
+    </f:entry>
+
   </f:section>
 
 </j:jelly>
