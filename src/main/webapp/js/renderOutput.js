@@ -140,12 +140,6 @@ function buildPolicyEvalTable(tableId, outputFile) {
           columns: headers,
           order: [[3, 'asc']],
           columnDefs: [
-    //        {
-    //          targets: [0, 1, 2],
-    //          render: function (source, type, val) {
-    //            return '<span style="word-break: break-all;">' + source + '</span>';
-    //          }
-    //        },
             {
               targets: 3,
               render: gateAction
@@ -183,9 +177,9 @@ function buildSecurityTable(tableId, outputFile) {
       var vulnColumn = "";
       if (row[tableColFor("URL")].startsWith("<")) {
         // Old versions write the report adding the <a href=...
-         vulnColumn = "<div>" + row[tableColFor("CVE ID")] + "</div><div>" + row[tableColFor("URL")] + "</div>";
+         vulnColumn = '<div style="white-space: nowrap;">' + row[tableColFor("CVE ID")] + "</div><div>" + row[tableColFor("URL")] + "</div>";
       } else {
-        vulnColumn = '<a href="' + row[tableColFor("URL")] + '">' + row[tableColFor("CVE ID")] + "</a>";
+        vulnColumn = '<a style="white-space: nowrap;" href="' + row[tableColFor("URL")] + '">' + row[tableColFor("CVE ID")] + "</a>";
       }
 
       rows.push([

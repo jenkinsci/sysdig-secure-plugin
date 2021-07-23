@@ -9,6 +9,7 @@
 
           <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/bootstrap.min.css"/>
           <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/dataTables.bootstrap.min.css"/>
+          <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/sysdig.css"/>
 
           <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/jquery.min.js"></script>
           <!-- To prevent conflicts with Jenkins prototype.js. Otherwise tabs go missing after moving to the next tab -->
