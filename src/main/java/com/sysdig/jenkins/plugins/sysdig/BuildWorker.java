@@ -28,6 +28,7 @@ import hudson.tasks.ArtifactArchiver;
 import net.sf.json.JSONObject;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -43,6 +44,7 @@ public class BuildWorker {
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport_";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
+  private static final String RAW_VULN_REPORT_FILENAME = "sysdig_secure_raw_vulns_report-%s.json";
 
   // Private members
   Run<?, ?> run;
@@ -115,6 +117,12 @@ public class BuildWorker {
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
       reportConverter.processVulnerabilities(scanResults, jenkinsQueryOutputFP);
+
+      for (ImageScanningResult result: scanResults) {
+        FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, result.getImageDigest()));
+        logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
+        rawVulnerabilityReportFP.write(result.getVulnerabilityReport().toString(), String.valueOf(StandardCharsets.UTF_8));
+      }
 
       /* Setup reports */
       this.setupBuildReports(finalAction, gateSummary);
