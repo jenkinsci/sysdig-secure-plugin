@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 
 public class InlineScannerRemoteExecutorTests {
   private static final String SCAN_IMAGE = "quay.io/sysdig/test-secure-inline-scan:2";
@@ -357,22 +356,6 @@ public class InlineScannerRemoteExecutorTests {
 
     // When
     scannerRemoteExecutor.call();
-
-    // Then
-    verify(containerRunner, times(1)).createContainer(
-      eq("my-repo/my-custom-image:foo"),
-      argThat(args -> args.contains("cat")),
-      any(),
-      any(),
-      any());
-  }
-
-  @Test
-  public void inlineScanImageCanBeOverriddenWithSystemVars() throws Exception {
-
-    // When
-    withEnvironmentVariable("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", "my-repo/my-custom-image:foo")
-      .execute(() -> scannerRemoteExecutor.call());
 
     // Then
     verify(containerRunner, times(1)).createContainer(

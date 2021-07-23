@@ -35,13 +35,15 @@ public class InlineScanner extends Scanner {
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
+  private final EnvVars envVars;
 
-  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace, SysdigLogger logger) {
+  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
     super(config, logger);
 
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
     this.workspace = workspace;
+    this.envVars = envVars;
   }
 
   @Override
@@ -52,19 +54,12 @@ public class InlineScanner extends Scanner {
     }
 
     try {
-      final EnvVars nodeEnvVars = new EnvVars(System.getenv());
-
-
-      Computer computer = this.workspace.toComputer();
-      if (computer != null) {
-        nodeEnvVars.putAll(computer.buildEnvironment(listener));
-      }
 
       InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag,
         dockerFile,
         config,
         logger,
-        nodeEnvVars);
+        envVars);
 
       String scanRawOutput = workspace.act(task);
 

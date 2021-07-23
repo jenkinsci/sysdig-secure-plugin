@@ -63,9 +63,9 @@
       <version>2.1.18</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5.13</version>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>apache-httpcomponents-client-4-api</artifactId>
+      <version>4.5.13-1.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.docker-java</groupId>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>com.github.docker-java</groupId>
       <artifactId>docker-java-transport-httpclient5</artifactId>
-      <version>3.2.7</version>
+      <version>3.2.8</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -88,18 +88,13 @@
       <version>1.7.30</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpmime</artifactId>
-      <version>4.5.5</version>
-    </dependency>
-    <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2</artifactId>
       <version>2.6.0</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>jackson2-api</artifactId>
       <version>2.10.3</version>
     </dependency>
     <dependency> <!-- required by docker-java -->
@@ -121,7 +116,6 @@
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
       <version>2.19</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -165,9 +159,15 @@
       <version>1.2</version>
     </dependency>
     <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-lambda</artifactId>
-      <version>1.2.0</version>
+      <groupId>org.jenkins-ci.main</groupId>
+      <artifactId>jenkins-test-harness</artifactId>
+      <version>2.61</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -196,6 +196,11 @@
         <artifactId>commons-lang3</artifactId>
         <version>3.9</version>
         <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-annotations</artifactId>
+        <version>2.10.3</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

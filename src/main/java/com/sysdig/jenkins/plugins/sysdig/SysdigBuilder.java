@@ -20,10 +20,7 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import hudson.AbortException;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -33,13 +30,13 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -54,7 +51,7 @@ import java.util.Collections;
  * jenkins to run jobs as) must be allowed to interact with docker</li>
  * </ol>
  */
-public class SysdigBuilder extends Builder implements SimpleBuildStep {
+public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigScanStep {
 
   // Assigning the defaults here for pipeline builds
   private final String name;
@@ -144,8 +141,18 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
-    new SysdigBuilderExecutor(this, run, workspace, listener);
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+    Computer computer = workspace.toComputer();
+    EnvVars envVars = new EnvVars();
+    if (computer != null) {
+      envVars.putAll(computer.buildEnvironment(listener));
+    }
+
+    perform(run, workspace, launcher, listener, envVars);
+  }
+
+  public void perform(Run run, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars envVars) throws AbortException {
+    new SysdigBuilderExecutor(this, run, workspace, listener, envVars);
   }
 
   @Override
@@ -153,8 +160,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     return (DescriptorImpl) super.getDescriptor();
   }
 
-
-  @Symbol("sysdig") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
     // Default job level config that may be used both by config.jelly and an instance of SysdigBuilder
