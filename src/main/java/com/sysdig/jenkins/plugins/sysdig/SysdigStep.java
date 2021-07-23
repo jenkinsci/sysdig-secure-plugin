@@ -116,6 +116,7 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
   }
 
   @Override
+  @Deprecated
   public Action getProjectAction(AbstractProject<?, ?> abstractProject) {
     return builder.getProjectAction(abstractProject);
   }
@@ -133,6 +134,7 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
   private final static class Execution extends SynchronousNonBlockingStepExecution<Void> {
 
+    private static final long serialVersionUID = 1;
     private transient final SysdigBuilder builder;
 
     protected Execution(
