@@ -63,7 +63,7 @@ public class DockerClientContainer implements Container {
     execAsyncWithAdapter(cmd, envVars, stdoutCallback, stderrCallback);
   }
 
-  private ResultCallback.Adapter<Frame>  execAsyncWithAdapter(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
+  private ResultCallback.Adapter<Frame> execAsyncWithAdapter(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) {
     ExecCreateCmd execCmd = dockerClient.execCreateCmd(this.containerId)
       .withAttachStderr(true)
       .withAttachStdin(true)

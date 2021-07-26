@@ -26,70 +26,102 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
   final SysdigBuilder builder;
 
-  // Getters are used by config.jelly
+  @Override
   public String getName() {
     return builder.getName();
   }
 
+  @Override
   public boolean getBailOnFail() {
     return builder.getBailOnFail();
   }
 
+  @Override
   public boolean getBailOnPluginFail() {
     return builder.getBailOnPluginFail();
   }
 
+  @Override
   public String getEngineurl() {
     return builder.getEngineurl();
   }
 
+  @Override
   public String getEngineCredentialsId() {
     return builder.getEngineCredentialsId();
   }
 
+  @Override
   public boolean getEngineverify() {
     return builder.getEngineverify();
   }
 
+  @Override
+  public String getRunAsUser() { return builder.getRunAsUser(); }
+
+  @Override
+  public String getInlineScanExtraParams() { return builder.getInlineScanExtraParams(); }
+
+  @Override
   public boolean isInlineScanning() {
     return builder.isInlineScanning();
   }
 
+  @Override
   public boolean getForceScan() {
     return builder.getForceScan();
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnFail(boolean bailOnFail) {
     builder.setBailOnFail(bailOnFail);
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     builder.setBailOnPluginFail(bailOnPluginFail);
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineurl(String engineurl) {
     builder.setEngineurl(engineurl);
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineCredentialsId(String engineCredentialsId) {
     builder.setEngineCredentialsId(engineCredentialsId);
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineverify(boolean engineverify) {
     builder.setEngineverify(engineverify);
   }
 
   @DataBoundSetter
+  @Override
+  public void setRunAsUser(String runAsUser) {
+    builder.setRunAsUser(runAsUser);
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setInlineScanExtraParams(String inlineScanExtraParams) {
+    builder.setInlineScanExtraParams(inlineScanExtraParams);
+  }
+
+  @DataBoundSetter
+  @Override
   public void setInlineScanning(boolean inlineScanning) {
     builder.setInlineScanning(inlineScanning);
   }
 
   @DataBoundSetter
+  @Override
   public void setForceScan(boolean forceScan) {
     builder.setForceScan(forceScan);
   }
