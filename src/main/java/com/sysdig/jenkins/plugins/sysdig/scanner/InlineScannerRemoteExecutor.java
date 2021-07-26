@@ -105,13 +105,17 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     logger.logDebug("Creating container with environment: " + containerEnvVars);
     logger.logDebug("Bind mounts: " + bindMounts);
 
-    Container inlineScanContainer = containerRunner.createContainer(envVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, containerEnvVars, bindMounts);
+    Container inlineScanContainer = containerRunner.createContainer(envVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, containerEnvVars, config.getRunAsUser(), bindMounts);
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
       File f = new File(dockerFile);
       logger.logDebug("Copying Dockerfile from " + f.getAbsolutePath() + " to " + DOCKERFILE_MOUNTPOINT + f.getName() + " inside container");
       inlineScanContainer.copy(dockerFile, DOCKERFILE_MOUNTPOINT);
       args.add(DOCKERFILE_ARG + f.getName());
+    }
+
+    if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
+      args.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
     }
 
     final StringBuilder builder = new StringBuilder();

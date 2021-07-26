@@ -37,31 +37,45 @@ public class BuildConfig implements Serializable {
   private final boolean debug;
   private final String engineurl;
   private final boolean engineverify;
+  private final String runAsUser;
+  private final String inlineScanExtraParams;
   private final boolean inlineScanning;
   private final String sysdigToken;
   private final boolean forceScan;
   private final String inlineScanImage;
 
-  public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigBuilder builder, String sysdigToken) {
-    name = builder.getName();
-    bailOnFail = builder.getBailOnFail();
-    bailOnPluginFail =  builder.getBailOnPluginFail();
+  public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigScanStep scanStep, String sysdigToken) {
+    name = scanStep.getName();
+    bailOnFail = scanStep.getBailOnFail();
+    bailOnPluginFail =  scanStep.getBailOnPluginFail();
     debug = globalConfig.getDebug();
-    if (!Strings.isNullOrEmpty(builder.getEngineurl())) {
-      engineurl = builder.getEngineurl();
-      engineverify = builder.getEngineverify();
+    if (!Strings.isNullOrEmpty(scanStep.getEngineurl())) {
+      engineurl = scanStep.getEngineurl();
+      engineverify = scanStep.getEngineverify();
     } else {
       engineurl = globalConfig.getEngineurl();
       engineverify = globalConfig.getEngineverify();
     }
 
+    if (!Strings.isNullOrEmpty(scanStep.getRunAsUser())) {
+      runAsUser = scanStep.getRunAsUser();
+    } else {
+      runAsUser = globalConfig.getRunAsUser();
+    }
+
+    if (!Strings.isNullOrEmpty(scanStep.getInlineScanExtraParams())) {
+      inlineScanExtraParams = scanStep.getInlineScanExtraParams();
+    } else {
+      inlineScanExtraParams = globalConfig.getInlineScanExtraParams();
+    }
+
     if (globalConfig.getForceinlinescan()) {
       inlineScanning = true;
     } else {
-      inlineScanning = builder.isInlineScanning();
+      inlineScanning = scanStep.isInlineScanning();
     }
 
-    forceScan = builder.getForceScan();
+    forceScan = scanStep.getForceScan();
     this.sysdigToken = sysdigToken;
     if (!Strings.isNullOrEmpty(globalConfig.getInlinescanimage())) {
       inlineScanImage = globalConfig.getInlinescanimage();
@@ -98,6 +112,14 @@ public class BuildConfig implements Serializable {
     return engineverify;
   }
 
+  public String getRunAsUser() {
+    return runAsUser;
+  }
+
+  public String getInlineScanExtraParams() {
+    return inlineScanExtraParams;
+  }
+
   public boolean getInlineScanning() {
     return inlineScanning;
   }
@@ -129,6 +151,8 @@ public class BuildConfig implements Serializable {
     logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
     logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
     logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
+    logger.logInfo(String.format("runAsUser: %s", this.getRunAsUser()));
+    logger.logInfo(String.format("inlineScanExtraParams: %s", this.getInlineScanExtraParams()));
     logger.logInfo(String.format("name: %s", this.getName()));
     logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));

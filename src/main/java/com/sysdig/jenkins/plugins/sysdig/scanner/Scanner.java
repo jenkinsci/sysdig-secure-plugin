@@ -9,7 +9,6 @@ import net.sf.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 
 public abstract class Scanner {

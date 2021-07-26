@@ -64,72 +64,105 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
   private boolean engineverify = DescriptorImpl.DEFAULT_ENGINE_VERIFY;
-  // More flags to indicate boolean override, ugh!
+  private String runAsUser = DescriptorImpl.EMPTY_STRING;
+  private String inlineScanExtraParams = DescriptorImpl.EMPTY_STRING;
 
-  // Getters are used by config.jelly
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public boolean getBailOnFail() {
     return bailOnFail;
   }
 
+  @Override
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
   }
 
+  @Override
   public String getEngineurl() {
     return engineurl;
   }
 
+  @Override
   public String getEngineCredentialsId() {
     return engineCredentialsId;
   }
 
+  @Override
   public boolean getEngineverify() {
     return engineverify;
   }
 
+  @Override
+  public String getRunAsUser() { return runAsUser; }
+
+  @Override
+  public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+
+  @Override
   public boolean isInlineScanning() {
     return inlineScanning;
   }
 
+  @Override
   public boolean getForceScan() {
     return forceScan;
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     this.bailOnPluginFail = bailOnPluginFail;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineurl(String engineurl) {
     this.engineurl = engineurl;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineCredentialsId(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineverify(boolean engineverify) {
     this.engineverify = engineverify;
   }
 
   @DataBoundSetter
+  @Override
+  public void setRunAsUser(String runAsUser) {
+    this.runAsUser = runAsUser;
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setInlineScanExtraParams(String inlineScanExtraParams) {
+    this.inlineScanExtraParams = inlineScanExtraParams;
+  }
+
+  @DataBoundSetter
+  @Override
   public void setInlineScanning(boolean inlineScanning) {
     this.inlineScanning = inlineScanning;
   }
 
   @DataBoundSetter
+  @Override
   public void setForceScan(boolean forceScan) {
     this.forceScan = forceScan;
   }
@@ -179,6 +212,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
     private boolean engineverify = DEFAULT_ENGINE_VERIFY;
+    private String runAsUser = EMPTY_STRING;
+    private String inlineScanExtraParams = EMPTY_STRING;
     private String inlinescanimage = "";
     private boolean forceinlinescan = false;
 
@@ -205,6 +240,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     public void setEngineverify(boolean engineverify) {
       this.engineverify = engineverify;
+    }
+
+    public void setRunAsUser(String runAsUser) {
+      this.runAsUser = runAsUser;
+    }
+
+    public void setinlineScanExtraParams(String inlineScanExtraParams) {
+      this.inlineScanExtraParams = inlineScanExtraParams;
     }
 
     public void setInlinescanimage(String inlinescanimage) {
@@ -235,6 +278,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     public boolean getEngineverify() {
       return engineverify;
     }
+
+    public String getRunAsUser() { return runAsUser; }
+
+    public String getInlineScanExtraParams() { return inlineScanExtraParams; }
 
     public String getInlinescanimage() {
       return inlinescanimage;

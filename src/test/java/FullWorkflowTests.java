@@ -56,7 +56,7 @@ public class FullWorkflowTests {
     BackendScanner.setBackendScanningClientFactory(backendClientFactory);
 
     Container container = mock(Container.class);
-    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any());
+    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any(), any());
 
     JSONObject output = new JSONObject();
     output.put("digest", "foo-digest");

@@ -9,6 +9,7 @@ import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
 
@@ -59,7 +60,7 @@ public class DockerClientRunner implements ContainerRunner {
   }
 
   @Override
-  public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars, List<String> volumeBinds) throws InterruptedException {
+  public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars, String user, List<String> volumeBinds) throws InterruptedException {
 
     logger.logInfo(String.format("Pulling image: %s", imageName));
     dockerClient.pullImageCmd(imageName).start().awaitCompletion();
@@ -88,6 +89,10 @@ public class DockerClientRunner implements ContainerRunner {
 
     if (envVars != null) {
       createContainerCmd = createContainerCmd.withEnv(envVars);
+    }
+
+    if (!Strings.isNullOrEmpty(user)) {
+      createContainerCmd = createContainerCmd.withUser(user);
     }
 
     CreateContainerResponse createContainerResponse  = createContainerCmd.exec();
