@@ -213,7 +213,7 @@ public class ReportConverter {
     JSONObject securityJson = new JSONObject();
     JSONArray columnsJson = new JSONArray();
 
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL")) {
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Disclosure Date", "Solution Date")) {
       JSONObject columnJson = new JSONObject();
       columnJson.put("title", column);
       columnsJson.add(columnJson);
@@ -237,7 +237,11 @@ public class ReportConverter {
         vulnJson.getString("severity"),
         vulnJson.getString("package"),
         vulnJson.getString("fix"),
-        String.format("<a href='%s'>%s</a>", vulnJson.getString("url"), vulnJson.getString("url"))));
+        vulnJson.getString("url"),
+        vulnJson.getString("package_type"),
+        vulnJson.has("disclosure_date") ? vulnJson.getString("disclosure_date") : "",
+        vulnJson.has("solution_date") ? vulnJson.getString("solution_date") : ""
+      ));
       dataJson.add(vulnArray);
     }
 

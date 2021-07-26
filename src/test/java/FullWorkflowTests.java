@@ -11,11 +11,10 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScannerRemoteExecutor;
 import hudson.model.*;
-import hudson.tasks.BatchFile;
+import hudson.tasks.*;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import hudson.tasks.Shell;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.SystemUtils;
@@ -57,7 +56,7 @@ public class FullWorkflowTests {
     BackendScanner.setBackendScanningClientFactory(backendClientFactory);
 
     Container container = mock(Container.class);
-    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any());
+    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any(), any());
 
     JSONObject output = new JSONObject();
     output.put("digest", "foo-digest");

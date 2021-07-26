@@ -192,6 +192,11 @@ See [Docker environment variables documentation](https://docs.docker.com/engine/
 
 Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
 
+When using a FIFO socket, the user that is executing the Jenkins agent and the plugin must have read and write permissions on the socket. 
+
+The inline-scan container will run with UID 1000 by default, but you can change it with the option `Run inline-scan container as this UID`
+in order to match the UID executing and get read and write permissions in the Docker socket.
+
 ## Inline-scan container image override (air-gapped environments)
 
 By default, the plugin uses the image `quay.io/sysdig/secure-inline-scan:2` to execute in the inline scan. This tag points to the latest 2.x available version.
@@ -201,6 +206,15 @@ The default container image can be overridden in the plugin global configuration
 This can be useful in situations where you want to use a version different to the latest 2.x, or for air-gapped environments, where the inline-scan is pulled from a private registry.
 
 Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
+
+## Run inline-scan container as this UID
+
+Specify an UID to run the inline-scan container with that specific UID. It might be necessary to match the owner of the Docker socket
+and provide read and write permissions to the inline-scan container.
+
+## Extra parameters for inline-scan container execution
+
+Provide additional extra parameters when executing the inline-scan container.
 
 # Configuring environment variables in workers
 

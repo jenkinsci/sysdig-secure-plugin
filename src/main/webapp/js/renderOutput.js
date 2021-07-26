@@ -76,106 +76,6 @@ function severity(source, type, val) {
   return el;
 }
 
-function buildPolicyEvalTable(tableId, outputFile) {
-  jQuery.getJSON(outputFile, function (data) {
-    var headers = [];
-    var rows = [];
-    jQuery.each(data, function (imageId, imageIdObj) {
-      if (headers.length === 0) {
-        jQuery.each(imageIdObj.result.header, function (i, header) {
-          var headerObj = new Object();
-          headerObj.title = header.replace('_', ' ');
-          headers.push(headerObj);
-        });
-      }
-      jQuery.merge(rows, imageIdObj.result.rows);
-    });
-
-    jQuery(document).ready(function () {
-      jQuery(tableId).DataTable({
-        retrieve: true,
-        data: rows,
-        columns: headers,
-        order: [[6, 'asc']],
-        columnDefs: [
-          {
-            targets: [0, 1, 2],
-            render: function (source, type, val) {
-              return '<span style="word-break: break-all;">' + source + '</span>';
-            }
-          },
-          {
-            targets: 6,
-            render: gateAction
-          }
-        ]
-      });
-    });
-  });
-}
-
-function buildTableFromSysdigOutput(tableId, outputFile) {
-  jQuery.getJSON(outputFile, function (data) {
-    var headers = [];
-    var rows = [];
-    jQuery.each(data, function (imageId, imageIdObj) {
-      if (headers.length === 0) {
-        jQuery.each(imageIdObj.result.header, function (i, header) {
-          var headerObj = new Object();
-          headerObj.title = header.replace('_', ' ');
-          headers.push(headerObj);
-        });
-      }
-      jQuery.merge(rows, imageIdObj.result.rows);
-    });
-
-    jQuery(document).ready(function () {
-      jQuery(tableId).DataTable({
-        retrieve: true,
-        data: rows,
-        columns: headers
-      });
-    });
-  });
-}
-
-function buildTableFromSysdigOutputWithUrls(tableId, outputFile, index) {
-  var urlRegex = /(https?:\/\/[^\s\)]+)/g;
-
-  jQuery.getJSON(outputFile, function (data) {
-    var headers = [];
-    var rows = [];
-
-    jQuery.each(data, function (counter, imageIdObj) {
-      if (headers.length === 0) {
-        jQuery.each(imageIdObj.result.header, function (i, header) {
-          var headerObj = new Object();
-          headerObj.title = header.replace('_', ' ');
-          headers.push(headerObj);
-        });
-      }
-
-      jQuery.merge(rows, imageIdObj.result.rows);
-    });
-
-    jQuery(document).ready(function () {
-      jQuery(tableId).DataTable({
-        retrieve: true,
-        data: rows,
-        columns: headers,
-        columnDefs: [
-          {
-            render: function (data, type, row) {
-              return data.replace(urlRegex, '<a href="$1">$1</a>');
-            },
-            targets: index
-          }
-        ]
-      });
-    });
-  });
-}
-
 function buildPolicyEvalSummaryTable(tableId, tableObj) {
   jQuery(document).ready(function () {
     jQuery(tableId).DataTable({
@@ -211,13 +111,94 @@ function buildPolicyEvalSummaryTable(tableId, tableObj) {
   });
 }
 
+function buildPolicyEvalTable(tableId, outputFile) {
+  jQuery.getJSON(outputFile, function (data) {
+      var headers = [
+        { title: "Image"},
+        { title: "Gate:Trigger"},
+        { title: "Output"},
+        { title: "Action"}
+      ];
+
+      var rows = [];
+
+      jQuery.each(data, function (imageId, imageIdObj) {
+        imageIdObj.result.rows.forEach(function(row) {
+          rows.push([
+            "<div>" + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
+            row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
+            row[imageIdObj.result.header.indexOf("Check_Output")],
+            row[imageIdObj.result.header.indexOf("Gate_Action")],
+          ]);
+        });
+      });
+
+      jQuery(document).ready(function () {
+        jQuery(tableId).DataTable({
+          retrieve: true,
+          data: rows,
+          columns: headers,
+          order: [[3, 'asc']],
+          columnDefs: [
+            {
+              targets: 3,
+              render: gateAction
+            }
+          ]
+        });
+      });
+  });
+}
+
+
 function buildSecurityTable(tableId, outputFile) {
+
   jQuery.getJSON(outputFile, function (tableObj) {
+
+    var headers = [
+      { title: "Image"},
+      { title: "Vuln ID"},
+      { title: "Severity"},
+      { title: "Package"},
+      { title: "Type"},
+      { title: "Publish Date"},
+      { title: "Fix"},
+      { title: "Fix Date"},
+    ];
+
+    var rows = [];
+
+    tableObj.data.forEach(function(row) {
+
+      function tableColFor(title) {
+        return tableObj.columns.findIndex(e => e.title == title);
+      }
+
+      var vulnColumn = "";
+      if (row[tableColFor("URL")].startsWith("<")) {
+        // Old versions write the report adding the <a href=...
+         vulnColumn = '<div style="white-space: nowrap;">' + row[tableColFor("CVE ID")] + "</div><div>" + row[tableColFor("URL")] + "</div>";
+      } else {
+        vulnColumn = '<a style="white-space: nowrap;" href="' + row[tableColFor("URL")] + '">' + row[tableColFor("CVE ID")] + "</a>";
+      }
+
+      rows.push([
+        row[tableColFor("Tag")],
+        vulnColumn,
+        row[tableColFor("Severity")],
+        row[tableColFor("Vulnerability Package")],
+        row[tableColFor("Package Type")] || "",
+        row[tableColFor("Disclosure Date")] || "",
+        row[tableColFor("Fix Available")],
+        row[tableColFor("Solution Date")] || "",
+      ]);
+    });
+
     jQuery(document).ready(function () {
       jQuery(tableId).DataTable({
         retrieve: true,
-        data: tableObj.data,
-        columns: tableObj.columns,
+        columns: headers,
+        data: rows,
         order: [[2, 'asc'], [0, 'asc']],
         columnDefs: [
           {

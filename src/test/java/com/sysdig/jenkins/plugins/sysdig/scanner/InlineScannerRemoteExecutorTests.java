@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static com.github.stefanbirkner.systemlambda.SystemLambda.withEnvironmentVariable;
 
 public class InlineScannerRemoteExecutorTests {
   private static final String SCAN_IMAGE = "quay.io/sysdig/test-secure-inline-scan:2";
@@ -73,7 +72,7 @@ public class InlineScannerRemoteExecutorTests {
     logOutput = "";
 
     // Mock container creation to return our mock
-    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any());
+    doReturn(container).when(containerRunner).createContainer(any(), any(), any(), any(), any(), any());
 
     // Mock async executions of "tail", to simulate some log output
     doNothing().when(container).execAsync(
@@ -116,6 +115,7 @@ public class InlineScannerRemoteExecutorTests {
       argThat(args -> args.contains("cat")),
       any(),
       any(),
+      any(),
       any());
 
     verify(container, times(1)).runAsync(any(), any());
@@ -138,6 +138,7 @@ public class InlineScannerRemoteExecutorTests {
       argThat(args -> args.contains("cat")),
       any(),
       any(),
+      any(),
       any());
 
     verify(container, never()).exec(
@@ -156,6 +157,7 @@ public class InlineScannerRemoteExecutorTests {
     verify(containerRunner, times(1)).createContainer(
       eq(SCAN_IMAGE),
       argThat(args -> args.contains("cat")),
+      any(),
       any(),
       any(),
       argThat(args -> args.contains("/var/run/docker.sock:/var/run/docker.sock")));
@@ -196,6 +198,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(env -> env.contains("SYSDIG_ADDED_BY=cicd-inline-scan")),
+      any(),
       any());
   }
 
@@ -244,6 +247,38 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
+  public void runAsProvidedUser() throws Exception {
+    when(config.getRunAsUser()).thenReturn("1001");
+
+    // When
+    scannerRemoteExecutor.call();
+
+    // Then
+    verify(containerRunner, times(1)).createContainer(
+      eq(SCAN_IMAGE),
+      argThat(args -> args.contains("cat")),
+      any(),
+      any(),
+      argThat(args -> args.equals("1001")),
+      argThat(args -> args.contains("/var/run/docker.sock:/var/run/docker.sock")));
+  }
+
+  @Test
+  public void runWithExtraParams() throws Exception {
+    when(config.getInlineScanExtraParams()).thenReturn("--param1 --param2");
+
+    // When
+    scannerRemoteExecutor.call();
+
+    // Then
+    verify(container, times(1)).exec(
+      argThat(args -> args.contains("--param1") && args.contains("--param2")),
+      isNull(),
+      any(),
+      any());
+  }
+
+  @Test
   public void dockerfileIsProvidedAsParameter() throws Exception {
     scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", config, logger, nodeEnvVars);
 
@@ -268,6 +303,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       any(),
+      any(),
       any());
   }
 
@@ -283,6 +319,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(env -> env.contains("SYSDIG_API_TOKEN=" + SYSDIG_TOKEN)),
+      any(),
       any());
   }
 
@@ -300,12 +337,14 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(env -> env.contains("http_proxy=http://httpproxy:1234")),
+      any(),
       any());
     verify(containerRunner, times(1)).createContainer(
       any(),
       any(),
       any(),
       argThat(env -> env.contains("https_proxy=http://httpproxy:1234")),
+      any(),
       any());
   }
 
@@ -324,12 +363,14 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(env -> env.contains("http_proxy=http://httpproxy:1234")),
+      any(),
       any());
     verify(containerRunner, times(1)).createContainer(
       any(),
       any(),
       any(),
       argThat(env -> env.contains("https_proxy=http://httpsproxy:1234")),
+      any(),
       any());
   }
 
@@ -347,6 +388,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(env -> env.contains("no_proxy=1.2.3.4,5.6.7.8")),
+      any(),
       any());
   }
 
@@ -363,21 +405,6 @@ public class InlineScannerRemoteExecutorTests {
       eq("my-repo/my-custom-image:foo"),
       argThat(args -> args.contains("cat")),
       any(),
-      any(),
-      any());
-  }
-
-  @Test
-  public void inlineScanImageCanBeOverriddenWithSystemVars() throws Exception {
-
-    // When
-    withEnvironmentVariable("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", "my-repo/my-custom-image:foo")
-      .execute(() -> scannerRemoteExecutor.call());
-
-    // Then
-    verify(containerRunner, times(1)).createContainer(
-      eq("my-repo/my-custom-image:foo"),
-      argThat(args -> args.contains("cat")),
       any(),
       any(),
       any());

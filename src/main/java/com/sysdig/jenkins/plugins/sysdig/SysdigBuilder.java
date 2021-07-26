@@ -20,10 +20,7 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import hudson.AbortException;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -33,13 +30,13 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.Collections;
 
 /**
@@ -54,7 +51,7 @@ import java.util.Collections;
  * jenkins to run jobs as) must be allowed to interact with docker</li>
  * </ol>
  */
-public class SysdigBuilder extends Builder implements SimpleBuildStep {
+public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigScanStep {
 
   // Assigning the defaults here for pipeline builds
   private final String name;
@@ -67,72 +64,105 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   private String engineurl = DescriptorImpl.EMPTY_STRING;
   private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
   private boolean engineverify = DescriptorImpl.DEFAULT_ENGINE_VERIFY;
-  // More flags to indicate boolean override, ugh!
+  private String runAsUser = DescriptorImpl.EMPTY_STRING;
+  private String inlineScanExtraParams = DescriptorImpl.EMPTY_STRING;
 
-  // Getters are used by config.jelly
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public boolean getBailOnFail() {
     return bailOnFail;
   }
 
+  @Override
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
   }
 
+  @Override
   public String getEngineurl() {
     return engineurl;
   }
 
+  @Override
   public String getEngineCredentialsId() {
     return engineCredentialsId;
   }
 
+  @Override
   public boolean getEngineverify() {
     return engineverify;
   }
 
+  @Override
+  public String getRunAsUser() { return runAsUser; }
+
+  @Override
+  public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+
+  @Override
   public boolean isInlineScanning() {
     return inlineScanning;
   }
 
+  @Override
   public boolean getForceScan() {
     return forceScan;
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
   }
 
   @DataBoundSetter
+  @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     this.bailOnPluginFail = bailOnPluginFail;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineurl(String engineurl) {
     this.engineurl = engineurl;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineCredentialsId(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
   }
 
   @DataBoundSetter
+  @Override
   public void setEngineverify(boolean engineverify) {
     this.engineverify = engineverify;
   }
 
   @DataBoundSetter
+  @Override
+  public void setRunAsUser(String runAsUser) {
+    this.runAsUser = runAsUser;
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setInlineScanExtraParams(String inlineScanExtraParams) {
+    this.inlineScanExtraParams = inlineScanExtraParams;
+  }
+
+  @DataBoundSetter
+  @Override
   public void setInlineScanning(boolean inlineScanning) {
     this.inlineScanning = inlineScanning;
   }
 
   @DataBoundSetter
+  @Override
   public void setForceScan(boolean forceScan) {
     this.forceScan = forceScan;
   }
@@ -144,8 +174,18 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws AbortException {
-    new SysdigBuilderExecutor(this, run, workspace, listener);
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+    Computer computer = workspace.toComputer();
+    EnvVars envVars = new EnvVars();
+    if (computer != null) {
+      envVars.putAll(computer.buildEnvironment(listener));
+    }
+
+    perform(run, workspace, launcher, listener, envVars);
+  }
+
+  public void perform(Run run, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars envVars) throws AbortException {
+    new SysdigBuilderExecutor(this, run, workspace, listener, envVars);
   }
 
   @Override
@@ -153,8 +193,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     return (DescriptorImpl) super.getDescriptor();
   }
 
-
-  @Symbol("sysdig") // For Jenkins pipeline workflow. This lets pipeline refer to step using the defined identifier
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
     // Default job level config that may be used both by config.jelly and an instance of SysdigBuilder
@@ -174,6 +212,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     private String engineurl = DEFAULT_ENGINE_URL;
     private String engineCredentialsId;
     private boolean engineverify = DEFAULT_ENGINE_VERIFY;
+    private String runAsUser = EMPTY_STRING;
+    private String inlineScanExtraParams = EMPTY_STRING;
     private String inlinescanimage = "";
     private boolean forceinlinescan = false;
 
@@ -200,6 +240,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
 
     public void setEngineverify(boolean engineverify) {
       this.engineverify = engineverify;
+    }
+
+    public void setRunAsUser(String runAsUser) {
+      this.runAsUser = runAsUser;
+    }
+
+    public void setinlineScanExtraParams(String inlineScanExtraParams) {
+      this.inlineScanExtraParams = inlineScanExtraParams;
     }
 
     public void setInlinescanimage(String inlinescanimage) {
@@ -230,6 +278,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     public boolean getEngineverify() {
       return engineverify;
     }
+
+    public String getRunAsUser() { return runAsUser; }
+
+    public String getInlineScanExtraParams() { return inlineScanExtraParams; }
 
     public String getInlinescanimage() {
       return inlinescanimage;

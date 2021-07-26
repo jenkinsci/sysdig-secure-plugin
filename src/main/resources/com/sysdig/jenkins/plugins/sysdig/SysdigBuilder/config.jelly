@@ -38,5 +38,13 @@
         <f:checkbox name="engineverify" checked="${instance.engineverify}" title="Verify SSL" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
     </f:entry>
 
+    <f:entry title="Run inline-scan container as this UID" field="runAsUser">
+      <f:textbox name="runAsUser" default=""/>
+    </f:entry>
+
+    <f:entry title="Extra parameters for inline-scan container execution" field="inlineScanExtraParams">
+      <f:textbox name="inlineScanExtraParams" default=""/>
+    </f:entry>
+
   </f:section>
 </j:jelly>

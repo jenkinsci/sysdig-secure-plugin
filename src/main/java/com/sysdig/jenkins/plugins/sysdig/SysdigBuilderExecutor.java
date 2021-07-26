@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.*;
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -37,7 +38,8 @@ public class SysdigBuilderExecutor {
   public SysdigBuilderExecutor(SysdigBuilder builder,
                                Run<?, ?> run,
                                FilePath workspace,
-                               TaskListener listener) throws AbortException {
+                               TaskListener listener,
+                               EnvVars envVars) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
@@ -57,7 +59,7 @@ public class SysdigBuilderExecutor {
     try {
 
       Scanner scanner = config.getInlineScanning() ?
-        new InlineScanner(listener, config, workspace, logger) :
+        new InlineScanner(listener, config, workspace, envVars, logger) :
         new BackendScanner(config, logger);
 
       ReportConverter reporter = new ReportConverter(logger);

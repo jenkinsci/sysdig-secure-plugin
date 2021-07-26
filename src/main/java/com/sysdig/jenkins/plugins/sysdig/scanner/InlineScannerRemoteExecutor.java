@@ -60,14 +60,14 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private final String dockerFile;
   private final BuildConfig config;
   private final SysdigLogger logger;
-  private final EnvVars nodeEnvVars;
+  private final EnvVars envVars;
 
-  public InlineScannerRemoteExecutor(String imageName, String dockerFile, BuildConfig config, SysdigLogger logger, EnvVars nodeEnvVars) {
+  public InlineScannerRemoteExecutor(String imageName, String dockerFile, BuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
     this.dockerFile = dockerFile;
     this.config = config;
     this.logger = logger;
-    this.nodeEnvVars = nodeEnvVars;
+    this.envVars = envVars;
   }
 
   @Override
@@ -75,8 +75,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   @Override
 
   public String call() throws InterruptedException {
-    EnvVars finalEnvVars = this.getMergedEnvVars();
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, finalEnvVars);
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
 
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
@@ -93,27 +92,30 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       args.add(ON_PREM_ARG);
     }
 
-    List<String> envVars = new ArrayList<>();
-    envVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
-    envVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
-    addProxyVars(finalEnvVars, envVars, logger);
+    List<String> containerEnvVars = new ArrayList<>();
+    containerEnvVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
+    containerEnvVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
+    addProxyVars(envVars, containerEnvVars, logger);
 
     List<String> bindMounts = new ArrayList<>();
     bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
 
-    logger.logDebug("Node environment: " + nodeEnvVars.toString());
     logger.logDebug("System environment: " + System.getenv().toString());
-    logger.logDebug("Final environment: " + finalEnvVars.toString());
-    logger.logDebug("Creating container with environment: " + envVars.toString());
-    logger.logDebug("Bind mounts: " + bindMounts.toString());
+    logger.logDebug("Final environment: " + envVars);
+    logger.logDebug("Creating container with environment: " + containerEnvVars);
+    logger.logDebug("Bind mounts: " + bindMounts);
 
-    Container inlineScanContainer = containerRunner.createContainer(finalEnvVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, envVars, bindMounts);
+    Container inlineScanContainer = containerRunner.createContainer(envVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, containerEnvVars, config.getRunAsUser(), bindMounts);
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
       File f = new File(dockerFile);
       logger.logDebug("Copying Dockerfile from " + f.getAbsolutePath() + " to " + DOCKERFILE_MOUNTPOINT + f.getName() + " inside container");
       inlineScanContainer.copy(dockerFile, DOCKERFILE_MOUNTPOINT);
       args.add(DOCKERFILE_ARG + f.getName());
+    }
+
+    if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
+      args.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
     }
 
     final StringBuilder builder = new StringBuilder();
@@ -126,7 +128,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
-      logger.logDebug("Executing command in container: " + args.toString());
+      logger.logDebug("Executing command in container: " + args);
       inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
     } finally {
       inlineScanContainer.stop(STOP_SECONDS);
@@ -135,12 +137,6 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
 
     return builder.toString();
-  }
-
-  private EnvVars getMergedEnvVars() {
-    EnvVars vars = new EnvVars(this.nodeEnvVars);
-    vars.putAll(System.getenv());
-    return vars;
   }
 
   private void addProxyVars(EnvVars currentEnv, List<String> envVars, SysdigLogger logger) {
