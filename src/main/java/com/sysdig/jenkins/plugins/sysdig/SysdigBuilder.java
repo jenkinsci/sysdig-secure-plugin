@@ -181,6 +181,9 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       envVars.putAll(computer.buildEnvironment(listener));
     }
 
+    EnvVars buildEnvVars = run.getEnvironment(listener);
+    envVars.putAll(buildEnvVars);
+
     perform(run, workspace, launcher, listener, envVars);
   }
 
