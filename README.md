@@ -36,7 +36,7 @@ PRO:
 * Image contents are never transmitted outside the pipeline, just the image metadata
 
 CON:
-* The job performing the inline scanning needs to have access to the Docker daemon
+* The job performing the inline scanning **needs to have access to the Docker daemon**
 
 ## Pre-requisites
 
@@ -44,7 +44,15 @@ Both modes require a valid [Sysdig Secure API token](https://docs.sysdig.com/en/
 
 For Backend mode, the Sysdig Backend (SaaS or Onprem) needs to be able to fetch the images produced by this pipeline, usually accessing a buffer Docker repository.
 
-For Inline mode, Jenkins workers need to have access to the Docker daemon, in the most common case, by mounting or linking the Docker socket or connecting as specified by DOCKER_HOST environment variable. The Jenkins worker user needs to be able to read and write the socket, and for TCP connections TLS and certificated might be required, depending on the daemon configuration.
+For Inline mode, Jenkins workers **need to have access to the Docker daemon**, in the most common case, by mounting or linking the Docker socket or connecting as specified by DOCKER_HOST environment variable. The Jenkins worker user needs to be able to read and write the socket, and for TCP connections TLS and certificated might be required, depending on the daemon configuration.
+
+### Alternatives for inline scanning without docker
+
+Support for dockerless environments is coming soon.
+
+Meanwhile, inline scanning can be integrated (without the integrated Jenkins reporting features) by executing the inline-scan container as part of a podTemplate.
+
+See some examples in https://github.com/sysdiglabs/secure-inline-scan-examples/tree/main/jenkins
 
 ## Installation
 
