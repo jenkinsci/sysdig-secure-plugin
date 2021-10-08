@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
@@ -55,14 +56,18 @@ public class BackendScannerTests {
 
     SysdigLogger logger = mock(SysdigLogger.class);
 
-    when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean())).thenReturn(IMAGE_DIGEST);
-
     BackendScanner.setBackendScanningClientFactory(clientFactory);
     this.scanner = new BackendScanner(config, logger);
   }
 
-  @Test
+  private void setupMocks() throws ImageScanningException {
+    when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean())).thenReturn(IMAGE_DIGEST);
+  }
+
+    @Test
   public void testImageIsScanned() throws ImageScanningException, AbortException {
+    setupMocks();
+
     // When
     ImageScanningSubmission submission = this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -75,6 +80,8 @@ public class BackendScannerTests {
 
   @Test
   public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+    setupMocks();
+
     // When
     this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -88,6 +95,8 @@ public class BackendScannerTests {
 
   @Test
   public void testDockerfilePosted() throws ImageScanningException, IOException {
+    setupMocks();
+
     //Given
     byte[] dockerfileBytes = "foo content of dockerfile".getBytes(StandardCharsets.UTF_8);
     //Given
@@ -108,6 +117,8 @@ public class BackendScannerTests {
 
   @Test
   public void testGetGateResults() throws ImageScanningException, AbortException {
+    setupMocks();
+
     //Given
     JSONArray returnedGateResults = new JSONArray();
     JSONObject someJSON = new JSONObject();
@@ -125,6 +136,8 @@ public class BackendScannerTests {
 
   @Test
   public void testGetVulnsReport() throws ImageScanningException, AbortException {
+    setupMocks();
+
     // Given
     JSONObject returnedVulnsReport = new JSONObject();
     returnedVulnsReport.put("foo-key", "foo-value");
@@ -140,6 +153,8 @@ public class BackendScannerTests {
 
   @Test
   public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException {
+    setupMocks();
+
     // When
     this.scanner.scanImage(IMAGE_TO_SCAN, null);
 
@@ -150,6 +165,16 @@ public class BackendScannerTests {
       argThat(annotations ->
         annotations.containsKey("added-by") && annotations.get("added-by").equals("cicd-scan-request")),
       anyBoolean());
+  }
+
+  @Test
+  public void testNonExistingDockerfile() throws AbortException {
+    // When
+    AbortException thrown = assertThrows(
+      AbortException.class,
+      () -> this.scanner.scanImage(IMAGE_TO_SCAN, "non-existing-Dockerfile"));
+
+    assertEquals("Dockerfile 'non-existing-Dockerfile' does not exist", thrown.getMessage());
   }
 
 }

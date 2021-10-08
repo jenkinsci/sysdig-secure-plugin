@@ -128,17 +128,4 @@ public class ScannerTests {
     });
   }
 
-  @Test
-  public void testNonExistingDOckerfile() throws AbortException {
-    Map<String, String> imagesAndDockerfiles = new HashMap<>();
-    imagesAndDockerfiles.put("image:tag", "non-existing-Dockerfile");
-
-    // When
-    AbortException thrown = assertThrows(
-      AbortException.class,
-      () -> scanner.scanImages(imagesAndDockerfiles));
-
-    assertEquals("Dockerfile 'non-existing-Dockerfile' does not exist", thrown.getMessage());
-  }
-
 }

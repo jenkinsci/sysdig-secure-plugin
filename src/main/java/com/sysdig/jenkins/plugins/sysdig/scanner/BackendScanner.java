@@ -24,6 +24,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -58,6 +59,11 @@ public class BackendScanner extends Scanner {
       logger.logInfo(String.format("Submitting %s for analysis", imageTag));
       String dockerFileContents = null;
       if (!Strings.isNullOrEmpty(dockerfile)) {
+        File f = new File(dockerfile);
+        if (!f.exists()) {
+          throw new AbortException("Dockerfile '" + dockerfile + "' does not exist");
+        }
+
         byte[] dockerfileBytes = Files.readAllBytes(Paths.get(dockerfile));
         dockerFileContents = new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8);
       }
@@ -65,6 +71,8 @@ public class BackendScanner extends Scanner {
       String imageDigest = sysdigSecureClient.submitImageForScanning(imageTag, dockerFileContents, annotations, config.getForceScan() || dockerFileContents != null);
       logger.logInfo(String.format("Analysis request accepted, received image %s", imageDigest));
       return new ImageScanningSubmission(imageTag, imageDigest);
+    } catch (AbortException e) {
+      throw e;
     } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
       throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
