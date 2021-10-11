@@ -23,6 +23,7 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
@@ -74,7 +75,15 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   public void checkRoles(RoleChecker checker) throws SecurityException { }
   @Override
 
-  public String call() throws InterruptedException {
+  public String call() throws InterruptedException, AbortException {
+
+    if (!Strings.isNullOrEmpty(dockerFile)) {
+      File f = new File(dockerFile);
+      if (!f.exists()) {
+        throw new AbortException("Dockerfile '" + dockerFile + "' does not exist");
+      }
+    }
+
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
 
     List<String> args = new ArrayList<>();

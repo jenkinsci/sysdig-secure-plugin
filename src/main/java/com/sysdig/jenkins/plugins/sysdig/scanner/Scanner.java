@@ -1,13 +1,11 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -34,12 +32,6 @@ public abstract class Scanner {
 
     for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
       String dockerfile = entry.getValue();
-      if (!Strings.isNullOrEmpty(dockerfile)) {
-        File f = new File(dockerfile);
-        if (!f.exists()) {
-          throw new AbortException("Dockerfile '" + dockerfile + "' does not exist");
-        }
-      }
 
       ImageScanningSubmission submission = this.scanImage(entry.getKey(), dockerfile);
 

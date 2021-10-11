@@ -6,6 +6,7 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import hudson.AbortException;
 import hudson.EnvVars;
 import net.sf.json.JSONObject;
 import org.junit.*;
@@ -13,9 +14,11 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
+import java.io.File;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -44,8 +47,20 @@ public class InlineScannerRemoteExecutorTests {
   private BuildConfig config;
 
   @Before
-  public void beforeEach() throws InterruptedException {
+  public void beforeEach() {
     config = mock(BuildConfig.class);
+
+    nodeEnvVars = new EnvVars();
+    logger = mock(SysdigLogger.class);
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(
+      IMAGE_TO_SCAN,
+      null,
+      config,
+      logger,
+      nodeEnvVars);
+  }
+
+  private void setupMocks() throws InterruptedException {
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
     when(config.getInlineScanImage()).thenReturn(SCAN_IMAGE);
@@ -55,17 +70,8 @@ public class InlineScannerRemoteExecutorTests {
 
     containerRunner = mock(ContainerRunner.class);
     ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
-    when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
-
-    nodeEnvVars = new EnvVars();
-    logger = mock(SysdigLogger.class);
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(
-      IMAGE_TO_SCAN,
-      null,
-      config,
-      logger,
-      nodeEnvVars);
+    when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
 
     container = mock(Container.class);
     outputObject = new JSONObject();
@@ -106,6 +112,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void containerIsCreatedAndExecuted() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -129,6 +137,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void containerDoesNotHaveAnyAdditionalParameters() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -150,6 +160,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerSocketIsMounted() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -165,6 +177,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void logOutputIsSentToTheLogger() throws Exception {
+    setupMocks();
+
     // Given
     logOutput = "foo-output";
 
@@ -177,6 +191,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void scanJSONOutputIsReturned() throws Exception {
+    setupMocks();
+
     // Given
     outputObject.put("foo-key", "foo-value");
 
@@ -189,6 +205,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void addedByAnnotationsAreIncluded() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -204,6 +222,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void containerExecutionContainsExpectedParameters() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -214,6 +234,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void customURLIsProvidedAsParameter() throws Exception {
+    setupMocks();
+
     when(config.getEngineurl()).thenReturn("https://my-foo-url");
 
     // When
@@ -226,6 +248,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void verboseIsEnabledWhenDebug() throws Exception {
+    setupMocks();
+
     when(config.getDebug()).thenReturn(true);
 
     // When
@@ -237,6 +261,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void skipTLSFlagWhenInsecure() throws Exception {
+    setupMocks();
+
     when(config.getEngineverify()).thenReturn(false);
 
     // When
@@ -248,6 +274,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void runAsProvidedUser() throws Exception {
+    setupMocks();
+
     when(config.getRunAsUser()).thenReturn("1001");
 
     // When
@@ -265,6 +293,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void runWithExtraParams() throws Exception {
+    setupMocks();
+
     when(config.getInlineScanExtraParams()).thenReturn("--param1 --param2");
 
     // When
@@ -280,23 +310,33 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerfileIsProvidedAsParameter() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/tmp/foo-dockerfile", config, logger, nodeEnvVars);
+    setupMocks();
+
+    File tmp = File.createTempFile("foo-dockerfile", "");
+    tmp.deleteOnExit();
+
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, tmp.getAbsolutePath(), config, logger, nodeEnvVars);
 
     // When
     scannerRemoteExecutor.call();
 
     // Then
-    verify(container, times(1)).exec(argThat(args -> args.contains("--dockerfile=/tmp/foo-dockerfile")), isNull(), any(), any());
+    verify(container, times(1)).exec(argThat(args -> args.contains("--dockerfile=/tmp/" + tmp.getName())), isNull(), any(), any());
   }
 
   @Test
   public void dockerfileIsCopiedInsideContainer() throws Exception {
-    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "/some/path/foo-dockerfile", config, logger, nodeEnvVars);
+    setupMocks();
+
+    File tmp = File.createTempFile("foo-dockerfile", "");
+    tmp.deleteOnExit();
+
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, tmp.getAbsolutePath(), config, logger, nodeEnvVars);
 
     // When
     scannerRemoteExecutor.call();
 
-    verify(container, times(1)).copy("/some/path/foo-dockerfile", "/tmp/");
+    verify(container, times(1)).copy(tmp.getAbsolutePath(), "/tmp/");
 
     verify(containerRunner, times(1)).createContainer(
       eq(SCAN_IMAGE),
@@ -307,9 +347,24 @@ public class InlineScannerRemoteExecutorTests {
       any());
   }
 
+  @Test
+  public void testNonExistingDockerfile() throws AbortException {
+    scannerRemoteExecutor = new InlineScannerRemoteExecutor(IMAGE_TO_SCAN, "non-existing-Dockerfile", config, logger, nodeEnvVars);
+
+    // When
+    AbortException thrown = assertThrows(
+      AbortException.class,
+      () -> scannerRemoteExecutor.call());
+
+    assertEquals("Dockerfile 'non-existing-Dockerfile' does not exist", thrown.getMessage());
+  }
+
+
 
   @Test
   public void setSysdigTokenIsProvidedAsEnvironmentVariable() throws Exception {
+    setupMocks();
+
     // When
     scannerRemoteExecutor.call();
 
@@ -325,6 +380,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_http_proxy() throws Exception {
+    setupMocks();
+
     // Given
     nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
 
@@ -350,6 +407,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_https_proxy() throws Exception {
+    setupMocks();
+
     // Given
     nodeEnvVars.put("http_proxy", "http://httpproxy:1234");
     nodeEnvVars.put("https_proxy", "http://httpsproxy:1234");
@@ -376,6 +435,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void applyProxyEnvVarsFrom_no_proxy() throws Exception {
+    setupMocks();
+
     // Given
     nodeEnvVars.put("no_proxy", "1.2.3.4,5.6.7.8");
 
@@ -394,6 +455,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void inlineScanImageCanBeOverriddenWithNodeVars() throws Exception {
+    setupMocks();
+
     // Given
     nodeEnvVars.put("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", "my-repo/my-custom-image:foo");
 
