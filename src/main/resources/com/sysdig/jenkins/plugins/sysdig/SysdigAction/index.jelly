@@ -59,30 +59,7 @@
                 </j:if>
 
                 <h3 style="margin-bottom: 30px;">Sysdig Secure Policy Evaluation Report</h3>
-                  <label for="fix_select">Fix: </label>
-                  <select name="fix_select" id="fix_select">
-                      <option />
-                      <option value="Available">Available</option>
-                      <option value="None">Not Available</option>
-                  </select>
 
-                  <label for="severity_select">Severity: </label>
-                  <select name="severity_select_criteria" id="severity_select_criteria">
-                      <option value="geq" >&gt;=</option>
-                      <option value="eq">=</option>
-                      <option value="leq">&lt;=</option>
-                  </select>
-                  <select name="severity_select" id="severity_select">
-                      <option/>
-                      <option value="Critical">Critical</option>
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                      <option value="Negligible">Negligible</option>
-                      <option value="Unknown">Unknown</option>
-                  </select>
-
-                  <button onclick="download_csv()">Download CSV</button>
                 <!-- <style>#gates_table_wrapper {width: 100%;}</style> -->
                 <style>#gates_table_wrapper {float: left; width: 100%; margin-bottom: 50px;}</style>
                 <table id="gates_table" class="table table-striped table-bordered dataTable no-footer" style="width: 100%;"></table>
@@ -95,6 +72,30 @@
                 <div role="tabpanel" class="tab-pane fade" id="security">
                   <h3 style="margin-bottom: 30px;">Common Vulnerabilities and Exposures (CVE) List</h3>
                   <style>#security_table_wrapper {float: left; width: 100%; margin-bottom: 50px;}</style>
+                    <label for="fix_select">Fix: </label>
+                    <select name="fix_select" id="fix_select">
+                        <option />
+                        <option value="Available">Available</option>
+                        <option value="None">Not Available</option>
+                    </select>
+
+                    <label for="severity_select">Severity: </label>
+                    <select name="severity_select_criteria" id="severity_select_criteria">
+                        <option value="geq" >&gt;=</option>
+                        <option value="eq">=</option>
+                        <option value="leq">&lt;=</option>
+                    </select>
+                    <select name="severity_select" id="severity_select">
+                        <option/>
+                        <option value="Critical">Critical</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="Negligible">Negligible</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+
+                    <button onclick="download_csv()">Download CSV</button>
                   <table id="security_table" class="table table-striped table-bordered dataTable " style="width: 100%;"></table>
                   <script type="text/javascript">
                     buildSecurityTable("#security_table", "${it.cveListingUrl}");
