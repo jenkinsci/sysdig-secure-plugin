@@ -147,24 +147,46 @@ function buildPolicyEvalSummaryTable(tableId, tableObj) {
 }
 
 function buildPolicyEvalTable(tableId, outputFile) {
-  jQuery.getJSON(outputFile, function (data) {
-      var headers = [
-        { title: "Image"},
-        { title: "Gate:Trigger"},
-        { title: "Output"},
-        { title: "Action"}
-      ];
 
+  jQuery.getJSON(outputFile, function (data) {
+
+      var  headers = [
+            { title: "Image"},
+            { title: "Gate:Trigger"},
+            { title: "Output"},
+            { title: "Action"}
+          ];
       var rows = [];
+      var lastColumn=3;
 
       jQuery.each(data, function (imageId, imageIdObj) {
+        if (imageIdObj.result.header.includes("Policy_Name")){
+            headers = [
+              { title: "Image"},
+              { title: "Policy Name"},
+              { title: "Gate:Trigger"},
+              { title: "Output"},
+              { title: "Action"}
+            ];
+            lastColumn=4;
+        }
         imageIdObj.result.rows.forEach(function(row) {
-          rows.push([
-            "<div>" + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
-            row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
-            row[imageIdObj.result.header.indexOf("Check_Output")],
-            row[imageIdObj.result.header.indexOf("Gate_Action")],
-          ]);
+           if (imageIdObj.result.header.includes("Policy_Name")){
+              rows.push([
+                "<div> " + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
+                row[imageIdObj.result.header.indexOf("Policy_Name")],
+                row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
+                row[imageIdObj.result.header.indexOf("Check_Output")],
+                row[imageIdObj.result.header.indexOf("Gate_Action")],
+              ]);
+           } else {
+              rows.push([
+                  "<div>" + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
+                  row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
+                  row[imageIdObj.result.header.indexOf("Check_Output")],
+                  row[imageIdObj.result.header.indexOf("Gate_Action")],
+              ]);
+           }
         });
       });
 
@@ -173,15 +195,19 @@ function buildPolicyEvalTable(tableId, outputFile) {
           retrieve: true,
           data: rows,
           columns: headers,
-          order: [[3, 'asc']],
+          order: [[lastColumn, 'asc']],
           columnDefs: [
             {
-              targets: 3,
+              targets: lastColumn,
               render: gateAction
             }
           ]
         });
       });
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    var alert = jQuery("<div class=\"alert alert-warning\" role=\"alert\"> Failed to generate view: cannot load JSON report artifact. </div>");
+    jQuery(tableId).parent().append(alert);
+    jQuery(tableId).remove();
   });
 }
 
@@ -190,58 +216,65 @@ function buildPolicyEvalTable(tableId, outputFile) {
  var vulnerabilitiesData;
  var securityTable;
 
-
-
 function buildSecurityTable(tableId, outputFile) {
 
   jQuery.getJSON(outputFile, function (tableObj) {
     vulnerabilitiesData=tableObj;
-    drawSecurityTable();
-  });
+
+  }).done( function(){
+
+    jQuery(document).ready(function () {
+         jQuery('#fix_select').change(function(){drawSecurityTable()});
+         jQuery('#severity_select').change(function(){drawSecurityTable()});
+         jQuery('#severity_select_criteria').change(function(){drawSecurityTable()});
+
+          var headersSecurityTable = [
+                { title: "Image"},
+                { title: "Vuln ID"},
+                { title: "Severity"},
+                { title: "Package"},
+                { title: "Type"},
+                { title: "Publish Date"},
+                { title: "Fix"},
+                { title: "Fix Date"},
+              ];
 
 
-  jQuery(document).ready(function () {
-     jQuery('#fix_select').change(function(){drawSecurityTable()});
-     jQuery('#severity_select').change(function(){drawSecurityTable()});
-     jQuery('#severity_select_criteria').change(function(){drawSecurityTable()});
+        securityTable=jQuery(tableId).DataTable({
+            retrieve: true,
+            columns: headersSecurityTable,
+            data: [],
+            order: [[2, 'asc'], [0, 'asc']],
+            columnDefs: [
+                {
+                    targets: 2,
+                    render: severity
+                },
+                {
+                    targets: 5,
+                    render: dateToRelative
+                },
+                {
+                    targets: 6,
+                    render:fixAvailableRender
+                },
+                {
+                    targets: 7,
+                    render: dateToRelative
+                }
+            ]
+          });
+          drawSecurityTable();
+        });
+   }).fail(function(jqXHR, textStatus, errorThrown) {
+        var alert = jQuery("<div class=\"alert alert-warning\" role=\"alert\"> Failed to generate view: cannot load JSON report artifact. </div>");
 
-      var headersSecurityTable = [
-            { title: "Image"},
-            { title: "Vuln ID"},
-            { title: "Severity"},
-            { title: "Package"},
-            { title: "Type"},
-            { title: "Publish Date"},
-            { title: "Fix"},
-            { title: "Fix Date"},
-          ];
+        jQuery(tableId).parent().append(alert);
+        jQuery(tableId).remove();
+      });;
 
 
-    securityTable=jQuery(tableId).DataTable({
-        retrieve: true,
-        columns: headersSecurityTable,
-        data: [],
-        order: [[2, 'asc'], [0, 'asc']],
-        columnDefs: [
-            {
-                targets: 2,
-                render: severity
-            },
-            {
-                targets: 5,
-                render: dateToRelative
-            },
-            {
-                targets: 6,
-                render:fixAvailableRender
-            },
-            {
-                targets: 7,
-                render: dateToRelative
-            }
-        ]
-      });
-    });
+
 }
 
 function tableColFor(title,tableId) {

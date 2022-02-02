@@ -75,13 +75,14 @@ public class ScannerTests {
     imagesAndDockerfiles.put("image:tag", null);
 
     scanner.setSubmission("image:tag", new ImageScanningSubmission("image:tag", "some-digest"));
-    scanner.setGateResults("image:tag", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}}}}]}}]"));
+    scanner.setGateResults("image:tag", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}},  \"policy\": { \"policies\": [{ \"policyName\": \"default\",\"policyId\": \"default\"}] }}}]}}]"));
     scanner.setVulnsReport("image:tag", JSONObject.fromObject("{\"vulns\": \"blahblah\"}"));
 
     ArrayList<ImageScanningResult> results = scanner.scanImages(imagesAndDockerfiles);
 
     assertEquals("foo", results.get(0).getEvalStatus());
     assertEquals(JSONObject.fromObject("{\"foo\": \"bar\"}"), results.get(0).getGateResult());
+    assertEquals(JSONArray.fromObject("[{ \"policyName\": \"default\",\"policyId\": \"default\"}]"), results.get(0).getGatePolicies());
     assertEquals(JSONObject.fromObject("{\"vulns\": \"blahblah\"}"), results.get(0).getVulnerabilityReport());
   }
 
@@ -91,7 +92,7 @@ public class ScannerTests {
     imagesAndDockerfiles.put("image:tag", null);
 
     scanner.setSubmission("image:tag", new ImageScanningSubmission("image:tag", "other-digest"));
-    scanner.setGateResults("image:tag", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}}}}]}}]"));
+    scanner.setGateResults("image:tag", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}},  \"policy\": { \"policies\": [{ \"policyName\": \"default\",\"policyId\": \"default\"}] }}}]}}]"));
     scanner.setVulnsReport("image:tag", JSONObject.fromObject("{\"vulns\": \"blahblah\"}"));
 
     ArrayList<ImageScanningResult> results = scanner.scanImages(imagesAndDockerfiles);
@@ -106,11 +107,11 @@ public class ScannerTests {
     imagesAndDockerfiles.put("image2:tag2", null);
 
     scanner.setSubmission("image1:tag1", new ImageScanningSubmission("image1:tag1", "some-digest"));
-    scanner.setGateResults("image1:tag1", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo1\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}}}}]}}]"));
+    scanner.setGateResults("image1:tag1", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo1\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}},  \"policy\": { \"policies\": [{ \"policyName\": \"default\",\"policyId\": \"default\"}] }}}]}}]"));
     scanner.setVulnsReport("image1:tag1", JSONObject.fromObject("{\"vulns\": \"blahblah1\"}"));
 
     scanner.setSubmission("image2:tag2", new ImageScanningSubmission("image2:tag2", "some-digest"));
-    scanner.setGateResults("image2:tag2", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo2\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}}}}]}}]"));
+    scanner.setGateResults("image2:tag2", JSONArray.fromObject("[{\"some-digest\": {\"random:image-tag\" : [{\"status\": \"foo2\", \"detail\" : {\"result\": {\"result\": { \"foo\": \"bar\"}},  \"policy\": { \"policies\": [{ \"policyName\": \"default\",\"policyId\": \"default\"}] }}}]}}]"));
     scanner.setVulnsReport("image2:tag2", JSONObject.fromObject("{\"vulns\": \"blahblah2\"}"));
 
     ArrayList<ImageScanningResult> results = scanner.scanImages(imagesAndDockerfiles);
