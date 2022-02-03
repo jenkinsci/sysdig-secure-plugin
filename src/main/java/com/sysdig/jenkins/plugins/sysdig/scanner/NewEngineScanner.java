@@ -16,6 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
@@ -26,18 +27,22 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InlineScanner extends Scanner {
+public class NewEngineScanner implements ScannerInterface {
 
+  protected final NewEngineBuildConfig config;
+  protected final SysdigLogger logger;
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
   private final EnvVars envVars;
 
-  public InlineScanner(@Nonnull TaskListener listener, @Nonnull BuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
-    super(config, logger);
+  public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
+    this.config = config;
+    this.logger = logger;
 
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
@@ -54,7 +59,7 @@ public class InlineScanner extends Scanner {
 
     try {
 
-      InlineScannerRemoteExecutor task = new InlineScannerRemoteExecutor(imageTag,
+      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(imageTag,
         dockerFile,
         config,
         logger,
@@ -97,6 +102,12 @@ public class InlineScanner extends Scanner {
       return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("vulnsReport");
     }
 
+    return null;
+  }
+
+  @Override
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+    //TODO: ...
     return null;
   }
 }

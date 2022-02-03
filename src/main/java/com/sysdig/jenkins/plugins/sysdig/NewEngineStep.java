@@ -19,13 +19,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
+public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep {
 
-  final SysdigBuilder builder;
+  final NewEngineBuilder builder;
 
   @Override
-  public String getName() {
-    return builder.getName();
+  public String getImageName() {
+    return builder.getImageName();
   }
 
   @Override
@@ -39,8 +39,18 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
   }
 
   @Override
-  public String getEngineurl() {
-    return builder.getEngineurl();
+  public String getPoliciesToApply() {
+    return builder.getPoliciesToApply();
+  }
+
+  @Override
+  public String getPoliciesToIgnore() {
+    return builder.getPoliciesToIgnore();
+  }
+
+  @Override
+  public String getEngineURL() {
+    return builder.getEngineURL();
   }
 
   @Override
@@ -49,30 +59,29 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
   }
 
   @Override
-  public boolean getEngineverify() {
-    return builder.getEngineverify();
+  public boolean getEngineVerify() {
+    return builder.getEngineVerify();
   }
-
-  @Override
-  public String getRunAsUser() { return builder.getRunAsUser(); }
 
   @Override
   public String getInlineScanExtraParams() { return builder.getInlineScanExtraParams(); }
-
-  @Override
-  public boolean isInlineScanning() {
-    return builder.isInlineScanning();
-  }
-
-  @Override
-  public boolean getForceScan() {
-    return builder.getForceScan();
-  }
 
   @DataBoundSetter
   @Override
   public void setBailOnFail(boolean bailOnFail) {
     builder.setBailOnFail(bailOnFail);
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setPoliciesToApply(String policiesToApply) {
+    builder.setPoliciesToApply(policiesToApply);
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setPoliciesToIgnore(String policiesToIgnore) {
+    builder.setPoliciesToIgnore(policiesToIgnore);
   }
 
   @DataBoundSetter
@@ -83,8 +92,8 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
   @DataBoundSetter
   @Override
-  public void setEngineurl(String engineurl) {
-    builder.setEngineurl(engineurl);
+  public void setEngineURL(String engineurl) {
+    builder.setEngineURL(engineurl);
   }
 
   @DataBoundSetter
@@ -95,14 +104,8 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
   @DataBoundSetter
   @Override
-  public void setEngineverify(boolean engineverify) {
-    builder.setEngineverify(engineverify);
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setRunAsUser(String runAsUser) {
-    builder.setRunAsUser(runAsUser);
+  public void setEngineVerify(boolean engineVerify) {
+    builder.setEngineVerify(engineVerify);
   }
 
   @DataBoundSetter
@@ -111,22 +114,10 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
     builder.setInlineScanExtraParams(inlineScanExtraParams);
   }
 
-  @DataBoundSetter
-  @Override
-  public void setInlineScanning(boolean inlineScanning) {
-    builder.setInlineScanning(inlineScanning);
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setForceScan(boolean forceScan) {
-    builder.setForceScan(forceScan);
-  }
-
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
   @DataBoundConstructor
-  public SysdigStep(String name) {
-    this.builder = new SysdigBuilder(name);
+  public NewEngineStep(String imageName) {
+    this.builder = new NewEngineBuilder(imageName);
   }
 
   @Override
@@ -164,11 +155,11 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
   private final static class Execution extends SynchronousNonBlockingStepExecution<Void> {
 
     private static final long serialVersionUID = 1;
-    private transient final SysdigBuilder builder;
+    private transient final NewEngineBuilder builder;
 
     private Execution(
       @Nonnull StepContext context,
-      SysdigBuilder builder) {
+      NewEngineBuilder builder) {
       super(context);
       this.builder = builder;
     }
@@ -191,22 +182,19 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends StepDescriptor {
-    SysdigBuilder.DescriptorImpl builderDescriptor;
+
+    NewEngineBuilder.DescriptorImpl builderDescriptor;
 
     public DescriptorImpl() {
-      builderDescriptor = new SysdigBuilder.DescriptorImpl();
+      builderDescriptor = new NewEngineBuilder.DescriptorImpl();
       builderDescriptor.load();
     }
 
     @Override
     @Nonnull
     public String getDisplayName() {
-      return "Sysdig Secure Container Image Scanner pipeline step";
+      return "Sysdig Image Scanning pipeline step";
     }
-
-    //public FormValidation doCheckName(@QueryParameter String value) {
-    //  return builderDescriptor.doCheckName(value);
-    //}
 
     @SuppressWarnings("unused")
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
@@ -220,7 +208,7 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
 
     @Override
     public String getFunctionName() {
-      return "sysdig";
+      return "sysdigImageScan";
     }
   }
 }
