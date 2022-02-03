@@ -219,6 +219,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private String inlineScanExtraParams = EMPTY_STRING;
     private String inlinescanimage = "";
     private boolean forceinlinescan = false;
+    private boolean forceNewEngine = false;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -261,6 +262,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       this.forceinlinescan = forceinlinescan;
     }
 
+    public void setForceNewEngine(boolean forceNewEngine) {
+      this.forceNewEngine = forceNewEngine;
+    }
+
     @Deprecated
     public boolean getEnabled() {
       return enabled;
@@ -292,6 +297,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     public boolean getForceinlinescan() {
       return forceinlinescan;
+    }
+
+    public boolean getForceNewEngine() {
+      return forceNewEngine;
     }
 
     public DescriptorImpl() {

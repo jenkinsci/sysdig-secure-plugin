@@ -23,44 +23,28 @@ import jenkins.model.Jenkins;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Holder for all Sysdig Secure configuration - includes global and project level attributes. A convenience class for capturing a snapshot of
- * the config at the beginning of plugin execution and caching it for use during that specific execution
- */
-public class BuildConfig implements Serializable {
+public class NewEngineBuildConfig implements Serializable {
 
-  private static final String DEFAULT_INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
-
-  private final String imageListName;
+  private final String imageName;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
   private final boolean debug;
   private final String engineurl;
   private final boolean engineverify;
-  private final String runAsUser;
   private final String inlineScanExtraParams;
-  private final boolean inlineScanning;
   private final String sysdigToken;
-  private final boolean forceScan;
-  private final String inlineScanImage;
 
-  public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigScanStep scanStep, String sysdigToken) {
-    imageListName = scanStep.getName();
+  public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineScanStep scanStep, String sysdigToken) {
+    imageName = scanStep.getImageName();
     bailOnFail = scanStep.getBailOnFail();
     bailOnPluginFail =  scanStep.getBailOnPluginFail();
     debug = globalConfig.getDebug();
-    if (!Strings.isNullOrEmpty(scanStep.getEngineurl())) {
-      engineurl = scanStep.getEngineurl();
-      engineverify = scanStep.getEngineverify();
+    if (!Strings.isNullOrEmpty(scanStep.getEngineURL())) {
+      engineurl = scanStep.getEngineURL();
+      engineverify = scanStep.getEngineVerify();
     } else {
       engineurl = globalConfig.getEngineurl();
       engineverify = globalConfig.getEngineverify();
-    }
-
-    if (!Strings.isNullOrEmpty(scanStep.getRunAsUser())) {
-      runAsUser = scanStep.getRunAsUser();
-    } else {
-      runAsUser = globalConfig.getRunAsUser();
     }
 
     if (!Strings.isNullOrEmpty(scanStep.getInlineScanExtraParams())) {
@@ -69,23 +53,11 @@ public class BuildConfig implements Serializable {
       inlineScanExtraParams = globalConfig.getInlineScanExtraParams();
     }
 
-    if (globalConfig.getForceinlinescan()) {
-      inlineScanning = true;
-    } else {
-      inlineScanning = scanStep.isInlineScanning();
-    }
-
-    forceScan = scanStep.getForceScan();
     this.sysdigToken = sysdigToken;
-    if (!Strings.isNullOrEmpty(globalConfig.getInlinescanimage())) {
-      inlineScanImage = globalConfig.getInlinescanimage();
-    } else {
-      inlineScanImage = DEFAULT_INLINE_SCAN_IMAGE;
-    }
   }
 
-  public String getImageListName() {
-    return imageListName;
+  public String getImageName() {
+    return imageName;
   }
 
   public boolean getBailOnFail() {
@@ -112,24 +84,8 @@ public class BuildConfig implements Serializable {
     return engineverify;
   }
 
-  public String getRunAsUser() {
-    return runAsUser;
-  }
-
   public String getInlineScanExtraParams() {
     return inlineScanExtraParams;
-  }
-
-  public boolean getInlineScanning() {
-    return inlineScanning;
-  }
-
-  public boolean getForceScan() {
-    return forceScan;
-  }
-
-  public String getInlineScanImage() {
-    return inlineScanImage;
   }
 
   /**
@@ -147,16 +103,13 @@ public class BuildConfig implements Serializable {
       }
     }
 
-    logger.logInfo(String.format("debug: %s", this.getDebug()));
-    logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
-    logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
-    logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
-    logger.logInfo(String.format("runAsUser: %s", this.getRunAsUser()));
-    logger.logInfo(String.format("inlineScanExtraParams: %s", this.getInlineScanExtraParams()));
-    logger.logInfo(String.format("image list file: %s", this.getImageListName()));
-    logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
-    logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
-    logger.logInfo(String.format("forceScan: %b", this.getForceScan()));
+    logger.logInfo("Using new-scanning engine");
+    logger.logInfo(String.format("Debug: %s", this.getDebug()));
+    logger.logInfo(String.format("EngineURL: %s", this.getEngineurl()));
+    logger.logInfo(String.format("EngineVerify: %s", this.getEngineverify()));
+    logger.logInfo(String.format("InlineScanExtraParams: %s", this.getInlineScanExtraParams()));
+    logger.logInfo(String.format("BailOnFail: %s", this.getBailOnFail()));
+    logger.logInfo(String.format("BailOnPluginFail: %s", this.getBailOnPluginFail()));
   }
 
 }

@@ -9,7 +9,7 @@ import net.sf.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Map;
 
-public abstract class Scanner {
+public abstract class Scanner implements ScannerInterface {
 
   protected final BuildConfig config;
   protected final SysdigLogger logger;

@@ -35,6 +35,10 @@
       <f:textbox name="inlinescanimage" default=""/>
     </f:entry>
 
+    <f:entry title="Force usage of new scanning engine" field="forceNewEngine">
+      <f:checkbox name="forceNewEngine" checked="${descriptor.forceNewEngine}" default="${false}"/>
+    </f:entry>
+
   </f:section>
 
 </j:jelly>
