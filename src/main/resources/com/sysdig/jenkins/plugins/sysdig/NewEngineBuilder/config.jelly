@@ -8,11 +8,11 @@
     </f:entry>
 
     <f:entry>
-      <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}" title="Fail build on policy evaluation FAIL result"  default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
+      <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}" title="Fail build on policy evaluation FAIL result"  default="${com.sysdig.jenkins.plugins.sysdig.SysdigBuilder.DescriptorImpl.DEFAULT_BAIL_ON_FAIL}"/>
     </f:entry>
 
     <f:entry>
-      <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" title="Fail build on critical plugin error" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
+      <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" title="Fail build on critical plugin error" default="${com.sysdig.jenkins.plugins.sysdig.SysdigBuilder.DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
     </f:entry>
 
     <f:entry title="Identifiers of policies to apply" field="policiesToApply">
@@ -35,7 +35,7 @@
     </f:entry>
 
     <f:entry>
-        <f:checkbox name="engineVerify" checked="${instance.engineVerify}" title="Verify SSL" default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
+        <f:checkbox name="engineVerify" checked="${instance.engineVerify}" title="Verify SSL" default="${com.sysdig.jenkins.plugins.sysdig.SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_VERIFY}"/>
     </f:entry>
 
     <f:entry title="Extra parameters for inlinescan execution" field="inlineScanExtraParams">

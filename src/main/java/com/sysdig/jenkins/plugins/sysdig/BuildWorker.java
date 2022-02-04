@@ -18,7 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
+import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -57,9 +57,9 @@ public class BuildWorker {
 
   private String jenkinsOutputDirName;
   private final ReportConverter reportConverter;
-  private final ScannerInterface scanner;
+  private final Scanner scanner;
 
-  public BuildWorker(Run<?,?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, ScannerInterface scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
+  public BuildWorker(Run<?,?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, Scanner scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
     try {
       if (listener == null) {
         LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");

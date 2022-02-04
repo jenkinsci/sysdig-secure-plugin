@@ -58,7 +58,7 @@ public class SysdigBuilderExecutor {
     Util.GATE_ACTION finalAction = null;
     try {
 
-      Scanner scanner = config.getInlineScanning() ?
+      OldEngineScanner scanner = config.getInlineScanning() ?
         new InlineScanner(listener, config, workspace, envVars, logger) :
         new BackendScanner(config, logger);
 

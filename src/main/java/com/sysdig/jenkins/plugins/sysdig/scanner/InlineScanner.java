@@ -29,7 +29,7 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InlineScanner extends Scanner {
+public class InlineScanner extends OldEngineScanner {
 
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;

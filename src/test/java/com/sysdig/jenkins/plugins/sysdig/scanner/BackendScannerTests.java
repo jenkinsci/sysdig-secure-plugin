@@ -44,7 +44,7 @@ public class BackendScannerTests {
   private final static String IMAGE_TO_SCAN = "foo:latest";
   private final static String IMAGE_DIGEST = "foo-digest";
 
-  private Scanner scanner = null;
+  private OldEngineScanner scanner = null;
   private SysdigSecureClient client;
 
   @Before

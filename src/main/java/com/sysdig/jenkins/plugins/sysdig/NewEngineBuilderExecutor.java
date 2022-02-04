@@ -19,8 +19,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
-import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -60,7 +60,7 @@ public class NewEngineBuilderExecutor {
     Util.GATE_ACTION finalAction = null;
     try {
 
-      ScannerInterface scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
+      Scanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
       ReportConverter reporter = new ReportConverter(logger);
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
       finalAction = worker.scanAndBuildReports(config.getImageName(), null, null);

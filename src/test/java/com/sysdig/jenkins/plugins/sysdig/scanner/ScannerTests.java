@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
 
 public class ScannerTests {
 
-  class MockScanner extends Scanner {
+  class MockScanner extends OldEngineScanner {
     private Map<String, ImageScanningSubmission> submissions;
     private Map<String, JSONArray> gateResults;
     private Map<String, JSONObject> vulnsReport;

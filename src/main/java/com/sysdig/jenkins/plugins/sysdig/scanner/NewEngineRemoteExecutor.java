@@ -17,31 +17,26 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.jenkinsci.remoting.RoleChecker;
 
-import java.io.File;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
 
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
 
   //TODO: ...
-  private static final String SCAN_COMMAND = "TO-DO";
-  private static final String VERBOSE_ARG = "--verbose";
-  private static final String SKIP_TLS_ARG = "--sysdig-skip-tls";
-  private static final String SYSDIG_URL_ARG = "--sysdig-url=%s";
-  private static final String ON_PREM_ARG = "--on-prem";
-  private static final String DOCKERFILE_ARG = "--dockerfile=/tmp/";
-  private static final String DOCKERFILE_MOUNTPOINT = "/tmp/";
-
   private final String imageName;
   private final String dockerFile;
   private final NewEngineBuildConfig config;
@@ -69,49 +64,100 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       }
     }
 
-    //TODO: Download
+    //Download
+    File tmpBinary;
+    try {
+      String latestVersion = getInlineScanLatestVersion();
+      logger.logInfo("Downloading inlinescan v" + latestVersion);
+      tmpBinary = downloadInlineScan(latestVersion);
+      logger.logInfo("Inlinescan binary downloaded to " + tmpBinary.getPath());
+      Files.setPosixFilePermissions(tmpBinary.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
+    } catch (IOException e) {
+      throw new AbortException("Error downloading inlinescan binary: " + e);
+    }
 
-    //TODO: Prepare args and execute
-//    List<String> args = new ArrayList<>();
-//    args.add(SCAN_COMMAND);
-//    args.addAll(Arrays.asList(SCAN_ARGS));
-//    if (config.getDebug()) {
-//      args.add(VERBOSE_ARG);
-//    }
-//    if (!config.getEngineverify()) {
-//      args.add(SKIP_TLS_ARG);
-//    }
-//    args.add(imageName);
-//    if (!config.getEngineurl().equals(SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_URL)) {
-//      args.add(String.format(SYSDIG_URL_ARG, config.getEngineurl()));
-//      args.add(ON_PREM_ARG);
-//    }
-//
-//    List<String> containerEnvVars = new ArrayList<>();
-//    containerEnvVars.add("SYSDIG_API_TOKEN=" + this.config.getSysdigToken());
-//    containerEnvVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
-//
-//    logger.logDebug("System environment: " + System.getenv().toString());
-//    logger.logDebug("Final environment: " + envVars);
-//    logger.logDebug("Creating container with environment: " + containerEnvVars);
-//    logger.logDebug("Bind mounts: " + bindMounts);
-//
-//    Container inlineScanContainer = containerRunner.createContainer(envVars.get("SYSDIG_OVERRIDE_INLINE_SCAN_IMAGE", config.getInlineScanImage()), Collections.singletonList(DUMMY_ENTRYPOINT), null, containerEnvVars, config.getRunAsUser(), bindMounts);
-//
-//    if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
-//      args.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
-//    }
-//
-//    final StringBuilder builder = new StringBuilder();
-//
-//    logger.logDebug("Executing command in container: " + args);
-//    inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
+    //Prepare args and execute
+    try {
+      File scanLog  = File.createTempFile("inlinescan", ".log");
+      File scanResult  = File.createTempFile("inlinescan", ".json");
+      List<String> command = new ArrayList<>();
+      command.add(tmpBinary.getPath());
+      command.add("--apiurl");
+      command.add(config.getEngineurl());
+      command.add("--logfile");
+      command.add(scanLog.getAbsolutePath());
+      command.add("--output-json");
+      command.add(scanResult.getAbsolutePath());
 
-    //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
+      for (String extraParam: config.getInlineScanExtraParams().split(" ")) {
+        if (!Strings.isNullOrEmpty(extraParam)) {
+          command.add(extraParam);
+        }
+      }
 
-    //return builder.toString();
+      for (String policyId: config.getPoliciesToApply().split(" ")) {
+        if (!Strings.isNullOrEmpty(policyId)) {
+          command.add("--policy");
+          command.add(policyId);
+        }
+      }
 
-    throw new AbortException("New engine not implemented");
+      if (!config.getEngineverify()) {
+        command.add("--skiptlsverify");
+      }
+
+      if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
+        new ArrayList<String>();
+        command.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
+      }
+
+      command.add(this.imageName);
+
+      List<String> env = new ArrayList<>();
+      env.add("SECURE_API_TOKEN=" + config.getSysdigToken());
+      for (String key: envVars.keySet()) {
+        env.add(key + "=" + envVars.get(key));
+      }
+
+      logger.logInfo("Executing: " + String.join(" ", command));
+      Process p = Runtime.getRuntime().exec(command.toArray(new String[0]), env.toArray(new String[0]));
+
+      String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+      String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+
+      int retCode = p.waitFor();
+
+      logger.logInfo("Inlinescan exit code: " + retCode);
+
+      logger.logInfo("Inline scan output:\n" + stdout);
+      logger.logInfo("Inline scan error:\n" + stderr);
+
+      logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath()))));
+
+      //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
+      String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())));
+      logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
+
+      return jsonOutput;
+
+    } catch (IOException e) {
+      throw new AbortException("Error executing inlinescan binary: " + e);
+    }
+
+  }
+
+  private File downloadInlineScan(String latestVersion) throws IOException {
+    File tmpBinary = File.createTempFile("inlinescan", "-" + latestVersion + ".bin");
+    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_linux_amd64");
+    FileUtils.copyURLToFile(url, tmpBinary);
+    return tmpBinary;
+  }
+
+  private String getInlineScanLatestVersion() throws IOException {
+    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/latest_version.txt");
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+      return reader.readLine();
+    }
   }
 
 }
