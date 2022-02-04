@@ -76,6 +76,41 @@ function severity(source, type, val) {
   return el;
 }
 
+function dateToRelative(source,type,val){
+    var el = source;
+    if ((typeof source === 'string')){
+        switch (source.trim().toLowerCase()) {
+            case 'none': {
+                el = '';
+                break;
+            }
+            default: {
+                el = '<span style = "display:none;">' + source
+                        + '</span><span >' + timeDifference(Date.now(),Date.parse(source)) + '</span>';
+                break;
+            }
+        }
+    }
+    return el;
+}
+
+function fixAvailableRender(source,type,val){
+    var el = source;
+    if ((typeof source === 'string')){
+        switch (source.trim().toLowerCase()) {
+            case 'none': {
+                el = '';
+                break;
+            }
+            default: {
+                el = source;
+                break;
+            }
+        }
+    }
+    return el;
+}
+
 function buildPolicyEvalSummaryTable(tableId, tableObj) {
   jQuery(document).ready(function () {
     jQuery(tableId).DataTable({
@@ -112,24 +147,46 @@ function buildPolicyEvalSummaryTable(tableId, tableObj) {
 }
 
 function buildPolicyEvalTable(tableId, outputFile) {
-  jQuery.getJSON(outputFile, function (data) {
-      var headers = [
-        { title: "Image"},
-        { title: "Gate:Trigger"},
-        { title: "Output"},
-        { title: "Action"}
-      ];
 
+  jQuery.getJSON(outputFile, function (data) {
+
+      var  headers = [
+            { title: "Image"},
+            { title: "Gate:Trigger"},
+            { title: "Output"},
+            { title: "Action"}
+          ];
       var rows = [];
+      var lastColumn=3;
 
       jQuery.each(data, function (imageId, imageIdObj) {
+        if (imageIdObj.result.header.includes("Policy_Name")){
+            headers = [
+              { title: "Image"},
+              { title: "Policy Name"},
+              { title: "Gate:Trigger"},
+              { title: "Output"},
+              { title: "Action"}
+            ];
+            lastColumn=4;
+        }
         imageIdObj.result.rows.forEach(function(row) {
-          rows.push([
-            "<div>" + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
-            row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
-            row[imageIdObj.result.header.indexOf("Check_Output")],
-            row[imageIdObj.result.header.indexOf("Gate_Action")],
-          ]);
+           if (imageIdObj.result.header.includes("Policy_Name")){
+              rows.push([
+                "<div> " + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
+                row[imageIdObj.result.header.indexOf("Policy_Name")],
+                row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
+                row[imageIdObj.result.header.indexOf("Check_Output")],
+                row[imageIdObj.result.header.indexOf("Gate_Action")],
+              ]);
+           } else {
+              rows.push([
+                  "<div>" + row[imageIdObj.result.header.indexOf("Repo_Tag")] + '</div><div class="image-id">' + row[imageIdObj.result.header.indexOf("Image_Id")] + "</div>",
+                  row[imageIdObj.result.header.indexOf("Gate")] + ":" + row[imageIdObj.result.header.indexOf("Trigger")],
+                  row[imageIdObj.result.header.indexOf("Check_Output")],
+                  row[imageIdObj.result.header.indexOf("Gate_Action")],
+              ]);
+           }
         });
       });
 
@@ -138,75 +195,245 @@ function buildPolicyEvalTable(tableId, outputFile) {
           retrieve: true,
           data: rows,
           columns: headers,
-          order: [[3, 'asc']],
+          order: [[lastColumn, 'asc']],
           columnDefs: [
             {
-              targets: 3,
+              targets: lastColumn,
               render: gateAction
             }
           ]
         });
       });
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    var alert = jQuery("<div class=\"alert alert-warning\" role=\"alert\"> Failed to generate view: cannot load JSON report artifact. </div>");
+    jQuery(tableId).parent().append(alert);
+    jQuery(tableId).remove();
   });
 }
 
+
+
+ var vulnerabilitiesData;
+ var securityTable;
 
 function buildSecurityTable(tableId, outputFile) {
 
   jQuery.getJSON(outputFile, function (tableObj) {
+    vulnerabilitiesData=tableObj;
 
-    var headers = [
-      { title: "Image"},
-      { title: "Vuln ID"},
-      { title: "Severity"},
-      { title: "Package"},
-      { title: "Type"},
-      { title: "Publish Date"},
-      { title: "Fix"},
-      { title: "Fix Date"},
-    ];
+  }).done( function(){
 
-    var rows = [];
+    jQuery(document).ready(function () {
+         jQuery('#fix_select').change(function(){drawSecurityTable()});
+         jQuery('#severity_select').change(function(){drawSecurityTable()});
+         jQuery('#severity_select_criteria').change(function(){drawSecurityTable()});
 
-    tableObj.data.forEach(function(row) {
+          var headersSecurityTable = [
+                { title: "Image"},
+                { title: "Vuln ID"},
+                { title: "Severity"},
+                { title: "Package"},
+                { title: "Type"},
+                { title: "Publish Date"},
+                { title: "Fix"},
+                { title: "Fix Date"},
+              ];
 
-      function tableColFor(title) {
-        return tableObj.columns.findIndex(e => e.title == title);
+
+        securityTable=jQuery(tableId).DataTable({
+            retrieve: true,
+            columns: headersSecurityTable,
+            data: [],
+            order: [[2, 'asc'], [0, 'asc']],
+            columnDefs: [
+                {
+                    targets: 2,
+                    render: severity
+                },
+                {
+                    targets: 5,
+                    render: dateToRelative
+                },
+                {
+                    targets: 6,
+                    render:fixAvailableRender
+                },
+                {
+                    targets: 7,
+                    render: dateToRelative
+                }
+            ]
+          });
+          drawSecurityTable();
+        });
+   }).fail(function(jqXHR, textStatus, errorThrown) {
+        var alert = jQuery("<div class=\"alert alert-warning\" role=\"alert\"> Failed to generate view: cannot load JSON report artifact. </div>");
+
+        jQuery(tableId).parent().append(alert);
+        jQuery(tableId).remove();
+      });;
+
+
+
+}
+
+function tableColFor(title,tableId) {
+        return tableId.columns.findIndex(e => e.title == title);
+}
+
+function getFilteredData(totalData){
+    var filteredData = {columns: [],data:[]};
+    totalData.data.forEach(function(row) {
+        var selectFix = jQuery('#fix_select');
+        var select = jQuery('#severity_select');
+        var selectCriteria = jQuery('#severity_select_criteria');
+        var addRow = true
+
+        if (selectFix){
+            switch (selectFix.val()) {
+                case 'Available': {
+                    if (row[tableColFor("Fix Available",totalData)] == 'None')  {
+                        addRow = false
+                    }
+                    break;
+                }
+                case 'None': {
+                    if (row[tableColFor("Fix Available",totalData)] != 'None')  {
+                        addRow = false
+                    }
+                    break;
+                }
+            }
+        }
+
+
+
+        if (select.val() ){
+            switch (selectCriteria.val()) {
+                case 'geq': {
+                    if (severityLookup[row[tableColFor("Severity",totalData)].toLowerCase()] > severityLookup[select.val().toLowerCase()])  {
+                        addRow = false
+                    }
+                    break;
+                }
+                case 'eq': {
+                    if (severityLookup[row[tableColFor("Severity",totalData)].toLowerCase()] != severityLookup[select.val().toLowerCase()])  {
+                        addRow = false
+                    }
+                    break;
+                }
+                case 'leq': {
+                    if (severityLookup[row[tableColFor("Severity",totalData)].toLowerCase()] < severityLookup[select.val().toLowerCase()])  {
+                        addRow = false
+                    }
+                    break;
+                }
+          }
       }
 
+      if (addRow){
+          filteredData.data.push(row);
+      }
+    });
+    filteredData.columns = totalData.columns
+
+    return filteredData;
+}
+
+
+function drawSecurityTable(){
+
+  var rows = [];
+  var tableData = getFilteredData(vulnerabilitiesData)
+  tableData.data.forEach(function(row) {
+
       var vulnColumn = "";
-      if (row[tableColFor("URL")].startsWith("<")) {
+      if (row[tableColFor("URL",tableData)].startsWith("<")) {
         // Old versions write the report adding the <a href=...
-         vulnColumn = '<div style="white-space: nowrap;">' + row[tableColFor("CVE ID")] + "</div><div>" + row[tableColFor("URL")] + "</div>";
+        vulnColumn = '<div style="white-space: nowrap;">' + row[tableColFor("CVE ID",tableData)] + "</div><div>" + row[tableColFor("URL",tableData)] + "</div>";
       } else {
-        vulnColumn = '<a style="white-space: nowrap;" href="' + row[tableColFor("URL")] + '">' + row[tableColFor("CVE ID")] + "</a>";
+        vulnColumn = '<a style="white-space: nowrap;" href="' + row[tableColFor("URL",tableData)] + '">' + row[tableColFor("CVE ID",tableData)] + "</a>";
       }
 
       rows.push([
-        row[tableColFor("Tag")],
+        row[tableColFor("Tag",tableData)],
         vulnColumn,
-        row[tableColFor("Severity")],
-        row[tableColFor("Vulnerability Package")],
-        row[tableColFor("Package Type")] || "",
-        row[tableColFor("Disclosure Date")] || "",
-        row[tableColFor("Fix Available")],
-        row[tableColFor("Solution Date")] || "",
+        row[tableColFor("Severity",tableData)],
+        row[tableColFor("Vulnerability Package",tableData)],
+        row[tableColFor("Package Type",tableData)] || "",
+        row[tableColFor("Disclosure Date",tableData)] || "",
+        row[tableColFor("Fix Available",tableData)],
+        row[tableColFor("Solution Date",tableData)] || "",
       ]);
+
+
+    });
+    securityTable.clear().draw();
+    securityTable.rows.add(rows); // Add new data
+    securityTable.columns.adjust().draw(); // Redraw the DataTable
+}
+
+
+function download_csv() {
+    var csv = 'sep=;';
+    csv += "\n";
+    var headerArray = ["Image","Vuln ID","Severity","Package","Type","URL","Publish Date","Fix","Fix Date"];
+
+    csv += headerArray.join(';')
+    csv += "\n";
+    getFilteredData(vulnerabilitiesData).data.forEach(function(row) {
+            csv += row.join(';');
+            csv += "\n";
     });
 
-    jQuery(document).ready(function () {
-      jQuery(tableId).DataTable({
-        retrieve: true,
-        columns: headers,
-        data: rows,
-        order: [[2, 'asc'], [0, 'asc']],
-        columnDefs: [
-          {
-            targets: 2,
-            render: severity
-          }
-        ]
-      });
-    });
-  });
+    var hiddenElement = document.createElement('a');
+    hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);
+    hiddenElement.target = '_blank';
+    hiddenElement.download = 'vulnerabilities.csv';
+    hiddenElement.click();
+
 }
+
+function timeDifference(current, previous) {
+
+    var msPerMinute = 60 * 1000;
+    var msPerHour = msPerMinute * 60;
+    var msPerDay = msPerHour * 24;
+    var msPerWeek = msPerDay * 7;
+    var msPerMonth = msPerDay * 30;
+    var msPerYear = msPerDay * 365;
+
+    var elapsed = current - previous;
+
+    if (elapsed < msPerMinute) {
+         return Math.round(elapsed/1000) + ' seconds ago';
+    }
+
+    else if (elapsed < msPerHour) {
+         return Math.round(elapsed/msPerMinute) + ' minutes ago';
+    }
+
+    else if (elapsed < msPerDay ) {
+         return Math.round(elapsed/msPerHour ) + ' hours ago';
+    }
+
+    else if (elapsed < msPerWeek) {
+        return Math.round(elapsed/msPerDay) + ' days ago';
+    }
+
+    else if (elapsed < msPerMonth ) {
+        return Math.round(elapsed/msPerWeek ) + ' weeks ago';
+    }
+
+    else if (elapsed < msPerYear) {
+        return Math.round(elapsed/msPerMonth) + ' months ago';
+    }
+
+    else {
+        return Math.round(elapsed/msPerYear ) + ' years ago';
+    }
+}
+
+
+
+

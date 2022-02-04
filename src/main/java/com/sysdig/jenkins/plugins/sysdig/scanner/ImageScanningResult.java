@@ -15,6 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import java.io.Serializable;
@@ -23,12 +24,14 @@ public class ImageScanningResult extends ImageScanningSubmission implements Seri
   private final String evalStatus;
   private final JSONObject gateResult;
   private final JSONObject vulnsReport;
+  private final JSONArray gatePolicies;
 
-  public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult, JSONObject vulnsReport) {
+  public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult, JSONObject vulnsReport, JSONArray gatePolicies) {
     super(tag, imageDigest);
     this.evalStatus = evalStatus;
     this.gateResult = gateResult;
     this.vulnsReport = vulnsReport;
+    this.gatePolicies = gatePolicies;
   }
 
   public String getEvalStatus() {
@@ -41,5 +44,9 @@ public class ImageScanningResult extends ImageScanningSubmission implements Seri
 
   public JSONObject getVulnerabilityReport() {
     return vulnsReport;
+  }
+
+  public JSONArray getGatePolicies(){
+    return gatePolicies;
   }
 }
