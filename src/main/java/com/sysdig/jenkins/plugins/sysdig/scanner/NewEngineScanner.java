@@ -31,18 +31,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner implements ScannerInterface {
+public class NewEngineScanner extends Scanner {
 
   protected final NewEngineBuildConfig config;
-  protected final SysdigLogger logger;
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
   private final EnvVars envVars;
 
   public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
+    super(logger);
     this.config = config;
-    this.logger = logger;
 
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
@@ -106,9 +105,9 @@ public class NewEngineScanner implements ScannerInterface {
   }
 
   @Override
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
-    //TODO: ...
+  protected ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
     return null;
   }
+
 }
 

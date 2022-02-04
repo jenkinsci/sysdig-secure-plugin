@@ -23,7 +23,7 @@ public class InlineScannerTests {
   private final String IMAGE_TO_SCAN = "foo:latest";
 
   private FilePath workspace = null;
-  private Scanner scanner = null;
+  private OldEngineScanner scanner = null;
 
   //TODO: Handle exception in channel.call
 
