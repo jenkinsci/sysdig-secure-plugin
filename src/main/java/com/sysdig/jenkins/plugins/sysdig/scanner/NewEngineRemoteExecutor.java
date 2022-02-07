@@ -106,11 +106,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         command.add("--skiptlsverify");
       }
 
-      if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
-        new ArrayList<String>();
-        command.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
-      }
-
       command.add(this.imageName);
 
       List<String> env = new ArrayList<>();
