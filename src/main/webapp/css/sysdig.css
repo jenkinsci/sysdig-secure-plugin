@@ -1,3 +1,22 @@
 div.image-id {
     font-size: 0.8em;
 }
+.filter-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.flex-container {
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.select-field {
+  margin: 0 4px;
+}
+
+.download-csv {
+  display: flex;
+  justify-content: flex-end;
+}

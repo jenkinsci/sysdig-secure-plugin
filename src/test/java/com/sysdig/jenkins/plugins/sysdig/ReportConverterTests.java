@@ -5,6 +5,7 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.model.Run;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.io.IOUtils;
@@ -40,8 +41,8 @@ public class ReportConverterTests {
   public void reportFinalActionPass() throws AbortException {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), new JSONObject()));
+    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
 
     // Then
     assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(results));
@@ -51,8 +52,8 @@ public class ReportConverterTests {
   public void reportFinalActionFail() throws AbortException {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject()));
+    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject(), new JSONArray()));
 
     // Then
     assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(results));
@@ -70,8 +71,8 @@ public class ReportConverterTests {
     data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates2.json"));
     JSONObject gatesReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
 
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", gatesReport2, new JSONObject()));
+    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", gatesReport2, new JSONObject(), new JSONArray()));
 
     File tmp = File.createTempFile("gatesreport", "");
     tmp.deleteOnExit();
@@ -96,11 +97,11 @@ public class ReportConverterTests {
     // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
     data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns1.json"));
     JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport));
+    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport, new JSONArray()));
 
     data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns2.json"));
     JSONObject vulnsReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), vulnsReport2));
+    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), vulnsReport2, new JSONArray()));
 
     File tmp = File.createTempFile("vulnerabilitiesreport", "");
     tmp.deleteOnExit();

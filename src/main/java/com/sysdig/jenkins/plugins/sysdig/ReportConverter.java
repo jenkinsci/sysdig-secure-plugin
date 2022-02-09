@@ -11,6 +11,7 @@ import net.sf.json.JSONObject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class ReportConverter {
@@ -41,11 +42,28 @@ public class ReportConverter {
 
     for (ImageScanningResult result : resultList) {
       JSONObject gateResult = result.getGateResult();
+      JSONArray gatePolicies = result.getGatePolicies();
 
-      logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s", result.getTag(), gateResult.toString()));
+      logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+
+      logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
+
+      HashMap<String,String> policieNames = new HashMap<>();
+
+      gatePolicies.forEach (item -> {
+        JSONObject obj = (JSONObject) item;
+        policieNames.put(obj.getString("id"),obj.getString("name"));
+      });
 
       for (Object key : gateResult.keySet()) {
+
         try {
+          JSONObject processedResult = gateResult.getJSONObject((String) key);
+          processedResult.getJSONObject("result").getJSONArray("header").element("Policy_Name");
+
+          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")){
+            ((JSONArray)row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
+          }
           fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
         } catch (Exception e) {
           logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
