@@ -6,20 +6,23 @@ import hudson.AbortException;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-public abstract class OldEngineScanner extends Scanner {
+import java.util.ArrayList;
+import java.util.Map;
+
+public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
 
   protected final BuildConfig config;
 
+  protected final SysdigLogger logger;
+
   public OldEngineScanner(BuildConfig config, SysdigLogger logger) {
-    super(logger);
+    this.logger = logger;
     this.config = config;
   }
 
-  public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;
-  public abstract JSONArray getGateResults(ImageScanningSubmission submission) throws AbortException;
-  public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException;
 
-  protected ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
+
+  public ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
     JSONObject reportDigests = JSONObject.fromObject(scanReport.get(0));
     JSONObject firstReport = null;
     for (Object key : reportDigests.keySet()) {
@@ -45,6 +48,28 @@ public abstract class OldEngineScanner extends Scanner {
     JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
 
     return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport);
+  }
+
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+    if (imagesAndDockerfiles == null) {
+      return new ArrayList<>();
+    }
+
+    ArrayList<ImageScanningResult> resultList = new ArrayList<>();
+
+    for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
+      String dockerfile = entry.getValue();
+
+      ImageScanningSubmission submission = this.scanImage(entry.getKey(), dockerfile);
+
+      JSONArray scanReport = this.getGateResults(submission);
+      JSONObject vulnsReport = this.getVulnsReport(submission);
+
+      ImageScanningResult result = this.buildImageScanningResult(scanReport, vulnsReport, submission.getImageDigest(), submission.getTag());
+      resultList.add(result);
+    }
+
+    return resultList;
   }
   
 }

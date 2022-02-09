@@ -21,12 +21,14 @@ import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.pipeline.modeldefinition.shaded.org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -60,8 +62,8 @@ public class NewEngineBuilderExecutor {
     Util.GATE_ACTION finalAction = null;
     try {
 
-      Scanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
-      ReportConverter reporter = new ReportConverter(logger);
+      NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
+      ReportConverter reporter = new NewEngineReportConverter(logger);
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
       finalAction = worker.scanAndBuildReports(config.getImageName(), null, null);
 

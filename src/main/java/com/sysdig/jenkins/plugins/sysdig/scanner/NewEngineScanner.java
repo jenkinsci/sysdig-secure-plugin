@@ -31,18 +31,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner extends Scanner {
+public class NewEngineScanner implements ScannerInterface<JSONObject>  {
 
   protected final NewEngineBuildConfig config;
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
   private final EnvVars envVars;
+  protected final SysdigLogger logger;
 
   public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
-    super(logger);
+    this.logger = logger;
     this.config = config;
-
     this.scanOutputs = new HashMap<>();
     this.listener = listener;
     this.workspace = workspace;
@@ -73,8 +73,8 @@ public class NewEngineScanner extends Scanner {
         throw new ImageScanningException(scanOutput.getString("error"));
       }
 
-      String digest = scanOutput.getString("digest");
-      String tag = scanOutput.getString("tag");
+      String digest = scanOutput.getJSONObject("metadata").getString("digest");
+      String tag = scanOutput.getJSONObject("metadata").getString("pullString");
 
       this.scanOutputs.put(digest, scanOutput);
 
@@ -86,10 +86,11 @@ public class NewEngineScanner extends Scanner {
     }
   }
 
-  @Override
-  public JSONArray getGateResults(ImageScanningSubmission submission) {
+
+
+  public JSONObject getGateResults(ImageScanningSubmission submission) {
     if (this.scanOutputs.containsKey(submission.getImageDigest())) {
-      return this.scanOutputs.get(submission.getImageDigest()).getJSONArray("scanReport");
+      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("policies");
     }
 
     return null;
@@ -98,15 +99,64 @@ public class NewEngineScanner extends Scanner {
   @Override
   public JSONObject getVulnsReport(ImageScanningSubmission submission) {
     if (this.scanOutputs.containsKey(submission.getImageDigest())) {
-      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("vulnsReport");
+      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("packages");
     }
 
     return null;
   }
 
+
+
   @Override
-  protected ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
-    return null;
+  public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
+   /* JSONObject reportDigests = JSONObject.fromObject(scanReport.get(0));
+    JSONObject firstReport = null;
+    for (Object key : reportDigests.keySet()) {
+      firstReport = reportDigests.getJSONObject((String) key);
+      break;
+    }
+
+    if (firstReport == null || firstReport.size() < 1) {
+      throw new AbortException(String.format("Failed to analyze %s due to missing digest eval records in sysdig-secure-engine policy evaluation response", tag));
+    }
+
+    JSONArray tagEvals = null;
+    for (Object key : firstReport.keySet()) {
+      tagEvals = firstReport.getJSONArray((String) key);
+      break;
+    }
+
+    if (tagEvals == null || tagEvals.size() < 1) {
+      throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
+    }*/
+
+    String evalStatus = scanReport.getString("status");
+
+
+    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport);
+  }
+
+  @Override
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+    if (imagesAndDockerfiles == null) {
+      return new ArrayList<>();
+    }
+
+    ArrayList<ImageScanningResult> resultList = new ArrayList<>();
+
+    for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
+      String dockerfile = entry.getValue();
+
+      ImageScanningSubmission submission = this.scanImage(entry.getKey(), dockerfile);
+
+      JSONObject scanReport = this.getGateResults(submission);
+      JSONObject vulnsReport = this.getVulnsReport(submission);
+
+      ImageScanningResult result = this.buildImageScanningResult(scanReport, vulnsReport, submission.getImageDigest(), submission.getTag());
+      resultList.add(result);
+    }
+
+    return resultList;
   }
 
 }

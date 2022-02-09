@@ -225,7 +225,7 @@ public class ReportConverter {
     jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
   }
 
-  private JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+  protected JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
     JSONArray dataJson = new JSONArray();
     JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
     for (int i = 0; i < vulList.size(); i++) {

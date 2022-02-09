@@ -148,7 +148,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   private File downloadInlineScan(String latestVersion) throws IOException {
     File tmpBinary = File.createTempFile("inlinescan", "-" + latestVersion + ".bin");
-    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_linux_amd64");
+    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_darwin_amd64");
     FileUtils.copyURLToFile(url, tmpBinary);
     return tmpBinary;
   }
