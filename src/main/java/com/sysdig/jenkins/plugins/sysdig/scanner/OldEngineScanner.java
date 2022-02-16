@@ -46,8 +46,9 @@ public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
 
     String evalStatus = tagEvals.getJSONObject(0).getString("status");
     JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
+    JSONArray gatePolicies = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("policy").getJSONArray("policies");
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport);
+    return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport,gatePolicies);
   }
 
   public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {

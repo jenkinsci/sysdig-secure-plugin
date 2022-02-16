@@ -133,7 +133,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
     String evalStatus = scanReport.getString("status");
 
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport);
+    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport,scanReport.getJSONArray("list"));
   }
 
   @Override

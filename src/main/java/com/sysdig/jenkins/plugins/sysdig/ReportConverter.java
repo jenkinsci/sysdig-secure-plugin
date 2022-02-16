@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ReportConverter {
-  private final SysdigLogger logger;
+  protected final SysdigLogger logger;
 
   public ReportConverter(SysdigLogger logger) {
     this.logger = logger;
@@ -44,12 +44,12 @@ public class ReportConverter {
       JSONObject gateResult = result.getGateResult();
       JSONArray gatePolicies = result.getGatePolicies();
 
-      logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+      if (logger.isDebugEnabled()) {
+        logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
 
-      logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
-
+      }
       HashMap<String,String> policieNames = new HashMap<>();
-
       gatePolicies.forEach (item -> {
         JSONObject obj = (JSONObject) item;
         policieNames.put(obj.getString("id"),obj.getString("name"));
@@ -77,7 +77,7 @@ public class ReportConverter {
     return generateGatesSummary(fullGateResults);
   }
 
-  private JSONObject generateGatesSummary(JSONObject gatesJson) {
+  protected JSONObject generateGatesSummary(JSONObject gatesJson) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -209,7 +209,7 @@ public class ReportConverter {
     return gateSummary;
   }
 
-  private static JSONArray generateDataTablesColumnsForGateSummary() {
+  protected static JSONArray generateDataTablesColumnsForGateSummary() {
     JSONArray headers = new JSONArray();
     for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
       JSONObject header = new JSONObject();
