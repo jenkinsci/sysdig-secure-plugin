@@ -249,20 +249,20 @@ public class NewEngineReportConverter extends ReportConverter{
     JSONArray dataJson = new JSONArray();
     JSONArray vulList = vulnsReport.getJSONArray("list");
     for (int i = 0; i < vulList.size(); i++) {
-      JSONObject vulnJson = vulList.getJSONObject(i);
-      vulnJson.getJSONArray("vulnerabilities").forEach(item -> {
-        JSONObject obj = (JSONObject) item;
+      JSONObject packageJson = vulList.getJSONObject(i);
+      packageJson.getJSONArray("vulnerabilities").forEach(item -> {
+        JSONObject vulnJson = (JSONObject) item;
         JSONArray vulnArray = new JSONArray();
         vulnArray.addAll(Arrays.asList(
           tag,
-          ((JSONObject) item).getString("name"),
-          ((JSONObject) item).getJSONObject("severity").getString("label"),
           vulnJson.getString("name"),
-          vulnJson.get("suggestedFix")== JSONNull.getInstance() ? "None" : vulnJson.getString("suggestedFix"),
+          vulnJson.getJSONObject("severity").getString("label"),
+          packageJson.getString("name"),
+          packageJson.get("suggestedFix")== JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
           vulnJson.has("url") ? vulnJson.getString("url") : "",
-          vulnJson.getString("type"),
-          ((JSONObject) item).getString("disclosureDate"),
-          ((JSONObject) item).get("solutionDate")==JSONNull.getInstance() ? "None" : ((JSONObject) item).getString("solutionDate")
+          packageJson.getString("type"),
+          vulnJson.getString("disclosureDate"),
+          vulnJson.get("solutionDate")==JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate")
         ));
         dataJson.add(vulnArray);
       });

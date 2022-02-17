@@ -13,7 +13,6 @@ public interface NewEngineScanStep {
 
   public String getPoliciesToApply();
 
-  public String getPoliciesToIgnore();
 
   public String getEngineURL();
 
@@ -31,9 +30,6 @@ public interface NewEngineScanStep {
 
   @DataBoundSetter
   public void setPoliciesToApply(String policiesToApply);
-
-  @DataBoundSetter
-  public void setPoliciesToIgnore(String policiesToIgnore);
 
   @DataBoundSetter
   public void setEngineURL(String engineurl);

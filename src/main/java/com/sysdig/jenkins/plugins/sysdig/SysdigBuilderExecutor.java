@@ -60,7 +60,7 @@ public class SysdigBuilderExecutor {
     try {
       if (globalConfig.getForceNewEngine()) {
         logger.logWarn("-- DEPRECATED SYSDIG CONTAINER SERCURE SCANNING / Forcing new sysdig scanning step--" );
-        NewEngineBuilder newEngineBuilder = new NewEngineBuilder("debian");
+        NewEngineBuilder newEngineBuilder = new NewEngineBuilder("");
         newEngineBuilder.setEngineURL(builder.getEngineurl());
         newEngineBuilder.setBailOnFail(builder.getBailOnFail());
         newEngineBuilder.setBailOnPluginFail(builder.getBailOnPluginFail());

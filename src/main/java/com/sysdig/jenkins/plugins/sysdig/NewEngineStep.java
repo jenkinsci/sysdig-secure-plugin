@@ -43,10 +43,6 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     return builder.getPoliciesToApply();
   }
 
-  @Override
-  public String getPoliciesToIgnore() {
-    return builder.getPoliciesToIgnore();
-  }
 
   @Override
   public String getEngineURL() {
@@ -78,11 +74,6 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     builder.setPoliciesToApply(policiesToApply);
   }
 
-  @DataBoundSetter
-  @Override
-  public void setPoliciesToIgnore(String policiesToIgnore) {
-    builder.setPoliciesToIgnore(policiesToIgnore);
-  }
 
   @DataBoundSetter
   @Override
@@ -182,6 +173,12 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
 
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends StepDescriptor {
+
+    public static final String DEFAULT_NAME = "sysdig_secure_images";
+    public static final boolean DEFAULT_BAIL_ON_FAIL = true;
+    public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
+    public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
+    public static final boolean DEFAULT_ENGINE_VERIFY = true;
 
     NewEngineBuilder.DescriptorImpl builderDescriptor;
 
