@@ -13,10 +13,13 @@ import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.EnvVars;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DockerClientRunner implements ContainerRunner {
+
+  private static final String DOCKER_RESPONSE_TIMEOUT = "600";
 
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
@@ -48,6 +51,17 @@ public class DockerClientRunner implements ContainerRunner {
     if (config.getSSLConfig() != null) {
       clientBuilder.sslConfig(config.getSSLConfig());
     }
+
+    if (currentEnv.get("DOCKER_CONNECTION_TIMEOUT")!=null){
+      final String connTimeout=currentEnv.get("DOCKER_CONNECTION_TIMEOUT");
+      try{
+        clientBuilder.responseTimeout(Duration.ofSeconds(Long.parseLong(connTimeout)));
+      } catch (NumberFormatException e){
+        logger.logWarn(String.format("DOCKER_CONNECTION_TIMEOUT=%s is not valid", connTimeout));
+      }
+    }
+
+    clientBuilder.responseTimeout(Duration.ofSeconds(Long.parseLong(currentEnv.getOrDefault("DOCKER_RESPONSE_TIMEOUT", DOCKER_RESPONSE_TIMEOUT))));
 
     this.dockerClient = DockerClientBuilder
       .getInstance(config)

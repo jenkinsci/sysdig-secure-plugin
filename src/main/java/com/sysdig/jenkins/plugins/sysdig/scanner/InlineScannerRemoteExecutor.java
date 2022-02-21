@@ -85,6 +85,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     }
 
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
+    Timer cmdExecPingTimer = null;
 
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
@@ -137,9 +138,29 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
+      if (this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY")!=null) {
+        String pingDelayStr = this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY");
+        try {
+          long pingDelay = Long.parseLong(pingDelayStr);
+          cmdExecPingTimer = new Timer();
+          cmdExecPingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+              inlineScanContainer.ping();
+            }
+          }, pingDelay * 1000, pingDelay * 1000);
+          logger.logDebug("Starting pinging to keep connection alive during command execution...");
+        } catch (NumberFormatException e) {
+          logger.logWarn(String.format("DOCKER_CMD_EXEC_PING_DELAY=%s is not valid", pingDelayStr));
+        }
+      }
+
       logger.logDebug("Executing command in container: " + args);
       inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
     } finally {
+      if (cmdExecPingTimer!=null){
+        cmdExecPingTimer.cancel();
+      }
       inlineScanContainer.stop(STOP_SECONDS);
     }
 
