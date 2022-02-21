@@ -122,14 +122,59 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       logger.logInfo("Executing: " + String.join(" ", command));
       Process p = Runtime.getRuntime().exec(command.toArray(new String[0]), env.toArray(new String[0]));
 
-      String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-      String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+ //     String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+ //     String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+
+
+      class PrimeThread extends Thread {
+        Process p;
+        SysdigLogger logger;
+        BufferedReader or=null;
+        BufferedReader er = null;
+        String output = "";
+        String error = "";
+        PrimeThread(Process p, SysdigLogger logger) {
+          this.p = p;
+          this.logger=logger;
+        }
+
+        public void run() {
+          try {
+            or = new BufferedReader(new InputStreamReader(p.getInputStream(),Charset.defaultCharset()));
+
+            while ((output = or.readLine()) != null) {
+             logger.logInfo(output);
+            }
+          }
+          catch (IOException ioe) {
+           logger.logError("Exception while reading input " + ioe);
+          }
+          finally {
+            // close the streams using close method
+            try {
+              if (or != null) {
+                or.close();
+              }
+            }
+            catch (IOException ioe) {
+              logger.logError("Error while closing stream: " + ioe);
+            }
+          }
+        }
+      }
+
+      PrimeThread thread = new PrimeThread(p,logger);
+      thread.start();
+
 
       int retCode = p.waitFor();
+      thread.join();
+  //    thread.interrupt();
 
       logger.logInfo("Inlinescan exit code: " + retCode);
 
-      logger.logInfo("Inline scan output:\n" + stdout);
+  //    logger.logInfo("Inline scan output:\n" + stdout);
+      String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
       logger.logInfo("Inline scan error:\n" + stderr);
 
       logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath()))));
