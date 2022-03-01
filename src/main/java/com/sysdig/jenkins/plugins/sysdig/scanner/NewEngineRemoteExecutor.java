@@ -107,7 +107,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       }
 
       if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
-        new ArrayList<String>();
         command.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
       }
 
@@ -115,8 +114,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
       List<String> env = new ArrayList<>();
       env.add("SECURE_API_TOKEN=" + config.getSysdigToken());
-      for (String key: envVars.keySet()) {
-        env.add(key + "=" + envVars.get(key));
+      for (Map.Entry<String,String> entry: envVars.entrySet()) {
+        env.add(entry.getKey() + "=" + entry.getValue());
       }
 
       logger.logInfo("Executing: " + String.join(" ", command));
@@ -130,9 +129,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         Process p;
         SysdigLogger logger;
         BufferedReader or=null;
-        BufferedReader er = null;
         String output = "";
-        String error = "";
         PrimeThread(Process p, SysdigLogger logger) {
           this.p = p;
           this.logger=logger;
@@ -180,7 +177,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath()))));
 
       //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
-      String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())));
+      String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())),Charset.defaultCharset());
       logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
 
       return jsonOutput;
@@ -193,7 +190,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   private File downloadInlineScan(String latestVersion) throws IOException {
     File tmpBinary = File.createTempFile("inlinescan", "-" + latestVersion + ".bin");
-    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_darwin_amd64");
+    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_linux_amd64");
     FileUtils.copyURLToFile(url, tmpBinary);
     return tmpBinary;
   }
