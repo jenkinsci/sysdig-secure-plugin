@@ -244,7 +244,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       address = (envVars.getOrDefault("http_proxy",envVars.get("HTTP_PROXY"))).split(":");
       port = Integer.parseInt(address.length >1 ? address[1] : "80");
       proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
-    }else{
+    } else {
       proxy = Proxy.NO_PROXY;
     }
     logger.logDebug("Inline scan proxy: " + proxy);
