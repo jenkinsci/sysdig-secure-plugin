@@ -26,13 +26,14 @@ import org.apache.commons.io.IOUtils;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+
 
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
 
@@ -42,6 +43,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   private final NewEngineBuildConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
+  private final String[] noProxy;
 
   public NewEngineRemoteExecutor(String imageName, String dockerFile, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
@@ -49,6 +51,15 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     this.config = config;
     this.logger = logger;
     this.envVars = envVars;
+
+
+    if (envVars.containsKey("no_proxy") || envVars.containsKey("NO_PROXY")) {
+      String noProxy= envVars.getOrDefault("no_proxy",envVars.get("NO_PROXY"));
+      this.noProxy = noProxy.split(",");
+    } else {
+      this.noProxy = new String[0];
+    }
+
   }
 
   @Override
@@ -190,16 +201,55 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   private File downloadInlineScan(String latestVersion) throws IOException {
     File tmpBinary = File.createTempFile("inlinescan", "-" + latestVersion + ".bin");
-    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_linux_amd64");
-    FileUtils.copyURLToFile(url, tmpBinary);
+    logger.logInfo(System.getProperty("os.name"));
+
+    String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin":"linux";
+    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_"+os+"_amd64");
+    Proxy proxy = getHttpProxy();
+    Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
+    if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
+      FileUtils.copyInputStreamToFile(url.openConnection(proxy).getInputStream(),tmpBinary);
+    }else{
+      FileUtils.copyURLToFile(url, tmpBinary);
+    }
+
     return tmpBinary;
   }
 
+
   private String getInlineScanLatestVersion() throws IOException {
     URL url = new URL("https://download.sysdig.com/scanning/inlinescan/latest_version.txt");
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
-      return reader.readLine();
+    Proxy proxy = getHttpProxy();
+    Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
+    if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openConnection(proxy).getInputStream(), StandardCharsets.UTF_8))) {
+        return reader.readLine();
+      }
+    } else {
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
+        return reader.readLine();
+      }
     }
   }
+
+  private Proxy getHttpProxy(){
+    Proxy proxy;
+    String[] address;
+    Integer port;
+    if (envVars.containsKey("https_proxy") || envVars.containsKey("HTTPS_PROXY")) {
+      address = (envVars.getOrDefault("https_proxy",envVars.get("HTTPS_PROXY"))).split(":");
+      port = Integer.parseInt(address.length >1 ? address[1] : "443");
+      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
+    }else if (envVars.containsKey("http_proxy") || envVars.containsKey("HTTP_PROXY")) {
+      address = (envVars.getOrDefault("http_proxy",envVars.get("HTTP_PROXY"))).split(":");
+      port = Integer.parseInt(address.length >1 ? address[1] : "80");
+      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
+    }else{
+      proxy = Proxy.NO_PROXY;
+    }
+    logger.logDebug("Inline scan proxy: " + proxy);
+    return proxy;
+  }
+
 
 }
