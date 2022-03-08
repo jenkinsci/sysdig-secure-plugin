@@ -209,7 +209,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
     if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
       FileUtils.copyInputStreamToFile(url.openConnection(proxy).getInputStream(),tmpBinary);
-    }else{
+    } else {
       FileUtils.copyURLToFile(url, tmpBinary);
     }
 
