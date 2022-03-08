@@ -70,7 +70,7 @@ public class SysdigBuilderExecutor {
         ReportConverter reporter = new NewEngineReportConverter(logger);
         worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
         finalAction = worker.scanAndBuildReports(null, null, config.getImageListName());
-      }else {
+      } else {
         OldEngineScanner scanner = config.getInlineScanning() ?
           new InlineScanner(listener, config, workspace, envVars, logger) :
           new BackendScanner(config, logger);
