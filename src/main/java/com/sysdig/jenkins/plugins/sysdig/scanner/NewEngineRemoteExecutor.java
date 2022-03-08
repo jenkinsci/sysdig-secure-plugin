@@ -240,7 +240,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       address = (envVars.getOrDefault("https_proxy",envVars.get("HTTPS_PROXY"))).split(":");
       port = Integer.parseInt(address.length >1 ? address[1] : "443");
       proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
-    }else if (envVars.containsKey("http_proxy") || envVars.containsKey("HTTP_PROXY")) {
+    } else if (envVars.containsKey("http_proxy") || envVars.containsKey("HTTP_PROXY")) {
       address = (envVars.getOrDefault("http_proxy",envVars.get("HTTP_PROXY"))).split(":");
       port = Integer.parseInt(address.length >1 ? address[1] : "80");
       proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
