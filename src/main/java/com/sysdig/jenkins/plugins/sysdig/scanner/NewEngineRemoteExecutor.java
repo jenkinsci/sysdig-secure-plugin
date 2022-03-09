@@ -232,18 +232,27 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     }
   }
 
-  private Proxy getHttpProxy(){
+  private Proxy getHttpProxy() throws IOException {
     Proxy proxy;
-    String[] address;
+    String address="";
     Integer port;
+    URL proxyURL;
+
+
+
     if (envVars.containsKey("https_proxy") || envVars.containsKey("HTTPS_PROXY")) {
-      address = (envVars.getOrDefault("https_proxy",envVars.get("HTTPS_PROXY"))).split(":");
-      port = Integer.parseInt(address.length >1 ? address[1] : "443");
-      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
+      address = envVars.getOrDefault("https_proxy",envVars.get("HTTPS_PROXY"));
     } else if (envVars.containsKey("http_proxy") || envVars.containsKey("HTTP_PROXY")) {
-      address = (envVars.getOrDefault("http_proxy",envVars.get("HTTP_PROXY"))).split(":");
-      port = Integer.parseInt(address.length >1 ? address[1] : "80");
-      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(address[0],port));
+      address = envVars.getOrDefault("https_proxy",envVars.get("HTTPS_PROXY"));
+    }
+
+    if (!address.isEmpty()) {
+      if (!address.startsWith("http://") && !address.startsWith("https://")){
+        address = "http://" + address;
+      }
+      proxyURL = new URL(address);
+      port = proxyURL.getPort()!=-1 ? proxyURL.getPort() : 80;
+      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyURL.getHost(),port));
     } else {
       proxy = Proxy.NO_PROXY;
     }
