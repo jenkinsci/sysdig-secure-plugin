@@ -34,6 +34,7 @@ public class NewEngineBuildConfig implements Serializable {
   private final String inlineScanExtraParams;
   private final String sysdigToken;
   private final String policiesToApply;
+  private final String scannerBinaryPath;
 
   public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineScanStep scanStep, String sysdigToken) {
     imageName = scanStep.getImageName();
@@ -57,6 +58,13 @@ public class NewEngineBuildConfig implements Serializable {
     this.sysdigToken = sysdigToken;
 
     this.policiesToApply = scanStep.getPoliciesToApply();
+
+    if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())){
+      this.scannerBinaryPath = scanStep.getScannerBinaryPath();
+    } else {
+      this.scannerBinaryPath = globalConfig.getScannerBinaryPath();
+    }
+
   }
 
   public String getImageName() {
@@ -94,6 +102,8 @@ public class NewEngineBuildConfig implements Serializable {
   public String getPoliciesToApply() {
     return policiesToApply;
   }
+
+  public String getScannerBinaryPath() {return scannerBinaryPath;}
 
   /**
    * Print versions info and configuration

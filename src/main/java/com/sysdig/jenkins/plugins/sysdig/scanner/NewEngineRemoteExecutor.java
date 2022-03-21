@@ -77,16 +77,21 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
     //Download
     File tmpBinary;
-    try {
-      String latestVersion = getInlineScanLatestVersion();
-      logger.logInfo("Downloading inlinescan v" + latestVersion);
-      tmpBinary = downloadInlineScan(latestVersion);
-      logger.logInfo("Inlinescan binary downloaded to " + tmpBinary.getPath());
-      Files.setPosixFilePermissions(tmpBinary.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
-    } catch (IOException e) {
-      throw new AbortException("Error downloading inlinescan binary: " + e);
-    }
 
+    if (!config.getScannerBinaryPath().isEmpty()) {
+      tmpBinary = new File(config.getScannerBinaryPath());
+      logger.logInfo("Inlinescan binary globally defined to* " + tmpBinary.getPath());
+    }else {
+      try {
+        String latestVersion = getInlineScanLatestVersion();
+        logger.logInfo("Downloading inlinescan v" + latestVersion);
+        tmpBinary = downloadInlineScan(latestVersion);
+        logger.logInfo("Inlinescan binary downloaded to " + tmpBinary.getPath());
+        Files.setPosixFilePermissions(tmpBinary.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
+      } catch (IOException e) {
+        throw new AbortException("Error downloading inlinescan binary: " + e);
+      }
+    }
     //Prepare args and execute
     try {
       File scanLog  = File.createTempFile("inlinescan", ".log");

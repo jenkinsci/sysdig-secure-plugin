@@ -22,6 +22,8 @@ public interface NewEngineScanStep {
 
   public String getInlineScanExtraParams();
 
+  public String getScannerBinaryPath();
+
   @DataBoundSetter
   public void setBailOnFail(boolean bailOnFail);
 
@@ -42,4 +44,7 @@ public interface NewEngineScanStep {
 
   @DataBoundSetter
   public void setInlineScanExtraParams(String inlineScanExtraParams);
+
+  @DataBoundSetter
+  public void setScannerBinaryPath(String scannerBinaryPath);
 }

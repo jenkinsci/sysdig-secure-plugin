@@ -62,6 +62,9 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
   @Override
   public String getInlineScanExtraParams() { return builder.getInlineScanExtraParams(); }
 
+  @Override
+  public String getScannerBinaryPath() { return builder.getScannerBinaryPath();}
+
   @DataBoundSetter
   @Override
   public void setBailOnFail(boolean bailOnFail) {
@@ -103,6 +106,12 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
   @Override
   public void setInlineScanExtraParams(String inlineScanExtraParams) {
     builder.setInlineScanExtraParams(inlineScanExtraParams);
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setScannerBinaryPath(String scannerBinayPath){
+    builder.setScannerBinaryPath(scannerBinayPath);
   }
 
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"

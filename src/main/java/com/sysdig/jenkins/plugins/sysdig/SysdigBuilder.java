@@ -221,6 +221,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private boolean forceinlinescan = false;
     private boolean forceNewEngine = false;
 
+
+
+    private String scannerBinaryPath = EMPTY_STRING;
+
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
     private boolean enabled;
@@ -254,6 +258,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       this.inlineScanExtraParams = inlineScanExtraParams;
     }
 
+
     public void setInlinescanimage(String inlinescanimage) {
       this.inlinescanimage = inlinescanimage;
     }
@@ -265,6 +270,9 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     public void setForceNewEngine(boolean forceNewEngine) {
       this.forceNewEngine = forceNewEngine;
     }
+
+    public void setScannerBinaryPath(String scannerBinaryPath) { this.scannerBinaryPath = scannerBinaryPath; }
+
 
     @Deprecated
     public boolean getEnabled() {
@@ -302,6 +310,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     public boolean getForceNewEngine() {
       return forceNewEngine;
     }
+
+    public String getScannerBinaryPath() { return scannerBinaryPath; }
 
     public DescriptorImpl() {
       load();

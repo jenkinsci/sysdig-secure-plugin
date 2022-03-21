@@ -55,6 +55,7 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   private boolean engineVerify = SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_VERIFY;
   private String inlineScanExtraParams = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
   private String policiesToApply = "";
+  private String scannerBinaryPath = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
 
 
   @Override
@@ -95,6 +96,9 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   @Override
   public String getInlineScanExtraParams() { return inlineScanExtraParams; }
 
+  @Override
+  public String getScannerBinaryPath() { return scannerBinaryPath; }
+
   @DataBoundSetter
   @Override
   public void setBailOnFail(boolean bailOnFail) {
@@ -130,6 +134,11 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   public void setEngineVerify(boolean engineVerify) {
     this.engineVerify = engineVerify;
   }
+
+  @DataBoundSetter
+  @Override
+  public void setScannerBinaryPath(String scannerBinaryPath) { this.scannerBinaryPath = scannerBinaryPath; }
+
 
   @DataBoundSetter
   @Override

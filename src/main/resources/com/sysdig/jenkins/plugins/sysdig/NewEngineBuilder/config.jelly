@@ -38,6 +38,9 @@
     <f:entry title="Extra parameters for inlinescan execution" field="inlineScanExtraParams">
       <f:textbox default=""/>
     </f:entry>
+    <f:entry title="Scanner binary path" field="scannerBinaryPath" help="/plugin/sysdig-secure/help/help-OverrideScannerBinaryPath.html">
+      <f:textbox/>
+    </f:entry>
 
   </f:section>
 </j:jelly>
