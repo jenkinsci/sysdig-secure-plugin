@@ -94,8 +94,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     }
     //Prepare args and execute
     try {
-      File scanLog  = File.createTempFile("inlinescan", ".log");
-      File scanResult  = File.createTempFile("inlinescan", ".json");
+      File scanLog = File.createTempFile("inlinescan", ".log");
+      File scanResult = File.createTempFile("inlinescan", ".json");
       List<String> command = new ArrayList<>();
       command.add(tmpBinary.getPath());
       command.add("--apiurl");
@@ -105,13 +105,13 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       command.add("--output-json");
       command.add(scanResult.getAbsolutePath());
 
-      for (String extraParam: config.getInlineScanExtraParams().split(" ")) {
+      for (String extraParam : config.getInlineScanExtraParams().split(" ")) {
         if (!Strings.isNullOrEmpty(extraParam)) {
           command.add(extraParam);
         }
       }
 
-      for (String policyId: config.getPoliciesToApply().split(" ")) {
+      for (String policyId : config.getPoliciesToApply().split(" ")) {
         if (!Strings.isNullOrEmpty(policyId)) {
           command.add("--policy");
           command.add(policyId);
@@ -126,7 +126,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         command.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
       }
 
-      if (config.getDebug()){
+      if (config.getDebug()) {
         command.add("--loglevel=debug");
       }
 
@@ -134,15 +134,15 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
       List<String> env = new ArrayList<>();
       env.add("SECURE_API_TOKEN=" + config.getSysdigToken());
-      for (Map.Entry<String,String> entry: envVars.entrySet()) {
+      for (Map.Entry<String, String> entry : envVars.entrySet()) {
         env.add(entry.getKey() + "=" + entry.getValue());
       }
 
       logger.logInfo("Executing: " + String.join(" ", command));
       Process p = Runtime.getRuntime().exec(command.toArray(new String[0]), env.toArray(new String[0]));
 
- //     String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
- //     String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
+      //     String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+     // String stdout = IOUtils.toString(p.getInputStream(), Charset.defaultCharset());
 
 
       class PrimeThread extends Thread {
@@ -157,7 +157,9 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
         public void run() {
           try {
-            or = new BufferedReader(new InputStreamReader(p.getInputStream(),Charset.defaultCharset()));
+            SequenceInputStream message = new SequenceInputStream(p.getInputStream(),p.getErrorStream());
+
+            or = new BufferedReader(new InputStreamReader(message,Charset.defaultCharset()));
 
             while ((output = or.readLine()) != null) {
              logger.logInfo(output);
@@ -185,24 +187,31 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
 
       int retCode = p.waitFor();
-      thread.join();
-  //    thread.interrupt();
+          thread.join();
 
       logger.logInfo("Inlinescan exit code: " + retCode);
 
-  //    logger.logInfo("Inline scan output:\n" + stdout);
-      String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
-      logger.logInfo("Inline scan error:\n" + stderr);
+     // logger.logInfo("Inline scan output:\n" + stdout);
+     // String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
+     // logger.logInfo("Inline scan error:\n" + stderr);
 
       logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath()))));
 
       //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
-      String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())),Charset.defaultCharset());
+      String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())), Charset.defaultCharset());
       logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
+
+      if ( retCode == 2 ) {
+        jsonOutput = "{error:\"Wrong parameters in call to inline scanner\"}";
+      } else if ( retCode == 3 ) {
+        jsonOutput = "{error:\"Unexpected error when executing scan\"}";
+      }else if ( retCode != 0 && retCode != 1 ) {
+        throw new Exception("Cannot manage return code");
+      }
 
       return jsonOutput;
 
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new AbortException("Error executing inlinescan binary: " + e);
     }
 

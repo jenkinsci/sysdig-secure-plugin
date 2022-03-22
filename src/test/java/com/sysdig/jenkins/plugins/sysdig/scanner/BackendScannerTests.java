@@ -65,7 +65,7 @@ public class BackendScannerTests {
   }
 
     @Test
-  public void testImageIsScanned() throws ImageScanningException, AbortException {
+  public void testImageIsScanned() throws ImageScanningException, AbortException,InterruptedException {
     setupMocks();
 
     // When
@@ -79,7 +79,7 @@ public class BackendScannerTests {
 
 
   @Test
-  public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+  public void testNoDockerfilePosted() throws ImageScanningException, IOException, InterruptedException {
     setupMocks();
 
     // When
@@ -94,7 +94,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testDockerfilePosted() throws ImageScanningException, IOException {
+  public void testDockerfilePosted() throws ImageScanningException, IOException, InterruptedException {
     setupMocks();
 
     //Given
@@ -116,7 +116,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testGetGateResults() throws ImageScanningException, AbortException {
+  public void testGetGateResults() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     //Given
@@ -135,7 +135,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testGetVulnsReport() throws ImageScanningException, AbortException {
+  public void testGetVulnsReport() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // Given
@@ -152,7 +152,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException {
+  public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // When

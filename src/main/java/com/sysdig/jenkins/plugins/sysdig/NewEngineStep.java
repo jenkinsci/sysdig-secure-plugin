@@ -152,11 +152,10 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     return builder.getRequiredMonitorService();
   }
 
-  private final static class Execution extends SynchronousNonBlockingStepExecution<Void> {
+  private final static class Execution extends StepExecution {
 
     private static final long serialVersionUID = 1;
     private transient final NewEngineBuilder builder;
-
     private Execution(
       @Nonnull StepContext context,
       NewEngineBuilder builder) {
@@ -165,7 +164,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     }
 
     @Override
-    protected Void run() throws Exception {
+    public boolean start() throws Exception {
 
       FilePath workspace = getContext().get(FilePath.class);
       assert workspace != null;
@@ -176,7 +175,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
         getContext().get(Launcher.class),
         getContext().get(TaskListener.class),
         getContext().get(EnvVars.class));
-      return null;
+      return true;
     }
   }
 

@@ -70,7 +70,7 @@ public class ScannerTests {
   }
 
   @Test
-  public void testParsingReports() throws AbortException {
+  public void testParsingReports() throws AbortException,InterruptedException {
     Map<String, String> imagesAndDockerfiles = new HashMap<>();
     imagesAndDockerfiles.put("image:tag", null);
 
@@ -87,7 +87,7 @@ public class ScannerTests {
   }
 
   @Test
-  public void testDigestMismatchInReportIsIgnored() throws AbortException {
+  public void testDigestMismatchInReportIsIgnored() throws AbortException,InterruptedException {
     Map<String, String> imagesAndDockerfiles = new HashMap<>();
     imagesAndDockerfiles.put("image:tag", null);
 
@@ -101,7 +101,7 @@ public class ScannerTests {
   }
 
   @Test
-  public void testMultipleImages() throws AbortException {
+  public void testMultipleImages() throws AbortException,InterruptedException {
     Map<String, String> imagesAndDockerfiles = new HashMap<>();
     imagesAndDockerfiles.put("image1:tag1", null);
     imagesAndDockerfiles.put("image2:tag2", null);

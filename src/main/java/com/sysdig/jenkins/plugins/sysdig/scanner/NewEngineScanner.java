@@ -50,7 +50,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException,InterruptedException {
 
     if (this.workspace == null) {
       throw new AbortException("Inline-scan failed. No workspace available");
@@ -80,9 +80,12 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
 
       return new ImageScanningSubmission(tag, digest);
 
+    } catch (ImageScanningException e) {
+      logger.logError(e.getMessage());
+      throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
     } catch (Exception e) {
       logger.logError("Failed to perform inline-scan due to an unexpected error", e);
-      throw new AbortException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
+      throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
@@ -137,7 +140,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
   @Override
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException,InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }

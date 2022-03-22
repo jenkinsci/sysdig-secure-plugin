@@ -96,7 +96,7 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(String imageName, String dockerFile, String imageListName) throws AbortException {
+  public Util.GATE_ACTION scanAndBuildReports(String imageName, String dockerFile, String imageListName) throws AbortException,InterruptedException {
     Map<String, String> imagesAndDockerfiles;
     if (!Strings.isNullOrEmpty(imageListName)) {
       imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, imageListName);

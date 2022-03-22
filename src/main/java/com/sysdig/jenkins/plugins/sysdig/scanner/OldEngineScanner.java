@@ -51,7 +51,7 @@ public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
     return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport,gatePolicies);
   }
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException,InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
