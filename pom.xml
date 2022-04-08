@@ -294,6 +294,7 @@
         <artifactId>maven-hpi-plugin</artifactId>
         <configuration>
           <minimumJavaVersion>1.8</minimumJavaVersion>
+          <pluginFirstClassLoader>false</pluginFirstClassLoader>
           <webResources>
             <webResource>
               <directory>${project.build.directory}/external-resources</directory>

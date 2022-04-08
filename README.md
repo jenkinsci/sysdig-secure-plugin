@@ -198,7 +198,7 @@ Connection to the Docker daemon uses the FIFO socket at /var/run/docker.sock by 
 
 Additional environment variables can be set to apply a more customized behaviour:
 
-* DOCKER_CONNECTION_TIMEOUT: The time (in seconds) the docker client will wait for connection to be established before a timeout
+* DOCKER_CONNECTION_TIMEOUT: The time (in seconds) the docker client will wait for connection to be established before a timeout. (Default: 3 minutes)
 * DOCKER_RESPONSE_TIMEOUT: The time (in seconds) the docker client will wait for a response before a timeout. (Default: 10 minutes)
 * DOCKER_CMD_EXEC_PING_DELAY: The delay (in seconds) between ping requests made by the docker client during the scan-command execution. (Default: no ping)
 

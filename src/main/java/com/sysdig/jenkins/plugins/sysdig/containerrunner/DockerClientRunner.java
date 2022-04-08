@@ -19,13 +19,13 @@ import java.util.List;
 
 public class DockerClientRunner implements ContainerRunner {
 
+  private static final String DOCKER_CONNECTION_TIMEOUT = "180";
   private static final String DOCKER_RESPONSE_TIMEOUT = "600";
 
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
 
   public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv) {
-
 
     DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
     if (currentEnv.get("DOCKER_HOST") != null) {
@@ -52,16 +52,29 @@ public class DockerClientRunner implements ContainerRunner {
       clientBuilder.sslConfig(config.getSSLConfig());
     }
 
+    Duration connectionTimeoutDuration = Duration.ofSeconds(Long.parseLong(DOCKER_CONNECTION_TIMEOUT));
+    Duration responseTimeoutDuration = Duration.ofSeconds(Long.parseLong(DOCKER_RESPONSE_TIMEOUT));
+
     if (currentEnv.get("DOCKER_CONNECTION_TIMEOUT")!=null){
-      final String connTimeout=currentEnv.get("DOCKER_CONNECTION_TIMEOUT");
+      final String connTimeout = currentEnv.get("DOCKER_CONNECTION_TIMEOUT");
       try{
-        clientBuilder.responseTimeout(Duration.ofSeconds(Long.parseLong(connTimeout)));
+        connectionTimeoutDuration = Duration.ofSeconds(Long.parseLong(connTimeout));
       } catch (NumberFormatException e){
-        logger.logWarn(String.format("DOCKER_CONNECTION_TIMEOUT=%s is not valid", connTimeout));
+        logger.logWarn(String.format("DOCKER_CONNECTION_TIMEOUT=%s is not valid, using default", connTimeout));
       }
     }
 
-    clientBuilder.responseTimeout(Duration.ofSeconds(Long.parseLong(currentEnv.getOrDefault("DOCKER_RESPONSE_TIMEOUT", DOCKER_RESPONSE_TIMEOUT))));
+    if (currentEnv.get("DOCKER_RESPONSE_TIMEOUT")!=null){
+      final String responseTimeout = currentEnv.get("DOCKER_RESPONSE_TIMEOUT");
+      try{
+        responseTimeoutDuration = Duration.ofSeconds(Long.parseLong(responseTimeout));
+      } catch (NumberFormatException e){
+        logger.logWarn(String.format("DOCKER_RESPONSE_TIMEOUT=%s is not valid, using default", responseTimeout));
+      }
+    }
+
+    clientBuilder.connectionTimeout(connectionTimeoutDuration);
+    clientBuilder.responseTimeout(responseTimeoutDuration);
 
     this.dockerClient = DockerClientBuilder
       .getInstance(config)
