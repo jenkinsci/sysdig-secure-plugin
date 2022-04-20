@@ -6,7 +6,7 @@
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
     <version>3.57</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <artifactId>sysdig-secure</artifactId>
@@ -105,7 +105,7 @@
     <dependency> <!-- required by docker-java-transport-httpclient5 -->
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.13</version>
+      <version>1.15</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
