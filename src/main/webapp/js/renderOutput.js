@@ -377,8 +377,7 @@ function drawSecurityTable(){
 function download_csv() {
     var csv = 'sep=;';
     csv += "\n";
-    var headerArray = ["Image","Vuln ID","Severity","Package","Type","URL","Publish Date","Fix","Fix Date"];
-
+    var headerArray = ["Image","Vuln ID","Severity","Package","Fix","URL","type","Publish Date","Fix Date"];
     csv += headerArray.join(';')
     csv += "\n";
     getFilteredData(vulnerabilitiesData).data.forEach(function(row) {

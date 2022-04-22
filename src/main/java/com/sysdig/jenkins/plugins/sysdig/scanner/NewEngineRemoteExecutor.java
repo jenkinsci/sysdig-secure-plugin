@@ -222,7 +222,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     logger.logInfo(System.getProperty("os.name"));
 
     String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin":"linux";
-    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/inlinescan_" + latestVersion + "_"+os+"_amd64");
+    URL url = new URL("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/" + latestVersion + "/"+os+"/amd64/sysdig-cli-scanner");
     Proxy proxy = getHttpProxy();
     Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
     if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
@@ -234,9 +234,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     return tmpBinary;
   }
 
-
   private String getInlineScanLatestVersion() throws IOException {
-    URL url = new URL("https://download.sysdig.com/scanning/inlinescan/latest_version.txt");
+    URL url = new URL("https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt");
     Proxy proxy = getHttpProxy();
     Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
     if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
