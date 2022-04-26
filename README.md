@@ -196,6 +196,12 @@ Connection to the Docker daemon uses the FIFO socket at /var/run/docker.sock by 
 * DOCKER_TLS_VERIFY: When set Docker uses TLS and verifies the remote
 * DOCKER_CERT_PATH: The location of your authentication keys
 
+Additional environment variables can be set to apply a more customized behaviour:
+
+* DOCKER_CONNECTION_TIMEOUT: The time (in seconds) the docker client will wait for connection to be established before a timeout. (Default: 3 minutes)
+* DOCKER_RESPONSE_TIMEOUT: The time (in seconds) the docker client will wait for a response before a timeout. (Default: 10 minutes)
+* DOCKER_CMD_EXEC_PING_DELAY: The delay (in seconds) between ping requests made by the docker client during the scan-command execution. (Default: no ping)
+
 See [Docker environment variables documentation](https://docs.docker.com/engine/reference/commandline/cli/#environment-variables) for more information.
 
 Environment variables must be defined in **the worker node**. See *Configuring environment variables in workers* section.
