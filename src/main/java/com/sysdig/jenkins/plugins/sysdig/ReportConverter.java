@@ -231,7 +231,7 @@ public class ReportConverter {
     JSONObject securityJson = new JSONObject();
     JSONArray columnsJson = new JSONArray();
 
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Disclosure Date", "Solution Date")) {
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path","Disclosure Date", "Solution Date")) {
       JSONObject columnJson = new JSONObject();
       columnJson.put("title", column);
       columnsJson.add(columnJson);

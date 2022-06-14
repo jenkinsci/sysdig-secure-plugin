@@ -152,7 +152,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     return builder.getRequiredMonitorService();
   }
 
-  private final static class Execution extends StepExecution {
+  private final static class Execution extends SynchronousNonBlockingStepExecution {
 
     private static final long serialVersionUID = 1;
     private transient final NewEngineBuilder builder;
@@ -164,7 +164,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     }
 
     @Override
-    public boolean start() throws Exception {
+    protected Void run() throws Exception {
 
       FilePath workspace = getContext().get(FilePath.class);
       assert workspace != null;
@@ -175,8 +175,10 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
         getContext().get(Launcher.class),
         getContext().get(TaskListener.class),
         getContext().get(EnvVars.class));
-      return true;
+
+      return null;
     }
+
   }
 
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.

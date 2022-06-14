@@ -234,6 +234,7 @@ function buildSecurityTable(tableId, outputFile) {
                 { title: "Severity"},
                 { title: "Package"},
                 { title: "Type"},
+                { title: "Package Path"},
                 { title: "Publish Date"},
                 { title: "Fix"},
                 { title: "Fix Date"},
@@ -251,15 +252,15 @@ function buildSecurityTable(tableId, outputFile) {
                     render: severity
                 },
                 {
-                    targets: 5,
+                    targets: 6,
                     render: dateToRelative
                 },
                 {
-                    targets: 6,
+                    targets: 7,
                     render:fixAvailableRender
                 },
                 {
-                    targets: 7,
+                    targets: 8,
                     render: dateToRelative
                 }
             ]
@@ -361,6 +362,7 @@ function drawSecurityTable(){
         row[tableColFor("Severity",tableData)],
         row[tableColFor("Vulnerability Package",tableData)],
         row[tableColFor("Package Type",tableData)] || "",
+        row[tableColFor("Package Path",tableData)] || "",
         row[tableColFor("Disclosure Date",tableData)] || "",
         row[tableColFor("Fix Available",tableData)],
         row[tableColFor("Solution Date",tableData)] || "",
@@ -377,7 +379,7 @@ function drawSecurityTable(){
 function download_csv() {
     var csv = 'sep=;';
     csv += "\n";
-    var headerArray = ["Image","Vuln ID","Severity","Package","Fix","URL","type","Publish Date","Fix Date"];
+    var headerArray = ["Image","Vuln ID","Severity","Package","Fix","URL","type","Package Path","Publish Date","Fix Date"];
     csv += headerArray.join(';')
     csv += "\n";
     getFilteredData(vulnerabilitiesData).data.forEach(function(row) {

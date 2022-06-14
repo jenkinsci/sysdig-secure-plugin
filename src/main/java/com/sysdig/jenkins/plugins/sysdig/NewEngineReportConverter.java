@@ -261,6 +261,7 @@ public class NewEngineReportConverter extends ReportConverter{
           packageJson.get("suggestedFix")== JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
           vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
           packageJson.getString("type"),
+          packageJson.containsKey("packagePath")?packageJson.get("packagePath")== JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath"):"N/A",
           vulnJson.getString("disclosureDate"),
           vulnJson.get("solutionDate")==JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate")
         ));
