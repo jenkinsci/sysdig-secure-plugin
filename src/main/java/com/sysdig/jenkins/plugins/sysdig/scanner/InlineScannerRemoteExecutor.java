@@ -108,7 +108,8 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     addProxyVars(envVars, containerEnvVars, logger);
 
     List<String> bindMounts = new ArrayList<>();
-    bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
+    String daemonSocket = envVars.get("DOCKER_HOST", "/var/run/docker.sock");
+    bindMounts.add(daemonSocket + ":/var/run/docker.sock");
 
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Final environment: " + envVars);

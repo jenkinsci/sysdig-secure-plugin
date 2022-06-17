@@ -159,7 +159,7 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  public void dockerSocketIsMounted() throws Exception {
+  public void dockerSocketIsMountedWithDefaultValue() throws Exception {
     setupMocks();
 
     // When
@@ -174,6 +174,27 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       argThat(args -> args.contains("/var/run/docker.sock:/var/run/docker.sock")));
   }
+
+  @Test
+  public void dockerSocketIsMountedWithCorrectPath() throws Exception {
+    String customVolumePath = "/myroot/volume";
+
+    setupMocks();
+    nodeEnvVars.override("DOCKER_HOST", customVolumePath);
+
+    // When
+    scannerRemoteExecutor.call();
+
+    // Then
+    verify(containerRunner, times(1)).createContainer(
+      eq(SCAN_IMAGE),
+      argThat(args -> args.contains("cat")),
+      any(),
+      any(),
+      any(),
+      argThat(args -> args.contains(customVolumePath + ":/var/run/docker.sock")));
+  }
+
 
   @Test
   public void logOutputIsSentToTheLogger() throws Exception {
