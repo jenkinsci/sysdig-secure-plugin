@@ -15,11 +15,23 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.google.common.base.Splitter;
-import java.util.regex.Pattern;
+import java.nio.file.Paths;
+import java.nio.file.InvalidPathException;
 
 public class Util {
 
   public enum GATE_ACTION {PASS, FAIL}
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
+
+  public static boolean isValidLocalPath(String path) {
+    try {
+      Paths.get(path);
+    } catch (InvalidPathException | NullPointerException ex) {
+      return false;
+    }
+    if (path.length()>0 && path.substring(0, 1).equals("/")){
+      return true;
+    }
+    return false;
+  }
 }

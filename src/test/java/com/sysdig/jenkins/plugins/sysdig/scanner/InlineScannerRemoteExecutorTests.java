@@ -15,7 +15,9 @@ import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.regex.Pattern;
+import java.nio.file.Path;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
@@ -46,6 +48,8 @@ public class InlineScannerRemoteExecutorTests {
   private EnvVars nodeEnvVars;
   private BuildConfig config;
 
+  private Path tempPath;
+
   @Before
   public void beforeEach() {
     config = mock(BuildConfig.class);
@@ -60,6 +64,7 @@ public class InlineScannerRemoteExecutorTests {
       nodeEnvVars);
   }
 
+
   private void setupMocks() throws InterruptedException {
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
@@ -71,7 +76,7 @@ public class InlineScannerRemoteExecutorTests {
     containerRunner = mock(ContainerRunner.class);
     ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
-    when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
+    when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
 
     container = mock(Container.class);
     outputObject = new JSONObject();
@@ -159,7 +164,7 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  public void dockerSocketIsMountedWithDefaultValue() throws Exception {
+  public void dockerSocketIsMountedWithEnvVariableNotSet() throws Exception {
     setupMocks();
 
     // When
@@ -176,8 +181,8 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  public void dockerSocketIsMountedWithCorrectPath() throws Exception {
-    String customVolumePath = "/myroot/volume";
+  public void dockerSocketIsMountedWithValidPath() throws Exception {
+    String customVolumePath = "/mypath";
 
     setupMocks();
     nodeEnvVars.override("DOCKER_HOST", customVolumePath);
@@ -193,6 +198,26 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(args -> args.contains(customVolumePath + ":/var/run/docker.sock")));
+  }
+
+  @Test
+  public void dockerSocketIsMountedWithInvalidPath() throws Exception {
+    String customVolumePath = "tcp://foo:/var/run";
+
+    setupMocks();
+    nodeEnvVars.override("DOCKER_HOST", customVolumePath);
+
+    // When
+    scannerRemoteExecutor.call();
+
+    // Then
+    verify(containerRunner, times(1)).createContainer(
+      eq(SCAN_IMAGE),
+      argThat(args -> args.contains("cat")),
+      any(),
+      any(),
+      any(),
+      argThat(args -> args.equals(Collections.emptyList())));
   }
 
 

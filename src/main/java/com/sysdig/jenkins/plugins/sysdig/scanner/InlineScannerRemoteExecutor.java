@@ -23,6 +23,7 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.Util;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
@@ -71,6 +72,8 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     this.envVars = envVars;
   }
 
+  static final String DEFAULT_DOCKER_VOLUME = "/var/run/docker.sock";
+
   @Override
   public void checkRoles(RoleChecker checker) throws SecurityException { }
   @Override
@@ -84,7 +87,22 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       }
     }
 
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
+    List<String> bindMounts = new ArrayList<>();
+    String dockerVolumeInContainer = null;
+
+    // see https://github.com/jenkinsci/sysdig-secure-plugin/pull/55 discussion
+    if (envVars.containsKey("DOCKER_HOST")) {
+      String candidateVolumeHostPath = envVars.get("DOCKER_HOST");
+      if (Util.isValidLocalPath(candidateVolumeHostPath)) {
+        bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
+      } else {
+        dockerVolumeInContainer = candidateVolumeHostPath;
+      }
+    } else {
+      bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
+    }
+
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars, dockerVolumeInContainer);
     Timer cmdExecPingTimer = null;
 
     List<String> args = new ArrayList<>();
@@ -107,9 +125,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     containerEnvVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
     addProxyVars(envVars, containerEnvVars, logger);
 
-    List<String> bindMounts = new ArrayList<>();
-    String daemonSocket = envVars.get("DOCKER_HOST", "/var/run/docker.sock");
-    bindMounts.add(daemonSocket + ":/var/run/docker.sock");
+
 
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Final environment: " + envVars);
@@ -244,4 +260,6 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       logger.logDebug(line);
     }
   }
+
+
 }

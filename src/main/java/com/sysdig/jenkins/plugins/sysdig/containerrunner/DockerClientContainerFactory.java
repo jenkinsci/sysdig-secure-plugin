@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 public class DockerClientContainerFactory implements ContainerRunnerFactory, Serializable {
   @Override
-  public ContainerRunner getContainerRunner(SysdigLogger logger, EnvVars currentEnv) {
-    return new DockerClientRunner(logger, currentEnv);
+  public ContainerRunner getContainerRunner(SysdigLogger logger, EnvVars currentEnv, String dockerHost) {
+    return new DockerClientRunner(logger, currentEnv, dockerHost);
   }
 }
