@@ -15,23 +15,27 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-import java.nio.file.Paths;
+
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 
 public class Util {
 
   public enum GATE_ACTION {PASS, FAIL}
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
 
-  public static boolean isValidLocalPath(String path) {
+  public static boolean isValidLocalExistingFile(String path) {
     try {
       Paths.get(path);
     } catch (InvalidPathException | NullPointerException ex) {
       return false;
     }
-    if (path.length()>0 && path.substring(0, 1).equals("/")){
-      return true;
+    File f = new File(path);
+    if (!path.startsWith("/") || !f.isFile()){
+      return false;
     }
-    return false;
+    return true;
   }
 }

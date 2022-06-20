@@ -15,6 +15,8 @@ import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
 import java.util.regex.Pattern;
 import java.nio.file.Path;
@@ -51,7 +53,8 @@ public class InlineScannerRemoteExecutorTests {
   private Path tempPath;
 
   @Before
-  public void beforeEach() {
+  public void beforeEach() throws IOException {
+    tempPath = Files.createTempFile("testJenkinsPlugins", "");
     config = mock(BuildConfig.class);
 
     nodeEnvVars = new EnvVars();
@@ -64,7 +67,10 @@ public class InlineScannerRemoteExecutorTests {
       nodeEnvVars);
   }
 
-
+  @After
+  public void afterEach() throws IOException {
+    Files.delete(tempPath);
+  }
   private void setupMocks() throws InterruptedException {
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
@@ -182,10 +188,8 @@ public class InlineScannerRemoteExecutorTests {
 
   @Test
   public void dockerSocketIsMountedWithValidPath() throws Exception {
-    String customVolumePath = "/mypath";
-
     setupMocks();
-    nodeEnvVars.override("DOCKER_HOST", customVolumePath);
+    nodeEnvVars.override("DOCKER_HOST", tempPath.toString());
 
     // When
     scannerRemoteExecutor.call();
@@ -197,7 +201,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       any(),
-      argThat(args -> args.contains(customVolumePath + ":/var/run/docker.sock")));
+      argThat(args -> args.contains(tempPath + ":/var/run/docker.sock")));
   }
 
   @Test
