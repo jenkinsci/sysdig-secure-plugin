@@ -260,6 +260,4 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       logger.logDebug(line);
     }
   }
-
-
 }
