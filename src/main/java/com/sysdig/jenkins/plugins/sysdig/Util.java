@@ -26,14 +26,14 @@ public class Util {
   public enum GATE_ACTION {PASS, FAIL}
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
 
-  public static boolean isValidLocalExistingFile(String path) {
+  public static boolean isExistingFile(String path) {
     try {
       Paths.get(path);
     } catch (InvalidPathException | NullPointerException ex) {
       return false;
     }
     File f = new File(path);
-    if (!path.startsWith("/") || !f.isFile()){
+    if (!f.isFile()){
       return false;
     }
     return true;

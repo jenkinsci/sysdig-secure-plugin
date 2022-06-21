@@ -205,7 +205,7 @@ public class InlineScannerRemoteExecutorTests {
   }
 
   @Test
-  public void dockerSocketIsMountedWithInvalidPath() throws Exception {
+  public void dockerSocketIsMountedWithNotLocalPath() throws Exception {
     String customVolumePath = "tcp://foo:/var/run";
 
     setupMocks();
@@ -222,6 +222,15 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       argThat(args -> args.equals(Collections.emptyList())));
+  }
+
+  @Test
+  public void dockerSocketIsMountedWithInvalidPath() {
+    String customVolumePath = tempPath + "whatever";
+
+    nodeEnvVars.override("DOCKER_HOST", customVolumePath);
+
+    assertThrows(AbortException.class, () -> scannerRemoteExecutor.call());
   }
 
 

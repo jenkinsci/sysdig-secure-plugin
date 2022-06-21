@@ -93,10 +93,14 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     // see https://github.com/jenkinsci/sysdig-secure-plugin/pull/55 discussion
     if (envVars.containsKey("DOCKER_HOST")) {
       String candidateVolumeHostPath = envVars.get("DOCKER_HOST");
-      if (Util.isValidLocalExistingFile(candidateVolumeHostPath)) {
-        bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
-      } else {
+      if (!candidateVolumeHostPath.startsWith("/")){
         dockerVolumeInContainer = candidateVolumeHostPath;
+      } else {
+        if (Util.isExistingFile(candidateVolumeHostPath)) {
+          bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
+        } else {
+          throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
+        }
       }
     } else {
       bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
