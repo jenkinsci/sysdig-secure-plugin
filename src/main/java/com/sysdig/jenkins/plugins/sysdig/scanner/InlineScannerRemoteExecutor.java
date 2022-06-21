@@ -28,6 +28,7 @@ import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.*;
 import java.util.*;
@@ -93,11 +94,11 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     // see https://github.com/jenkinsci/sysdig-secure-plugin/pull/55 discussion
     if (envVars.containsKey("DOCKER_HOST")) {
       String candidateVolumeHostPath = envVars.get("DOCKER_HOST");
-      if (!candidateVolumeHostPath.startsWith("/")){
-        dockerVolumeInContainer = candidateVolumeHostPath;
+      if (Util.isExistingFile(candidateVolumeHostPath)) {
+        bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
       } else {
-        if (Util.isExistingFile(candidateVolumeHostPath)) {
-          bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
+          if (!candidateVolumeHostPath.startsWith("/")){
+          dockerVolumeInContainer = candidateVolumeHostPath;
         } else {
           throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
         }
