@@ -13,6 +13,7 @@ import org.junit.*;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -230,7 +231,10 @@ public class InlineScannerRemoteExecutorTests {
 
     nodeEnvVars.override("DOCKER_HOST", customVolumePath);
 
-    assertThrows(AbortException.class, () -> scannerRemoteExecutor.call());
+    if (!SystemUtils.IS_OS_WINDOWS) {
+      assertThrows(AbortException.class, () -> scannerRemoteExecutor.call());
+    }
+
   }
 
 

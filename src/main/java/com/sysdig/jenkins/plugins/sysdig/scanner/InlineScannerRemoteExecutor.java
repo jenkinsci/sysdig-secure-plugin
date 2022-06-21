@@ -98,9 +98,9 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
         bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
       } else {
           if (!candidateVolumeHostPath.startsWith("/")){
-          dockerVolumeInContainer = candidateVolumeHostPath;
+            dockerVolumeInContainer = candidateVolumeHostPath;
         } else {
-          throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
+            throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
         }
       }
     } else {
