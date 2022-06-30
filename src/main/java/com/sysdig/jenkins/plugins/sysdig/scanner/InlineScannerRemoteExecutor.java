@@ -23,10 +23,12 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.Util;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.*;
 import java.util.*;
@@ -71,6 +73,8 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     this.envVars = envVars;
   }
 
+  static final String DEFAULT_DOCKER_VOLUME = "/var/run/docker.sock";
+
   @Override
   public void checkRoles(RoleChecker checker) throws SecurityException { }
   @Override
@@ -84,7 +88,26 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       }
     }
 
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
+    List<String> bindMounts = new ArrayList<>();
+    String dockerVolumeInContainer = null;
+
+    // see https://github.com/jenkinsci/sysdig-secure-plugin/pull/55 discussion
+    if (envVars.containsKey("DOCKER_HOST")) {
+      String candidateVolumeHostPath = envVars.get("DOCKER_HOST");
+      if (Util.isExistingFile(candidateVolumeHostPath)) {
+        bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
+      } else {
+          if (!candidateVolumeHostPath.startsWith("/")){
+            dockerVolumeInContainer = candidateVolumeHostPath;
+        } else {
+            throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
+        }
+      }
+    } else {
+      bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
+    }
+
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars, dockerVolumeInContainer);
     Timer cmdExecPingTimer = null;
 
     List<String> args = new ArrayList<>();
@@ -107,8 +130,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     containerEnvVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
     addProxyVars(envVars, containerEnvVars, logger);
 
-    List<String> bindMounts = new ArrayList<>();
-    bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
+
 
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Final environment: " + envVars);

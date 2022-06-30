@@ -25,11 +25,11 @@ public class DockerClientRunner implements ContainerRunner {
   private final DockerClient dockerClient;
   private final SysdigLogger logger;
 
-  public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv) {
+  public DockerClientRunner(SysdigLogger logger, EnvVars currentEnv, String dockerHost) {
 
     DefaultDockerClientConfig.Builder configBuilder = DefaultDockerClientConfig.createDefaultConfigBuilder();
-    if (currentEnv.get("DOCKER_HOST") != null) {
-      configBuilder.withDockerHost(currentEnv.get("DOCKER_HOST"));
+    if (dockerHost != null) {
+      configBuilder.withDockerHost(dockerHost);
     }
 
     if (currentEnv.get("DOCKER_TLS_VERIFY") != null) {

@@ -50,7 +50,7 @@ public class FullWorkflowTests {
 
     ContainerRunner containerRunner = mock(ContainerRunner.class);
     ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
-    when(containerRunnerFactory.getContainerRunner(any(), any())).thenReturn(containerRunner);
+    when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
 
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
     BackendScanner.setBackendScanningClientFactory(backendClientFactory);
