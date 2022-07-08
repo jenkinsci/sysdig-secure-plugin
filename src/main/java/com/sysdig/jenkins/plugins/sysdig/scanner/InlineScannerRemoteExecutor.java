@@ -23,10 +23,12 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.Util;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
+import org.apache.commons.lang.SystemUtils;
 
 import java.io.*;
 import java.util.*;
@@ -71,10 +73,16 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     this.envVars = envVars;
   }
 
+  static final String DEFAULT_DOCKER_VOLUME = "/var/run/docker.sock";
+
+  private void addDefaultDockerDaemonSocketToMountas(List<String> bindMounts){
+    bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
+  }
+
   @Override
   public void checkRoles(RoleChecker checker) throws SecurityException { }
-  @Override
 
+  @Override
   public String call() throws InterruptedException, AbortException {
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
@@ -84,7 +92,29 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       }
     }
 
-    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars);
+    List<String> bindMounts = new ArrayList<>();
+    String dockerVolumeInContainer = null;
+
+    // see https://github.com/jenkinsci/sysdig-secure-plugin/pull/55 discussion
+    if (envVars.containsKey("DOCKER_HOST")) {
+      String candidateVolumeHostPath = envVars.get("DOCKER_HOST");
+      if (Util.isExistingFile(candidateVolumeHostPath)) {
+        bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
+      } else {
+          if (!candidateVolumeHostPath.startsWith("/")){
+            // this mount makes a tcp DOCKER_HOST be working if the docker.sock
+            addDefaultDockerDaemonSocketToMountas(bindMounts);
+            dockerVolumeInContainer = candidateVolumeHostPath;
+        } else {
+            throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
+        }
+      }
+    } else {
+      addDefaultDockerDaemonSocketToMountas(bindMounts);
+    }
+
+    ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars, dockerVolumeInContainer);
+    Timer cmdExecPingTimer = null;
 
     List<String> args = new ArrayList<>();
     args.add(SCAN_COMMAND);
@@ -106,8 +136,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     containerEnvVars.add("SYSDIG_ADDED_BY=cicd-inline-scan");
     addProxyVars(envVars, containerEnvVars, logger);
 
-    List<String> bindMounts = new ArrayList<>();
-    bindMounts.add("/var/run/docker.sock:/var/run/docker.sock");
+
 
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Final environment: " + envVars);
@@ -137,9 +166,29 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
+      if (this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY")!=null) {
+        String pingDelayStr = this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY");
+        try {
+          long pingDelay = Long.parseLong(pingDelayStr);
+          cmdExecPingTimer = new Timer();
+          cmdExecPingTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+              inlineScanContainer.ping();
+            }
+          }, pingDelay * 1000, pingDelay * 1000);
+          logger.logDebug("Starting pinging to keep connection alive during command execution...");
+        } catch (NumberFormatException e) {
+          logger.logWarn(String.format("DOCKER_CMD_EXEC_PING_DELAY=%s is not valid", pingDelayStr));
+        }
+      }
+
       logger.logDebug("Executing command in container: " + args);
       inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
     } finally {
+      if (cmdExecPingTimer!=null){
+        cmdExecPingTimer.cancel();
+      }
       inlineScanContainer.stop(STOP_SECONDS);
     }
 

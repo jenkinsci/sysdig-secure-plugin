@@ -110,4 +110,10 @@ public class DockerClientContainer implements Container {
     .withForce(true)
     .exec();
   }
+
+  @Override
+  public void ping() {
+    dockerClient.pingCmd().exec();
+  }
+
 }
