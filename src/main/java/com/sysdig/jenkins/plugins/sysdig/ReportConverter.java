@@ -27,7 +27,7 @@ public class ReportConverter {
     for (ImageScanningResult result : results) {
       String evalStatus = result.getEvalStatus();
 
-      logger.logDebug(String.format("Get policy evaluation status for image 's': %s", result.getTag(), evalStatus));
+      logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
       if (!"pass".equals(evalStatus)) {
         finalAction = Util.GATE_ACTION.FAIL;
