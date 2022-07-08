@@ -257,6 +257,7 @@ public class ReportConverter {
         vulnJson.getString("fix"),
         vulnJson.getString("url"),
         vulnJson.getString("package_type"),
+        vulnJson.getString("package_path"),
         vulnJson.has("disclosure_date") ? vulnJson.getString("disclosure_date") : "",
         vulnJson.has("solution_date") ? vulnJson.getString("solution_date") : ""
       ));
