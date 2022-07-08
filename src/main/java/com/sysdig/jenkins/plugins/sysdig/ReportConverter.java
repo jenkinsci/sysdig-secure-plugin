@@ -29,7 +29,7 @@ public class ReportConverter {
 
       logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
-      if (!"pass".equals(evalStatus)) {
+      if (!"pass".equals(evalStatus) && !"passed".equals(evalStatus)) {
         finalAction = Util.GATE_ACTION.FAIL;
       }
     }
