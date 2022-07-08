@@ -122,10 +122,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         command.add("--skiptlsverify");
       }
 
-      if (!Strings.isNullOrEmpty(config.getInlineScanExtraParams())) {
-        command.addAll(Arrays.asList(config.getInlineScanExtraParams().split(" ")));
-      }
-
       if (config.getDebug()) {
         command.add("--loglevel=debug");
       }
