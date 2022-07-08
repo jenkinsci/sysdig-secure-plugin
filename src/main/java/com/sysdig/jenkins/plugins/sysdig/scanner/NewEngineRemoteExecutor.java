@@ -195,7 +195,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
      // String stderr = IOUtils.toString(p.getErrorStream(), Charset.defaultCharset());
      // logger.logInfo("Inline scan error:\n" + stderr);
 
-      logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath()))));
+      logger.logDebug("Inline scan logs:\n" + new String(Files.readAllBytes(Paths.get(scanLog.getAbsolutePath())), Charset.defaultCharset()));
 
       //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
       String jsonOutput = new String(Files.readAllBytes(Paths.get(scanResult.getAbsolutePath())), Charset.defaultCharset());
