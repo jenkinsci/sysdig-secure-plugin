@@ -222,7 +222,7 @@ public class InlineScannerRemoteExecutorTests {
       any(),
       any(),
       any(),
-      argThat(args -> args.equals(Collections.emptyList())));
+      argThat(args -> args.contains("/var/run/docker.sock:/var/run/docker.sock")));
   }
 
   @Test

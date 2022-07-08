@@ -75,10 +75,14 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   static final String DEFAULT_DOCKER_VOLUME = "/var/run/docker.sock";
 
+  private void addDefaultDockerDaemonSocketToMountas(List<String> bindMounts){
+    bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
+  }
+
   @Override
   public void checkRoles(RoleChecker checker) throws SecurityException { }
-  @Override
 
+  @Override
   public String call() throws InterruptedException, AbortException {
 
     if (!Strings.isNullOrEmpty(dockerFile)) {
@@ -98,13 +102,15 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
         bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
       } else {
           if (!candidateVolumeHostPath.startsWith("/")){
+            // this mount makes a tcp DOCKER_HOST be working if the docker.sock
+            addDefaultDockerDaemonSocketToMountas(bindMounts);
             dockerVolumeInContainer = candidateVolumeHostPath;
         } else {
             throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
         }
       }
     } else {
-      bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
+      addDefaultDockerDaemonSocketToMountas(bindMounts);
     }
 
     ContainerRunner containerRunner = containerRunnerFactory.getContainerRunner(logger, envVars, dockerVolumeInContainer);
