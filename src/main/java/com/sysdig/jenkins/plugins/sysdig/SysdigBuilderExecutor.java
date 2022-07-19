@@ -69,7 +69,7 @@ public class SysdigBuilderExecutor {
         NewEngineScanner scanner = new NewEngineScanner(listener, newEngineBuildConfig, workspace, envVars, logger);
         ReportConverter reporter = new NewEngineReportConverter(logger);
         worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName());
+        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(),false);
       } else {
         OldEngineScanner scanner = config.getInlineScanning() ?
           new InlineScanner(listener, config, workspace, envVars, logger) :
@@ -79,7 +79,7 @@ public class SysdigBuilderExecutor {
 
         worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
 
-        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName());
+        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(),true);
       }
     } catch (Exception e) {
       if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {

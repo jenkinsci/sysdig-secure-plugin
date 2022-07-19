@@ -4,6 +4,9 @@
 
     <t:summary href="sysdig-secure-results" icon="/plugin/sysdig-secure/images/sysdig-shovel.png">
       <a href="sysdig-secure-results">Sysdig Secure Report (${it.gateStatus})</a>
+        <j:if test="${ (it.legacyEngine!= null) &amp;&amp; !(it.legacyEngine)}">
+            <h3 style="margin-bottom: 30px;">New engine generated results</h3>
+        </j:if>
     </t:summary>
 
 </j:jelly>

@@ -96,7 +96,7 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(String imageName, String dockerFile, String imageListName) throws AbortException,InterruptedException {
+  public Util.GATE_ACTION scanAndBuildReports(String imageName, String dockerFile, String imageListName,Boolean legacyEngine) throws AbortException,InterruptedException {
     Map<String, String> imagesAndDockerfiles;
     if (!Strings.isNullOrEmpty(imageListName)) {
       imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, imageListName);
@@ -132,7 +132,7 @@ public class BuildWorker {
       }
 
       /* Setup reports */
-      this.setupBuildReports(finalAction, gateSummary);
+      this.setupBuildReports(finalAction, gateSummary,legacyEngine);
 
     } catch (Exception e) {
       logger.logError("Recording failure to build reports and moving on with plugin operation", e);
@@ -141,7 +141,7 @@ public class BuildWorker {
     return finalAction;
   }
 
-  private void setupBuildReports(Util.GATE_ACTION finalAction, JSONObject gateSummary) throws AbortException {
+  private void setupBuildReports(Util.GATE_ACTION finalAction, JSONObject gateSummary, Boolean legacyEngine) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
@@ -151,7 +151,7 @@ public class BuildWorker {
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
+      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME,legacyEngine));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
