@@ -208,7 +208,7 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
     @Override
     @Nonnull
     public String getDisplayName() {
-      return "Sysdig Secure Container Image Scanner pipeline step";
+      return "Sysdig Secure Container Image Scanner pipeline step (Legacy)";
     }
 
     //public FormValidation doCheckName(@QueryParameter String value) {

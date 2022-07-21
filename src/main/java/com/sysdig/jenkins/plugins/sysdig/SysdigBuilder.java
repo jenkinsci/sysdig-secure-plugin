@@ -324,7 +324,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     @Override
     public String getDisplayName() {
-      return "Sysdig Secure Container Image Scanner";
+      return "Sysdig Secure Container Image Scanner (Legacy)";
     }
 
     @Override
