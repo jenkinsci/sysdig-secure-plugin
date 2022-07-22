@@ -231,7 +231,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanLatestVersion() throws IOException {
-    URL url = new URL("https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt");
+    /*URL url = new URL("https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt");
     Proxy proxy = getHttpProxy();
     Boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
     if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
@@ -242,7 +242,9 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
         return reader.readLine();
       }
-    }
+    }*/
+    //Fixed to avoid compatibility issues.
+    return "1.2.1";
   }
 
   private Proxy getHttpProxy() throws IOException {
