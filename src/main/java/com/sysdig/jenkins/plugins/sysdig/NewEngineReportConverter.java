@@ -13,13 +13,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
-
-
-public class NewEngineReportConverter extends ReportConverter{
-
+public class NewEngineReportConverter extends ReportConverter {
 
   public NewEngineReportConverter(SysdigLogger logger) {
     super(logger);
@@ -27,7 +25,8 @@ public class NewEngineReportConverter extends ReportConverter{
   }
 
   @Override
-  public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
+  public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP)
+      throws IOException, InterruptedException {
     JSONObject fullGateResults = new JSONObject();
 
     for (ImageScanningResult result : resultList) {
@@ -35,11 +34,13 @@ public class NewEngineReportConverter extends ReportConverter{
       JSONArray gatePolicies = result.getGatePolicies();
 
       if (logger.isDebugEnabled()) {
-        logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
-        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
+        logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(),
+            gatePolicies.toString()));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ",
+            result.getTag(), gateResult.toString()));
 
       }
-      fullGateResults.put(result.getImageDigest(),generateCompatibleGatesResult(result));
+      fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
     }
 
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
@@ -48,62 +49,113 @@ public class NewEngineReportConverter extends ReportConverter{
     return generateGatesSummary(fullGateResults);
   }
 
-  private JSONObject generateCompatibleGatesResult(ImageScanningResult imageResult){
+  private String getPkgVulnFailuresString(JSONObject failure) {
+    String result = failure.getString("vulnerabilityName") + " in " + failure.getString("packageName") + "-"
+        + failure.getString("packageVersion");
+
+    return result;
+  }
+
+  private JSONArray getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString,
+      String ruleName) {
+    JSONArray row = new JSONArray();
+    row.element(imageResult.getImageDigest());
+    row.element(imageResult.getTag());
+    row.element("trigger_id");
+    row.element(ruleName);
+    row.add(ruleString);
+    row.add(failure);
+    row.element("STOP");
+    row.element(false);
+    row.element("");
+    row.element(policyName);
+    return row;
+  }
+
+  private JSONArray getPkgVulnFailures(JSONObject rule, ImageScanningResult imageResult, String policyName,
+      String ruleString, String ruleName) {
+    return rule.getJSONArray("pkgVulnFailures").stream().map(failure -> {
+      String failureName = getPkgVulnFailuresString((JSONObject) failure);
+      return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
+    })
+    .collect(Collectors.toCollection(JSONArray::new));
+  }
+
+  private JSONArray getImageConfFailures(JSONObject rule, ImageScanningResult imageResult, String policyName,
+      String ruleString, String ruleName) {
+    return rule.getJSONArray("ImageConfFailures").stream().map(failure -> {
+      String failureName = ((JSONObject) failure).getString("RemediationId");
+      return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
+    })
+    .collect(Collectors.toCollection(JSONArray::new));
+  }
+
+  private JSONArray getRuleFailures(JSONObject item, ImageScanningResult imageResult, String policyName) {
+    return ((JSONObject) item).getJSONArray("rules")
+        .stream()
+        .filter(rule -> ((JSONObject) rule).getInt("failuresCount") > 0)
+        .map(rule -> {
+          JSONArray results = new JSONArray();
+          String ruleName = ((JSONObject) item).getString("name");
+          String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
+          Boolean hasPkgVulnFailures = ((JSONObject) rule).has("pkgVulnFailures");
+          Boolean hasImageConfFailures = ((JSONObject) rule).has("ImageConfFailures");
+          if (hasPkgVulnFailures) {
+            results = getPkgVulnFailures((JSONObject) rule, imageResult, policyName, ruleString, ruleName);
+            return results;
+          }
+          if (hasImageConfFailures) {
+            results = getImageConfFailures((JSONObject) rule, imageResult, policyName, ruleString, ruleName);
+          }
+          return results;
+        })
+        .flatMap(Collection::stream)
+        .collect(Collectors.toCollection(JSONArray::new));
+  }
+
+  private JSONObject generateCompatibleGatesResult(ImageScanningResult imageResult) {
     JSONObject oldEngineResult = new JSONObject();
-    String[] headerlist =  {
-      "Image_Id",
-      "Repo_Tag",
-      "Trigger_Id",
-      "Gate",
-      "Trigger",
-      "Check_Output",
-      "Gate_Action",
-      "Whitelisted",
-      "Policy_Id",
-      "Policy_Name"
+    String[] headerlist = {
+        "Image_Id",
+        "Repo_Tag",
+        "Trigger_Id",
+        "Gate",
+        "Trigger",
+        "Check_Output",
+        "Gate_Action",
+        "Whitelisted",
+        "Policy_Id",
+        "Policy_Name"
     };
 
-
     JSONArray headers = JSONArray.fromObject(headerlist);
-    JSONArray rows = new JSONArray();
+    JSONArray gateList = imageResult.getGateResult().getJSONArray("list");
     JSONObject result = new JSONObject();
 
-    imageResult.getGateResult().getJSONArray("list").forEach(policy -> {
-      if (((JSONObject)policy).getInt("failuresCount")>0){
-        ((JSONObject)policy).getJSONArray("bundle").forEach(item ->{
-          if (((JSONObject) item).getInt("failuresCount") > 0) {
-            ((JSONObject)item).getJSONArray("rules").forEach(rule -> {
-              if (((JSONObject)rule).getInt("failuresCount") > 0) {
-                String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
-                if (((JSONObject)rule).has("pkgVulnFailures")) {
-                  ((JSONObject)rule).getJSONArray("pkgVulnFailures").forEach(failure -> {
-                    JSONArray row = new JSONArray();
-                    row.element(imageResult.getImageDigest());
-                    row.element(imageResult.getTag());
-                    row.element("trigger_id");
-                    row.element(((JSONObject) item).getString("name"));
-                    row.add(ruleString );
-                    row.add(getPkgVulnFailuresString((JSONObject)failure));
-                    row.element("STOP");
-                    row.element(false);
-                    row.element("");
-                    row.element(((JSONObject) policy).getString("name"));
-                    rows.element(row);
-                  });
-                }
-              }
-            });
-          }
-        });
-      }
-    });
+    JSONArray rows = gateList
+        .stream()
+        .filter(policy -> ((JSONObject) policy).getInt("failuresCount") > 0)
+        .map(policy -> {
+          String policyName = ((JSONObject) policy).getString("name");
+          JSONArray bundles = ((JSONObject) policy).getJSONArray("bundle");
 
-    result.put("header",headers);
+          JSONArray finalResults = bundles
+              .stream()
+              .filter(item -> ((JSONObject) item).getInt("failuresCount") > 0)
+              .map(item -> getRuleFailures(((JSONObject) item), imageResult, policyName))
+              .flatMap(Collection::stream)
+              .collect(Collectors.toCollection(JSONArray::new));
+          return finalResults;
+        })
+        .flatMap(Collection::stream)
+        .collect(Collectors.toCollection(JSONArray::new));
+
+    result.put("header", headers);
     String finalAction = imageResult.getEvalStatus().equalsIgnoreCase("failed") ? "STOP" : "GO";
-    result.put("final_action",finalAction);
-    result.put("rows",rows);
+    result.put("final_action", finalAction);
+    result.put("rows", rows);
 
-    oldEngineResult.put("result",result);
+    oldEngineResult.put("result", result);
 
     return oldEngineResult;
   }
@@ -123,20 +175,21 @@ public class NewEngineReportConverter extends ReportConverter{
     int numColumns = 0, repoTagIndex = -1, gateNameIndex = -1, gateActionIndex = -1, whitelistedIndex = -1;
 
     for (Object imageKey : gatesJson.keySet()) {
-      if (logger.isDebugEnabled()){
+      if (logger.isDebugEnabled()) {
         logger.logDebug(gatesJson.toString());
       }
 
-
       JSONObject content = gatesJson.getJSONObject((String) imageKey);
       if (null == content) { // no content found for a given image id, log and move on
-        logger.logWarn(String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
+        logger.logWarn(
+            String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
         continue;
       }
 
       JSONObject result = content.getJSONObject("result");
       if (null == result) { // result object not found, log and move on
-        logger.logWarn(String.format("'result' element not found in gate output, skipping summary computation for %s", imageKey));
+        logger.logWarn(
+            String.format("'result' element not found in gate output, skipping summary computation for %s", imageKey));
         continue;
       }
 
@@ -144,7 +197,8 @@ public class NewEngineReportConverter extends ReportConverter{
       if (numColumns <= 0 || repoTagIndex < 0 || gateNameIndex < 0 || gateActionIndex < 0 || whitelistedIndex < 0) {
         JSONArray header = result.getJSONArray("header");
         if (null == header) {
-          logger.logWarn(String.format("'header' element not found in gate output, skipping summary computation for %s", imageKey));
+          logger.logWarn(String.format("'header' element not found in gate output, skipping summary computation for %s",
+              imageKey));
           continue;
         }
 
@@ -170,7 +224,9 @@ public class NewEngineReportConverter extends ReportConverter{
       }
 
       if (numColumns <= 0 || repoTagIndex < 0 || gateNameIndex < 0 || gateActionIndex < 0) {
-        logger.logWarn(String.format("Either 'header' element has no columns or column indices (for Repo_Tag, Gate, Gate_Action) not initialized, skipping summary computation for %s", imageKey));
+        logger.logWarn(String.format(
+            "Either 'header' element has no columns or column indices (for Repo_Tag, Gate, Gate_Action) not initialized, skipping summary computation for %s",
+            imageKey));
         continue;
       }
 
@@ -189,30 +245,37 @@ public class NewEngineReportConverter extends ReportConverter{
               switch (row.getString(gateActionIndex).toLowerCase()) {
                 case "stop":
                   stop++;
-                  stop_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row
-                    .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
+                  stop_wl += (whitelistedIndex != -1
+                      && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row
+                          .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
                   break;
                 case "warn":
                   warn++;
-                  warn_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row
-                    .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
+                  warn_wl += (whitelistedIndex != -1
+                      && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row
+                          .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
                   break;
                 case "go":
                   go++;
                   go_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row
-                    .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
+                      .getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
                   break;
                 default:
                   break;
               }
             }
           } else {
-            logger.logWarn(String.format("Expected %d elements but got %d, skipping row %s in summary computation for %s", numColumns, row.size(), row, imageKey));
+            logger
+                .logWarn(String.format("Expected %d elements but got %d, skipping row %s in summary computation for %s",
+                    numColumns, row.size(), row, imageKey));
           }
         }
 
         if (!Strings.isNullOrEmpty(repoTag)) {
-          logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
+          logger.logInfo(String.format(
+              "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
+              repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl,
+              result.getString("final_action")));
 
           JSONObject summaryRow = new JSONObject();
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), repoTag);
@@ -222,7 +285,10 @@ public class NewEngineReportConverter extends ReportConverter{
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
           summaryRows.add(summaryRow);
         } else {
-          logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
+          logger.logInfo(String.format(
+              "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
+              imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl,
+              result.getString("final_action")));
           JSONObject summaryRow = new JSONObject();
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
@@ -231,11 +297,13 @@ public class NewEngineReportConverter extends ReportConverter{
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
           summaryRows.add(summaryRow);
 
-          //console.logWarn("Repo_Tag element not found in gate output, skipping summary computation for " + imageKey);
+          // console.logWarn("Repo_Tag element not found in gate output, skipping summary
+          // computation for " + imageKey);
           logger.logWarn(String.format("Repo_Tag element not found in gate output, using imageId: %s", imageKey));
         }
       } else { // rows object not found
-        logger.logWarn(String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
+        logger.logWarn(
+            String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
       }
 
     }
@@ -256,17 +324,21 @@ public class NewEngineReportConverter extends ReportConverter{
         JSONObject vulnJson = (JSONObject) item;
         JSONArray vulnArray = new JSONArray();
         vulnArray.addAll(Arrays.asList(
-          tag,
-          vulnJson.getString("name"),
-          vulnJson.getJSONObject("severity").getString("label"),
-          packageJson.getString("name"),
-          packageJson.get("suggestedFix")== JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
-          vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
-          packageJson.getString("type"),
-          packageJson.containsKey("packagePath")?packageJson.get("packagePath")== JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath"):"N/A",
-          vulnJson.getString("disclosureDate"),
-          vulnJson.get("solutionDate")==JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate")
-        ));
+            tag,
+            vulnJson.getString("name"),
+            vulnJson.getJSONObject("severity").getString("label"),
+            packageJson.getString("name"),
+            packageJson.get("suggestedFix") == JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
+            vulnJson.getJSONObject("severity").has("sourceUrl")
+                ? vulnJson.getJSONObject("severity").getString("sourceUrl")
+                : "",
+            packageJson.getString("type"),
+            packageJson.containsKey("packagePath")
+                ? packageJson.get("packagePath") == JSONNull.getInstance() ? "N/A"
+                    : packageJson.getString("packagePath")
+                : "N/A",
+            vulnJson.getString("disclosureDate"),
+            vulnJson.get("solutionDate") == JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate")));
         dataJson.add(vulnArray);
       });
     }
@@ -274,17 +346,17 @@ public class NewEngineReportConverter extends ReportConverter{
     return dataJson;
   }
 
-  private String getRuleString(JSONArray rule){
+  private String getRuleString(JSONArray rule) {
     ArrayList<String> ruleResult = new ArrayList<>();
 
-   for (Object p : rule.stream().toArray()) {
+    for (Object p : rule.stream().toArray()) {
       JSONObject predicate = (JSONObject) p;
       String type = predicate.getString("type");
       JSONObject extra = predicate.getJSONObject("extra");
-      switch (type){
+      switch (type) {
         case "denyCVE":
           break;
-          case "vulnSeverity":
+        case "vulnSeverity":
           ruleResult.add(" Severity is " + extra.getString("level"));
           break;
         case "vulnIsFixable":
@@ -294,29 +366,29 @@ public class NewEngineReportConverter extends ReportConverter{
           int days = extra.getInt("age");
           String period = " days";
           if (days < 2) {
-          period = " day";
+            period = " day";
           }
           ruleResult.add(" Fixable since " + days + period);
           break;
         case "vulnExploitable":
           ruleResult.add(" Public Exploit available");
           break;
-          case "vulnExploitableWithAge":
+        case "vulnExploitableWithAge":
           days = extra.getInt("age");
           period = " days";
           if (days < 2) {
             period = " day";
           }
-            ruleResult.add(" Public Exploit available and age older than " +days+period);
+          ruleResult.add(" Public Exploit available and age older than " + days + period);
           break;
-          case "vulnAge":
-            days = extra.getInt("age");
-            period = " days";
-            if (days < 2) {
-              period = " day";
-            }
-            ruleResult.add(" Disclosure date older than " +days+period);
-            break;
+        case "vulnAge":
+          days = extra.getInt("age");
+          period = " days";
+          if (days < 2) {
+            period = " day";
+          }
+          ruleResult.add(" Disclosure date older than " + days + period);
+          break;
         case "vulnCVSS":
           Double cvssScore = extra.getDouble("value");
           ruleResult.add(" CVSS Score higher or equal to %.1f" + cvssScore);
@@ -335,14 +407,6 @@ public class NewEngineReportConverter extends ReportConverter{
       }
     }
 
-    return String.join(" AND " , ruleResult);
+    return String.join(" AND ", ruleResult);
   }
-
-  private String getPkgVulnFailuresString(JSONObject failure){
-     String result = failure.getString("vulnerabilityName") + " in " + failure.getString("packageName")+"-"+failure.getString("packageVersion");
-
-    return result;
-  }
-
-
 }
