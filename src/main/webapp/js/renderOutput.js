@@ -54,7 +54,7 @@ function gateAction(source) {
 }
 
 function severity(source) {
-  var el = "<span>" + source + "</span>";
+  var el = `<span>${source}</span>"`;
   if (
     typeof source === "string" &&
     source

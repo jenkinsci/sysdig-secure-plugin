@@ -63,8 +63,8 @@ public class NewEngineReportConverter extends ReportConverter {
     row.element(imageResult.getTag());
     row.element("trigger_id");
     row.element(ruleName);
-    row.add(ruleString);
-    row.add(failure);
+    row.element(ruleString);
+    row.element(failure);
     row.element("STOP");
     row.element(false);
     row.element("");
@@ -72,8 +72,7 @@ public class NewEngineReportConverter extends ReportConverter {
     return row;
   }
 
-  private JSONArray getPkgVulnFailures(JSONObject rule, ImageScanningResult imageResult, String policyName,
-      String ruleString, String ruleName) {
+  private JSONArray getPkgVulnFailures(JSONObject rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
     return rule.getJSONArray("pkgVulnFailures").stream().map(failure -> {
       String failureName = getPkgVulnFailuresString((JSONObject) failure);
       return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
@@ -81,10 +80,9 @@ public class NewEngineReportConverter extends ReportConverter {
     .collect(Collectors.toCollection(JSONArray::new));
   }
 
-  private JSONArray getImageConfFailures(JSONObject rule, ImageScanningResult imageResult, String policyName,
-      String ruleString, String ruleName) {
-    return rule.getJSONArray("ImageConfFailures").stream().map(failure -> {
-      String failureName = ((JSONObject) failure).getString("RemediationId");
+  private JSONArray getImageConfFailures(JSONObject rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+    return rule.getJSONArray("imageConfFailures").stream().map(failure -> {
+      String failureName = ((JSONObject) failure).getString("remediationText").replaceAll("(\r\n|\n)", "<br />");
       return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
     })
     .collect(Collectors.toCollection(JSONArray::new));
@@ -99,13 +97,14 @@ public class NewEngineReportConverter extends ReportConverter {
           String ruleName = ((JSONObject) item).getString("name");
           String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
           Boolean hasPkgVulnFailures = ((JSONObject) rule).has("pkgVulnFailures");
-          Boolean hasImageConfFailures = ((JSONObject) rule).has("ImageConfFailures");
+          Boolean hasImageConfFailures = ((JSONObject) rule).has("imageConfFailures");
+
           if (hasPkgVulnFailures) {
-            results = getPkgVulnFailures((JSONObject) rule, imageResult, policyName, ruleString, ruleName);
+            results = getPkgVulnFailures((JSONObject) rule, imageResult, policyName, ruleName, ruleString);
             return results;
           }
           if (hasImageConfFailures) {
-            results = getImageConfFailures((JSONObject) rule, imageResult, policyName, ruleString, ruleName);
+            results = getImageConfFailures((JSONObject) rule, imageResult, policyName, ruleName, ruleString);
           }
           return results;
         })
@@ -375,10 +374,7 @@ public class NewEngineReportConverter extends ReportConverter {
           break;
         case "vulnExploitableWithAge":
           days = extra.getInt("age");
-          period = " days";
-          if (days < 2) {
-            period = " day";
-          }
+          period = days < 2 ? " days" : " day";
           ruleResult.add(" Public Exploit available and age older than " + days + period);
           break;
         case "vulnAge":
@@ -400,7 +396,59 @@ public class NewEngineReportConverter extends ReportConverter {
           ruleResult.add("No user interaction required");
           break;
         case "vulnExploitableNoAdmin":
-          ruleResult.add(" No administrative priviliges required");
+          ruleResult.add(" No administrative privileges required");
+          break;
+        case "imageConfigDefaultUserIsRoot":
+          ruleResult.add(" User is root");
+          break;
+        case "imageConfigInstructionNotRecommended":
+          ruleResult.add(" Use of ADD instruction found");
+          break;
+        case "imageConfigInstructionIsPkgManager":
+          ruleResult.add(" Package manager instructions (eg. apk, npm, rpm, etc) are found");
+          break;
+        case "imageConfigSensitiveInformationAndSecrets":
+          ruleResult.add(" Sensitive information and secrets in the image metadata are found");
+          break;
+        case "imageConfigDefaultUserIsNot":
+          String user = extra.getString("user");
+          ruleResult.add(" User is not " + user);
+          break;
+        case "imageConfigCreationDateWithAge":
+          days = extra.has("age") ? extra.getInt("age") : 0;
+          period = days < 2 ? " days" : " day";
+          String daysString = days == 0 ? "N/A" : String.valueOf(days);
+          ruleResult.add(" Creation date is older than or not specified " + daysString + period);
+          break;
+        case "imageConfigLabelExists":
+        case "imageConfigLabelNotExists":
+          String key = extra.getString("key");
+          Boolean isNotExist = type == "imageConfigLabelNotExists";
+          if (isNotExist) {
+            ruleResult.add(" Image label " + key + " does not exist");
+          } else {
+            ruleResult.add(" Image label " + key + " exists");
+          }
+          break;
+        case "imageConfigLabelNotContains":
+          String value = extra.getString("value");
+          key = extra.getString("key");
+          ruleResult.add(" Image label " + key + " does not exist or does not contain " + value);
+          break;
+        case "imageConfigEnvVariableNotExists":
+        case "imageConfigEnvVariableExists":
+          key = extra.getString("key");
+          isNotExist = type == "imageConfigEnvVariableNotExists";
+          if (isNotExist) {
+            ruleResult.add(" Variable " + key + " does not exist");
+          } else {
+            ruleResult.add(" Variable " + key + " exist");
+          }
+          break;
+        case "imageConfigEnvVariableContains":
+          value = extra.getString("value");
+          key = extra.getString("key");
+          ruleResult.add(" Variable " + key + " exists and contains " + value);
           break;
         default:
           ruleResult.add(" ");
