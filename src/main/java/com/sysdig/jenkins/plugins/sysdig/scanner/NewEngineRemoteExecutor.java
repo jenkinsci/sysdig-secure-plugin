@@ -244,7 +244,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       }
     }*/
     //Fixed to avoid compatibility issues.
-    return "1.2.1";
+    return "1.2.4";
   }
 
   private Proxy getHttpProxy() throws IOException {

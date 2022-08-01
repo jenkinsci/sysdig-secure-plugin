@@ -54,7 +54,7 @@ function gateAction(source) {
 }
 
 function severity(source) {
-  var el = "<span>" + source + "</span>";
+  var el = `<span>${source}</span>"`;
   if (
     typeof source === "string" &&
     source
@@ -452,16 +452,15 @@ function timeDifference(current, previous) {
 }
 
 const getFailedPolicies = (policies) => {
-  return Object.values(policies).map((item) =>
-    item.result.rows.reduce((failed, curr) => {
-      const evaluation = curr[6];
-      const policyName = curr[8];
-      if (evaluation === "STOP" && !failed.include(policyName)) {
-        failed.push(policyName);
+  return Object.values(policies).map((item) => {
+    return item.result.rows.reduce((failedList, curr) => {
+      const policyName = curr[curr.length -1];
+      if (!failedList.include(policyName)) {
+        failedList.push(policyName);
       }
-      return failed;
+      return failedList;
     }, [])
-  );
+  }).flat();
 };
 
 function getSummaryRecap(id, vulnReportPath, policyReportPath) {
