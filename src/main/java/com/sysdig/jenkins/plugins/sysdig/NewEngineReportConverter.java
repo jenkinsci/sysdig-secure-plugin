@@ -74,21 +74,23 @@ public class NewEngineReportConverter extends ReportConverter{
           if (((JSONObject) item).getInt("failuresCount") > 0) {
             ((JSONObject)item).getJSONArray("rules").forEach(rule -> {
               if (((JSONObject) rule).getInt("failuresCount") > 0) {
-                String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
-                ((JSONObject)rule).getJSONArray("pkgVulnFailures").forEach(failure -> {
-                  JSONArray row = new JSONArray();
-                  row.element(imageResult.getImageDigest());
-                  row.element(imageResult.getTag());
-                  row.element("trigger_id");
-                  row.element(((JSONObject) item).getString("name"));
-                  row.add(ruleString );
-                  row.add(getPkgVulnFailuresString((JSONObject)failure));
-                  row.element("STOP");
-                  row.element(false);
-                  row.element("");
-                  row.element(((JSONObject) policy).getString("name"));
-                  rows.element(row);
-                });
+                if (((JSONObject) rule).has("pkgVulnFailures")) {
+                  String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
+                  ((JSONObject) rule).getJSONArray("pkgVulnFailures").forEach(failure -> {
+                    JSONArray row = new JSONArray();
+                    row.element(imageResult.getImageDigest());
+                    row.element(imageResult.getTag());
+                    row.element("trigger_id");
+                    row.element(((JSONObject) item).getString("name"));
+                    row.add(ruleString);
+                    row.add(getPkgVulnFailuresString((JSONObject) failure));
+                    row.element("STOP");
+                    row.element(false);
+                    row.element("");
+                    row.element(((JSONObject) policy).getString("name"));
+                    rows.element(row);
+                  });
+                }
               }
             });
           }

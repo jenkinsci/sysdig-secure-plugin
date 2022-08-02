@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
@@ -23,7 +22,6 @@ import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.TaskListener;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import javax.annotation.Nonnull;
@@ -31,7 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner implements ScannerInterface<JSONObject>  {
+public class NewEngineScanner implements ScannerInterface<JSONObject> {
 
   protected final NewEngineBuildConfig config;
   private final Map<String, JSONObject> scanOutputs;
@@ -50,7 +48,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException,InterruptedException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException, InterruptedException {
 
     if (this.workspace == null) {
       throw new AbortException("Inline-scan failed. No workspace available");
@@ -58,11 +56,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
 
     try {
 
-      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(imageTag,
-        dockerFile,
-        config,
-        logger,
-        envVars);
+      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, dockerFile, config, logger, envVars);
 
       String scanRawOutput = workspace.act(task);
 
@@ -90,7 +84,6 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
 
-
   public JSONObject getGateResults(ImageScanningSubmission submission) {
     if (this.scanOutputs.containsKey(submission.getImageDigest())) {
       return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("policies");
@@ -107,7 +100,6 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
 
     return null;
   }
-
 
 
   @Override
@@ -136,11 +128,11 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
     String evalStatus = scanReport.getString("status");
 
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport,scanReport.getJSONArray("list"));
+    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, scanReport.getJSONArray("list"));
   }
 
   @Override
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException,InterruptedException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
