@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
@@ -31,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner implements ScannerInterface<JSONObject>  {
+public class NewEngineScanner implements ScannerInterface<JSONObject> {
 
   protected final NewEngineBuildConfig config;
   private final Map<String, JSONObject> scanOutputs;
@@ -50,7 +49,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
   @Override
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException,InterruptedException {
+  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException, InterruptedException {
 
     if (this.workspace == null) {
       throw new AbortException("Inline-scan failed. No workspace available");
@@ -58,11 +57,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
 
     try {
 
-      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(imageTag,
-        dockerFile,
-        config,
-        logger,
-        envVars);
+      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, dockerFile, config, logger, envVars);
 
       String scanRawOutput = workspace.act(task);
 
@@ -90,7 +85,6 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
 
-
   public JSONObject getGateResults(ImageScanningSubmission submission) {
     if (this.scanOutputs.containsKey(submission.getImageDigest())) {
       return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("policies");
@@ -109,38 +103,16 @@ public class NewEngineScanner implements ScannerInterface<JSONObject>  {
   }
 
 
-
   @Override
-  public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
-   /* JSONObject reportDigests = JSONObject.fromObject(scanReport.get(0));
-    JSONObject firstReport = null;
-    for (Object key : reportDigests.keySet()) {
-      firstReport = reportDigests.getJSONObject((String) key);
-      break;
-    }
+  public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
+    final String evalStatus = scanReport.getString("status");
+    final JSONArray gatePolicies = scanReport.optJSONArray("list")!=null ? scanReport.getJSONArray("list") : new JSONArray();
 
-    if (firstReport == null || firstReport.size() < 1) {
-      throw new AbortException(String.format("Failed to analyze %s due to missing digest eval records in sysdig-secure-engine policy evaluation response", tag));
-    }
-
-    JSONArray tagEvals = null;
-    for (Object key : firstReport.keySet()) {
-      tagEvals = firstReport.getJSONArray((String) key);
-      break;
-    }
-
-    if (tagEvals == null || tagEvals.size() < 1) {
-      throw new AbortException(String.format("Failed to analyze %s due to missing tag eval records in sysdig-secure-engine policy evaluation response", tag));
-    }*/
-
-    String evalStatus = scanReport.getString("status");
-
-
-    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport,scanReport.getJSONArray("list"));
+    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, gatePolicies);
   }
 
   @Override
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException,InterruptedException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
