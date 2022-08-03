@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
@@ -149,7 +150,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   @Override
-  public void checkRoles(RoleChecker checker) throws SecurityException {}
+  public void checkRoles(RoleChecker checker) throws SecurityException {
+  }
 
   @Override
   public String call() throws AbortException {
@@ -172,7 +174,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     }
   }
 
-  private File downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException {
+  private File downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
     final File scannerBinFile = Files.createFile(Paths.get(this.scannerPaths.getBinFolder().toString(), String.format("inlinescan-%s.bin", latestVersion))).toFile();
     logger.logInfo(System.getProperty("os.name"));
 
@@ -180,14 +182,26 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     URL url = new URL("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/" + latestVersion + "/" + os + "/amd64/sysdig-cli-scanner");
     Proxy proxy = getHttpProxy();
     boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
-    if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
-      FileUtils.copyInputStreamToFile(url.openConnection(proxy).getInputStream(), scannerBinFile);
-    } else {
-      FileUtils.copyURLToFile(url, scannerBinFile);
-    }
+    int downloadRetriesLeft = 5;
+    while (true) {
+      try {
+        if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
+          FileUtils.copyInputStreamToFile(url.openConnection(proxy).getInputStream(), scannerBinFile);
+        } else {
+          FileUtils.copyURLToFile(url, scannerBinFile);
+        }
 
-    Files.setPosixFilePermissions(scannerBinFile.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
-    return scannerBinFile;
+        Files.setPosixFilePermissions(scannerBinFile.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
+        return scannerBinFile;
+      } catch (Exception e) {
+        downloadRetriesLeft--;
+        if (downloadRetriesLeft > 0) {
+          TimeUnit.SECONDS.sleep(2L);
+        } else {
+          throw e;
+        }
+      }
+    }
   }
 
   private String getInlineScanLatestVersion() throws IOException {
@@ -260,7 +274,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         logger.logInfo("Downloading inlinescan v" + latestVersion);
         scannerBinaryPath = downloadInlineScan(latestVersion);
         logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
-      } catch (IOException e) {
+      } catch (IOException | InterruptedException e) {
         throw new AbortException("Error downloading inlinescan binary: " + e);
       }
     }
