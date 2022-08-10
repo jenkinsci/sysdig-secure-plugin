@@ -351,12 +351,12 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
       StandardListBoxModel result = new StandardListBoxModel();
 
-      if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+      if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
         return result.includeCurrentValue(credentialsId);
       }
 
       return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
-        Jenkins.get(),
+        Jenkins.getInstance(),
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());
