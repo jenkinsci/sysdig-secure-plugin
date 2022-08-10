@@ -6,37 +6,27 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import hudson.AbortException;
 import hudson.FilePath;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class ReportConverter {
-  protected final SysdigLogger logger;
 
-  public ReportConverter(SysdigLogger logger) {
-    this.logger = logger;
+
+public class NewEngineReportConverter extends ReportConverter{
+
+
+  public NewEngineReportConverter(SysdigLogger logger) {
+    super(logger);
+
   }
 
-  public Util.GATE_ACTION getFinalAction(List<ImageScanningResult> results) throws AbortException {
-    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
-
-    for (ImageScanningResult result : results) {
-      String evalStatus = result.getEvalStatus();
-
-      logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
-
-      if (!"pass".equals(evalStatus) && !"passed".equals(evalStatus)) {
-        finalAction = Util.GATE_ACTION.FAIL;
-      }
-    }
-
-    return finalAction;
-  }
-
+  @Override
   public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
     JSONObject fullGateResults = new JSONObject();
 
@@ -49,26 +39,7 @@ public class ReportConverter {
         logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
 
       }
-      HashMap<String,String> policieNames = new HashMap<>();
-      gatePolicies.forEach (item -> {
-        JSONObject obj = (JSONObject) item;
-        policieNames.put(obj.getString("id"),obj.getString("name"));
-      });
-
-      for (Object key : gateResult.keySet()) {
-
-        try {
-          JSONObject processedResult = gateResult.getJSONObject((String) key);
-          processedResult.getJSONObject("result").getJSONArray("header").element("Policy_Name");
-
-          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")){
-            ((JSONArray)row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
-          }
-          fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
-        } catch (Exception e) {
-          logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
-        }
-      }
+      fullGateResults.put(result.getImageDigest(),generateCompatibleGatesResult(result));
     }
 
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
@@ -77,6 +48,68 @@ public class ReportConverter {
     return generateGatesSummary(fullGateResults);
   }
 
+  private JSONObject generateCompatibleGatesResult(ImageScanningResult imageResult){
+    JSONObject oldEngineResult = new JSONObject();
+    String[] headerlist =  {"Image_Id",
+      "Repo_Tag",
+      "Trigger_Id",
+      "Gate",
+      "Trigger",
+      "Check_Output",
+      "Gate_Action",
+      "Whitelisted",
+      "Policy_Id",
+      "Policy_Name"};
+
+
+    JSONArray headers = JSONArray.fromObject(headerlist);
+    JSONArray rows = new JSONArray();
+    JSONObject result = new JSONObject();
+
+
+    if(imageResult.getGateResult()!=null && imageResult.getGateResult().optJSONArray("list")!=null){
+      imageResult.getGateResult().getJSONArray("list").forEach(policy -> {
+        if (((JSONObject)policy).getInt("failuresCount")>0){
+          ((JSONObject)policy).getJSONArray("bundle").forEach(item ->{
+            if (((JSONObject) item).getInt("failuresCount") > 0) {
+              ((JSONObject)item).getJSONArray("rules").forEach(rule -> {
+                if (((JSONObject) rule).getInt("failuresCount") > 0) {
+                  if (((JSONObject) rule).has("pkgVulnFailures")) {
+                    String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
+                    ((JSONObject) rule).getJSONArray("pkgVulnFailures").forEach(failure -> {
+                      JSONArray row = new JSONArray();
+                      row.element(imageResult.getImageDigest());
+                      row.element(imageResult.getTag());
+                      row.element("trigger_id");
+                      row.element(((JSONObject) item).getString("name"));
+                      row.add(ruleString);
+                      row.add(getPkgVulnFailuresString((JSONObject) failure));
+                      row.element("STOP");
+                      row.element(false);
+                      row.element("");
+                      row.element(((JSONObject) policy).getString("name"));
+                      rows.element(row);
+                    });
+                  }
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+
+    result.put("header",headers);
+    String finalAction = imageResult.getEvalStatus().equalsIgnoreCase("failed") ? "STOP" : "GO";
+    result.put("final_action",finalAction);
+    result.put("rows",rows);
+
+    oldEngineResult.put("result",result);
+
+    return oldEngineResult;
+  }
+
+  @Override
   protected JSONObject generateGatesSummary(JSONObject gatesJson) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
@@ -91,6 +124,11 @@ public class ReportConverter {
     int numColumns = 0, repoTagIndex = -1, gateNameIndex = -1, gateActionIndex = -1, whitelistedIndex = -1;
 
     for (Object imageKey : gatesJson.keySet()) {
+      if (logger.isDebugEnabled()){
+        logger.logDebug(gatesJson.toString());
+      }
+
+
       JSONObject content = gatesJson.getJSONObject((String) imageKey);
       if (null == content) { // no content found for a given image id, log and move on
         logger.logWarn(String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
@@ -209,61 +247,103 @@ public class ReportConverter {
     return gateSummary;
   }
 
-  protected static JSONArray generateDataTablesColumnsForGateSummary() {
-    JSONArray headers = new JSONArray();
-    for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
-      JSONObject header = new JSONObject();
-      header.put("data", column.toString());
-      header.put("title", column.toString().replaceAll("_", " "));
-      headers.add(header);
-    }
-    return headers;
-  }
-
-  public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
-
-    JSONArray dataJson = new JSONArray();
-    for (ImageScanningResult entry : scanResults) {
-      String tag = entry.getTag();
-      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
-    }
-
-    JSONObject securityJson = new JSONObject();
-    JSONArray columnsJson = new JSONArray();
-
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path","Disclosure Date", "Solution Date")) {
-      JSONObject columnJson = new JSONObject();
-      columnJson.put("title", column);
-      columnsJson.add(columnJson);
-    }
-
-    securityJson.put("columns", columnsJson);
-    securityJson.put("data", dataJson);
-
-    jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
-  }
-
+  @Override
   protected JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
     JSONArray dataJson = new JSONArray();
-    JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
+    JSONArray vulList = vulnsReport.getJSONArray("list");
     for (int i = 0; i < vulList.size(); i++) {
-      JSONObject vulnJson = vulList.getJSONObject(i);
-      JSONArray vulnArray = new JSONArray();
-      vulnArray.addAll(Arrays.asList(
-        tag,
-        vulnJson.getString("vuln"),
-        vulnJson.getString("severity"),
-        vulnJson.getString("package"),
-        vulnJson.getString("fix"),
-        vulnJson.getString("url"),
-        vulnJson.getString("package_type"),
-        vulnJson.getString("package_path"),
-        vulnJson.has("disclosure_date") ? vulnJson.getString("disclosure_date") : "",
-        vulnJson.has("solution_date") ? vulnJson.getString("solution_date") : ""
-      ));
-      dataJson.add(vulnArray);
+      JSONObject packageJson = vulList.getJSONObject(i);
+      packageJson.getJSONArray("vulnerabilities").forEach(item -> {
+        JSONObject vulnJson = (JSONObject) item;
+        JSONArray vulnArray = new JSONArray();
+        vulnArray.addAll(Arrays.asList(
+          tag,
+          vulnJson.getString("name"),
+          vulnJson.getJSONObject("severity").getString("label"),
+          packageJson.getString("name"),
+          packageJson.get("suggestedFix")== JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
+          vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
+          packageJson.getString("type"),
+          packageJson.containsKey("packagePath")?packageJson.get("packagePath")== JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath"):"N/A",
+          vulnJson.getString("disclosureDate"),
+          vulnJson.get("solutionDate")==JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate")
+        ));
+        dataJson.add(vulnArray);
+      });
     }
 
     return dataJson;
   }
+
+  private String getRuleString(JSONArray rule){
+    ArrayList<String> ruleResult = new ArrayList<>();
+
+   for (Object p : rule.stream().toArray()) {
+      JSONObject predicate = (JSONObject) p;
+      String type = predicate.getString("type");
+      JSONObject extra = predicate.getJSONObject("extra");
+      switch (type){
+        case "denyCVE":
+          break;
+          case "vulnSeverity":
+          ruleResult.add(" Severity is " + extra.getString("level"));
+          break;
+        case "vulnIsFixable":
+          ruleResult.add(" Fixable");
+          break;
+        case "vulnIsFixableWithAge":
+          int days = extra.getInt("age");
+          String period = " days";
+          if (days < 2) {
+          period = " day";
+          }
+          ruleResult.add(" Fixable since " + days + period);
+          break;
+        case "vulnExploitable":
+          ruleResult.add(" Public Exploit available");
+          break;
+          case "vulnExploitableWithAge":
+          days = extra.getInt("age");
+          period = " days";
+          if (days < 2) {
+            period = " day";
+          }
+            ruleResult.add(" Public Exploit available and age older than " +days+period);
+          break;
+          case "vulnAge":
+            days = extra.getInt("age");
+            period = " days";
+            if (days < 2) {
+              period = " day";
+            }
+            ruleResult.add(" Disclosure date older than " +days+period);
+            break;
+        case "vulnCVSS":
+          Double cvssScore = extra.getDouble("value");
+          ruleResult.add(" CVSS Score higher or equal to %.1f" + cvssScore);
+          break;
+        case "vulnExploitableViaNetwork":
+          ruleResult.add(" Exploitable via network attack");
+          break;
+        case "vulnExploitableNoUser":
+          ruleResult.add("No user interaction required");
+          break;
+        case "vulnExploitableNoAdmin":
+          ruleResult.add(" No administrative priviliges required");
+          break;
+        default:
+          ruleResult.add(" ");
+      }
+    }
+
+    return String.join(" AND " , ruleResult);
+  }
+
+  private String getPkgVulnFailuresString(JSONObject failure){
+     String result = failure.getString("vulnerabilityName") + " in " + failure.getString("packageName")+"-"+failure.getString("packageVersion");
+
+    return result;
+  }
+
+
 }

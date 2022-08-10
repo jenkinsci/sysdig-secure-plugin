@@ -19,68 +19,54 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
-import com.sysdig.jenkins.plugins.sysdig.scanner.*;
+import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.pipeline.modeldefinition.shaded.org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.logging.Logger;
 
-public class SysdigBuilderExecutor {
+public class NewEngineBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
-  private static final Logger LOG = Logger.getLogger(SysdigBuilderExecutor.class.getName());
+  private static final Logger LOG = Logger.getLogger(NewEngineBuilderExecutor.class.getName());
 
   private final ConsoleLog logger;
 
-  public SysdigBuilderExecutor(SysdigBuilder builder,
-                               Run<?, ?> run,
-                               FilePath workspace,
-                               TaskListener listener,
-                               EnvVars envVars) throws AbortException {
+  public NewEngineBuilderExecutor(NewEngineBuilder builder,
+                                  Run<?, ?> run,
+                                  FilePath workspace,
+                                  TaskListener listener,
+                                  EnvVars envVars) throws AbortException {
 
     LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
 
 
     /* Instantiate config and a new build worker */
-    SysdigBuilder.DescriptorImpl globalConfig = builder.getDescriptor();
+    SysdigBuilder.DescriptorImpl globalConfig = (SysdigBuilder.DescriptorImpl) Jenkins.get().getDescriptorOrDie(SysdigBuilder.class);
     logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
     final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
 
-    BuildConfig config = new BuildConfig(globalConfig, builder, sysdigToken);
+    NewEngineBuildConfig config = new NewEngineBuildConfig(globalConfig, builder, sysdigToken);
     config.print(logger);
 
     BuildWorker worker = null;
     Util.GATE_ACTION finalAction = null;
-
     try {
-      if (globalConfig.getForceNewEngine()) {
-        logger.logWarn("-- DEPRECATED SYSDIG CONTAINER SERCURE SCANNING / Forcing new sysdig scanning step--" );
-        NewEngineBuilder newEngineBuilder = new NewEngineBuilder("");
-        newEngineBuilder.setEngineURL(builder.getEngineurl());
-        newEngineBuilder.setBailOnFail(builder.getBailOnFail());
-        newEngineBuilder.setBailOnPluginFail(builder.getBailOnPluginFail());
-        newEngineBuilder.setEngineCredentialsId(builder.getEngineCredentialsId());
-        NewEngineBuildConfig newEngineBuildConfig = new NewEngineBuildConfig(globalConfig, newEngineBuilder, sysdigToken);
-        NewEngineScanner scanner = new NewEngineScanner(listener, newEngineBuildConfig, workspace, envVars, logger);
-        ReportConverter reporter = new NewEngineReportConverter(logger);
-        worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName());
-      } else {
-        OldEngineScanner scanner = config.getInlineScanning() ?
-          new InlineScanner(listener, config, workspace, envVars, logger) :
-          new BackendScanner(config, logger);
 
-        ReportConverter reporter = new ReportConverter(logger);
+      NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
+      ReportConverter reporter = new NewEngineReportConverter(logger);
+      worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
+      finalAction = worker.scanAndBuildReports(config.getImageName(), null, null);
 
-        worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-
-        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName());
-      }
     } catch (Exception e) {
       if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
@@ -114,7 +100,7 @@ public class SysdigBuilderExecutor {
     }
   }
 
-  private String getSysdigTokenFromCredentials(SysdigBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
+  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
 
     //Prefer the job credentials set by the user and fallback to the global ones
     String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();

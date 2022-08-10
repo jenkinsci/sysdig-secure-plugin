@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.Map;
 
 
-public class BackendScanner extends Scanner {
+public class BackendScanner extends OldEngineScanner {
 
   private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
   private final SysdigSecureClient sysdigSecureClient;
@@ -106,6 +106,8 @@ public class BackendScanner extends Scanner {
       throw new AbortException("Failed to retrieve vulnerabilities report due to an unexpected error. Please refer to above logs for more information");
     }
   }
+
+
 
 
 }

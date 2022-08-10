@@ -8,7 +8,7 @@
     </f:entry>
 
     <f:entry help="/plugin/sysdig-secure/help/help-inlineScanning.html">
-      <f:checkbox name="inlineScanning" checked="${instance.inlineScanning}" title="Inline Scanning" onclick="javascript:toggleForceScan()" />
+      <f:checkbox name="inlineScanning" checked="${instance.inlineScanning}" title="Inline Scanning"/>
     </f:entry>
 
     <f:entry help="/plugin/sysdig-secure/help/help-forceScan.html">
