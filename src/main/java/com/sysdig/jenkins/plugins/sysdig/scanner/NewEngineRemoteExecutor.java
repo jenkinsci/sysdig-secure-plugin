@@ -107,13 +107,13 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     }
   }
 
-  private final ScannerPaths scannerPaths;
   private final String imageName;
   private final String dockerFile;
   private final NewEngineBuildConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
+  private final FilePath workspace;
 
   public NewEngineRemoteExecutor(FilePath workspace, String imageName, String dockerFile, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
@@ -121,7 +121,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     this.config = config;
     this.logger = logger;
     this.envVars = envVars;
-    this.scannerPaths = new ScannerPaths(workspace);
+    this.workspace = workspace;
 
     if (envVars.containsKey("no_proxy") || envVars.containsKey("NO_PROXY")) {
       String noProxy = envVars.getOrDefault("no_proxy", envVars.get("NO_PROXY"));
@@ -137,6 +137,9 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   @Override
   public String call() throws AbortException {
+    ScannerPaths scannerPaths = new ScannerPaths(this.workspace);
+
+
     if (!Strings.isNullOrEmpty(dockerFile)) {
       File f = new File(dockerFile);
       if (!f.exists()) {
@@ -146,18 +149,18 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
     try {
       // Create all the necessary folders to store execution temp files and such
-      createExecutionWorkspace();
+      createExecutionWorkspace(scannerPaths);
       // Retrieve the scanner bin file
-      final File scannerBinaryFile = retrieveScannerBinFile();
+      final File scannerBinaryFile = retrieveScannerBinFile(scannerPaths);
       // Execute the scanner bin file and retrieves its json output
-      return executeScan(scannerBinaryFile);
+      return executeScan(scannerPaths, scannerBinaryFile);
     } finally {
-      purgeExecutionWorkspace();
+      purgeExecutionWorkspace(scannerPaths);
     }
   }
 
-  private File downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
-    final File scannerBinFile = Files.createFile(Paths.get(this.scannerPaths.getBinFolder().toString(), String.format("inlinescan-%s.bin", latestVersion))).toFile();
+  private File downloadInlineScan(ScannerPaths scannerPaths, String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
+    final File scannerBinFile = Files.createFile(Paths.get(scannerPaths.getBinFolder().toString(), String.format("inlinescan-%s.bin", latestVersion))).toFile();
     logger.logInfo(System.getProperty("os.name"));
 
     String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin" : "linux";
@@ -231,24 +234,24 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     return proxy;
   }
 
-  private void createExecutionWorkspace() throws AbortException {
+  private void createExecutionWorkspace(ScannerPaths scannerPaths) throws AbortException {
     try {
-      this.scannerPaths.create();
+      scannerPaths.create();
     } catch (Exception e) {
       logger.logError("Unable to create scanner execution workspace", e);
       throw new AbortException("Unable to create scanner execution workspace");
     }
   }
 
-  private void purgeExecutionWorkspace() {
+  private void purgeExecutionWorkspace(ScannerPaths scannerPaths) {
     try {
-      this.scannerPaths.purge();
+      scannerPaths.purge();
     } catch (IOException e) {
       logger.logError("Unable to delete scanner execution workspace", e);
     }
   }
 
-  private File retrieveScannerBinFile() throws AbortException {
+  private File retrieveScannerBinFile(ScannerPaths scannerPaths) throws AbortException {
     File scannerBinaryPath;
 
     if (!config.getScannerBinaryPath().isEmpty()) {
@@ -258,7 +261,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       try {
         String latestVersion = getInlineScanPinnedVersion();
         logger.logInfo("Downloading inlinescan v" + latestVersion);
-        scannerBinaryPath = downloadInlineScan(latestVersion);
+        scannerBinaryPath = downloadInlineScan(scannerPaths, latestVersion);
         logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
       } catch (IOException | InterruptedException e) {
         throw new AbortException("Error downloading inlinescan binary: " + e);
@@ -267,17 +270,17 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     return scannerBinaryPath;
   }
 
-  private String executeScan(final File scannerBinFile) throws AbortException {
+  private String executeScan(ScannerPaths scannerPaths, final File scannerBinFile) throws AbortException {
     try {
-      final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder().toString(), "inlinescan.json")).toFile();
-      final File scannerExecLogsFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder().toString(), "inlinescan-logs.log")).toFile();
+      final File scannerJsonOutputFile = Files.createFile(Paths.get(scannerPaths.getBaseFolder().toString(), "inlinescan.json")).toFile();
+      final File scannerExecLogsFile = Files.createFile(Paths.get(scannerPaths.getBaseFolder().toString(), "inlinescan-logs.log")).toFile();
       final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), 500L);
 
       List<String> command = new ArrayList<>();
       command.add(scannerBinFile.getPath());
       command.add(String.format("--apiurl=%s", this.config.getEngineurl()));
-      command.add(String.format("--dbpath=%s", this.scannerPaths.getDatabaseFolder()));
-      command.add(String.format("--cachepath=%s", this.scannerPaths.getCacheFolder()));
+      command.add(String.format("--dbpath=%s", scannerPaths.getDatabaseFolder()));
+      command.add(String.format("--cachepath=%s", scannerPaths.getCacheFolder()));
 //      command.add(String.format("--logfile=%s", scannerExecLogsFile.getAbsolutePath()));
       command.add(String.format("--output-json=%s", scannerJsonOutputFile.getAbsolutePath()));
       command.add("--console-log");
@@ -305,7 +308,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       final ProcessBuilder processBuilder = new ProcessBuilder().command(command).redirectOutput(scannerExecLogsFile).redirectError(scannerExecLogsFile);
       final Map<String, String> processEnv = processBuilder.environment();
       processEnv.putAll(this.envVars);
-      processEnv.put("TMPDIR", this.scannerPaths.getTmpFolder().toString());
+      processEnv.put("TMPDIR", scannerPaths.getTmpFolder().toString());
       processEnv.put("SECURE_API_TOKEN", this.config.getSysdigToken());
 
       logger.logInfo("Executing: " + String.join(" ", command));
