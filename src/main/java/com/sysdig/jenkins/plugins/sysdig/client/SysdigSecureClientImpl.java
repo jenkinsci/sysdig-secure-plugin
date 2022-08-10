@@ -186,7 +186,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     clientBuilder.useSystemProperties();
 
     // Add proxy configuration to the client
-    ProxyConfiguration proxyConfiguration = Jenkins.get().proxy;
+    ProxyConfiguration proxyConfiguration = Jenkins.getInstance().proxy;
     if (proxyConfiguration != null && !Strings.isNullOrEmpty(proxyConfiguration.name)) {
       HttpHost proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port, "http");
 

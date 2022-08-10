@@ -49,7 +49,7 @@ public class NewEngineBuilderExecutor {
 
 
     /* Instantiate config and a new build worker */
-    SysdigBuilder.DescriptorImpl globalConfig = (SysdigBuilder.DescriptorImpl) Jenkins.get().getDescriptorOrDie(SysdigBuilder.class);
+    SysdigBuilder.DescriptorImpl globalConfig = (SysdigBuilder.DescriptorImpl) Jenkins.getInstance().getDescriptorOrDie(SysdigBuilder.class);
     logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */

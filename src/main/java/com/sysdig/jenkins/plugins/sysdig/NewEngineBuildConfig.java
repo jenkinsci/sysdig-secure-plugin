@@ -111,7 +111,7 @@ public class NewEngineBuildConfig implements Serializable {
   public void print(SysdigLogger logger) {
     logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
-    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
+    if (Jenkins.getInstance().getPluginManager() != null && (plugins = Jenkins.getInstance().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
