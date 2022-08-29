@@ -11,7 +11,7 @@ performing security scans.
 
 > The Sysdig engine has been redesigned to provide better quality results, this documentation shows you how to configure the plugin to work with the redesigned engine.
 >
->If you are still using the legacy engine please refer to the [Legacy engine plugin documentation](README_OLD.md)
+>If you are still using the legacy engine please refer to the [Legacy engine plugin documentation](README-legacy.md)
 
 # Getting Started
 
