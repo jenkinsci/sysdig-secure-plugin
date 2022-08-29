@@ -120,7 +120,7 @@ public class NewEngineReportConverter extends ReportConverter {
     };
 
     JSONArray headers = JSONArray.fromObject(headersList);
-    JSONArray gateList = imageResult.getGateResult().optJSONArray("list")!=null ? imageResult.getGateResult().getJSONArray("list") : new JSONArray();
+    JSONArray gateList = imageResult.getGateResult().optJSONArray("list") != null ? imageResult.getGateResult().getJSONArray("list") : new JSONArray();
     JSONObject result = new JSONObject();
 
     JSONArray rows = gateList

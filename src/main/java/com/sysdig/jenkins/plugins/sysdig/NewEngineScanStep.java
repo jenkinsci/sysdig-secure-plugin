@@ -5,46 +5,46 @@ import org.kohsuke.stapler.DataBoundSetter;
 public interface NewEngineScanStep {
 
   // Getters are used by config.jelly
-  public String getImageName();
+  String getImageName();
 
-  public boolean getBailOnFail();
+  boolean getBailOnFail();
 
-  public boolean getBailOnPluginFail();
+  boolean getBailOnPluginFail();
 
-  public String getPoliciesToApply();
+  String getPoliciesToApply();
 
+  String getEngineURL();
 
-  public String getEngineURL();
+  String getEngineCredentialsId();
 
-  public String getEngineCredentialsId();
+  boolean getEngineVerify();
 
-  public boolean getEngineVerify();
+  String getInlineScanExtraParams();
 
-  public String getInlineScanExtraParams();
-
-  public String getScannerBinaryPath();
-
-  @DataBoundSetter
-  public void setBailOnFail(boolean bailOnFail);
+  String getScannerBinaryPath();
 
   @DataBoundSetter
-  public void setBailOnPluginFail(boolean bailOnPluginFail);
+  void setBailOnFail(boolean bailOnFail);
 
   @DataBoundSetter
-  public void setPoliciesToApply(String policiesToApply);
+  void setBailOnPluginFail(boolean bailOnPluginFail);
 
   @DataBoundSetter
-  public void setEngineURL(String engineurl);
+  void setPoliciesToApply(String policiesToApply);
 
   @DataBoundSetter
-  public void setEngineCredentialsId(String engineCredentialsId);
+  void setEngineURL(String engineurl);
 
   @DataBoundSetter
-  public void setEngineVerify(boolean engineverify);
+  void setEngineCredentialsId(String engineCredentialsId);
 
   @DataBoundSetter
-  public void setInlineScanExtraParams(String inlineScanExtraParams);
+  void setEngineVerify(boolean engineverify);
 
   @DataBoundSetter
-  public void setScannerBinaryPath(String scannerBinaryPath);
+  void setInlineScanExtraParams(String inlineScanExtraParams);
+
+  @DataBoundSetter
+  void setScannerBinaryPath(String scannerBinaryPath);
+
 }

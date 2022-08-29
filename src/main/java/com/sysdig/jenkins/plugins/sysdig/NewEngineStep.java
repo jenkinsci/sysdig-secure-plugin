@@ -60,10 +60,14 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
   }
 
   @Override
-  public String getInlineScanExtraParams() { return builder.getInlineScanExtraParams(); }
+  public String getInlineScanExtraParams() {
+    return builder.getInlineScanExtraParams();
+  }
 
   @Override
-  public String getScannerBinaryPath() { return builder.getScannerBinaryPath();}
+  public String getScannerBinaryPath() {
+    return builder.getScannerBinaryPath();
+  }
 
   @DataBoundSetter
   @Override
@@ -110,7 +114,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
 
   @DataBoundSetter
   @Override
-  public void setScannerBinaryPath(String scannerBinayPath){
+  public void setScannerBinaryPath(String scannerBinayPath) {
     builder.setScannerBinaryPath(scannerBinayPath);
   }
 
@@ -156,6 +160,7 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
 
     private static final long serialVersionUID = 1;
     private transient final NewEngineBuilder builder;
+
     private Execution(
       @Nonnull StepContext context,
       NewEngineBuilder builder) {

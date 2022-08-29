@@ -42,6 +42,7 @@ public class BackendScanner extends OldEngineScanner {
 
   // Use a default container runner factory, but allow overriding for mocks in tests
   private static BackendScanningClientFactory backendScanningClientFactory = new SysdigSecureClientFactory();
+
   public static void setBackendScanningClientFactory(BackendScanningClientFactory backendScanningClientFactory) {
     BackendScanner.backendScanningClientFactory = backendScanningClientFactory;
   }
@@ -78,7 +79,7 @@ public class BackendScanner extends OldEngineScanner {
       throw e;
     } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
+      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n");
     }
   }
 
@@ -109,8 +110,5 @@ public class BackendScanner extends OldEngineScanner {
       throw new AbortException("Failed to retrieve vulnerabilities report due to an unexpected error. Please refer to above logs for more information");
     }
   }
-
-
-
 
 }

@@ -47,7 +47,7 @@ public class BuildConfig implements Serializable {
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigScanStep scanStep, String sysdigToken) {
     imageListName = scanStep.getName();
     bailOnFail = scanStep.getBailOnFail();
-    bailOnPluginFail =  scanStep.getBailOnPluginFail();
+    bailOnPluginFail = scanStep.getBailOnPluginFail();
     debug = globalConfig.getDebug();
     if (!Strings.isNullOrEmpty(scanStep.getEngineurl())) {
       engineurl = scanStep.getEngineurl();
@@ -140,7 +140,7 @@ public class BuildConfig implements Serializable {
     List<PluginWrapper> plugins;
     if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
-        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
+        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin,
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
           break;
         }

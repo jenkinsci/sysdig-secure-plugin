@@ -106,5 +106,5 @@ public class SysdigAction implements Action {
   public Boolean getLegacyEngine() {
     return legacyEngine;
   }
-}
 
+}

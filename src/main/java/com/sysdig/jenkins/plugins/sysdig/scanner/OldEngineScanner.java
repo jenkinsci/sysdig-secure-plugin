@@ -21,7 +21,6 @@ public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
   }
 
 
-
   public ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException {
     JSONObject reportDigests = JSONObject.fromObject(scanReport.get(0));
     JSONObject firstReport = null;
@@ -48,10 +47,10 @@ public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
     JSONObject gateResult = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("result").getJSONObject("result");
     JSONArray gatePolicies = tagEvals.getJSONObject(0).getJSONObject("detail").getJSONObject("policy").getJSONArray("policies");
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport,gatePolicies);
+    return new ImageScanningResult(tag, imageDigest, evalStatus, gateResult, vulnsReport, gatePolicies);
   }
 
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException,InterruptedException {
+  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
     }
@@ -72,5 +71,5 @@ public abstract class OldEngineScanner implements ScannerInterface<JSONArray> {
 
     return resultList;
   }
-  
+
 }

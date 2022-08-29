@@ -26,8 +26,6 @@ public class InlineScannerTests {
   private FilePath workspace = null;
   private OldEngineScanner scanner = null;
 
-  //TODO: Handle exception in channel.call
-
   TaskListener listener;
 
   @Before
@@ -68,7 +66,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("workspace"));
-    //TODO: Check exception registered in log
   }
 
   @Test
@@ -86,7 +83,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("Failed to perform"));
-    //TODO: Check exception registered in log
   }
 
   @Test
@@ -104,7 +100,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("Failed to perform"));
-    //TODO: Check exception registered in log
   }
 
   @Test

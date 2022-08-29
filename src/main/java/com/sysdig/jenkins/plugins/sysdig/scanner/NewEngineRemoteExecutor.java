@@ -48,7 +48,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
     private final SysdigLogger logger;
 
-    public LogsFileToLoggerForwarder(final SysdigLogger forwardTo){
+    public LogsFileToLoggerForwarder(final SysdigLogger forwardTo) {
       this.logger = forwardTo;
     }
 
@@ -314,7 +314,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       logsFileTailer.stop();
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
-      //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
       String jsonOutput = new String(Files.readAllBytes(Paths.get(scannerJsonOutputFile.getAbsolutePath())), Charset.defaultCharset());
       logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
 

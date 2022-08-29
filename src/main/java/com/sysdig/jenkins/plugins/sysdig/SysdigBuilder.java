@@ -101,10 +101,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
   }
 
   @Override
-  public String getRunAsUser() { return runAsUser; }
+  public String getRunAsUser() {
+    return runAsUser;
+  }
 
   @Override
-  public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+  public String getInlineScanExtraParams() {
+    return inlineScanExtraParams;
+  }
 
   @Override
   public boolean isInlineScanning() {
@@ -225,7 +229,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private boolean forceNewEngine = false;
 
 
-
     private String scannerBinaryPath = EMPTY_STRING;
 
     // Upgrade case, you can never really remove these variables once they are introduced
@@ -274,7 +277,9 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       this.forceNewEngine = forceNewEngine;
     }
 
-    public void setScannerBinaryPath(String scannerBinaryPath) { this.scannerBinaryPath = scannerBinaryPath; }
+    public void setScannerBinaryPath(String scannerBinaryPath) {
+      this.scannerBinaryPath = scannerBinaryPath;
+    }
 
 
     @Deprecated
@@ -298,9 +303,13 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       return engineverify;
     }
 
-    public String getRunAsUser() { return runAsUser; }
+    public String getRunAsUser() {
+      return runAsUser;
+    }
 
-    public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+    public String getInlineScanExtraParams() {
+      return inlineScanExtraParams;
+    }
 
     public String getInlinescanimage() {
       return inlinescanimage;
@@ -314,7 +323,9 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       return forceNewEngine;
     }
 
-    public String getScannerBinaryPath() { return scannerBinaryPath; }
+    public String getScannerBinaryPath() {
+      return scannerBinaryPath;
+    }
 
     public DescriptorImpl() {
       load();
@@ -364,7 +375,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
         Collections.emptyList(),
         CredentialsMatchers.always());
     }
-
   }
-}
 
+}

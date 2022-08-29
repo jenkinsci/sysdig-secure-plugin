@@ -94,10 +94,14 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   }
 
   @Override
-  public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+  public String getInlineScanExtraParams() {
+    return inlineScanExtraParams;
+  }
 
   @Override
-  public String getScannerBinaryPath() { return scannerBinaryPath; }
+  public String getScannerBinaryPath() {
+    return scannerBinaryPath;
+  }
 
   @DataBoundSetter
   @Override
@@ -137,7 +141,9 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
 
   @DataBoundSetter
   @Override
-  public void setScannerBinaryPath(String scannerBinaryPath) { this.scannerBinaryPath = scannerBinaryPath; }
+  public void setScannerBinaryPath(String scannerBinaryPath) {
+    this.scannerBinaryPath = scannerBinaryPath;
+  }
 
 
   @DataBoundSetter
@@ -217,8 +223,6 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
       return Strings.isNullOrEmpty(value) ? FormValidation.error("Please enter a valid image name") : FormValidation.ok();
     }
 
-    //TODO: Add image list file support
-
     @SuppressWarnings("unused")
     public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
       StandardListBoxModel result = new StandardListBoxModel();
@@ -229,12 +233,10 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
 
       return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
         Jenkins.get(),
-        //TODO: Move to another kind of credentials
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());
     }
-
   }
-}
 
+}

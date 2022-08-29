@@ -54,10 +54,14 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
   }
 
   @Override
-  public String getRunAsUser() { return builder.getRunAsUser(); }
+  public String getRunAsUser() {
+    return builder.getRunAsUser();
+  }
 
   @Override
-  public String getInlineScanExtraParams() { return builder.getInlineScanExtraParams(); }
+  public String getInlineScanExtraParams() {
+    return builder.getInlineScanExtraParams();
+  }
 
   @Override
   public boolean isInlineScanning() {
@@ -230,4 +234,5 @@ public class SysdigStep extends Step implements BuildStep, SysdigScanStep {
       return "sysdig";
     }
   }
+
 }

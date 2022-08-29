@@ -63,7 +63,6 @@ public class NewEngineScanner implements ScannerInterface<JSONObject> {
 
       JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
 
-      //TODO: Only if exit code 0 or 1 or 3.
       if (scanOutput.has("error")) {
         throw new ImageScanningException(scanOutput.getString("error"));
       }
@@ -106,7 +105,7 @@ public class NewEngineScanner implements ScannerInterface<JSONObject> {
   @Override
   public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
     final String evalStatus = scanReport.getString("status");
-    final JSONArray gatePolicies = scanReport.optJSONArray("list")!=null ? scanReport.getJSONArray("list") : new JSONArray();
+    final JSONArray gatePolicies = scanReport.optJSONArray("list") != null ? scanReport.getJSONArray("list") : new JSONArray();
 
     return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, gatePolicies);
   }

@@ -64,7 +64,6 @@ public class InlineScanner extends OldEngineScanner {
 
       JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
 
-      //TODO: Only if exit code 0 or 1 or 3.
       if (scanOutput.has("error")) {
         throw new ImageScanningException(scanOutput.getString("error"));
       }
@@ -100,8 +99,4 @@ public class InlineScanner extends OldEngineScanner {
     return null;
   }
 
-
-
-
 }
-

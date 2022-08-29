@@ -39,7 +39,7 @@ public class NewEngineBuildConfig implements Serializable {
   public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineScanStep scanStep, String sysdigToken) {
     imageName = scanStep.getImageName();
     bailOnFail = scanStep.getBailOnFail();
-    bailOnPluginFail =  scanStep.getBailOnPluginFail();
+    bailOnPluginFail = scanStep.getBailOnPluginFail();
     debug = globalConfig.getDebug();
     if (!Strings.isNullOrEmpty(scanStep.getEngineURL())) {
       engineurl = scanStep.getEngineURL();
@@ -59,7 +59,7 @@ public class NewEngineBuildConfig implements Serializable {
 
     this.policiesToApply = scanStep.getPoliciesToApply();
 
-    if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())){
+    if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())) {
       this.scannerBinaryPath = scanStep.getScannerBinaryPath();
     } else {
       this.scannerBinaryPath = globalConfig.getScannerBinaryPath();
@@ -103,7 +103,9 @@ public class NewEngineBuildConfig implements Serializable {
     return policiesToApply;
   }
 
-  public String getScannerBinaryPath() {return scannerBinaryPath;}
+  public String getScannerBinaryPath() {
+    return scannerBinaryPath;
+  }
 
   /**
    * Print versions info and configuration
@@ -113,7 +115,7 @@ public class NewEngineBuildConfig implements Serializable {
     List<PluginWrapper> plugins;
     if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
-        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
+        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin,
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
           break;
         }

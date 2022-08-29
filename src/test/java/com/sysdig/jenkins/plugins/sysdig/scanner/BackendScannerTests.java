@@ -27,16 +27,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class BackendScannerTests {
-  //TODO: Test error handling on API
-
-  //TODO: Secure client is received at factory
-
-  //TODO: Verify Token is received at factory
-
-  //TODO: Verify URL is received at factory
-
-  //TODO: Verify client is created with proxy if master is configured to use proxy
-
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
@@ -63,8 +53,8 @@ public class BackendScannerTests {
     when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean())).thenReturn(IMAGE_DIGEST);
   }
 
-    @Test
-  public void testImageIsScanned() throws ImageScanningException, AbortException,InterruptedException {
+  @Test
+  public void testImageIsScanned() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // When
@@ -108,7 +98,7 @@ public class BackendScannerTests {
     // Then
     verify(client, times(1)).submitImageForScanning(
       eq(IMAGE_TO_SCAN),
-      eq( new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
+      eq(new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
       any(),
       anyBoolean());
 

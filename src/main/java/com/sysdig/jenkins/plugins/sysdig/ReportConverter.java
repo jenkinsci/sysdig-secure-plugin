@@ -49,10 +49,10 @@ public class ReportConverter {
         logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
 
       }
-      HashMap<String,String> policieNames = new HashMap<>();
-      gatePolicies.forEach (item -> {
+      HashMap<String, String> policieNames = new HashMap<>();
+      gatePolicies.forEach(item -> {
         JSONObject obj = (JSONObject) item;
-        policieNames.put(obj.getString("id"),obj.getString("name"));
+        policieNames.put(obj.getString("id"), obj.getString("name"));
       });
 
       for (Object key : gateResult.keySet()) {
@@ -61,8 +61,8 @@ public class ReportConverter {
           JSONObject processedResult = gateResult.getJSONObject((String) key);
           processedResult.getJSONObject("result").getJSONArray("header").element("Policy_Name");
 
-          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")){
-            ((JSONArray)row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
+          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")) {
+            ((JSONArray) row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
           }
           fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
         } catch (Exception e) {
@@ -231,7 +231,7 @@ public class ReportConverter {
     JSONObject securityJson = new JSONObject();
     JSONArray columnsJson = new JSONArray();
 
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path","Disclosure Date", "Solution Date")) {
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path", "Disclosure Date", "Solution Date")) {
       JSONObject columnJson = new JSONObject();
       columnJson.put("title", column);
       columnsJson.add(columnJson);
@@ -266,4 +266,5 @@ public class ReportConverter {
 
     return dataJson;
   }
+
 }

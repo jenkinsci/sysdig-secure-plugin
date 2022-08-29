@@ -42,10 +42,10 @@ public class DockerClientContainer implements Container {
       .exec(new ResultCallback.Adapter<Frame>() {
         @Override
         public void onNext(Frame item) {
-          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null){
+          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null) {
             stdoutCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
-          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null){
+          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null) {
             stderrCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
           super.onNext(item);
@@ -55,7 +55,7 @@ public class DockerClientContainer implements Container {
 
   @Override
   public void exec(List<String> cmd, List<String> envVars, Consumer<String> stdoutCallback, Consumer<String> stderrCallback) throws InterruptedException {
-     execAsyncWithAdapter(cmd, envVars, stdoutCallback, stderrCallback).awaitCompletion();
+    execAsyncWithAdapter(cmd, envVars, stdoutCallback, stderrCallback).awaitCompletion();
   }
 
   @Override
@@ -81,10 +81,10 @@ public class DockerClientContainer implements Container {
       .exec(new ResultCallback.Adapter<Frame>() {
         @Override
         public void onNext(Frame item) {
-          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null){
+          if (item.getStreamType() == StreamType.STDOUT && stdoutCallback != null) {
             stdoutCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
-          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null){
+          if (item.getStreamType() == StreamType.STDERR && stderrCallback != null) {
             stderrCallback.accept(new String(item.getPayload(), StandardCharsets.UTF_8));
           }
           super.onNext(item);
@@ -107,8 +107,8 @@ public class DockerClientContainer implements Container {
       .exec();
 
     dockerClient.removeContainerCmd(this.containerId)
-    .withForce(true)
-    .exec();
+      .withForce(true)
+      .exec();
   }
 
   @Override

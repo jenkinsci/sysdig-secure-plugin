@@ -17,12 +17,15 @@ public abstract class Scanner {
   }
 
   public abstract ImageScanningSubmission scanImage(String imageTag, String dockerfile) throws AbortException;
+
   public abstract JSONObject getGateResults(ImageScanningSubmission submission) throws AbortException;
+
   public abstract JSONObject getVulnsReport(ImageScanningSubmission submission) throws AbortException;
+
   protected abstract ImageScanningResult buildImageScanningResult(JSONArray scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException;
+
   protected abstract ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) throws AbortException;
-  public  abstract ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException;
 
-
+  public abstract ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException;
 
 }

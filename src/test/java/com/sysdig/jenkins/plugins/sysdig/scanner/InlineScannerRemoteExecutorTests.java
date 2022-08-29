@@ -36,12 +36,6 @@ public class InlineScannerRemoteExecutorTests {
 
   private InlineScannerRemoteExecutor scannerRemoteExecutor = null;
 
-  //TODO: Throw exception on container run
-
-  //TODO: Handle errors on plugin execution
-
-  //TODO: Handle failed scan, arg errors, other errors
-
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
@@ -74,6 +68,7 @@ public class InlineScannerRemoteExecutorTests {
   public void afterEach() throws IOException {
     Files.delete(tempPath);
   }
+
   private void setupMocks() throws InterruptedException {
     when(config.getSysdigToken()).thenReturn(SYSDIG_TOKEN);
     when(config.getEngineverify()).thenReturn(true);
@@ -83,7 +78,7 @@ public class InlineScannerRemoteExecutorTests {
     when(config.getDebug()).thenReturn(false);
 
     containerRunner = mock(ContainerRunner.class);
-    ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
+    ContainerRunnerFactory containerRunnerFactory = mock(ContainerRunnerFactory.class);
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
     when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
 
@@ -166,7 +161,7 @@ public class InlineScannerRemoteExecutorTests {
       any());
 
     verify(container, never()).exec(
-      argThat(args -> args.stream().anyMatch(Pattern.compile("^(--verbose|-v|-s|--sysdig-url|-o|--on-prem|-f|--dockerfile|--sysdig-skip-tls)$").asPredicate()) ),
+      argThat(args -> args.stream().anyMatch(Pattern.compile("^(--verbose|-v|-s|--sysdig-url|-o|--on-prem|-f|--dockerfile|--sysdig-skip-tls)$").asPredicate())),
       isNull(),
       any(),
       any());
@@ -423,7 +418,6 @@ public class InlineScannerRemoteExecutorTests {
 
     assertEquals("Dockerfile 'non-existing-Dockerfile' does not exist", thrown.getMessage());
   }
-
 
 
   @Test

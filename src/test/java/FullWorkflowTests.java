@@ -30,7 +30,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import static org.mockito.Mockito.*;
 
 public class FullWorkflowTests {
-  //TODO: Test (pipeline?) docker daemon not available
 
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
@@ -55,7 +54,7 @@ public class FullWorkflowTests {
     when(backendClientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
     ContainerRunner containerRunner = mock(ContainerRunner.class);
-    ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
+    ContainerRunnerFactory containerRunnerFactory = mock(ContainerRunnerFactory.class);
     when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
 
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);

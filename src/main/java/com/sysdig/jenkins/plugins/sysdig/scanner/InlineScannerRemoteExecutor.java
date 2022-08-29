@@ -40,7 +40,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   private static final String[] TOUCH_COMMAND = new String[]{"touch", "/tmp/sysdig-inline-scan/logs/info.log"};
   private static final String[] TAIL_COMMAND = new String[]{"tail", "-f", "/tmp/sysdig-inline-scan/logs/info.log"};
   private static final String SCAN_COMMAND = "/sysdig-inline-scan.sh";
-  private static final String[] SCAN_ARGS = new String[] {
+  private static final String[] SCAN_ARGS = new String[]{
     "--storage-type=docker-daemon",
     "--format=JSON"};
   private static final String VERBOSE_ARG = "--verbose";
@@ -75,12 +75,13 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
 
   static final String DEFAULT_DOCKER_VOLUME = "/var/run/docker.sock";
 
-  private void addDefaultDockerDaemonSocketToMountas(List<String> bindMounts){
+  private void addDefaultDockerDaemonSocketToMountas(List<String> bindMounts) {
     bindMounts.add(DEFAULT_DOCKER_VOLUME + ":" + DEFAULT_DOCKER_VOLUME);
   }
 
   @Override
-  public void checkRoles(RoleChecker checker) throws SecurityException { }
+  public void checkRoles(RoleChecker checker) throws SecurityException {
+  }
 
   @Override
   public String call() throws InterruptedException, AbortException {
@@ -101,12 +102,12 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       if (Util.isExistingFile(candidateVolumeHostPath)) {
         bindMounts.add(candidateVolumeHostPath + ":" + DEFAULT_DOCKER_VOLUME);
       } else {
-          if (!candidateVolumeHostPath.startsWith("/")){
-            // this mount makes a tcp DOCKER_HOST be working if the docker.sock
-            addDefaultDockerDaemonSocketToMountas(bindMounts);
-            dockerVolumeInContainer = candidateVolumeHostPath;
+        if (!candidateVolumeHostPath.startsWith("/")) {
+          // this mount makes a tcp DOCKER_HOST be working if the docker.sock
+          addDefaultDockerDaemonSocketToMountas(bindMounts);
+          dockerVolumeInContainer = candidateVolumeHostPath;
         } else {
-            throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
+          throw new AbortException("Daemon socket '" + candidateVolumeHostPath + "' does not exist");
         }
       }
     } else {
@@ -137,7 +138,6 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     addProxyVars(envVars, containerEnvVars, logger);
 
 
-
     logger.logDebug("System environment: " + System.getenv().toString());
     logger.logDebug("Final environment: " + envVars);
     logger.logDebug("Creating container with environment: " + containerEnvVars);
@@ -159,14 +159,13 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
     final StringBuilder builder = new StringBuilder();
 
     try {
-      //TODO: Get exit code in run and exec?
       inlineScanContainer.runAsync(frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
       inlineScanContainer.exec(Arrays.asList(MKDIR_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
-      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null,  frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
+      inlineScanContainer.exec(Arrays.asList(TOUCH_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
       inlineScanContainer.execAsync(Arrays.asList(TAIL_COMMAND), null, frame -> this.sendToLog(logger, frame), frame -> this.sendToLog(logger, frame));
 
-      if (this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY")!=null) {
+      if (this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY") != null) {
         String pingDelayStr = this.envVars.get("DOCKER_CMD_EXEC_PING_DELAY");
         try {
           long pingDelay = Long.parseLong(pingDelayStr);
@@ -186,13 +185,11 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
       logger.logDebug("Executing command in container: " + args);
       inlineScanContainer.exec(args, null, frame -> this.sendToBuilder(builder, frame), frame -> this.sendToDebugLog(logger, frame));
     } finally {
-      if (cmdExecPingTimer!=null){
+      if (cmdExecPingTimer != null) {
         cmdExecPingTimer.cancel();
       }
       inlineScanContainer.stop(STOP_SECONDS);
     }
-
-    //TODO: For exit code 2 (wrong params), just show the output (should not happen, but just in case)
 
     return builder.toString();
   }
@@ -252,7 +249,7 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   }
 
   private void sendToBuilder(StringBuilder builder, String frame) {
-    for (String line: frame.split("[\n\r]")) {
+    for (String line : frame.split("[\n\r]")) {
       // Workaround for older versions of inline-scan which can include some verbose output from "set -x", starting with "+ " in the stdout
       if (!line.startsWith("+ ")) {
         builder.append(line);
@@ -261,13 +258,13 @@ public class InlineScannerRemoteExecutor implements Callable<String, Exception>,
   }
 
   private void sendToLog(SysdigLogger logger, String frame) {
-    for (String line: frame.split("[\n\r]")) {
+    for (String line : frame.split("[\n\r]")) {
       logger.logInfo(line);
     }
   }
 
   private void sendToDebugLog(SysdigLogger logger, String frame) {
-    for (String line: frame.split("[\n\r]")) {
+    for (String line : frame.split("[\n\r]")) {
       logger.logDebug(line);
     }
   }
