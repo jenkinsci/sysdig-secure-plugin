@@ -17,11 +17,10 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import hudson.model.Action;
 import hudson.model.Run;
-
-import java.util.Map;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Sysdig Secure plugin results for a given build are stored and subsequently retrieved from an instance of this class. Rendering/display of

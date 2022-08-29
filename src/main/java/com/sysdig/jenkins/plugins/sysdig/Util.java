@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 

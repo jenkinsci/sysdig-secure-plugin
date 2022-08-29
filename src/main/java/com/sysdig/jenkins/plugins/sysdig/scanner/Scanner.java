@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;

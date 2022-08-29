@@ -18,7 +18,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -30,7 +29,9 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**

@@ -20,15 +20,12 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
-import com.sysdig.jenkins.plugins.sysdig.scanner.Scanner;
-import com.sysdig.jenkins.plugins.sysdig.scanner.ScannerInterface;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.pipeline.modeldefinition.shaded.org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.logging.Logger;

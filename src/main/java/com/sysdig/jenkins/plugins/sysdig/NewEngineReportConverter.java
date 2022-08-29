@@ -3,7 +3,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.AbortException;
 import hudson.FilePath;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONNull;

@@ -18,19 +18,19 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
+import com.sysdig.jenkins.plugins.sysdig.Util;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.Container;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.DockerClientContainerFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.Util;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.remoting.Callable;
 import org.jenkinsci.remoting.RoleChecker;
-import org.apache.commons.lang.SystemUtils;
 
-import java.io.*;
+import java.io.File;
+import java.io.Serializable;
 import java.util.*;
 
 public class InlineScannerRemoteExecutor implements Callable<String, Exception>, Serializable {
