@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ReportConverter {
-  private final SysdigLogger logger;
+  protected final SysdigLogger logger;
 
   public ReportConverter(SysdigLogger logger) {
     this.logger = logger;
@@ -29,7 +29,7 @@ public class ReportConverter {
 
       logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
-      if (!"pass".equals(evalStatus)) {
+      if (!"pass".equals(evalStatus) && !"passed".equals(evalStatus)) {
         finalAction = Util.GATE_ACTION.FAIL;
       }
     }
@@ -44,15 +44,15 @@ public class ReportConverter {
       JSONObject gateResult = result.getGateResult();
       JSONArray gatePolicies = result.getGatePolicies();
 
-      logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+      if (logger.isDebugEnabled()) {
+        logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
 
-      logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
-
-      HashMap<String,String> policieNames = new HashMap<>();
-
-      gatePolicies.forEach (item -> {
+      }
+      HashMap<String, String> policieNames = new HashMap<>();
+      gatePolicies.forEach(item -> {
         JSONObject obj = (JSONObject) item;
-        policieNames.put(obj.getString("id"),obj.getString("name"));
+        policieNames.put(obj.getString("id"), obj.getString("name"));
       });
 
       for (Object key : gateResult.keySet()) {
@@ -61,8 +61,8 @@ public class ReportConverter {
           JSONObject processedResult = gateResult.getJSONObject((String) key);
           processedResult.getJSONObject("result").getJSONArray("header").element("Policy_Name");
 
-          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")){
-            ((JSONArray)row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
+          for (Object row : processedResult.getJSONObject("result").getJSONArray("rows")) {
+            ((JSONArray) row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
           }
           fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
         } catch (Exception e) {
@@ -77,7 +77,7 @@ public class ReportConverter {
     return generateGatesSummary(fullGateResults);
   }
 
-  private JSONObject generateGatesSummary(JSONObject gatesJson) {
+  protected JSONObject generateGatesSummary(JSONObject gatesJson) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -209,7 +209,7 @@ public class ReportConverter {
     return gateSummary;
   }
 
-  private static JSONArray generateDataTablesColumnsForGateSummary() {
+  protected static JSONArray generateDataTablesColumnsForGateSummary() {
     JSONArray headers = new JSONArray();
     for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
       JSONObject header = new JSONObject();
@@ -231,7 +231,7 @@ public class ReportConverter {
     JSONObject securityJson = new JSONObject();
     JSONArray columnsJson = new JSONArray();
 
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Disclosure Date", "Solution Date")) {
+    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path", "Disclosure Date", "Solution Date")) {
       JSONObject columnJson = new JSONObject();
       columnJson.put("title", column);
       columnsJson.add(columnJson);
@@ -243,7 +243,7 @@ public class ReportConverter {
     jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
   }
 
-  private JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+  protected JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
     JSONArray dataJson = new JSONArray();
     JSONArray vulList = vulnsReport.getJSONArray("vulnerabilities");
     for (int i = 0; i < vulList.size(); i++) {
@@ -257,6 +257,7 @@ public class ReportConverter {
         vulnJson.getString("fix"),
         vulnJson.getString("url"),
         vulnJson.getString("package_type"),
+        vulnJson.getString("package_path"),
         vulnJson.has("disclosure_date") ? vulnJson.getString("disclosure_date") : "",
         vulnJson.has("solution_date") ? vulnJson.getString("solution_date") : ""
       ));
@@ -265,4 +266,5 @@ public class ReportConverter {
 
     return dataJson;
   }
+
 }

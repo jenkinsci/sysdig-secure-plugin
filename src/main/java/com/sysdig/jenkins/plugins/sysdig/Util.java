@@ -17,13 +17,13 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 
 public class Util {
 
   public enum GATE_ACTION {PASS, FAIL}
+
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
 
   public static boolean isExistingFile(String path) {
@@ -33,7 +33,7 @@ public class Util {
       return false;
     }
     File f = new File(path);
-    if (!f.isFile()){
+    if (!f.isFile()) {
       return false;
     }
     return true;

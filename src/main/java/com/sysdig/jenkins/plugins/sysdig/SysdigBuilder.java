@@ -21,7 +21,10 @@ import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import hudson.*;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Computer;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
@@ -98,10 +101,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
   }
 
   @Override
-  public String getRunAsUser() { return runAsUser; }
+  public String getRunAsUser() {
+    return runAsUser;
+  }
 
   @Override
-  public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+  public String getInlineScanExtraParams() {
+    return inlineScanExtraParams;
+  }
 
   @Override
   public boolean isInlineScanning() {
@@ -219,6 +226,10 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private String inlineScanExtraParams = EMPTY_STRING;
     private String inlinescanimage = "";
     private boolean forceinlinescan = false;
+    private boolean forceNewEngine = false;
+
+
+    private String scannerBinaryPath = EMPTY_STRING;
 
     // Upgrade case, you can never really remove these variables once they are introduced
     @Deprecated
@@ -253,6 +264,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       this.inlineScanExtraParams = inlineScanExtraParams;
     }
 
+
     public void setInlinescanimage(String inlinescanimage) {
       this.inlinescanimage = inlinescanimage;
     }
@@ -260,6 +272,15 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     public void setForceinlinescan(boolean forceinlinescan) {
       this.forceinlinescan = forceinlinescan;
     }
+
+    public void setForceNewEngine(boolean forceNewEngine) {
+      this.forceNewEngine = forceNewEngine;
+    }
+
+    public void setScannerBinaryPath(String scannerBinaryPath) {
+      this.scannerBinaryPath = scannerBinaryPath;
+    }
+
 
     @Deprecated
     public boolean getEnabled() {
@@ -282,9 +303,13 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
       return engineverify;
     }
 
-    public String getRunAsUser() { return runAsUser; }
+    public String getRunAsUser() {
+      return runAsUser;
+    }
 
-    public String getInlineScanExtraParams() { return inlineScanExtraParams; }
+    public String getInlineScanExtraParams() {
+      return inlineScanExtraParams;
+    }
 
     public String getInlinescanimage() {
       return inlinescanimage;
@@ -292,6 +317,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     public boolean getForceinlinescan() {
       return forceinlinescan;
+    }
+
+    public boolean getForceNewEngine() {
+      return forceNewEngine;
+    }
+
+    public String getScannerBinaryPath() {
+      return scannerBinaryPath;
     }
 
     public DescriptorImpl() {
@@ -305,7 +338,7 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     @Override
     public String getDisplayName() {
-      return "Sysdig Secure Container Image Scanner";
+      return "Sysdig Secure Container Image Scanner (Legacy)";
     }
 
     @Override
@@ -342,7 +375,6 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
         Collections.emptyList(),
         CredentialsMatchers.always());
     }
-
   }
-}
 
+}

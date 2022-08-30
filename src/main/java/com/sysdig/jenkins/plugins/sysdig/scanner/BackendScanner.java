@@ -17,7 +17,10 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildConfig;
-import com.sysdig.jenkins.plugins.sysdig.client.*;
+import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
+import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClient;
+import com.sysdig.jenkins.plugins.sysdig.client.SysdigSecureClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import net.sf.json.JSONArray;
@@ -32,13 +35,14 @@ import java.util.Collections;
 import java.util.Map;
 
 
-public class BackendScanner extends Scanner {
+public class BackendScanner extends OldEngineScanner {
 
   private static final Map<String, String> annotations = Collections.singletonMap("added-by", "cicd-scan-request");
   private final SysdigSecureClient sysdigSecureClient;
 
   // Use a default container runner factory, but allow overriding for mocks in tests
   private static BackendScanningClientFactory backendScanningClientFactory = new SysdigSecureClientFactory();
+
   public static void setBackendScanningClientFactory(BackendScanningClientFactory backendScanningClientFactory) {
     BackendScanner.backendScanningClientFactory = backendScanningClientFactory;
   }
@@ -75,7 +79,7 @@ public class BackendScanner extends Scanner {
       throw e;
     } catch (Exception e) {
       logger.logError("Failed to add image(s) to sysdig-secure-engine due to an unexpected error", e);
-      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n" );
+      throw new AbortException("Failed to add image(s) to sysdig-secure-engine due to an unexpected error. Please refer to above logs for more information" + "\n");
     }
   }
 
@@ -106,6 +110,5 @@ public class BackendScanner extends Scanner {
       throw new AbortException("Failed to retrieve vulnerabilities report due to an unexpected error. Please refer to above logs for more information");
     }
   }
-
 
 }

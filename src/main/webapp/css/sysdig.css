@@ -1,11 +1,13 @@
 div.image-id {
     font-size: 0.8em;
 }
+
 .filter-bar {
   display: flex;
   align-items: center;
   margin-bottom: 24px;
 }
+
 .flex-container {
   display: flex;
   align-items: center;
@@ -16,7 +18,39 @@ div.image-id {
   margin: 0 4px;
 }
 
+.title {
+    margin-bottom: 30px;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
 .download-csv {
   display: flex;
   justify-content: flex-end;
+}
+
+.vuln.label-danger {
+  background-color: #AE44C5
+}
+
+.vuln.label-warning {
+  background-color: #EE635E
+}
+
+.vuln.label-info {
+  background-color: #FA8C16
+}
+
+.vuln.label-success {
+  background-color: #F6CA09
+}
+
+.vuln.label-default {
+  background-color: #91A7B3
 }

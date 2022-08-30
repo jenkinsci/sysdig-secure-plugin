@@ -13,6 +13,7 @@ hs_err_pid*
 
 # build stuff
 target/
+work/
 
 # IDE
 .idea

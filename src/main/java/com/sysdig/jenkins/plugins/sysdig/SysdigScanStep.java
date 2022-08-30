@@ -5,51 +5,51 @@ import org.kohsuke.stapler.DataBoundSetter;
 public interface SysdigScanStep {
 
   // Getters are used by config.jelly
-  public String getName();
+  String getName();
 
-  public boolean getBailOnFail();
+  boolean getBailOnFail();
 
-  public boolean getBailOnPluginFail();
+  boolean getBailOnPluginFail();
 
-  public String getEngineurl();
+  String getEngineurl();
 
-  public String getEngineCredentialsId();
+  String getEngineCredentialsId();
 
-  public boolean getEngineverify();
+  boolean getEngineverify();
 
-  public String getRunAsUser();
+  String getRunAsUser();
 
-  public String getInlineScanExtraParams();
+  String getInlineScanExtraParams();
 
-  public boolean isInlineScanning();
+  boolean isInlineScanning();
 
-  public boolean getForceScan();
-
-  @DataBoundSetter
-  public void setBailOnFail(boolean bailOnFail);
+  boolean getForceScan();
 
   @DataBoundSetter
-  public void setBailOnPluginFail(boolean bailOnPluginFail);
+  void setBailOnFail(boolean bailOnFail);
 
   @DataBoundSetter
-  public void setEngineurl(String engineurl);
+  void setBailOnPluginFail(boolean bailOnPluginFail);
 
   @DataBoundSetter
-  public void setEngineCredentialsId(String engineCredentialsId);
+  void setEngineurl(String engineurl);
 
   @DataBoundSetter
-  public void setEngineverify(boolean engineverify);
+  void setEngineCredentialsId(String engineCredentialsId);
 
   @DataBoundSetter
-  public void setRunAsUser(String runAsUser);
+  void setEngineverify(boolean engineverify);
 
   @DataBoundSetter
-  public void setInlineScanExtraParams(String inlineScanExtraParams);
+  void setRunAsUser(String runAsUser);
 
   @DataBoundSetter
-  public void setInlineScanning(boolean inlineScanning);
+  void setInlineScanExtraParams(String inlineScanExtraParams);
 
   @DataBoundSetter
-  public void setForceScan(boolean forceScan);
+  void setInlineScanning(boolean inlineScanning);
+
+  @DataBoundSetter
+  void setForceScan(boolean forceScan);
 
 }

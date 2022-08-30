@@ -16,4 +16,6 @@ public interface SysdigLogger {
   void logError(String msg);
 
   void logError(String msg, Throwable t);
+
+  boolean isDebugEnabled();
 }

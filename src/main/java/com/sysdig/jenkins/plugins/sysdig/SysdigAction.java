@@ -17,11 +17,10 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import hudson.model.Action;
 import hudson.model.Run;
-
-import java.util.Map;
-
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
+
+import java.util.Map;
 
 /**
  * Sysdig Secure plugin results for a given build are stored and subsequently retrieved from an instance of this class. Rendering/display of
@@ -35,6 +34,7 @@ public class SysdigAction implements Action {
   private final String gateOutputUrl;
   private final String gateSummary;
   private final String cveListingUrl;
+  private final Boolean legacyEngine;
 
   // For backwards compatibility
   @Deprecated
@@ -43,12 +43,13 @@ public class SysdigAction implements Action {
   private Map<String, String> queries;
 
 
-  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
+  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName, Boolean legacyEngine) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
     this.gateSummary = gateSummary;
     this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
+    this.legacyEngine = legacyEngine;
   }
 
   @Override
@@ -101,5 +102,9 @@ public class SysdigAction implements Action {
   public Map<String, String> getQueries() {
     return this.queries;
   }
-}
 
+  public Boolean getLegacyEngine() {
+    return legacyEngine;
+  }
+
+}

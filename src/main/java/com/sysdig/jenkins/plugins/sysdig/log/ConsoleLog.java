@@ -88,4 +88,9 @@ public class ConsoleLog implements SysdigLogger, Serializable {
       t.printStackTrace(getLogger());
     }
   }
+
+  @Override
+  public boolean isDebugEnabled() {
+    return enableDebug;
+  }
 }

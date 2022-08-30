@@ -35,12 +35,12 @@ import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.routing.HttpRoutePlanner;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.*;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.security.KeyManagementException;
@@ -139,7 +139,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
     }
   }
 
-    @Override
+  @Override
   public JSONArray retrieveImageScanningResults(String tag, String imageDigest) throws ImageScanningException {
     try (CloseableHttpClient httpclient = makeHttpClient(verifySSL)) {
       String url = String.format("%s/api/scanning/v1/anchore/images/%s/check?tag=%s&detail=true", apiURL, imageDigest, tag);
@@ -199,7 +199,7 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
             final HttpRequest request,
             final HttpContext context) throws HttpException {
             String hostname = host.getHostName();
-            for (Pattern p: proxyConfiguration.getNoProxyHostPatterns()) {
+            for (Pattern p : proxyConfiguration.getNoProxyHostPatterns()) {
               if (p.matcher(hostname).matches()) {
                 // Return direct route
                 return new HttpRoute(host);
@@ -215,9 +215,9 @@ public class SysdigSecureClientImpl implements SysdigSecureClient {
       clientBuilder.setProxy(proxy);
 
       if (!Strings.isNullOrEmpty(proxyConfiguration.getUserName())) {
-        Credentials credentials = new UsernamePasswordCredentials(proxyConfiguration.getUserName(),proxyConfiguration.getPassword());
+        Credentials credentials = new UsernamePasswordCredentials(proxyConfiguration.getUserName(), proxyConfiguration.getPassword());
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials( new AuthScope(proxyConfiguration.name, proxyConfiguration.port), credentials);
+        credsProvider.setCredentials(new AuthScope(proxyConfiguration.name, proxyConfiguration.port), credentials);
         clientBuilder.setDefaultCredentialsProvider(credsProvider);
         clientBuilder.setProxyAuthenticationStrategy(new ProxyAuthenticationStrategy());
       }

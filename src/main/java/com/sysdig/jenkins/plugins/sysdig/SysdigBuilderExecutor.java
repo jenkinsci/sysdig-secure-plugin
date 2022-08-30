@@ -19,7 +19,10 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
-import com.sysdig.jenkins.plugins.sysdig.scanner.*;
+import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.scanner.OldEngineScanner;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -56,18 +59,31 @@ public class SysdigBuilderExecutor {
 
     BuildWorker worker = null;
     Util.GATE_ACTION finalAction = null;
+
     try {
+      if (globalConfig.getForceNewEngine()) {
+        logger.logWarn("-- DEPRECATED SYSDIG CONTAINER SERCURE SCANNING / Forcing new sysdig scanning step--");
+        NewEngineBuilder newEngineBuilder = new NewEngineBuilder("");
+        newEngineBuilder.setEngineURL(builder.getEngineurl());
+        newEngineBuilder.setBailOnFail(builder.getBailOnFail());
+        newEngineBuilder.setBailOnPluginFail(builder.getBailOnPluginFail());
+        newEngineBuilder.setEngineCredentialsId(builder.getEngineCredentialsId());
+        NewEngineBuildConfig newEngineBuildConfig = new NewEngineBuildConfig(globalConfig, newEngineBuilder, sysdigToken);
+        NewEngineScanner scanner = new NewEngineScanner(listener, newEngineBuildConfig, workspace, envVars, logger);
+        ReportConverter reporter = new NewEngineReportConverter(logger);
+        worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
+        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(), false);
+      } else {
+        OldEngineScanner scanner = config.getInlineScanning() ?
+          new InlineScanner(listener, config, workspace, envVars, logger) :
+          new BackendScanner(config, logger);
 
-      Scanner scanner = config.getInlineScanning() ?
-        new InlineScanner(listener, config, workspace, envVars, logger) :
-        new BackendScanner(config, logger);
+        ReportConverter reporter = new ReportConverter(logger);
 
-      ReportConverter reporter = new ReportConverter(logger);
+        worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
 
-      worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-
-      finalAction = worker.scanAndBuildReports(config);
-
+        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(), true);
+      }
     } catch (Exception e) {
       if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);

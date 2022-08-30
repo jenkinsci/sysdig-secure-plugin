@@ -25,26 +25,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 public class BackendScannerTests {
-  //TODO: Test error handling on API
-
-  //TODO: Secure client is received at factory
-
-  //TODO: Verify Token is received at factory
-
-  //TODO: Verify URL is received at factory
-
-  //TODO: Verify client is created with proxy if master is configured to use proxy
-
   @Rule
   public MockitoRule rule = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
   private final static String IMAGE_TO_SCAN = "foo:latest";
   private final static String IMAGE_DIGEST = "foo-digest";
 
-  private Scanner scanner = null;
+  private OldEngineScanner scanner = null;
   private SysdigSecureClient client;
 
   @Before
@@ -64,8 +53,8 @@ public class BackendScannerTests {
     when(client.submitImageForScanning(eq(IMAGE_TO_SCAN), any(), any(), anyBoolean())).thenReturn(IMAGE_DIGEST);
   }
 
-    @Test
-  public void testImageIsScanned() throws ImageScanningException, AbortException {
+  @Test
+  public void testImageIsScanned() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // When
@@ -79,7 +68,7 @@ public class BackendScannerTests {
 
 
   @Test
-  public void testNoDockerfilePosted() throws ImageScanningException, IOException {
+  public void testNoDockerfilePosted() throws ImageScanningException, IOException, InterruptedException {
     setupMocks();
 
     // When
@@ -94,7 +83,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testDockerfilePosted() throws ImageScanningException, IOException {
+  public void testDockerfilePosted() throws ImageScanningException, IOException, InterruptedException {
     setupMocks();
 
     //Given
@@ -109,14 +98,14 @@ public class BackendScannerTests {
     // Then
     verify(client, times(1)).submitImageForScanning(
       eq(IMAGE_TO_SCAN),
-      eq( new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
+      eq(new String(Base64.encodeBase64(dockerfileBytes), StandardCharsets.UTF_8)),
       any(),
       anyBoolean());
 
   }
 
   @Test
-  public void testGetGateResults() throws ImageScanningException, AbortException {
+  public void testGetGateResults() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     //Given
@@ -135,7 +124,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void testGetVulnsReport() throws ImageScanningException, AbortException {
+  public void testGetVulnsReport() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // Given
@@ -152,7 +141,7 @@ public class BackendScannerTests {
   }
 
   @Test
-  public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException {
+  public void addedByAnnotationsAreIncluded() throws ImageScanningException, AbortException, InterruptedException {
     setupMocks();
 
     // When

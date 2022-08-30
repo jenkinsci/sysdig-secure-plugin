@@ -46,7 +46,7 @@ public class ImageScanningResult extends ImageScanningSubmission implements Seri
     return vulnsReport;
   }
 
-  public JSONArray getGatePolicies(){
+  public JSONArray getGatePolicies() {
     return gatePolicies;
   }
 }

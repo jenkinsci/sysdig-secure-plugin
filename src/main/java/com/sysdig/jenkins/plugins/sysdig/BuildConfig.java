@@ -31,7 +31,7 @@ public class BuildConfig implements Serializable {
 
   private static final String DEFAULT_INLINE_SCAN_IMAGE = "quay.io/sysdig/secure-inline-scan:2";
 
-  private final String name;
+  private final String imageListName;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
   private final boolean debug;
@@ -45,9 +45,9 @@ public class BuildConfig implements Serializable {
   private final String inlineScanImage;
 
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigScanStep scanStep, String sysdigToken) {
-    name = scanStep.getName();
+    imageListName = scanStep.getName();
     bailOnFail = scanStep.getBailOnFail();
-    bailOnPluginFail =  scanStep.getBailOnPluginFail();
+    bailOnPluginFail = scanStep.getBailOnPluginFail();
     debug = globalConfig.getDebug();
     if (!Strings.isNullOrEmpty(scanStep.getEngineurl())) {
       engineurl = scanStep.getEngineurl();
@@ -84,8 +84,8 @@ public class BuildConfig implements Serializable {
     }
   }
 
-  public String getName() {
-    return name;
+  public String getImageListName() {
+    return imageListName;
   }
 
   public boolean getBailOnFail() {
@@ -140,7 +140,7 @@ public class BuildConfig implements Serializable {
     List<PluginWrapper> plugins;
     if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
-        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin, TODO is there a better way to get this
+        if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin,
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));
           break;
         }
@@ -153,7 +153,7 @@ public class BuildConfig implements Serializable {
     logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));
     logger.logInfo(String.format("runAsUser: %s", this.getRunAsUser()));
     logger.logInfo(String.format("inlineScanExtraParams: %s", this.getInlineScanExtraParams()));
-    logger.logInfo(String.format("name: %s", this.getName()));
+    logger.logInfo(String.format("image list file: %s", this.getImageListName()));
     logger.logInfo(String.format("bailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("bailOnPluginFail: %s", this.getBailOnPluginFail()));
     logger.logInfo(String.format("forceScan: %b", this.getForceScan()));

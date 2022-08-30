@@ -31,7 +31,7 @@ public class ReportConverterTests {
   @Before
   public void BeforeEach() {
     SysdigLogger logger = mock(SysdigLogger.class);
-    Run<?,?> build = mock(Run.class);
+    Run<?, ?> build = mock(Run.class);
     when(build.getNumber()).thenReturn(0);
     FilePath ws = mock(FilePath.class);
     converter = new ReportConverter(logger);

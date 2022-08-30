@@ -55,20 +55,20 @@ public class DockerClientRunner implements ContainerRunner {
     Duration connectionTimeoutDuration = Duration.ofSeconds(Long.parseLong(DOCKER_CONNECTION_TIMEOUT));
     Duration responseTimeoutDuration = Duration.ofSeconds(Long.parseLong(DOCKER_RESPONSE_TIMEOUT));
 
-    if (currentEnv.get("DOCKER_CONNECTION_TIMEOUT")!=null){
+    if (currentEnv.get("DOCKER_CONNECTION_TIMEOUT") != null) {
       final String connTimeout = currentEnv.get("DOCKER_CONNECTION_TIMEOUT");
-      try{
+      try {
         connectionTimeoutDuration = Duration.ofSeconds(Long.parseLong(connTimeout));
-      } catch (NumberFormatException e){
+      } catch (NumberFormatException e) {
         logger.logWarn(String.format("DOCKER_CONNECTION_TIMEOUT=%s is not valid, using default", connTimeout));
       }
     }
 
-    if (currentEnv.get("DOCKER_RESPONSE_TIMEOUT")!=null){
+    if (currentEnv.get("DOCKER_RESPONSE_TIMEOUT") != null) {
       final String responseTimeout = currentEnv.get("DOCKER_RESPONSE_TIMEOUT");
-      try{
+      try {
         responseTimeoutDuration = Duration.ofSeconds(Long.parseLong(responseTimeout));
-      } catch (NumberFormatException e){
+      } catch (NumberFormatException e) {
         logger.logWarn(String.format("DOCKER_RESPONSE_TIMEOUT=%s is not valid, using default", responseTimeout));
       }
     }
@@ -87,7 +87,7 @@ public class DockerClientRunner implements ContainerRunner {
   }
 
   @Override
-  public Container createContainer(String imageName, List<String> entryPoint,  List<String> cmd, List<String> envVars, String user, List<String> volumeBinds) throws InterruptedException {
+  public Container createContainer(String imageName, List<String> entryPoint, List<String> cmd, List<String> envVars, String user, List<String> volumeBinds) throws InterruptedException {
 
     logger.logInfo(String.format("Pulling image: %s", imageName));
     dockerClient.pullImageCmd(imageName).start().awaitCompletion();
@@ -122,7 +122,7 @@ public class DockerClientRunner implements ContainerRunner {
       createContainerCmd = createContainerCmd.withUser(user);
     }
 
-    CreateContainerResponse createContainerResponse  = createContainerCmd.exec();
+    CreateContainerResponse createContainerResponse = createContainerCmd.exec();
     final String containerId = createContainerResponse.getId();
 
     logger.logInfo(String.format("Container ID %s", containerId));

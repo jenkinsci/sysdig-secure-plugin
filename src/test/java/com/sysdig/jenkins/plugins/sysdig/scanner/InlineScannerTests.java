@@ -15,17 +15,16 @@ import org.mockito.ArgumentMatchers;
 
 import java.io.PrintStream;
 
-import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class InlineScannerTests {
 
   private final String IMAGE_TO_SCAN = "foo:latest";
 
   private FilePath workspace = null;
-  private Scanner scanner = null;
-
-  //TODO: Handle exception in channel.call
+  private OldEngineScanner scanner = null;
 
   TaskListener listener;
 
@@ -67,7 +66,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("workspace"));
-    //TODO: Check exception registered in log
   }
 
   @Test
@@ -85,7 +83,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("Failed to perform"));
-    //TODO: Check exception registered in log
   }
 
   @Test
@@ -103,7 +100,6 @@ public class InlineScannerTests {
 
     // Then
     assertTrue(thrown.getMessage().contains("Failed to perform"));
-    //TODO: Check exception registered in log
   }
 
   @Test

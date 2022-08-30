@@ -1,4 +1,5 @@
-import com.cloudbees.plugins.credentials.*;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
@@ -10,21 +11,25 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScannerRemoteExecutor;
-import hudson.model.*;
-import hudson.tasks.*;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.tasks.BatchFile;
+import hudson.tasks.Shell;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.SystemUtils;
-import org.junit.*;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static org.mockito.Mockito.*;
 
 public class FullWorkflowTests {
-  //TODO: Test (pipeline?) docker daemon not available
 
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
@@ -49,7 +54,7 @@ public class FullWorkflowTests {
     when(backendClientFactory.newInsecureClient(any(), any(), any())).thenReturn(client);
 
     ContainerRunner containerRunner = mock(ContainerRunner.class);
-    ContainerRunnerFactory containerRunnerFactory = mock (ContainerRunnerFactory.class);
+    ContainerRunnerFactory containerRunnerFactory = mock(ContainerRunnerFactory.class);
     when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
 
     InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);

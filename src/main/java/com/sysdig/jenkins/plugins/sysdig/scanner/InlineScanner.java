@@ -21,7 +21,6 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
-import hudson.model.Computer;
 import hudson.model.TaskListener;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -30,7 +29,7 @@ import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class InlineScanner extends Scanner {
+public class InlineScanner extends OldEngineScanner {
 
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
@@ -65,7 +64,6 @@ public class InlineScanner extends Scanner {
 
       JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
 
-      //TODO: Only if exit code 0 or 1 or 3.
       if (scanOutput.has("error")) {
         throw new ImageScanningException(scanOutput.getString("error"));
       }
@@ -100,5 +98,5 @@ public class InlineScanner extends Scanner {
 
     return null;
   }
-}
 
+}
