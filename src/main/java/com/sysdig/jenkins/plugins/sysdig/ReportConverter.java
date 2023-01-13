@@ -15,6 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class ReportConverter {
+  private static final String LEGACY_PASSED_STATUS = "pass";
+  private static final String PASSED_STATUS = "passed";
+  private static final String ACCEPTED_STATUS = "accepted";
+
   protected final SysdigLogger logger;
 
   public ReportConverter(SysdigLogger logger) {
@@ -29,7 +33,7 @@ public class ReportConverter {
 
       logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
-      if (!"pass".equals(evalStatus) && !"passed".equals(evalStatus)) {
+      if (!evalStatus.equalsIgnoreCase(LEGACY_PASSED_STATUS) && !evalStatus.equalsIgnoreCase(PASSED_STATUS) && !evalStatus.equalsIgnoreCase(ACCEPTED_STATUS)) {
         finalAction = Util.GATE_ACTION.FAIL;
       }
     }
