@@ -42,7 +42,9 @@ public class ReportConverterTests {
     // Given
     List<ImageScanningResult> results = new ArrayList<>();
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "passed", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag4", "foo-digest2", "ACCEPTED", new JSONObject(), new JSONObject(), new JSONArray()));
 
     // Then
     assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(results));
@@ -54,6 +56,7 @@ public class ReportConverterTests {
     List<ImageScanningResult> results = new ArrayList<>();
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
     results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject(), new JSONArray()));
+    results.add(new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()));
 
     // Then
     assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(results));
