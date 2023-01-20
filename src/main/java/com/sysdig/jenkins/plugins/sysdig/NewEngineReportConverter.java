@@ -331,99 +331,92 @@ public class NewEngineReportConverter extends ReportConverter {
         case "denyCVE":
           break;
         case "vulnSeverity":
-          ruleResult.add(" Severity is " + extra.getString("level"));
+          ruleResult.add("Severity greater than or equal " + extra.getString("level"));
+          break;
+        case "vulnSeverityEquals":
+          ruleResult.add("Severity equal " + extra.getString("level"));
           break;
         case "vulnIsFixable":
-          ruleResult.add(" Fixable");
+          ruleResult.add("Fixable");
           break;
         case "vulnIsFixableWithAge":
           int days = extra.getInt("age");
           String period = " days";
-          if (days < 2) {
-            period = " day";
-          }
-          ruleResult.add(" Fixable since " + days + period);
+          period = days < 2 ? " day" : " days";
+          ruleResult.add("Fixable since " + days + period);
           break;
         case "vulnExploitable":
-          ruleResult.add(" Public Exploit available");
+          ruleResult.add("Public Exploit available");
           break;
         case "vulnExploitableWithAge":
           days = extra.getInt("age");
-          period = days < 2 ? " days" : " day";
-          ruleResult.add(" Public Exploit available and age older than " + days + period);
+          period = days < 2 ? " day" : " days";
+          ruleResult.add("Public Exploit available since " + days + period);
           break;
         case "vulnAge":
           days = extra.getInt("age");
-          period = " days";
-          if (days < 2) {
-            period = " day";
-          }
-          ruleResult.add(" Disclosure date older than " + days + period);
+          period = days < 2 ? " day" : " days";
+          ruleResult.add("Disclosure date older than or equal " + days + period);
           break;
         case "vulnCVSS":
           double cvssScore = extra.getDouble("value");
-          ruleResult.add(" CVSS Score higher or equal to %.1f" + cvssScore);
+          ruleResult.add("CVSS Score greater than or equal to %.1f" + cvssScore);
           break;
         case "vulnExploitableViaNetwork":
-          ruleResult.add(" Exploitable via network attack");
+          ruleResult.add("Network attack vector");
           break;
         case "vulnExploitableNoUser":
-          ruleResult.add("No user interaction required");
+          ruleResult.add("No User interaction required");
           break;
         case "vulnExploitableNoAdmin":
-          ruleResult.add(" No administrative privileges required");
+          ruleResult.add("No administrative privileges required");
           break;
         case "imageConfigDefaultUserIsRoot":
-          ruleResult.add(" User is root");
-          break;
-        case "imageConfigInstructionNotRecommended":
-          ruleResult.add(" Use of ADD instruction found");
-          break;
-        case "imageConfigInstructionIsPkgManager":
-          ruleResult.add(" Package manager instructions (eg. apk, npm, rpm, etc) are found");
-          break;
-        case "imageConfigSensitiveInformationAndSecrets":
-          ruleResult.add(" Sensitive information and secrets in the image metadata are found");
+          ruleResult.add("User is root");
           break;
         case "imageConfigDefaultUserIsNot":
           String user = extra.getString("user");
-          ruleResult.add(" User is not " + user);
+          ruleResult.add("User is not " + user);
+          break;
+        case "imageConfigLabelExists":
+          String key = extra.getString("key");
+          ruleResult.add("Image label " + key + " exists");
+          break;
+        case "imageConfigLabelNotExists":
+          key = extra.getString("key");
+          ruleResult.add("Image label " + key + " does not exist");
+          break;
+        case "imageConfigEnvVariableExists":
+          key = extra.getString("key");
+          ruleResult.add("Variable " + key + " exist");
+          break;
+        case "imageConfigEnvVariableNotExists":
+          key = extra.getString("key");
+          ruleResult.add("Variable " + key + " does not exist");
+          break;
+        case "imageConfigEnvVariableContains":
+          String value = extra.getString("value");
+          key = extra.getString("key");
+          ruleResult.add("Variable " + key + " contains value " + value);
+          break;
+        case "imageConfigLabelNotContains":
+          value = extra.getString("value");
+          key = extra.getString("key");
+          ruleResult.add("Value " + value + " not found in label " + key);
           break;
         case "imageConfigCreationDateWithAge":
           days = extra.has("age") ? extra.getInt("age") : 0;
-          period = days < 2 ? " days" : " day";
-          String daysString = days == 0 ? "N/A" : String.valueOf(days);
-          ruleResult.add(" Creation date is older than or not specified " + daysString + period);
+          period = days < 2 ? " day" : " days";
+          ruleResult.add("Image is older than " + days + period + " or Creation date is not present");
           break;
-        case "imageConfigLabelExists":
-        case "imageConfigLabelNotExists":
-          String key = extra.getString("key");
-          boolean isNotExist = type == "imageConfigLabelNotExists";
-          if (isNotExist) {
-            ruleResult.add(" Image label " + key + " does not exist");
-          } else {
-            ruleResult.add(" Image label " + key + " exists");
-          }
+        case "imageConfigInstructionNotRecommended":
+          ruleResult.add("Forbid the use of discouraged instructions");
           break;
-        case "imageConfigLabelNotContains":
-          String value = extra.getString("value");
-          key = extra.getString("key");
-          ruleResult.add(" Image label " + key + " does not exist or does not contain " + value);
+        case "imageConfigInstructionIsPkgManager":
+          ruleResult.add("Forbid the use of package manager instructions (eg. apk, npm, rpm, etc)");
           break;
-        case "imageConfigEnvVariableNotExists":
-        case "imageConfigEnvVariableExists":
-          key = extra.getString("key");
-          isNotExist = type == "imageConfigEnvVariableNotExists";
-          if (isNotExist) {
-            ruleResult.add(" Variable " + key + " does not exist");
-          } else {
-            ruleResult.add(" Variable " + key + " exist");
-          }
-          break;
-        case "imageConfigEnvVariableContains":
-          value = extra.getString("value");
-          key = extra.getString("key");
-          ruleResult.add(" Variable " + key + " exists and contains " + value);
+        case "imageConfigSensitiveInformationAndSecrets":
+          ruleResult.add("Forbid sensitive information and secrets in the image metadata");
           break;
         default:
           ruleResult.add(" ");
