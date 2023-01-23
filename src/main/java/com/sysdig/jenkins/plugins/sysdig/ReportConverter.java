@@ -18,6 +18,7 @@ public class ReportConverter {
   private static final String LEGACY_PASSED_STATUS = "pass";
   private static final String PASSED_STATUS = "passed";
   private static final String ACCEPTED_STATUS = "accepted";
+  private static final String NO_POLICY_STATUS = "noPolicy";
 
   protected final SysdigLogger logger;
 
@@ -33,7 +34,7 @@ public class ReportConverter {
 
       logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
-      if (!evalStatus.equalsIgnoreCase(LEGACY_PASSED_STATUS) && !evalStatus.equalsIgnoreCase(PASSED_STATUS) && !evalStatus.equalsIgnoreCase(ACCEPTED_STATUS)) {
+      if (!evalStatus.equalsIgnoreCase(LEGACY_PASSED_STATUS) && !evalStatus.equalsIgnoreCase(PASSED_STATUS) && !evalStatus.equalsIgnoreCase(ACCEPTED_STATUS) && !evalStatus.equalsIgnoreCase(NO_POLICY_STATUS)) {
         finalAction = Util.GATE_ACTION.FAIL;
       }
     }
