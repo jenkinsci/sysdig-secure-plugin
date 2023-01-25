@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
 
-  private static final String FIXED_SCANNED_VERSION = "1.3.2";
+  private static final String FIXED_SCANNED_VERSION = "1.3.3";
 
   public static class LogsFileToLoggerForwarder extends TailerListenerAdapter {
 
