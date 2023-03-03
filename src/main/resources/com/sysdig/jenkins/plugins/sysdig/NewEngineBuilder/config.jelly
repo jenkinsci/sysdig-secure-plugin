@@ -15,6 +15,10 @@
       <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}" title="Fail build on critical plugin error" default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
     </f:entry>
 
+    <f:entry title="CLI version to use" field="cliVersionToApply">
+      <f:textbox/>
+    </f:entry>
+
     <f:entry title="Identifiers of policies to apply" field="policiesToApply">
       <f:textbox/>
     </f:entry>

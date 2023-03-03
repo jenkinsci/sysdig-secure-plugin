@@ -35,6 +35,7 @@ public class NewEngineBuildConfig implements Serializable {
   private final String sysdigToken;
   private final String policiesToApply;
   private final String scannerBinaryPath;
+  private final String cliVersionToApply;
 
   public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineScanStep scanStep, String sysdigToken) {
     imageName = scanStep.getImageName();
@@ -58,6 +59,7 @@ public class NewEngineBuildConfig implements Serializable {
     this.sysdigToken = sysdigToken;
 
     this.policiesToApply = scanStep.getPoliciesToApply();
+    this.cliVersionToApply = scanStep.getCliVersionToApply();
 
     if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())) {
       this.scannerBinaryPath = scanStep.getScannerBinaryPath();
@@ -103,6 +105,10 @@ public class NewEngineBuildConfig implements Serializable {
     return policiesToApply;
   }
 
+  public String getCliVersionToApply() {
+    return cliVersionToApply;
+  }
+
   public String getScannerBinaryPath() {
     return scannerBinaryPath;
   }
@@ -128,6 +134,7 @@ public class NewEngineBuildConfig implements Serializable {
     logger.logInfo(String.format("EngineURL: %s", this.getEngineurl()));
     logger.logInfo(String.format("EngineVerify: %s", this.getEngineverify()));
     logger.logInfo(String.format("Policies: %s", this.getPoliciesToApply()));
+    logger.logInfo(String.format("CliVersion: %s", this.getCliVersionToApply()));
     logger.logInfo(String.format("InlineScanExtraParams: %s", this.getInlineScanExtraParams()));
     logger.logInfo(String.format("BailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("BailOnPluginFail: %s", this.getBailOnPluginFail()));

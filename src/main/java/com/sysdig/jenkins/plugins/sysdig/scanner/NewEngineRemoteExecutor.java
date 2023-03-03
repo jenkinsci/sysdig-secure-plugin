@@ -201,7 +201,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanPinnedVersion() {
-    return FIXED_SCANNED_VERSION;
+    logger.logInfo("Version being passed $$$$$$$$" + this.config.getCliVersionToApply());
+    return this.config.getCliVersionToApply();
   }
 
   private Proxy getHttpProxy() throws IOException {
