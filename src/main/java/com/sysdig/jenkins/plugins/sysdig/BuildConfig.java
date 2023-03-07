@@ -43,6 +43,8 @@ public class BuildConfig implements Serializable {
   private final String sysdigToken;
   private final boolean forceScan;
   private final String inlineScanImage;
+  private final String cliVersionToApply;
+  private final String customCliVersion;
 
   public BuildConfig(SysdigBuilder.DescriptorImpl globalConfig, SysdigScanStep scanStep, String sysdigToken) {
     imageListName = scanStep.getName();
@@ -56,6 +58,9 @@ public class BuildConfig implements Serializable {
       engineurl = globalConfig.getEngineurl();
       engineverify = globalConfig.getEngineverify();
     }
+
+    cliVersionToApply = globalConfig.getCliVersionToApply();
+    customCliVersion = globalConfig.getCustomCliVersion();
 
     if (!Strings.isNullOrEmpty(scanStep.getRunAsUser())) {
       runAsUser = scanStep.getRunAsUser();
@@ -98,6 +103,14 @@ public class BuildConfig implements Serializable {
 
   public boolean getDebug() {
     return debug;
+  }
+
+  public String getCliVersionToApply() {
+    return cliVersionToApply;
+  }
+
+  public String getCustomCliVersion() {
+    return customCliVersion;
   }
 
   public String getEngineurl() {
@@ -148,6 +161,8 @@ public class BuildConfig implements Serializable {
     }
 
     logger.logInfo(String.format("debug: %s", this.getDebug()));
+    logger.logInfo(String.format("cliVersionToApply: %s", this.getCliVersionToApply()));
+    logger.logInfo(String.format("customCliVersion: %s", this.getCustomCliVersion()));
     logger.logInfo(String.format("inlineScanning: %s", this.getInlineScanning()));
     logger.logInfo(String.format("engineurl: %s", this.getEngineurl()));
     logger.logInfo(String.format("engineverify: %s", this.getEngineverify()));

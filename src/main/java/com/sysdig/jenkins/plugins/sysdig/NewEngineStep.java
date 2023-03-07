@@ -43,10 +43,10 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     return builder.getPoliciesToApply();
   }
 
-  @Override
-  public String getCliVersionToApply() {
-    return builder.getCliVersionToApply();
-  }
+  // @Override
+  // public String getCliVersionToApply() {
+  //   return builder.getCliVersionToApply();
+  // }
 
 
   @Override
@@ -86,11 +86,11 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     builder.setPoliciesToApply(policiesToApply);
   }
 
-  @DataBoundSetter
-  @Override
-  public void setCliVersionToApply(String cliVersionToApply) {
-    builder.setCliVersionToApply(cliVersionToApply);
-  }
+  // @DataBoundSetter
+  // @Override
+  // public void setCliVersionToApply(String cliVersionToApply) {
+  //   builder.setCliVersionToApply(cliVersionToApply);
+  // }
 
 
   @DataBoundSetter

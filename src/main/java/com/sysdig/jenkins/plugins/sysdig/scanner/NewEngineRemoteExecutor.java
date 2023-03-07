@@ -201,8 +201,16 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanPinnedVersion() {
-    logger.logInfo("Version being passed $$$$$$$$" + this.config.getCliVersionToApply());
-    return this.config.getCliVersionToApply();
+    return FIXED_SCANNED_VERSION;
+  }
+
+  private String getInlineScanVersion() throws IOException {
+   if(this.config.getCliVersionToApply().equals("latest")){
+      return getInlineScanLatestVersion();
+    } else if(this.config.getCliVersionToApply().equals("custom")){
+      return this.config.getCustomCliVersion();
+    }
+    return getInlineScanPinnedVersion();
   }
 
   private Proxy getHttpProxy() throws IOException {
@@ -256,7 +264,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       logger.logInfo("Inlinescan binary globally defined to* " + scannerBinaryPath.getPath());
     } else {
       try {
-        String latestVersion = getInlineScanPinnedVersion();
+        String latestVersion = getInlineScanVersion();
+        logger.logInfo("Passed value ###: " + this.config.getCliVersionToApply());
         logger.logInfo("Downloading inlinescan v" + latestVersion);
         scannerBinaryPath = downloadInlineScan(latestVersion);
         logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
