@@ -208,6 +208,9 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
    if(this.config.getCliVersionToApply().equals("latest")){
       return getInlineScanLatestVersion();
     } else if(this.config.getCliVersionToApply().equals("custom")){
+      if(this.config.getCustomCliVersion().isEmpty()){
+        return getInlineScanPinnedVersion();
+      }
       return this.config.getCustomCliVersion();
     }
     return getInlineScanPinnedVersion();
