@@ -60,8 +60,20 @@ public class NewEngineBuildConfig implements Serializable {
     this.sysdigToken = sysdigToken;
 
     this.policiesToApply = scanStep.getPoliciesToApply();
-    this.cliVersionToApply = globalConfig.getCliVersionToApply();
-    this.customCliVersion = globalConfig.getCustomCliVersion();
+    // this.cliVersionToApply = globalConfig.getCliVersionToApply();
+    // this.customCliVersion = globalConfig.getCustomCliVersion();
+
+    if (!Strings.isNullOrEmpty(scanStep.getCliVersionToApply())) {
+      this.cliVersionToApply = scanStep.getCliVersionToApply();
+    } else {
+      this.cliVersionToApply = globalConfig.getCliVersionToApply();
+    }
+
+    if (!Strings.isNullOrEmpty(scanStep.getCustomCliVersion())) {
+      this.customCliVersion = scanStep.getCustomCliVersion();
+    } else {
+      this.customCliVersion = globalConfig.getCustomCliVersion();
+    }
 
     if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())) {
       this.scannerBinaryPath = scanStep.getScannerBinaryPath();

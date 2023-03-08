@@ -13,7 +13,9 @@ public interface NewEngineScanStep {
 
   String getPoliciesToApply();
 
-  // String getCliVersionToApply();
+  String getCliVersionToApply();
+
+  String getCustomCliVersion();
 
   String getEngineURL();
 
@@ -34,8 +36,11 @@ public interface NewEngineScanStep {
   @DataBoundSetter
   void setPoliciesToApply(String policiesToApply);
 
-  // @DataBoundSetter
-  // void setCliVersionToApply(String cliVersionToApply);
+  @DataBoundSetter
+  void setCliVersionToApply(String cliVersionToApply);
+
+  @DataBoundSetter
+  void setCustomCliVersion(String customCliVersion);
 
   @DataBoundSetter
   void setEngineURL(String engineurl);
