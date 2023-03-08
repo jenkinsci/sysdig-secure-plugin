@@ -103,7 +103,6 @@ public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep 
     builder.setCustomCliVersion(customCliVersion);
   }
 
-
   @DataBoundSetter
   @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
