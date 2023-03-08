@@ -268,7 +268,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     } else {
       try {
         String latestVersion = getInlineScanVersion();
-        logger.logInfo("Passed value ###: " + this.config.getCliVersionToApply());
         logger.logInfo("Downloading inlinescan v" + latestVersion);
         scannerBinaryPath = downloadInlineScan(latestVersion);
         logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
