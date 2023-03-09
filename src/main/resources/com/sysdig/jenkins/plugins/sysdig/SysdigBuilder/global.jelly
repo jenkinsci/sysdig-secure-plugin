@@ -23,11 +23,9 @@
       <f:textbox name="inlineScanExtraParams" default=""/>
     </f:entry>
 
-    <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply" description="WARNING: Using latest or custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!" help="/plugin/sysdig-secure/help/help-CliVersionToApply.html">
+    <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply" description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!" help="/plugin/sysdig-secure/help/help-CliVersionToApply.html">
           <f:radio name="cliVersionToApply" title="Default Version" value="default"
-            checked="${instance.cliVersionToApply == 'default'}" />
-          <f:radio name="cliVersionToApply" title="Latest Version" value="latest"
-            checked="${instance.cliVersionToApply == 'latest'}" />
+            checked="true" />
           <f:radio name="cliVersionToApply" title="Custom Version" value="custom"
         checked="${instance.cliVersionToApply == 'custom'}">
             <f:textbox name="customCliVersion" field="customCliVersion"/>

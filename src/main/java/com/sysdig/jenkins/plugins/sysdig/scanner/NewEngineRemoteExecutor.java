@@ -205,9 +205,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanVersion() throws IOException {
-   if(this.config.getCliVersionToApply().equals("latest")){
-      return getInlineScanLatestVersion();
-    } else if(this.config.getCliVersionToApply().equals("custom")){
+    if(this.config.getCliVersionToApply().equals("custom")){
       if(this.config.getCustomCliVersion().isEmpty()){
         return getInlineScanPinnedVersion();
       }

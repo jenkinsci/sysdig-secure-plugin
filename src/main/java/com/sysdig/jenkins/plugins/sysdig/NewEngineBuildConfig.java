@@ -61,13 +61,15 @@ public class NewEngineBuildConfig implements Serializable {
 
     this.policiesToApply = scanStep.getPoliciesToApply();
 
-    if (!Strings.isNullOrEmpty(scanStep.getCliVersionToApply())) {
+    if (!Strings.isNullOrEmpty(scanStep.getCliVersionToApply()) 
+        && !scanStep.getCliVersionToApply().equals("global_default")) {
       this.cliVersionToApply = scanStep.getCliVersionToApply();
     } else {
       this.cliVersionToApply = globalConfig.getCliVersionToApply();
     }
 
-    if (!Strings.isNullOrEmpty(scanStep.getCustomCliVersion())) {
+    if (!Strings.isNullOrEmpty(scanStep.getCustomCliVersion()) 
+        && !scanStep.getCliVersionToApply().equals("global_default")) {
       this.customCliVersion = scanStep.getCustomCliVersion();
     } else {
       this.customCliVersion = globalConfig.getCustomCliVersion();
