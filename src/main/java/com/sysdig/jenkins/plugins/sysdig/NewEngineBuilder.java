@@ -55,6 +55,8 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   private boolean engineVerify = SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_VERIFY;
   private String inlineScanExtraParams = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
   private String policiesToApply = "";
+  private String cliVersionToApply = "";
+  private String customCliVersion = "";
   private String scannerBinaryPath = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
 
 
@@ -76,6 +78,16 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   @Override
   public String getPoliciesToApply() {
     return policiesToApply;
+  }
+
+  @Override
+  public String getCliVersionToApply() {
+    return cliVersionToApply;
+  }
+
+  @Override
+  public String getCustomCliVersion() {
+    return customCliVersion;
   }
 
   @Override
@@ -119,6 +131,18 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   @Override
   public void setPoliciesToApply(String policiesToApply) {
     this.policiesToApply = policiesToApply;
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setCliVersionToApply(String cliVersionToApply) {
+    this.cliVersionToApply = cliVersionToApply;
+  }
+
+  @DataBoundSetter
+  @Override
+  public void setCustomCliVersion(String customCliVersion) {
+    this.customCliVersion = customCliVersion;
   }
 
   @DataBoundSetter

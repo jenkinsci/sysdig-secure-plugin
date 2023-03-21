@@ -23,6 +23,15 @@
       <f:textbox name="inlineScanExtraParams" default=""/>
     </f:entry>
 
+    <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply" description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!" help="/plugin/sysdig-secure/help/help-CliVersionToApply.html">
+          <f:radio name="cliVersionToApply" title="Default Version" value="default"
+            checked="true" />
+          <f:radio name="cliVersionToApply" title="Custom Version" value="custom"
+        checked="${instance.cliVersionToApply == 'custom'}">
+            <f:textbox name="customCliVersion" field="customCliVersion"/>
+          </f:radio>
+    </f:entry>
+
     <f:entry title="Enable DEBUG logging" field="debug">
       <f:checkbox name="debug" checked="${descriptor.debug}" default="${false}"/>
     </f:entry>

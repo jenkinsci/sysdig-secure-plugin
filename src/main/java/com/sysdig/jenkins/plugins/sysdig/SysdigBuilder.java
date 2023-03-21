@@ -227,6 +227,8 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
     private String inlinescanimage = "";
     private boolean forceinlinescan = false;
     private boolean forceNewEngine = false;
+    private String cliVersionToApply = "";
+    private String customCliVersion = "";
 
 
     private String scannerBinaryPath = EMPTY_STRING;
@@ -242,6 +244,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     public void setDebug(boolean debug) {
       this.debug = debug;
+    }
+
+    public void setCliVersionToApply(String cliVersionToApply) {
+      this.cliVersionToApply = cliVersionToApply;
+    }
+
+    public void setCustomCliVersion(String customCliVersion) {
+      this.customCliVersion = customCliVersion;
     }
 
     public void setEngineurl(String engineurl) {
@@ -289,6 +299,14 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigSca
 
     public boolean getDebug() {
       return debug;
+    }
+
+    public String getCliVersionToApply() {
+      return cliVersionToApply;
+    }
+
+    public String getCustomCliVersion() {
+      return customCliVersion;
     }
 
     public String getEngineurl() {

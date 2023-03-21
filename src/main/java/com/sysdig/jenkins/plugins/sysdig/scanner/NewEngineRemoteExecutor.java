@@ -204,6 +204,16 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     return FIXED_SCANNED_VERSION;
   }
 
+  private String getInlineScanVersion() throws IOException {
+    if(this.config.getCliVersionToApply().equals("custom")){
+      if(this.config.getCustomCliVersion().isEmpty()){
+        return getInlineScanPinnedVersion();
+      }
+      return this.config.getCustomCliVersion();
+    }
+    return getInlineScanPinnedVersion();
+  }
+
   private Proxy getHttpProxy() throws IOException {
     Proxy proxy;
     String address = "";
@@ -255,7 +265,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       logger.logInfo("Inlinescan binary globally defined to* " + scannerBinaryPath.getPath());
     } else {
       try {
-        String latestVersion = getInlineScanPinnedVersion();
+        String latestVersion = getInlineScanVersion();
         logger.logInfo("Downloading inlinescan v" + latestVersion);
         scannerBinaryPath = downloadInlineScan(latestVersion);
         logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
