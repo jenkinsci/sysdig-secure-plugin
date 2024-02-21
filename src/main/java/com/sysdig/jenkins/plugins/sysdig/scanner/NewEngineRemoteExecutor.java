@@ -278,9 +278,10 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   private String executeScan(final File scannerBinFile) throws AbortException {
     try {
+      final long logsFileTrailerCheckingInterval = 200L;
+      final long logsCollectionWaitingTime = 2000L;
       final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan.json")).toFile();
       final File scannerExecLogsFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan-logs.log")).toFile();
-      final long logsFileTrailerCheckingInterval = 200L;
       final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), logsFileTrailerCheckingInterval);
 
       List<String> command = new ArrayList<>();
@@ -322,7 +323,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
       logger.logInfo("Waiting for scanner execution to be completed...");
       int scannerExitCode = scannerProcess.waitFor();
-      Thread.sleep(logsFileTrailerCheckingInterval * 2); //just to be sure that all the logs have been written to the file for being successfully retrieved
+      Thread.sleep(logsCollectionWaitingTime); //just to be sure that all the logs have been written to the file for being successfully retrieved
       logsFileTailer.stop();
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
