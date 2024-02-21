@@ -205,8 +205,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanVersion() throws IOException {
-    if(this.config.getCliVersionToApply().equals("custom")){
-      if(this.config.getCustomCliVersion().isEmpty()){
+    if (this.config.getCliVersionToApply().equals("custom")) {
+      if (this.config.getCustomCliVersion().isEmpty()) {
         return getInlineScanPinnedVersion();
       }
       return this.config.getCustomCliVersion();
@@ -280,7 +280,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     try {
       final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan.json")).toFile();
       final File scannerExecLogsFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan-logs.log")).toFile();
-      final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), 500L);
+      final long logsFileTrailerCheckingInterval = 200L;
+      final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), logsFileTrailerCheckingInterval);
 
       List<String> command = new ArrayList<>();
       command.add(scannerBinFile.getPath());
@@ -321,6 +322,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
       logger.logInfo("Waiting for scanner execution to be completed...");
       int scannerExitCode = scannerProcess.waitFor();
+      Thread.sleep(logsFileTrailerCheckingInterval * 2); //just to be sure that all the logs have been written to the file for being successfully retrieved
       logsFileTailer.stop();
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
