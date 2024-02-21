@@ -294,27 +294,29 @@ public class NewEngineReportConverter extends ReportConverter {
   @Override
   protected JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
     JSONArray dataJson = new JSONArray();
-    JSONArray vulList = vulnsReport.getJSONArray("list");
-    for (int i = 0; i < vulList.size(); i++) {
-      JSONObject packageJson = vulList.getJSONObject(i);
-      packageJson.getJSONArray("vulnerabilities").forEach(item -> {
-        JSONObject vulnJson = (JSONObject) item;
-        JSONArray vulnArray = new JSONArray();
-        vulnArray.addAll(Arrays.asList
-          (
-            tag,
-            vulnJson.getString("name"),
-            vulnJson.getJSONObject("severity").getString("label"),
-            packageJson.getString("name"),
-            packageJson.get("suggestedFix") == JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
-            vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
-            packageJson.getString("type"),
-            packageJson.containsKey("packagePath") ? packageJson.get("packagePath") == JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath") : "N/A",
-            vulnJson.getString("disclosureDate"),
-            vulnJson.get("solutionDate") == JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate"))
-        );
-        dataJson.add(vulnArray);
-      });
+    final JSONArray vulList = vulnsReport.optJSONArray("list");
+    if (vulList != null) {
+      for (int i = 0; i < vulList.size(); i++) {
+        JSONObject packageJson = vulList.getJSONObject(i);
+        packageJson.getJSONArray("vulnerabilities").forEach(item -> {
+          JSONObject vulnJson = (JSONObject) item;
+          JSONArray vulnArray = new JSONArray();
+          vulnArray.addAll(Arrays.asList
+            (
+              tag,
+              vulnJson.getString("name"),
+              vulnJson.getJSONObject("severity").getString("label"),
+              packageJson.getString("name"),
+              packageJson.get("suggestedFix") == JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
+              vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
+              packageJson.getString("type"),
+              packageJson.containsKey("packagePath") ? packageJson.get("packagePath") == JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath") : "N/A",
+              vulnJson.getString("disclosureDate"),
+              vulnJson.get("solutionDate") == JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate"))
+          );
+          dataJson.add(vulnArray);
+        });
+      }
     }
 
     return dataJson;
