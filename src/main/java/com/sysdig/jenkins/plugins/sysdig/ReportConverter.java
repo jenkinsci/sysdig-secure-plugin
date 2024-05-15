@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ReportConverter {
   private static final String LEGACY_PASSED_STATUS = "pass";
@@ -44,6 +45,7 @@ public class ReportConverter {
 
   public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
     JSONObject fullGateResults = new JSONObject();
+    Map<String, String> imageDigestsToTags = new HashMap<>(resultList.size());
 
     for (ImageScanningResult result : resultList) {
       JSONObject gateResult = result.getGateResult();
@@ -70,6 +72,7 @@ public class ReportConverter {
             ((JSONArray) row).element(policieNames.get(((JSONArray) row).getString(processedResult.getJSONObject("result").getJSONArray("header").indexOf("Policy_Id"))));
           }
           fullGateResults.put((String) key, gateResult.getJSONObject((String) key));
+          imageDigestsToTags.put(result.getImageDigest(), result.getTag());
         } catch (Exception e) {
           logger.logDebug("Ignoring error parsing policy evaluation result key: " + key);
         }
@@ -79,10 +82,10 @@ public class ReportConverter {
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
     jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
-    return generateGatesSummary(fullGateResults);
+    return generateGatesSummary(fullGateResults, imageDigestsToTags);
   }
 
-  protected JSONObject generateGatesSummary(JSONObject gatesJson) {
+  protected JSONObject generateGatesSummary(JSONObject gatesJson, final Map<String, String> digestsToTags) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -192,7 +195,12 @@ public class ReportConverter {
         } else {
           logger.logInfo(String.format("Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s", imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")));
           JSONObject summaryRow = new JSONObject();
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
+          String imageName = digestsToTags.get(imageKey.toString());
+          if (Strings.isNullOrEmpty(imageName)){
+            imageName = imageKey.toString();
+          }
+
+          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageName);
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));

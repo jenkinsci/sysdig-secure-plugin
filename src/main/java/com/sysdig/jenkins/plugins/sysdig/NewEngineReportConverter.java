@@ -10,10 +10,7 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class NewEngineReportConverter extends ReportConverter {
@@ -26,6 +23,7 @@ public class NewEngineReportConverter extends ReportConverter {
   public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP)
     throws IOException, InterruptedException {
     JSONObject fullGateResults = new JSONObject();
+    Map<String, String> imageDigestsToTags = new HashMap<>(resultList.size());
 
     for (ImageScanningResult result : resultList) {
       JSONObject gateResult = result.getGateResult();
@@ -36,12 +34,13 @@ public class NewEngineReportConverter extends ReportConverter {
         logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
       }
       fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
+      imageDigestsToTags.put(result.getImageDigest(), result.getTag());
     }
 
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
     jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
-    return generateGatesSummary(fullGateResults);
+    return generateGatesSummary(fullGateResults, imageDigestsToTags);
   }
 
   private String getPkgVulnFailuresString(JSONObject failure) {
@@ -151,7 +150,7 @@ public class NewEngineReportConverter extends ReportConverter {
   }
 
   @Override
-  protected JSONObject generateGatesSummary(JSONObject gatesJson) {
+  protected JSONObject generateGatesSummary(JSONObject gatesJson, final Map<String, String> digestsToTags) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -270,15 +269,17 @@ public class NewEngineReportConverter extends ReportConverter {
           ));
 
           JSONObject summaryRow = new JSONObject();
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageKey.toString());
+          String imageName = digestsToTags.get(imageKey.toString());
+          if (Strings.isNullOrEmpty(imageName)){
+            imageName = imageKey.toString();
+          }
+
+          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageName);
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
           summaryRows.add(summaryRow);
-
-          // computation for " + imageKey);
-          logger.logWarn(String.format("Repo_Tag element not found in gate output, using imageId: %s", imageKey));
         }
       } else { // rows object not found
         logger.logWarn(String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
