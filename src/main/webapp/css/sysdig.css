@@ -1,3 +1,11 @@
+html, body {
+    font-size: initial;
+}
+
+.page-header {
+    margin: 0;
+}
+
 div.image-id {
     font-size: 0.8em;
 }
