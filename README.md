@@ -158,7 +158,7 @@ interface (`Sysdig Secure Report (FAIL)` in the image above)
 Use docker to build the sysdig-secure.hpi file:
 
 ```sh
-docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /usr/src/app maven:3.3-jdk-8 mvn package
+docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /usr/src/app maven:3.6.3-jdk-8 mvn package
 ```
 
 You can then install the plugin via the Jenkins UI, or by copying it into $JENKINS_HOME/plugins.
