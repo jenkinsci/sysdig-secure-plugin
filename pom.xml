@@ -173,7 +173,7 @@
       <dependency>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>structs</artifactId>
-        <version>1.21</version> <!-->This is the most-updated version supporting Jenkins 1.150.1<-->
+        <version>338.v848422169819</version> <!-->This is the most-updated version supporting Jenkins 1.150.1<-->
       </dependency>
 
       <!--TEST Dependencies-->
