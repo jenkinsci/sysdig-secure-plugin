@@ -160,7 +160,8 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
     logger.logInfo(System.getProperty("os.name"));
 
     String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin" : "linux";
-    URL url = new URL("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/" + latestVersion + "/" + os + "/amd64/sysdig-cli-scanner");
+    String arch = System.getProperty("os.arch").toLowerCase().startsWith("aarch64") ? "arm64" : "amd64";
+    URL url = new URL("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/" + latestVersion + "/" + os + "/" + arch + "/sysdig-cli-scanner");
     Proxy proxy = getHttpProxy();
     boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
     int downloadRetriesLeft = 5;
