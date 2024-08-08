@@ -1,0 +1,41 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  
+    <f:entry title="${%SysdigEnv}" field="sysdigEnv" help="/plugin/sysdig-secure/help/help-sysdigEnv.html">
+        <f:textbox />
+    </f:entry>
+   
+   
+     <f:entry title="${%SecureAPIToken}" field="secureAPIToken" help="/plugin/sysdig-secure/help/help-secureAPIToken.html">
+        <f:password />
+    </f:entry>
+
+    <f:entry title="${%Path}" field="path" help="/plugin/sysdig-secure/help/help-path.html">
+        <f:textbox />
+    </f:entry>
+
+    <f:advanced>
+       
+        <f:entry title="${%ListUnsupported}" field="listUnsupported"
+                 description="${%ListUnsupportedDescr}">
+        <f:checkbox />
+
+        </f:entry>
+                <f:entry title="${%IsRecursive}" checked="${instance.isRecursive}" field="isRecursive">
+            <f:checkbox />
+        </f:entry>
+
+       <f:entry name="severityThreshold" title="Choose Severity Threshold" field="severityThreshold">
+    <select name="severityThreshold">
+        <option value="h">High</option>
+        <option value="m">Medium</option>
+        <option value="l">Low</option>
+        <option value="n">Never</option>
+    </select>
+</f:entry>
+
+    <f:entry title="${%version}" field="version" default="latest">
+        <f:textbox />
+    </f:entry>
+    </f:advanced>
+</j:jelly>
