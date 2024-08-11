@@ -229,7 +229,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
         listener.getLogger().println("starting to scan");
         try {
-            if (act.cliExecPath() == "") {
+            if (act.cliExecPath().isEmpty()) {
                 listener.error("failed empty path");
 
                 throw new Exception("empty path");
@@ -246,7 +246,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             String output = getProcessOutput(p);
             int exitCode = p.exitValue();
-            listener.getLogger().printf("finished status %d\n", exitCode);
+            listener.getLogger().printf("finished status %d", exitCode);
 
             listener.getLogger().printf("%s", output);
 
@@ -301,7 +301,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
         listener.getLogger().println("starting to scan");
         try {
-            if (act.cliExecPath() == "") {
+            if (act.cliExecPath().isEmpty()) {
                 listener.error("failed empty path");
 
                 throw new Exception("empty path");
@@ -333,10 +333,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
                     break;
             }
 
-        } catch (FailedCLIScan e) {
-            listener.error("iac scan %s", e.getMessage());
-            return false;
-        } catch (BadParamCLIScan e) {
+        } catch (FailedCLIScan | BadParamCLIScan e) {
             listener.error("iac scan %s", e.getMessage());
             return false;
         } catch (Exception e) {

@@ -23,37 +23,37 @@ public class CLIDownloadAction implements RunAction2 {
     private String url;
     private String basePath = "/var/jenkins_home";
 
-    private Path apath;
+    private Path executionPath;
 
     public String cliExecPath() {
 
-        return this.apath.toAbsolutePath().toString();
+        return this.executionPath.toAbsolutePath().toString();
     }
 
     private void makeCLIDownladURL() {
-    Scanner s = null;    
-    try {
+        Scanner s = null;
+        try {
             @SuppressWarnings("deprecation")
             URL uarl = new URL("https", "download.sysdig.com", "/scanning/sysdig-cli-scanner/latest_version.txt");
-            s = new Scanner(uarl.openStream());
-            if (this.version.isEmpty() || this.version.equalsIgnoreCase("latest")){
+            s = new Scanner(uarl.openStream(), "UTF-8");
+            if (this.version.isEmpty() || this.version.equalsIgnoreCase("latest")) {
                 this.version = s.nextLine();
             }
             this.url = String.format(
                     "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/%s/%s/%s/sysdig-cli-scanner",
                     this.version,
                     this.os.toLowerCase(), this.arch.toLowerCase());
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-        if (s != null) {
-         s.close();
-         }
-         }
+            if (s != null) {
+                s.close();
+            }
+        }
     }
 
-     private void downloadUsingNIO( String file) throws IOException {
+    private void downloadUsingNIO(String file) throws IOException {
         URL url = new URL(this.url);
         ReadableByteChannel rbc = Channels.newChannel(url.openStream());
         FileOutputStream fos = new FileOutputStream(file);
@@ -74,7 +74,7 @@ public class CLIDownloadAction implements RunAction2 {
         fis.close();
         bis.close();
     }
-    
+
     private void downloadCLI() throws Exception {
         if ("".equals(this.url)) {
             throw new Exception("empty url");
@@ -83,13 +83,13 @@ public class CLIDownloadAction implements RunAction2 {
         try {
             downloaderStream(tmpPath);
         } catch (Exception e) {
-            
+
             downloadUsingNIO(tmpPath);
         }
-        
+
     }
 
-    public CLIDownloadAction(String name, String basePath,String version) throws Exception {
+    public CLIDownloadAction(String name, String basePath, String version) throws Exception {
         this.name = name;
         this.basePath = basePath;
         this.os = System.getProperty("os.name");
@@ -98,9 +98,9 @@ public class CLIDownloadAction implements RunAction2 {
         makeCLIDownladURL();
         downloadCLI();
         String tmpPath = String.format("%s/sysdig-cli-scanner.%s", this.basePath, this.version);
-        this.apath = Paths.get(tmpPath);
+        this.executionPath = Paths.get(tmpPath);
 
-        Files.setPosixFilePermissions(this.apath, PosixFilePermissions.fromString("rwx------"));
+        Files.setPosixFilePermissions(this.executionPath, PosixFilePermissions.fromString("rwx------"));
 
     }
 
