@@ -121,6 +121,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             builder.append(System.getProperty("line.separator"));
         }
         String output = builder.toString();
+        reader.close();
         return output;
     }
 
