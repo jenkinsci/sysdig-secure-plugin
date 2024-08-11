@@ -225,16 +225,16 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             return false;
         }
         build.addAction(act);
-        listener.getLogger().println(act.chwd());
+        listener.getLogger().println(act.cliExecPath());
 
         listener.getLogger().println("starting to scan");
         try {
-            if (act.chwd() == "") {
+            if (act.cliExecPath() == "") {
                 listener.error("failed empty path");
 
                 throw new Exception("empty path");
             }
-            String exec = act.chwd();
+            String exec = act.cliExecPath();
             ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
             Map<String, String> envv = pb.environment();
             envv.put("SECURE_API_TOKEN", secureAPIToken);
@@ -297,16 +297,16 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             return false;
         }
         build.addAction(act);
-        listener.getLogger().println(act.chwd());
+        listener.getLogger().println(act.cliExecPath());
 
         listener.getLogger().println("starting to scan");
         try {
-            if (act.chwd() == "") {
+            if (act.cliExecPath() == "") {
                 listener.error("failed empty path");
 
                 throw new Exception("empty path");
             }
-            String exec = act.chwd();
+            String exec = act.cliExecPath();
             ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
             Map<String, String> envv = pb.environment();
             envv.put("SECURE_API_TOKEN", secureAPIToken);

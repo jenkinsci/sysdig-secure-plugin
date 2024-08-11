@@ -25,12 +25,12 @@ public class CLIDownloadAction implements RunAction2 {
 
     private Path apath;
 
-    public String chwd() {
+    public String cliExecPath() {
 
         return this.apath.toAbsolutePath().toString();
     }
 
-    private void makeUrl() {
+    private void makeCLIDownladURL() {
     Scanner s = null;    
     try {
             @SuppressWarnings("deprecation")
@@ -75,7 +75,7 @@ public class CLIDownloadAction implements RunAction2 {
         bis.close();
     }
     
-    private void downloader() throws Exception {
+    private void downloadCLI() throws Exception {
         if ("".equals(this.url)) {
             throw new Exception("empty url");
         }
@@ -89,14 +89,14 @@ public class CLIDownloadAction implements RunAction2 {
         
     }
 
-    public CLIDownloadAction(String name, String basePath,String ver) throws Exception {
+    public CLIDownloadAction(String name, String basePath,String version) throws Exception {
         this.name = name;
         this.basePath = basePath;
         this.os = System.getProperty("os.name");
-        this.version = ver;
+        this.version = version;
         this.arch = System.getProperty("os.arch");
-        makeUrl();
-        downloader();
+        makeCLIDownladURL();
+        downloadCLI();
         String tmpPath = String.format("%s/sysdig-cli-scanner.%s", this.basePath, this.version);
         this.apath = Paths.get(tmpPath);
 
