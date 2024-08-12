@@ -4,6 +4,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Vector;
 
@@ -111,7 +112,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
     private String getProcessOutput(Process p) throws IOException {
         
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(),StandardCharsets.UTF_8));
         StringBuilder builder = new StringBuilder();
         String line = null;
         while ((line = reader.readLine()) != null) {
