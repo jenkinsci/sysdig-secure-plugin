@@ -2,6 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import java.io.BufferedInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
@@ -54,16 +55,16 @@ public class CLIDownloadAction implements RunAction2 {
     }
 
     private void downloadUsingNIO(String file) throws IOException {
-        URL url = new URL(this.url);
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-        FileOutputStream fos = new FileOutputStream(file);
-        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-        fos.close();
-        rbc.close();
+        URL url = URI.create(file).toURL();
+       try(ReadableByteChannel rbc = Channels.newChannel(url.openStream())){
+        try(FileOutputStream fos = new FileOutputStream(file)){
+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+        }
+       }
     }
 
     private void downloaderStream(String p) throws Exception {
-        URL url = new URL(this.url);
+        URL url = URI.create(this.url).toURL();
         try (BufferedInputStream bis = new BufferedInputStream(url.openStream()) ) {
             try(FileOutputStream fis = new FileOutputStream(p)) {
                 byte[] buffer = new byte[1024];

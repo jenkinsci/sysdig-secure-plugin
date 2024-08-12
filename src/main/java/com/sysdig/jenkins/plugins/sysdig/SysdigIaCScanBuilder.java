@@ -30,13 +30,13 @@ import jenkins.tasks.SimpleBuildStep;
 
 public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
-    public class FailedCLIScan extends Exception {
+    public static class FailedCLIScan extends Exception {
         public FailedCLIScan(String errorMessage) {
             super(errorMessage);
         }
     }
 
-    public class BadParamCLIScan extends Exception {
+    public static class BadParamCLIScan extends Exception {
         public BadParamCLIScan(String errorMessage) {
             super(errorMessage);
         }
