@@ -47,7 +47,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     private final String secureAPIToken;
     private String path;
     private String severityThreshold = "h";
-    private String sysdigEnv = "https://secure-staging.sysdig.com";
+    private String sysdigEnv = "";
     private String version = "latest";
 
     @DataBoundConstructor
