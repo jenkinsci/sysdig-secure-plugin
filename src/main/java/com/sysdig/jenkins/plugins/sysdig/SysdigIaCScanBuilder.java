@@ -4,7 +4,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Vector;
 
@@ -15,7 +14,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -112,7 +110,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     }
 
     private String getProcessOutput(Process p) throws IOException {
-
+        
         BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
         StringBuilder builder = new StringBuilder();
         String line = null;
@@ -211,7 +209,6 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     @Override
     public boolean perform(Build<?, ?> build, Launcher launcher, BuildListener listener)
             throws InterruptedException, IOException {
-        // TODO Auto-generated method stub
         super.perform(build, launcher, listener);
 
         CLIDownloadAction act = null;
@@ -220,7 +217,6 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             String cwd = System.getProperty("user.home");
             act = new CLIDownloadAction("IaC scanner", cwd,version);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             listener.getLogger().println("failed to download cli");
 
             e.printStackTrace();
@@ -256,10 +252,10 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             switch (exitCode) {
                 case 1:
-                    throw new FailedCLIScan(String.format("scan failed \n\n%s", output));
+                    throw new FailedCLIScan(String.format("scan failed %n %s", output));
 
                 case 2:
-                    throw new FailedCLIScan(String.format("scan failed \n\n%s", output));
+                    throw new BadParamCLIScan(String.format("scan failed %n %s", output));
                 default:
 
                     break;
@@ -267,12 +263,17 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
         } catch (FailedCLIScan e) {
             listener.error("iac scan %s", e.getMessage());
+            listener.getLogger().printf("iac scan failed(status 1) %s", e.getMessage());
             return false;
         } catch (BadParamCLIScan e) {
             listener.error("iac scan %s", e.getMessage());
+            listener.getLogger().printf("iac scan failed due to missing params %s", e.getMessage());
+
             return false;
         } catch (Exception e) {
             listener.error("failed processing output:%s", e.getMessage());
+            listener.getLogger().printf("iac scan failed %s", e.getMessage());
+
             e.printStackTrace();
             return false;
         }
@@ -283,16 +284,14 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
             throws InterruptedException, IOException {
-        // TODO Auto-generated method stub
         super.perform(build, launcher, listener);
 
-        CLIDownloadAction act = null;
+   CLIDownloadAction act = null;
         try {
             listener.getLogger().println("trying to download cli");
-            String cwd = System.getProperty("user.dir");
+            String cwd = System.getProperty("user.home");
             act = new CLIDownloadAction("IaC scanner", cwd,version);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             listener.getLogger().println("failed to download cli");
 
             e.printStackTrace();
@@ -322,26 +321,34 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             String output = getProcessOutput(p);
             int exitCode = p.exitValue();
-            listener.getLogger().printf("finished status %d\n", exitCode);
+            listener.getLogger().printf("finished status %d", exitCode);
 
             listener.getLogger().printf("%s", output);
 
             switch (exitCode) {
                 case 1:
-                    throw new FailedCLIScan(String.format("scan failed \n\n%s", output));
+                    throw new FailedCLIScan(String.format("scan failed %n %s", output));
 
                 case 2:
-                    throw new FailedCLIScan(String.format("scan failed \n\n%s", output));
+                    throw new BadParamCLIScan(String.format("scan failed %n %s", output));
                 default:
 
                     break;
             }
 
-        } catch (FailedCLIScan | BadParamCLIScan e) {
+        } catch (FailedCLIScan e) {
             listener.error("iac scan %s", e.getMessage());
+            listener.getLogger().printf("iac scan failed(status 1) %s", e.getMessage());
+            return false;
+        } catch (BadParamCLIScan e) {
+            listener.error("iac scan %s", e.getMessage());
+            listener.getLogger().printf("iac scan failed due to missing params %s", e.getMessage());
+
             return false;
         } catch (Exception e) {
             listener.error("failed processing output:%s", e.getMessage());
+            listener.getLogger().printf("iac scan failed %s", e.getMessage());
+
             e.printStackTrace();
             return false;
         }

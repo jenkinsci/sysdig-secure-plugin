@@ -72,7 +72,7 @@ public class CLIDownloadAction implements RunAction2 {
             fis.write(buffer, 0, count);
         }
         fis.close();
-        bis.close();
+        bis.close();      
     }
 
     private void downloadCLI() throws Exception {
