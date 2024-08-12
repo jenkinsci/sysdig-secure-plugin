@@ -6,23 +6,23 @@
     </f:entry>
    
    
-     <f:entry title="${%SecureAPIToken}" field="secureAPIToken" help="/plugin/sysdig-secure/help/help-secureAPIToken.html">
+     <f:entry name="SecureAPIToken" title="${%SecureAPIToken}" field="secureAPIToken" help="/plugin/sysdig-secure/help/help-secureAPIToken.html">
         <f:password />
     </f:entry>
 
-    <f:entry title="${%Path}" field="path" help="/plugin/sysdig-secure/help/help-path.html">
+    <f:entry name="Path" title="${%Path}" field="path" help="/plugin/sysdig-secure/help/help-path.html">
         <f:textbox />
     </f:entry>
 
     <f:advanced>
        
-        <f:entry title="${%ListUnsupported}" field="listUnsupported"
+        <f:entry name="ListUnsupported" title="${%ListUnsupported}" field="listUnsupported"
                  description="${%ListUnsupportedDescr}">
         <f:checkbox />
 
         </f:entry>
-                <f:entry title="${%IsRecursive}" checked="${instance.isRecursive}" field="isRecursive">
-            <f:checkbox />
+                <f:entry name="IsRecursive" title="${%IsRecursive}" default="${descriptor.DEFAULT_IS_RECURSIVE}" field="isRecursive">
+            <f:checkbox default="${descriptor.DEFAULT_IS_RECURSIVE}"/>
         </f:entry>
 
        <f:entry name="severityThreshold" title="Choose Severity Threshold" field="severityThreshold">
@@ -34,8 +34,8 @@
     </select>
 </f:entry>
 
-    <f:entry title="${%version}" field="version" default="latest">
-        <f:textbox />
+    <f:entry name="Version" title="${%Version}" field="version" >
+        <f:textbox default="${descriptor.DEFAULT_CLI_VERSION}" />
     </f:entry>
     </f:advanced>
 </j:jelly>

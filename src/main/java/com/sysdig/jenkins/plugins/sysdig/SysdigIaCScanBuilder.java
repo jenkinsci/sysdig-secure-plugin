@@ -129,6 +129,10 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
+        public static final boolean DEFAULT_IS_RECURSIVE = true;
+        public static final String DEFAULT_CLI_VERSION = "latest";
+
+
         public FormValidation doCheckSysdigEnv(@QueryParameter String value, @QueryParameter boolean useFrench)
                 throws IOException, ServletException {
             if (value.length() == 0)
@@ -213,7 +217,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
         CLIDownloadAction act = null;
         try {
             listener.getLogger().println("trying to download cli");
-            String cwd = System.getProperty("user.dir");
+            String cwd = System.getProperty("user.home");
             act = new CLIDownloadAction("IaC scanner", cwd,version);
         } catch (Exception e) {
             // TODO Auto-generated catch block
