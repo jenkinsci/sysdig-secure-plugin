@@ -54,7 +54,7 @@ public class CLIDownloadAction implements RunAction2 {
     }
 
     private void downloadUsingNIO(String file) throws IOException {
-        URL url = new URL(this.url);
+        URL url = new URI.create(this.url).toURL();
         ReadableByteChannel rbc = Channels.newChannel(url.openStream());
         FileOutputStream fos = new FileOutputStream(file);
         fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
