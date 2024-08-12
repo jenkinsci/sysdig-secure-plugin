@@ -64,15 +64,15 @@ public class CLIDownloadAction implements RunAction2 {
 
     private void downloaderStream(String p) throws Exception {
         URL url = new URL(this.url);
-        BufferedInputStream bis = new BufferedInputStream(url.openStream());
-        FileOutputStream fis = new FileOutputStream(p);
-        byte[] buffer = new byte[1024];
-        int count = 0;
-        while ((count = bis.read(buffer, 0, 1024)) != -1) {
-            fis.write(buffer, 0, count);
-        }
-        fis.close();
-        bis.close();      
+        try (BufferedInputStream bis = new BufferedInputStream(url.openStream()) ) {
+            try(FileOutputStream fis = new FileOutputStream(p)) {
+                byte[] buffer = new byte[1024];
+                int count = 0;
+                while ((count = bis.read(buffer, 0, 1024)) != -1) {
+                    fis.write(buffer, 0, count);
+                }
+            }
+        }  
     }
 
     private void downloadCLI() throws Exception {
