@@ -218,7 +218,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             String cwd = System.getProperty("user.home");
             act = new CLIDownloadAction("IaC scanner", cwd,version);
         } catch (Exception e) {
-            listener.getLogger().println("failed to download cli");
+            listener.getLogger().printf("failed to download cli version: %s%n",version);
 
             e.printStackTrace();
 
@@ -247,7 +247,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             String output = getProcessOutput(p);
             int exitCode = p.exitValue();
-            listener.getLogger().printf("finished status %d", exitCode);
+            listener.getLogger().printf("finished status %d%n", exitCode);
 
             listener.getLogger().printf("%s", output);
 
@@ -293,7 +293,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
             String cwd = System.getProperty("user.home");
             act = new CLIDownloadAction("IaC scanner", cwd,version);
         } catch (Exception e) {
-            listener.getLogger().println("failed to download cli");
+            listener.getLogger().printf("failed to download cli version: %s%n",version);
 
             e.printStackTrace();
 
@@ -322,7 +322,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             String output = getProcessOutput(p);
             int exitCode = p.exitValue();
-            listener.getLogger().printf("finished status %d", exitCode);
+            listener.getLogger().printf("finished status %d%n", exitCode);
 
             listener.getLogger().printf("%s", output);
 
