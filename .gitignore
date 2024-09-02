@@ -27,3 +27,9 @@ work/
 .factorypath
 .project
 .settings/
+
+# Direnv
+.direnv/
+
+# Nix Derivation result
+result
