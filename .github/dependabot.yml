@@ -1,0 +1,12 @@
+version: 2
+updates:
+# Maintain dependencies for the plugin
+- package-ecosystem: maven
+  directory: /
+  schedule:
+    interval: monthly
+# Maintain dependencies for GitHub Actions
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: monthly
