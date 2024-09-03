@@ -27,9 +27,12 @@ public class Util {
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
 
   public static boolean isExistingFile(String path) {
+    if (path == null) {
+      return false;
+    }
     try {
       Paths.get(path);
-    } catch (InvalidPathException | NullPointerException ex) {
+    } catch (InvalidPathException ex) {
       return false;
     }
     File f = new File(path);
