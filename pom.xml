@@ -14,7 +14,6 @@
   <packaging>hpi</packaging>
   <name>Sysdig Secure Container Image Scanner Plugin</name>
   <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan OCI images</description>
-
   <url>https://github.com/jenkinsci/sysdig-secure-plugin</url>
 
   <licenses>
@@ -26,6 +25,7 @@
 
   <properties>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/#currently-recommended-versions -->
+    <!-- You can check out which versions are being used per version in https://stats.jenkins.io/pluginversions/sysdig-secure.html -->
     <jenkins.version>2.440.3</jenkins.version>
   </properties>
 
@@ -40,7 +40,7 @@
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
     <tag>${project.artifactId}-${project.version}</tag>
   </scm>
 
@@ -63,7 +63,7 @@
       <!-- https://www.jenkins.io/doc/developer/tutorial-improve/update-base-jenkins-version/#update-minimum-required-jenkins-version -->
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId>
+        <artifactId>bom-2.440.x</artifactId> <!-- This should match the Jenkins version configured. You can find out existing ones in https://repo.jenkins-ci.org/artifactory/public/io/jenkins/tools/bom/ -->
         <version>3307.v2769886db_63b_</version>
         <type>pom</type>
         <scope>import</scope>
@@ -77,9 +77,11 @@
       <artifactId>credentials</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>apache-httpcomponents-client-4-api</artifactId>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-step-api</artifactId>
     </dependency>
+    <!-- FIXME(fede): This has to be removed once we get rid of the legacy scanner -->
+    <!-- From here, it's required for the legacy scanner -->
     <dependency>
       <groupId>com.github.docker-java</groupId>
       <artifactId>docker-java</artifactId>
@@ -101,33 +103,11 @@
       <version>3.4.0</version>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-    </dependency>
-    <dependency>
-      <!-- FIXME(fede) Check if we can remove this -->
       <groupId>org.apache.commons</groupId>
-      <artifactId>commons-vfs2</artifactId>
-      <version>2.9.0</version>
-      <exclusions>
-        <exclusion>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </exclusion>
-      </exclusions>
+      <artifactId>commons-lang3</artifactId>
+      <version>3.12.0</version>
     </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>jackson2-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-step-api</artifactId>
-    </dependency>
+    <!-- Until here, it's required for the legacy scanner -->
 
     <!--TEST Dependencies-->
     <dependency>
@@ -136,48 +116,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-cps</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-job</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-basic-steps</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-durable-task-step</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.plugins.workflow</groupId>
-      <artifactId>workflow-support</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jenkinsci.plugins</groupId>
       <artifactId>pipeline-model-definition</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.jenkins-ci.main</groupId>
-      <artifactId>jenkins-test-harness</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
