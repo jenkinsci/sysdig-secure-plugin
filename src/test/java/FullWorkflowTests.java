@@ -1,5 +1,6 @@
 
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuilder;
+import hudson.model.Descriptor;
 import org.apache.commons.lang.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -12,16 +13,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
-import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
-import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScannerRemoteExecutor;
-import hudson.model.Descriptor;
+
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
@@ -34,12 +31,6 @@ public class FullWorkflowTests {
 
   @Before
   public void BeforeEach() {
-    ContainerRunner containerRunner = mock(ContainerRunner.class);
-    ContainerRunnerFactory containerRunnerFactory = mock(ContainerRunnerFactory.class);
-    when(containerRunnerFactory.getContainerRunner(any(), any(), any())).thenReturn(containerRunner);
-
-    InlineScannerRemoteExecutor.setContainerRunnerFactory(containerRunnerFactory);
-
     NewEngineBuilder.DescriptorImpl desc = new NewEngineBuilder("temp").getDescriptor();
     desc.save();
   }
@@ -106,24 +97,6 @@ public class FullWorkflowTests {
   }
 
   @Test
-  public void scriptedPipelineScan() throws Exception {
-    WorkflowJob job = performScriptedPipelineScanJob(true);
-    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
-    // Then
-    jenkins.assertLogContains("final result PASS", build);
-  }
-
-  @Test
-  public void declarativePipelineBackendScan() throws Exception {
-    performDeclarativePipelineScanJob(false);
-  }
-
-  @Test
-  public void declarativePipelineInlineScan() throws Exception {
-    performDeclarativePipelineScanJob(true);
-  }
-
-  @Test
   public void noImageSpecified() throws Exception {
     // Given
     configureCredentials();
@@ -140,16 +113,14 @@ public class FullWorkflowTests {
     jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
   }
 
+  // FIXME(fede) use this helper method to create tests that bailOnFail after mocks are in place.
   private WorkflowJob performScriptedPipelineScanJob(boolean bailOnFail) throws Exception {
     // Given
     configureCredentials();
     WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
     String pipelineScript
       = "node {\n"
-      + (SystemUtils.IS_OS_WINDOWS
-      ? "  bat 'echo my-image:latest > images_file'\n"
-      : "  sh 'echo my-image:latest > images_file'\n")
-      + "  sysdig engineCredentialsId: 'sysdig-secure', name: 'images_file'"
+      + "  sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'"
       + (!bailOnFail ? ", bailOnFail: false" : "")
       + "\n"
       + "}";
@@ -157,7 +128,8 @@ public class FullWorkflowTests {
     return job;
   }
 
-  private void performDeclarativePipelineScanJob(boolean inline) throws Exception {
+  // FIXME(fede) use this helper method to create tests after mocks are in place.
+  private void performDeclarativePipelineScanJob() throws Exception {
     // Given
     configureCredentials();
     WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-declarative-pipeline");
@@ -167,10 +139,7 @@ public class FullWorkflowTests {
       + "  stages {\n"
       + "    stage('Test') {\n"
       + "      steps {\n"
-      + (SystemUtils.IS_OS_WINDOWS
-      ? "        bat 'echo my-image:latest > images_file'\n"
-      : "        sh 'echo my-image:latest > images_file'\n")
-      + "        sysdig engineCredentialsId: 'sysdig-secure', inlineScanning: " + inline + ", name: 'images_file'\n"
+      + "        sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'\n"
       + "      }\n"
       + "    }\n"
       + "  }\n"
