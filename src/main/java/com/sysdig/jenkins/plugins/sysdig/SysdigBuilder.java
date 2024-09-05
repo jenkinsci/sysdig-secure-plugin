@@ -22,7 +22,6 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.google.common.base.Strings;
 import hudson.*;
 import hudson.model.AbstractProject;
-import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
@@ -34,7 +33,6 @@ import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -54,148 +52,15 @@ import java.util.Collections;
  * jenkins to run jobs as) must be allowed to interact with docker</li>
  * </ol>
  */
-public class SysdigBuilder extends Builder implements SimpleBuildStep, SysdigScanStep {
-
-  // Assigning the defaults here for pipeline builds
-  private final String name;
-  private boolean bailOnFail = DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
-  private boolean bailOnPluginFail = DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
-  private boolean inlineScanning = DescriptorImpl.DEFAULT_INLINE_SCANNING;
-  private boolean forceScan = DescriptorImpl.DEFAULT_FORCE_SCAN;
-
-  // Override global config. Supported for sysdig-secure-engine mode config only
-  private String engineurl = DescriptorImpl.EMPTY_STRING;
-  private String engineCredentialsId = DescriptorImpl.EMPTY_STRING;
-  private boolean engineverify = DescriptorImpl.DEFAULT_ENGINE_VERIFY;
-  private String runAsUser = DescriptorImpl.EMPTY_STRING;
-  private String inlineScanExtraParams = DescriptorImpl.EMPTY_STRING;
-
-  @Override
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public boolean getBailOnFail() {
-    return bailOnFail;
-  }
-
-  @Override
-  public boolean getBailOnPluginFail() {
-    return bailOnPluginFail;
-  }
-
-  @Override
-  public String getEngineurl() {
-    return engineurl;
-  }
-
-  @Override
-  public String getEngineCredentialsId() {
-    return engineCredentialsId;
-  }
-
-  @Override
-  public boolean getEngineverify() {
-    return engineverify;
-  }
-
-  @Override
-  public String getRunAsUser() {
-    return runAsUser;
-  }
-
-  @Override
-  public String getInlineScanExtraParams() {
-    return inlineScanExtraParams;
-  }
-
-  @Override
-  public boolean isInlineScanning() {
-    return inlineScanning;
-  }
-
-  @Override
-  public boolean getForceScan() {
-    return forceScan;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setBailOnFail(boolean bailOnFail) {
-    this.bailOnFail = bailOnFail;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setBailOnPluginFail(boolean bailOnPluginFail) {
-    this.bailOnPluginFail = bailOnPluginFail;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setEngineurl(String engineurl) {
-    this.engineurl = engineurl;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setEngineCredentialsId(String engineCredentialsId) {
-    this.engineCredentialsId = engineCredentialsId;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setEngineverify(boolean engineverify) {
-    this.engineverify = engineverify;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setRunAsUser(String runAsUser) {
-    this.runAsUser = runAsUser;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setInlineScanExtraParams(String inlineScanExtraParams) {
-    this.inlineScanExtraParams = inlineScanExtraParams;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setInlineScanning(boolean inlineScanning) {
-    this.inlineScanning = inlineScanning;
-  }
-
-  @DataBoundSetter
-  @Override
-  public void setForceScan(boolean forceScan) {
-    this.forceScan = forceScan;
-  }
-
+public class SysdigBuilder extends Builder implements SimpleBuildStep {
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
   @DataBoundConstructor
-  public SysdigBuilder(String name) {
-    this.name = name;
+  public SysdigBuilder() {
   }
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
-    Computer computer = workspace.toComputer();
-    EnvVars envVars = new EnvVars();
-    if (computer != null) {
-      envVars.putAll(computer.buildEnvironment(listener));
-    }
-
-    EnvVars buildEnvVars = run.getEnvironment(listener);
-    envVars.putAll(buildEnvVars);
-
-    perform(run, workspace, launcher, listener, envVars);
-  }
-
-  public void perform(Run run, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars envVars) throws AbortException {
-    new SysdigBuilderExecutor(this, run, workspace, listener, envVars);
+    throw new AbortException("FIXME(fede): remove this. it should not be used");
   }
 
   @Override
