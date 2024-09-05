@@ -62,7 +62,7 @@ public class NewEngineBuilderExecutor {
       NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
       ReportConverter reporter = new NewEngineReportConverter(logger);
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-      finalAction = worker.scanAndBuildReports(config.getImageName(), null, null, false);
+      finalAction = worker.scanAndBuildReports(config.getImageName());
 
     } catch (Exception e) {
       if (config.getBailOnPluginFail() || builder.getBailOnPluginFail()) {

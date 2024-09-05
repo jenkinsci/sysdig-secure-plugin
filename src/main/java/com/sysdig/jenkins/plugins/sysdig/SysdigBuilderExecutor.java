@@ -69,7 +69,7 @@ public class SysdigBuilderExecutor {
         NewEngineScanner scanner = new NewEngineScanner(listener, newEngineBuildConfig, workspace, envVars, logger);
         ReportConverter reporter = new NewEngineReportConverter(logger);
         worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
-        finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(), false);
+        finalAction = worker.scanAndBuildReports(null);
       } else {
         throw new AbortException("legacy engine is no longer supported"); //FIXME(fede): Remove this after cleaning up the code.
       }

@@ -98,14 +98,9 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(String imageName, String dockerFile, String imageListName, Boolean legacyEngine) throws AbortException, InterruptedException {
-    Map<String, String> imagesAndDockerfiles;
-    if (!Strings.isNullOrEmpty(imageListName)) {
-      imagesAndDockerfiles = this.readImagesAndDockerfilesFromPath(workspace, imageListName);
-    } else {
-      imagesAndDockerfiles = new HashMap<>();
-      imagesAndDockerfiles.put(imageName, dockerFile);
-    }
+  public Util.GATE_ACTION scanAndBuildReports(String imageName) throws AbortException, InterruptedException {
+    Map<String, String> imagesAndDockerfiles = new HashMap<>();
+    imagesAndDockerfiles.put(imageName, null); // FIXME(fede): refactor this to not use null, we only need one image after all, we don't need the hashmap
 
     /* Run analysis */
     ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
@@ -134,7 +129,7 @@ public class BuildWorker {
       }
 
       /* Setup reports */
-      this.setupBuildReports(finalAction, gateSummary, legacyEngine);
+      this.setupBuildReports(finalAction, gateSummary, false);
 
     } catch (Exception e) {
       logger.logError("Recording failure to build reports and moving on with plugin operation", e);
@@ -191,7 +186,8 @@ public class BuildWorker {
         logger.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
         jenkinsReportDir.mkdirs();
       }
-    } catch (IOException | InterruptedException e) { // probably caught one of the thrown exceptions, let it pass through
+    } catch (IOException |
+             InterruptedException e) { // probably caught one of the thrown exceptions, let it pass through
       logger.logWarn("Failed to initialize Jenkins workspace", e);
       throw e;
     }
