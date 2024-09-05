@@ -24,7 +24,7 @@ public class CLIDownloadAction implements RunAction2 {
     private String url;
     private String basePath = "/var/jenkins_home";
 
-    private Path executionPath;
+    private transient Path executionPath;
 
     public String cliExecPath() {
 
