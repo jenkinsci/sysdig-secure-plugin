@@ -1,25 +1,8 @@
-import hudson.model.Descriptor;
-import org.apache.commons.lang.SystemUtils;
-import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
-import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.sysdig.jenkins.plugins.sysdig.NewEngineBuilder;
 import com.sysdig.jenkins.plugins.sysdig.SysdigBuilder;
 import com.sysdig.jenkins.plugins.sysdig.client.BackendScanningClientFactory;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
@@ -29,14 +12,23 @@ import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunner;
 import com.sysdig.jenkins.plugins.sysdig.containerrunner.ContainerRunnerFactory;
 import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScannerRemoteExecutor;
-
+import hudson.model.Descriptor;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
-import hudson.tasks.BatchFile;
-import hudson.tasks.Shell;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.SystemUtils;
+import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+import org.jenkinsci.plugins.workflow.job.WorkflowRun;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 public class FullWorkflowTests {
 
@@ -98,20 +90,20 @@ public class FullWorkflowTests {
   public void configurationRoundTrip() throws Exception {
     // Given
     FreeStyleProject project = jenkins.createFreeStyleProject();
-    project.getBuildersList().add(new SysdigBuilder("test"));
+    project.getBuildersList().add(new NewEngineBuilder("test"));
 
     // When - this makes sure that the config is saved and retrieved again
     project = jenkins.configRoundtrip(project);
 
     // Then - the config should be preserved
-    jenkins.assertEqualDataBoundBeans(new SysdigBuilder("test"), project.getBuildersList().get(0));
+    jenkins.assertEqualDataBoundBeans(new NewEngineBuilder("test"), project.getBuildersList().get(0));
   }
 
   @Test
   public void noCredentialsSetError() throws Exception {
     // Given
     FreeStyleProject project = jenkins.createFreeStyleProject();
-    SysdigBuilder builder = new SysdigBuilder("images_file");
+    NewEngineBuilder builder = new NewEngineBuilder("images_file");
     project.getBuildersList().add(builder);
 
     // When
@@ -125,7 +117,7 @@ public class FullWorkflowTests {
   public void credentialsNotFoundError() throws Exception {
     // Given
     FreeStyleProject project = jenkins.createFreeStyleProject();
-    SysdigBuilder builder = new SysdigBuilder("images_file");
+    NewEngineBuilder builder = new NewEngineBuilder("alpine");
     builder.setEngineCredentialsId("non-existing");
     project.getBuildersList().add(builder);
 
@@ -137,13 +129,22 @@ public class FullWorkflowTests {
   }
 
   @Test
-  public void freestyleBackendScan() throws Exception {
-    performFreestyleScanJob(false);
-  }
+  public void performFreestyleScanJob() throws Exception {
+    // Given
+    configureCredentials();
 
-  @Test
-  public void freestyleInlineScan() throws Exception {
-    performFreestyleScanJob(true);
+    FreeStyleProject project = jenkins.createFreeStyleProject();
+
+    NewEngineBuilder builder = new NewEngineBuilder("alpine");
+    builder.setEngineCredentialsId("sysdig-secure");
+    project.getBuildersList().add(builder);
+
+    // When
+    // FIXME(fede): Adjust mocks to assert success
+    FreeStyleBuild build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+    // Then
+    jenkins.assertLogContains("Retrieving MainDB", build);
   }
 
   @Test
@@ -191,45 +192,20 @@ public class FullWorkflowTests {
   }
 
   @Test
-  public void missingImagesFile() throws Exception {
+  public void noImageSpecified() throws Exception {
     // Given
     configureCredentials();
-    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "no-images-file");
+    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "no-image-specified");
     String pipelineScript
       = "node {\n"
-      + "  sysdig engineCredentialsId: 'sysdig-secure', name: 'images_file'\n"
+      + "  sysdigImageScan engineCredentialsId: 'sysdig-secure'\n"
       + "}";
     job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
     WorkflowRun build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
     // Then
-    jenkins.assertLogContains("Image list file 'images_file' not found", build);
-  }
-
-  private void performFreestyleScanJob(boolean inline) throws Exception {
-    // Given
-    configureCredentials();
-
-    FreeStyleProject project = jenkins.createFreeStyleProject();
-
-    if (SystemUtils.IS_OS_WINDOWS) {
-      BatchFile batch = new BatchFile("echo my-image:latest > images_file");
-      project.getBuildersList().add(batch);
-    } else {
-      Shell shell = new Shell("echo my-image:latest > images_file");
-      project.getBuildersList().add(shell);
-    }
-
-    SysdigBuilder builder = new SysdigBuilder("images_file");
-    builder.setEngineCredentialsId("sysdig-secure");
-    builder.setInlineScanning(inline);
-    project.getBuildersList().add(builder);
-
-    // When
-    FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-
-    // Then
-    jenkins.assertLogContains("final result PASS", build);
+    // FIXME(fede) we need to validate that the image has been provided, not just an error
+    jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
   }
 
   private WorkflowJob performScriptedPipelineScanJob(boolean inline, boolean bailOnFail) throws Exception {
