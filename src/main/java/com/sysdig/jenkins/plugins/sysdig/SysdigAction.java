@@ -34,7 +34,6 @@ public class SysdigAction implements Action {
   private final String gateOutputUrl;
   private final String gateSummary;
   private final String cveListingUrl;
-  private final Boolean legacyEngine;
 
   // For backwards compatibility
   @Deprecated
@@ -43,13 +42,12 @@ public class SysdigAction implements Action {
   private Map<String, String> queries;
 
 
-  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName, Boolean legacyEngine) {
+  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
     this.gateSummary = gateSummary;
     this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
-    this.legacyEngine = legacyEngine;
   }
 
   @Override
@@ -103,8 +101,9 @@ public class SysdigAction implements Action {
     return this.queries;
   }
 
+  //FIXME(fede): remove this lol
   public Boolean getLegacyEngine() {
-    return legacyEngine;
+    return false;
   }
 
 }
