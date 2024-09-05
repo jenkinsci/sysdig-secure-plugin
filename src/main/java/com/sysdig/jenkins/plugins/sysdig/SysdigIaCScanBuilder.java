@@ -244,6 +244,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
             Process p = pb.start();
             listener.getLogger().println("started...");
+            p.waitFor();
 
             String output = getProcessOutput(p);
             int exitCode = p.exitValue();
