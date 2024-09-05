@@ -20,7 +20,6 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
-import com.sysdig.jenkins.plugins.sysdig.scanner.OldEngineScanner;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
