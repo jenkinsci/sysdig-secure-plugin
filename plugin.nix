@@ -4,7 +4,7 @@ maven.buildMavenPackage {
   pname = "sysdig-secure-plugin";
   version = "2.3.4-SNAPSHOT";
   src = ./.;
-  mvnHash = "sha256-MawsZtPS2k3CK9HkVxSMVcT1oUXvZLGuxJpSbN8lsYM=";
+  mvnHash = "sha256-JaXBP9xumsJTaS8kpob0Q0rer5hweF6fbODetOyqCAI=";
 
   doCheck = false;
   installPhase = "
