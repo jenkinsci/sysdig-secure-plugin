@@ -19,7 +19,6 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
-import com.sysdig.jenkins.plugins.sysdig.scanner.BackendScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.InlineScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.scanner.OldEngineScanner;
@@ -74,9 +73,7 @@ public class SysdigBuilderExecutor {
         worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
         finalAction = worker.scanAndBuildReports(null, null, config.getImageListName(), false);
       } else {
-        OldEngineScanner scanner = config.getInlineScanning() ?
-          new InlineScanner(listener, config, workspace, envVars, logger) :
-          new BackendScanner(config, logger);
+        OldEngineScanner scanner = new InlineScanner(listener, config, workspace, envVars, logger);
 
         ReportConverter reporter = new ReportConverter(logger);
 
