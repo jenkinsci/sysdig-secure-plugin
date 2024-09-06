@@ -3,30 +3,30 @@
 
     <f:section title="Sysdig Image Scanning Build Options">
 
-        <f:entry title="Image name" field="imageName">
+        <f:entry title="Image name to scan" field="imageName" description="For example: alpine:latest">
             <f:textbox/>
         </f:entry>
 
-        <f:entry>
-            <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}"
-                        title="Fail build on policy evaluation FAIL result"
-                        default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
-        </f:entry>
+        <f:advanced title="More settings">
 
-        <f:entry>
-            <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}"
-                        title="Fail build on critical plugin error"
-                        default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
-        </f:entry>
+            <f:entry>
+                <f:checkbox name="bailOnFail" checked="${instance.bailOnFail}"
+                            title="Fail the build when the policy evaluation of the image scanned is not compliant"
+                            default="${descriptor.DEFAULT_BAIL_ON_FAIL}"/>
+            </f:entry>
 
-        <f:entry title="Identifiers of policies to apply" field="policiesToApply">
-            <f:textbox/>
-        </f:entry>
+            <f:entry>
+                <f:checkbox name="bailOnPluginFail" checked="${instance.bailOnPluginFail}"
+                            title="Fail the build when the plugin has an internal error"
+                            default="${descriptor.DEFAULT_BAIL_ON_PLUGIN_FAIL}"/>
+            </f:entry>
+
+        </f:advanced>
 
 
     </f:section>
 
-    <f:section title="Override Global Configuration">
+    <f:advanced title="Override Global Configuration">
         <f:entry title="Sysdig Secure Engine URL" field="engineURL"
                  help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
             <f:textbox/>
@@ -51,20 +51,23 @@
             <f:textbox/>
         </f:entry>
 
-        <f:section title="Advanced Image Scanning Options">
-            <f:advanced>
-                <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply"
-                         description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!"
-                         help="/plugin/sysdig-secure/help/help-OverrideCliVersionToApply.html">
-                    <f:radio name="cliVersionToApply" title="Use global setting" value="global_default"
-                             checked="true"/>
-                    <f:radio name="cliVersionToApply" title="Override global version setting" value="custom"
-                             checked="${instance.cliVersionToApply == 'custom'}">
-                        <f:textbox name="customCliVersion" field="customCliVersion"/>
-                    </f:radio>
-                </f:entry>
-            </f:advanced>
-        </f:section>
+    </f:advanced>
 
-    </f:section>
+
+    <f:advanced title="Advanced Image Scanning Options">
+        <f:entry title="Identifiers of policies to apply" field="policiesToApply">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply"
+                 description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!"
+                 help="/plugin/sysdig-secure/help/help-OverrideCliVersionToApply.html">
+            <f:radio name="cliVersionToApply" title="Use global setting" value="global_default"
+                     checked="true"/>
+            <f:radio name="cliVersionToApply" title="Override global version setting" value="custom"
+                     checked="${instance.cliVersionToApply == 'custom'}">
+                <f:textbox name="customCliVersion" field="customCliVersion"/>
+            </f:radio>
+        </f:entry>
+    </f:advanced>
 </j:jelly>

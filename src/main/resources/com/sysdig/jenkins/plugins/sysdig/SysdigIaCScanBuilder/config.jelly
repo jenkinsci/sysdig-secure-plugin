@@ -1,34 +1,33 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
 
-    <f:entry title="${%SysdigEnv}" field="sysdigEnv" help="/plugin/sysdig-secure/help/help-sysdigEnv.html">
+    <f:entry title="Sysdig Secure Engine URL" field="sysdigEnv" help="/plugin/sysdig-secure/help/help-sysdigEnv.html">
         <f:textbox/>
     </f:entry>
 
-
-    <f:entry name="SecureAPIToken" title="${%SecureAPIToken}" field="secureAPIToken"
+    <f:entry title="Secure API Token" field="secureAPIToken"
              help="/plugin/sysdig-secure/help/help-secureAPIToken.html">
         <f:password/>
     </f:entry>
 
-    <f:entry name="Path" title="${%Path}" field="path" help="/plugin/sysdig-secure/help/help-path.html">
+    <f:entry title="Path to scan" field="path" help="/plugin/sysdig-secure/help/help-path.html">
         <f:textbox/>
     </f:entry>
 
     <f:advanced>
 
-        <f:entry name="ListUnsupported" title="${%ListUnsupported}" field="listUnsupported"
-                 description="${%ListUnsupportedDescr}">
+        <f:entry title="List Unsupported Resources" field="listUnsupported"
+                 description="Toggle output of detailed list of unsupported resources">
             <f:checkbox/>
-
         </f:entry>
-        <f:entry name="IsRecursive" title="${%IsRecursive}" default="${descriptor.DEFAULT_IS_RECURSIVE}"
+
+        <f:entry title="Recursive"
                  field="isRecursive">
             <f:checkbox default="${descriptor.DEFAULT_IS_RECURSIVE}"/>
         </f:entry>
 
-        <f:entry name="severityThreshold" title="Choose Severity Threshold" field="severityThreshold">
+        <f:entry title="Choose Severity Threshold" field="severityThreshold">
             <select name="severityThreshold">
                 <option value="h">High</option>
                 <option value="m">Medium</option>
@@ -37,8 +36,9 @@
             </select>
         </f:entry>
 
-        <f:entry name="Version" title="${%Version}" field="version">
+        <f:entry title="CLI Version to use" field="version">
             <f:textbox default="${descriptor.DEFAULT_CLI_VERSION}"/>
         </f:entry>
+
     </f:advanced>
 </j:jelly>
