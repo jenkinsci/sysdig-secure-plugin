@@ -42,7 +42,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
-public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEngineScanStep {
+public class NewEngineBuilder extends Builder implements SimpleBuildStep {
 
   // Assigning the defaults here for pipeline builds
   private final String imageName;
@@ -60,118 +60,96 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep, NewEng
   private String scannerBinaryPath = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
 
 
-  @Override
   public String getImageName() {
     return imageName;
   }
 
-  @Override
   public boolean getBailOnFail() {
     return bailOnFail;
   }
 
-  @Override
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
   }
 
-  @Override
   public String getPoliciesToApply() {
     return policiesToApply;
   }
 
-  @Override
   public String getCliVersionToApply() {
     return cliVersionToApply;
   }
 
-  @Override
   public String getCustomCliVersion() {
     return customCliVersion;
   }
 
-  @Override
   public String getEngineURL() {
     return engineURL;
   }
 
-  @Override
   public String getEngineCredentialsId() {
     return engineCredentialsId;
   }
 
-  @Override
   public boolean getEngineVerify() {
     return engineVerify;
   }
 
-  @Override
   public String getInlineScanExtraParams() {
     return inlineScanExtraParams;
   }
 
-  @Override
   public String getScannerBinaryPath() {
     return scannerBinaryPath;
   }
 
-  @DataBoundSetter
-  @Override
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
   }
 
   @DataBoundSetter
-  @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     this.bailOnPluginFail = bailOnPluginFail;
   }
 
   @DataBoundSetter
-  @Override
   public void setPoliciesToApply(String policiesToApply) {
     this.policiesToApply = policiesToApply;
   }
 
   @DataBoundSetter
-  @Override
   public void setCliVersionToApply(String cliVersionToApply) {
     this.cliVersionToApply = cliVersionToApply;
   }
 
   @DataBoundSetter
-  @Override
   public void setCustomCliVersion(String customCliVersion) {
     this.customCliVersion = customCliVersion;
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineURL(String engineURL) {
     this.engineURL = engineURL;
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineCredentialsId(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineVerify(boolean engineVerify) {
     this.engineVerify = engineVerify;
   }
 
   @DataBoundSetter
-  @Override
   public void setScannerBinaryPath(String scannerBinaryPath) {
     this.scannerBinaryPath = scannerBinaryPath;
   }
 
 
   @DataBoundSetter
-  @Override
   public void setInlineScanExtraParams(String inlineScanExtraParams) {
     this.inlineScanExtraParams = inlineScanExtraParams;
   }

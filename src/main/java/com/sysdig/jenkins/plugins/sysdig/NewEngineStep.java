@@ -19,122 +19,100 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
-public class NewEngineStep extends Step implements BuildStep, NewEngineScanStep {
+public class NewEngineStep extends Step implements BuildStep {
 
   final NewEngineBuilder builder;
 
-  @Override
   public String getImageName() {
     return builder.getImageName();
   }
 
-  @Override
   public boolean getBailOnFail() {
     return builder.getBailOnFail();
   }
 
-  @Override
   public boolean getBailOnPluginFail() {
     return builder.getBailOnPluginFail();
   }
 
-  @Override
   public String getPoliciesToApply() {
     return builder.getPoliciesToApply();
   }
 
-  @Override
   public String getCliVersionToApply() {
     return builder.getCliVersionToApply();
   }
 
-  @Override
   public String getCustomCliVersion() {
     return builder.getCustomCliVersion();
   }
 
-
-  @Override
   public String getEngineURL() {
     return builder.getEngineURL();
   }
 
-  @Override
   public String getEngineCredentialsId() {
     return builder.getEngineCredentialsId();
   }
 
-  @Override
   public boolean getEngineVerify() {
     return builder.getEngineVerify();
   }
 
-  @Override
   public String getInlineScanExtraParams() {
     return builder.getInlineScanExtraParams();
   }
 
-  @Override
   public String getScannerBinaryPath() {
     return builder.getScannerBinaryPath();
   }
 
   @DataBoundSetter
-  @Override
   public void setBailOnFail(boolean bailOnFail) {
     builder.setBailOnFail(bailOnFail);
   }
 
   @DataBoundSetter
-  @Override
   public void setPoliciesToApply(String policiesToApply) {
     builder.setPoliciesToApply(policiesToApply);
   }
 
   @DataBoundSetter
-  @Override
   public void setCliVersionToApply(String cliVersionToApply) {
     builder.setCliVersionToApply(cliVersionToApply);
   }
 
   @DataBoundSetter
-  @Override
   public void setCustomCliVersion(String customCliVersion) {
     builder.setCustomCliVersion(customCliVersion);
   }
 
   @DataBoundSetter
-  @Override
   public void setBailOnPluginFail(boolean bailOnPluginFail) {
     builder.setBailOnPluginFail(bailOnPluginFail);
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineURL(String engineurl) {
     builder.setEngineURL(engineurl);
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineCredentialsId(String engineCredentialsId) {
     builder.setEngineCredentialsId(engineCredentialsId);
   }
 
   @DataBoundSetter
-  @Override
   public void setEngineVerify(boolean engineVerify) {
     builder.setEngineVerify(engineVerify);
   }
 
   @DataBoundSetter
-  @Override
   public void setInlineScanExtraParams(String inlineScanExtraParams) {
     builder.setInlineScanExtraParams(inlineScanExtraParams);
   }
 
   @DataBoundSetter
-  @Override
   public void setScannerBinaryPath(String scannerBinayPath) {
     builder.setScannerBinaryPath(scannerBinayPath);
   }

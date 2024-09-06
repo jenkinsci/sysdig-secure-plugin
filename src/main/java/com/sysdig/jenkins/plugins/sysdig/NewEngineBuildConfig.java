@@ -38,45 +38,45 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineScanStep scanStep, String sysdigToken) {
-    imageName = scanStep.getImageName();
-    bailOnFail = scanStep.getBailOnFail();
-    bailOnPluginFail = scanStep.getBailOnPluginFail();
+  public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineBuilder engineBuilder, String sysdigToken) {
+    imageName = engineBuilder.getImageName();
+    bailOnFail = engineBuilder.getBailOnFail();
+    bailOnPluginFail = engineBuilder.getBailOnPluginFail();
     debug = globalConfig.getDebug();
-    if (!Strings.isNullOrEmpty(scanStep.getEngineURL())) {
-      engineurl = scanStep.getEngineURL();
-      engineverify = scanStep.getEngineVerify();
+    if (!Strings.isNullOrEmpty(engineBuilder.getEngineURL())) {
+      engineurl = engineBuilder.getEngineURL();
+      engineverify = engineBuilder.getEngineVerify();
     } else {
       engineurl = globalConfig.getEngineurl();
       engineverify = globalConfig.getEngineverify();
     }
 
-    if (!Strings.isNullOrEmpty(scanStep.getInlineScanExtraParams())) {
-      inlineScanExtraParams = scanStep.getInlineScanExtraParams();
+    if (!Strings.isNullOrEmpty(engineBuilder.getInlineScanExtraParams())) {
+      inlineScanExtraParams = engineBuilder.getInlineScanExtraParams();
     } else {
       inlineScanExtraParams = globalConfig.getInlineScanExtraParams();
     }
 
     this.sysdigToken = sysdigToken;
 
-    this.policiesToApply = scanStep.getPoliciesToApply();
+    this.policiesToApply = engineBuilder.getPoliciesToApply();
 
-    if (!Strings.isNullOrEmpty(scanStep.getCliVersionToApply()) 
-        && !scanStep.getCliVersionToApply().equals("global_default")) {
-      this.cliVersionToApply = scanStep.getCliVersionToApply();
+    if (!Strings.isNullOrEmpty(engineBuilder.getCliVersionToApply())
+        && !engineBuilder.getCliVersionToApply().equals("global_default")) {
+      this.cliVersionToApply = engineBuilder.getCliVersionToApply();
     } else {
       this.cliVersionToApply = globalConfig.getCliVersionToApply();
     }
 
-    if (!Strings.isNullOrEmpty(scanStep.getCustomCliVersion()) 
-        && !scanStep.getCliVersionToApply().equals("global_default")) {
-      this.customCliVersion = scanStep.getCustomCliVersion();
+    if (!Strings.isNullOrEmpty(engineBuilder.getCustomCliVersion())
+        && !engineBuilder.getCliVersionToApply().equals("global_default")) {
+      this.customCliVersion = engineBuilder.getCustomCliVersion();
     } else {
       this.customCliVersion = globalConfig.getCustomCliVersion();
     }
 
-    if (!Strings.isNullOrEmpty(scanStep.getScannerBinaryPath())) {
-      this.scannerBinaryPath = scanStep.getScannerBinaryPath();
+    if (!Strings.isNullOrEmpty(engineBuilder.getScannerBinaryPath())) {
+      this.scannerBinaryPath = engineBuilder.getScannerBinaryPath();
     } else {
       this.scannerBinaryPath = globalConfig.getScannerBinaryPath();
     }
