@@ -9,10 +9,6 @@ across your microservices. The Sysdig Secure Jenkins plugin can be used in a Pip
 Freestyle job to automate the process of running an image analysis, evaluating custom policies against images, and
 performing security scans.
 
-> The Sysdig engine has been redesigned to provide better quality results, this documentation shows you how to configure the plugin to work with the redesigned engine.
->
->If you are still using the legacy engine please refer to the [Legacy engine plugin documentation](README-legacy.md)
-
 # Getting Started
 
 ## Pre-requisites
