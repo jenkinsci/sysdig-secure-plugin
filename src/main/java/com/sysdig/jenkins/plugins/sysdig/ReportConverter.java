@@ -27,6 +27,17 @@ public class ReportConverter {
     this.logger = logger;
   }
 
+  protected static JSONArray generateDataTablesColumnsForGateSummary() {
+    JSONArray headers = new JSONArray();
+    for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
+      JSONObject header = new JSONObject();
+      header.put("data", column.toString());
+      header.put("title", column.toString().replaceAll("_", " "));
+      headers.add(header);
+    }
+    return headers;
+  }
+
   public Util.GATE_ACTION getFinalAction(List<ImageScanningResult> results) throws AbortException {
     Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
 
@@ -41,17 +52,6 @@ public class ReportConverter {
     }
 
     return finalAction;
-  }
-
-  protected static JSONArray generateDataTablesColumnsForGateSummary() {
-    JSONArray headers = new JSONArray();
-    for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
-      JSONObject header = new JSONObject();
-      header.put("data", column.toString());
-      header.put("title", column.toString().replaceAll("_", " "));
-      headers.add(header);
-    }
-    return headers;
   }
 
   public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
@@ -326,7 +326,7 @@ public class ReportConverter {
 
           JSONObject summaryRow = new JSONObject();
           String imageName = digestsToTags.get(imageKey.toString());
-          if (Strings.isNullOrEmpty(imageName)){
+          if (Strings.isNullOrEmpty(imageName)) {
             imageName = imageKey.toString();
           }
 

@@ -60,6 +60,12 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
   private String scannerBinaryPath = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
 
 
+  // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
+  @DataBoundConstructor
+  public NewEngineBuilder(String imageName) {
+    this.imageName = imageName;
+  }
+
   public String getImageName() {
     return imageName;
   }
@@ -68,44 +74,12 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     return bailOnFail;
   }
 
-  public boolean getBailOnPluginFail() {
-    return bailOnPluginFail;
-  }
-
-  public String getPoliciesToApply() {
-    return policiesToApply;
-  }
-
-  public String getCliVersionToApply() {
-    return cliVersionToApply;
-  }
-
-  public String getCustomCliVersion() {
-    return customCliVersion;
-  }
-
-  public String getEngineURL() {
-    return engineURL;
-  }
-
-  public String getEngineCredentialsId() {
-    return engineCredentialsId;
-  }
-
-  public boolean getEngineVerify() {
-    return engineVerify;
-  }
-
-  public String getInlineScanExtraParams() {
-    return inlineScanExtraParams;
-  }
-
-  public String getScannerBinaryPath() {
-    return scannerBinaryPath;
-  }
-
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
+  }
+
+  public boolean getBailOnPluginFail() {
+    return bailOnPluginFail;
   }
 
   @DataBoundSetter
@@ -113,9 +87,17 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     this.bailOnPluginFail = bailOnPluginFail;
   }
 
+  public String getPoliciesToApply() {
+    return policiesToApply;
+  }
+
   @DataBoundSetter
   public void setPoliciesToApply(String policiesToApply) {
     this.policiesToApply = policiesToApply;
+  }
+
+  public String getCliVersionToApply() {
+    return cliVersionToApply;
   }
 
   @DataBoundSetter
@@ -123,9 +105,17 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     this.cliVersionToApply = cliVersionToApply;
   }
 
+  public String getCustomCliVersion() {
+    return customCliVersion;
+  }
+
   @DataBoundSetter
   public void setCustomCliVersion(String customCliVersion) {
     this.customCliVersion = customCliVersion;
+  }
+
+  public String getEngineURL() {
+    return engineURL;
   }
 
   @DataBoundSetter
@@ -133,9 +123,17 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     this.engineURL = engineURL;
   }
 
+  public String getEngineCredentialsId() {
+    return engineCredentialsId;
+  }
+
   @DataBoundSetter
   public void setEngineCredentialsId(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
+  }
+
+  public boolean getEngineVerify() {
+    return engineVerify;
   }
 
   @DataBoundSetter
@@ -143,21 +141,22 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     this.engineVerify = engineVerify;
   }
 
-  @DataBoundSetter
-  public void setScannerBinaryPath(String scannerBinaryPath) {
-    this.scannerBinaryPath = scannerBinaryPath;
+  public String getInlineScanExtraParams() {
+    return inlineScanExtraParams;
   }
-
 
   @DataBoundSetter
   public void setInlineScanExtraParams(String inlineScanExtraParams) {
     this.inlineScanExtraParams = inlineScanExtraParams;
   }
 
-  // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
-  @DataBoundConstructor
-  public NewEngineBuilder(String imageName) {
-    this.imageName = imageName;
+  public String getScannerBinaryPath() {
+    return scannerBinaryPath;
+  }
+
+  @DataBoundSetter
+  public void setScannerBinaryPath(String scannerBinaryPath) {
+    this.scannerBinaryPath = scannerBinaryPath;
   }
 
   @Override

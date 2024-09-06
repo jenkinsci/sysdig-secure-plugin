@@ -43,76 +43,12 @@ import java.util.concurrent.TimeUnit;
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
 
   private static final String FIXED_SCANNED_VERSION = "1.10.1";
-
-  public static class LogsFileToLoggerForwarder extends TailerListenerAdapter {
-
-    private final SysdigLogger logger;
-
-    public LogsFileToLoggerForwarder(final SysdigLogger forwardTo) {
-      this.logger = forwardTo;
-    }
-
-    public void handle(String line) {
-      this.logger.logInfo(line);
-    }
-  }
-
-  private static class ScannerPaths implements Serializable {
-    private static final String SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN = "sysdig-secure-scan-%d";
-    private final String baseFolder;
-    private final String binFolder;
-    private final String databaseFolder;
-    private final String cacheFolder;
-    private final String tmpFolder;
-
-    public ScannerPaths(final FilePath basePath) {
-      this.baseFolder = Paths.get(basePath.getRemote(), String.format(SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN, System.currentTimeMillis())).toString();
-      this.binFolder = Paths.get(this.baseFolder, "bin").toString();
-      this.databaseFolder = Paths.get(this.baseFolder, "db").toString();
-      this.cacheFolder = Paths.get(this.baseFolder, "cache").toString();
-      this.tmpFolder = Paths.get(this.baseFolder, "tmp").toString();
-    }
-
-    public String getBaseFolder() {
-      return this.baseFolder;
-    }
-
-    public String getBinFolder() {
-      return this.binFolder;
-    }
-
-    public String getDatabaseFolder() {
-      return this.databaseFolder;
-    }
-
-    public String getCacheFolder() {
-      return this.cacheFolder;
-    }
-
-    public String getTmpFolder() {
-      return this.tmpFolder;
-    }
-
-    public void create() throws Exception {
-      Files.createDirectories(Paths.get(this.baseFolder));
-      Files.createDirectory(Paths.get(this.binFolder));
-      Files.createDirectory(Paths.get(this.databaseFolder));
-      Files.createDirectory(Paths.get(this.cacheFolder));
-      Files.createDirectory(Paths.get(this.tmpFolder));
-    }
-
-    public void purge() throws IOException {
-      FileUtils.deleteDirectory(new File(this.baseFolder));
-    }
-  }
-
   private final ScannerPaths scannerPaths;
   private final String imageName;
   private final NewEngineBuildConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
-
   public NewEngineRemoteExecutor(FilePath workspace, String imageName, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
     this.config = config;
@@ -333,6 +269,68 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       return jsonOutput;
     } catch (Exception e) {
       throw new AbortException("Error executing inlinescan binary: " + e);
+    }
+  }
+
+  public static class LogsFileToLoggerForwarder extends TailerListenerAdapter {
+
+    private final SysdigLogger logger;
+
+    public LogsFileToLoggerForwarder(final SysdigLogger forwardTo) {
+      this.logger = forwardTo;
+    }
+
+    public void handle(String line) {
+      this.logger.logInfo(line);
+    }
+  }
+
+  private static class ScannerPaths implements Serializable {
+    private static final String SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN = "sysdig-secure-scan-%d";
+    private final String baseFolder;
+    private final String binFolder;
+    private final String databaseFolder;
+    private final String cacheFolder;
+    private final String tmpFolder;
+
+    public ScannerPaths(final FilePath basePath) {
+      this.baseFolder = Paths.get(basePath.getRemote(), String.format(SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN, System.currentTimeMillis())).toString();
+      this.binFolder = Paths.get(this.baseFolder, "bin").toString();
+      this.databaseFolder = Paths.get(this.baseFolder, "db").toString();
+      this.cacheFolder = Paths.get(this.baseFolder, "cache").toString();
+      this.tmpFolder = Paths.get(this.baseFolder, "tmp").toString();
+    }
+
+    public String getBaseFolder() {
+      return this.baseFolder;
+    }
+
+    public String getBinFolder() {
+      return this.binFolder;
+    }
+
+    public String getDatabaseFolder() {
+      return this.databaseFolder;
+    }
+
+    public String getCacheFolder() {
+      return this.cacheFolder;
+    }
+
+    public String getTmpFolder() {
+      return this.tmpFolder;
+    }
+
+    public void create() throws Exception {
+      Files.createDirectories(Paths.get(this.baseFolder));
+      Files.createDirectory(Paths.get(this.binFolder));
+      Files.createDirectory(Paths.get(this.databaseFolder));
+      Files.createDirectory(Paths.get(this.cacheFolder));
+      Files.createDirectory(Paths.get(this.tmpFolder));
+    }
+
+    public void purge() throws IOException {
+      FileUtils.deleteDirectory(new File(this.baseFolder));
     }
   }
 

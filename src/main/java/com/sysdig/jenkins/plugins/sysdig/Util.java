@@ -17,5 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 public class Util {
   public enum GATE_ACTION {PASS, FAIL}
+
   public enum GATE_SUMMARY_COLUMN {Repo_Tag, Stop_Actions, Warn_Actions, Go_Actions, Final_Action}
 }

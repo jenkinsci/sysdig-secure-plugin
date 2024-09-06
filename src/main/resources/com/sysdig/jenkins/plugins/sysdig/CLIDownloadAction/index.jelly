@@ -1,8 +1,8 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
     <l:layout title="Downloading CLI">
-        <l:side-panel> 
-            <st:include page="sidepanel.jelly" it="${it.run}" optional="true" /> 
+        <l:side-panel>
+            <st:include page="sidepanel.jelly" it="${it.run}" optional="true"/>
         </l:side-panel>
         <l:main-panel>
             <h1>
@@ -10,7 +10,5 @@
             </h1>
             ${it.url}
         </l:main-panel>
-
-       
     </l:layout>
 </j:jelly>

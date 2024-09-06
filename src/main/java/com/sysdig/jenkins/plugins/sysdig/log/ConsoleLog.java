@@ -21,18 +21,18 @@ public class ConsoleLog implements SysdigLogger, Serializable {
   // Not serializable, so make it transient and create a new one if required
   private transient PrintStream _logger;
 
+  public ConsoleLog(String name, TaskListener listener, boolean enableDebug) {
+    this.name = name;
+    this.listener = listener;
+    this.enableDebug = enableDebug;
+  }
+
   // Wrap access to non-serializable PrintStream logger
   private PrintStream getLogger() {
     if (_logger == null) {
       _logger = listener.getLogger();
     }
     return _logger;
-  }
-
-  public ConsoleLog(String name, TaskListener listener, boolean enableDebug) {
-    this.name = name;
-    this.listener = listener;
-    this.enableDebug = enableDebug;
   }
 
   @Override

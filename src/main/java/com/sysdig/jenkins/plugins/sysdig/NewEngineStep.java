@@ -23,6 +23,12 @@ public class NewEngineStep extends Step implements BuildStep {
 
   final NewEngineBuilder builder;
 
+  // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
+  @DataBoundConstructor
+  public NewEngineStep(String imageName) {
+    this.builder = new NewEngineBuilder(imageName);
+  }
+
   public String getImageName() {
     return builder.getImageName();
   }
@@ -31,60 +37,13 @@ public class NewEngineStep extends Step implements BuildStep {
     return builder.getBailOnFail();
   }
 
-  public boolean getBailOnPluginFail() {
-    return builder.getBailOnPluginFail();
-  }
-
-  public String getPoliciesToApply() {
-    return builder.getPoliciesToApply();
-  }
-
-  public String getCliVersionToApply() {
-    return builder.getCliVersionToApply();
-  }
-
-  public String getCustomCliVersion() {
-    return builder.getCustomCliVersion();
-  }
-
-  public String getEngineURL() {
-    return builder.getEngineURL();
-  }
-
-  public String getEngineCredentialsId() {
-    return builder.getEngineCredentialsId();
-  }
-
-  public boolean getEngineVerify() {
-    return builder.getEngineVerify();
-  }
-
-  public String getInlineScanExtraParams() {
-    return builder.getInlineScanExtraParams();
-  }
-
-  public String getScannerBinaryPath() {
-    return builder.getScannerBinaryPath();
-  }
-
   @DataBoundSetter
   public void setBailOnFail(boolean bailOnFail) {
     builder.setBailOnFail(bailOnFail);
   }
 
-  @DataBoundSetter
-  public void setPoliciesToApply(String policiesToApply) {
-    builder.setPoliciesToApply(policiesToApply);
-  }
-
-  @DataBoundSetter
-  public void setCliVersionToApply(String cliVersionToApply) {
-    builder.setCliVersionToApply(cliVersionToApply);
-  }
-
-  @DataBoundSetter
-  public void setCustomCliVersion(String customCliVersion) {
-    builder.setCustomCliVersion(customCliVersion);
+  public boolean getBailOnPluginFail() {
+    return builder.getBailOnPluginFail();
   }
 
   @DataBoundSetter
@@ -92,9 +51,44 @@ public class NewEngineStep extends Step implements BuildStep {
     builder.setBailOnPluginFail(bailOnPluginFail);
   }
 
+  public String getPoliciesToApply() {
+    return builder.getPoliciesToApply();
+  }
+
+  @DataBoundSetter
+  public void setPoliciesToApply(String policiesToApply) {
+    builder.setPoliciesToApply(policiesToApply);
+  }
+
+  public String getCliVersionToApply() {
+    return builder.getCliVersionToApply();
+  }
+
+  @DataBoundSetter
+  public void setCliVersionToApply(String cliVersionToApply) {
+    builder.setCliVersionToApply(cliVersionToApply);
+  }
+
+  public String getCustomCliVersion() {
+    return builder.getCustomCliVersion();
+  }
+
+  @DataBoundSetter
+  public void setCustomCliVersion(String customCliVersion) {
+    builder.setCustomCliVersion(customCliVersion);
+  }
+
+  public String getEngineURL() {
+    return builder.getEngineURL();
+  }
+
   @DataBoundSetter
   public void setEngineURL(String engineurl) {
     builder.setEngineURL(engineurl);
+  }
+
+  public String getEngineCredentialsId() {
+    return builder.getEngineCredentialsId();
   }
 
   @DataBoundSetter
@@ -102,9 +96,17 @@ public class NewEngineStep extends Step implements BuildStep {
     builder.setEngineCredentialsId(engineCredentialsId);
   }
 
+  public boolean getEngineVerify() {
+    return builder.getEngineVerify();
+  }
+
   @DataBoundSetter
   public void setEngineVerify(boolean engineVerify) {
     builder.setEngineVerify(engineVerify);
+  }
+
+  public String getInlineScanExtraParams() {
+    return builder.getInlineScanExtraParams();
   }
 
   @DataBoundSetter
@@ -112,15 +114,13 @@ public class NewEngineStep extends Step implements BuildStep {
     builder.setInlineScanExtraParams(inlineScanExtraParams);
   }
 
+  public String getScannerBinaryPath() {
+    return builder.getScannerBinaryPath();
+  }
+
   @DataBoundSetter
   public void setScannerBinaryPath(String scannerBinayPath) {
     builder.setScannerBinaryPath(scannerBinayPath);
-  }
-
-  // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
-  @DataBoundConstructor
-  public NewEngineStep(String imageName) {
-    this.builder = new NewEngineBuilder(imageName);
   }
 
   @Override

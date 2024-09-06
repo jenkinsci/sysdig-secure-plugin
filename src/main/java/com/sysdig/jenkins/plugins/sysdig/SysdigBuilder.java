@@ -20,7 +20,10 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import hudson.*;
+import hudson.AbortException;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.model.AbstractProject;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -102,92 +105,78 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
     @Deprecated
     private boolean enabled;
 
-    @Deprecated
-    public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-    }
-
-    public void setDebug(boolean debug) {
-      this.debug = debug;
-    }
-
-    public void setCliVersionToApply(String cliVersionToApply) {
-      this.cliVersionToApply = cliVersionToApply;
-    }
-
-    public void setCustomCliVersion(String customCliVersion) {
-      this.customCliVersion = customCliVersion;
-    }
-
-    public void setEngineurl(String engineurl) {
-      this.engineurl = engineurl;
-    }
-
-    public void setEngineCredentialsId(String engineCredentialsId) {
-      this.engineCredentialsId = engineCredentialsId;
-    }
-
-    public void setEngineverify(boolean engineverify) {
-      this.engineverify = engineverify;
-    }
-
-    public void setRunAsUser(String runAsUser) {
-      this.runAsUser = runAsUser;
+    public DescriptorImpl() {
+      load();
     }
 
     public void setinlineScanExtraParams(String inlineScanExtraParams) {
       this.inlineScanExtraParams = inlineScanExtraParams;
     }
 
-
-    public void setInlinescanimage(String inlinescanimage) {
-      this.inlinescanimage = inlinescanimage;
-    }
-
-    public void setForceinlinescan(boolean forceinlinescan) {
-      this.forceinlinescan = forceinlinescan;
-    }
-
-    public void setForceNewEngine(boolean forceNewEngine) {
-      this.forceNewEngine = forceNewEngine;
-    }
-
-    public void setScannerBinaryPath(String scannerBinaryPath) {
-      this.scannerBinaryPath = scannerBinaryPath;
-    }
-
-
     @Deprecated
     public boolean getEnabled() {
       return enabled;
+    }
+
+    @Deprecated
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
     }
 
     public boolean getDebug() {
       return debug;
     }
 
+    public void setDebug(boolean debug) {
+      this.debug = debug;
+    }
+
     public String getCliVersionToApply() {
       return cliVersionToApply;
+    }
+
+    public void setCliVersionToApply(String cliVersionToApply) {
+      this.cliVersionToApply = cliVersionToApply;
     }
 
     public String getCustomCliVersion() {
       return customCliVersion;
     }
 
+    public void setCustomCliVersion(String customCliVersion) {
+      this.customCliVersion = customCliVersion;
+    }
+
     public String getEngineurl() {
       return engineurl;
+    }
+
+    public void setEngineurl(String engineurl) {
+      this.engineurl = engineurl;
     }
 
     public String getEngineCredentialsId() {
       return engineCredentialsId;
     }
 
+    public void setEngineCredentialsId(String engineCredentialsId) {
+      this.engineCredentialsId = engineCredentialsId;
+    }
+
     public boolean getEngineverify() {
       return engineverify;
     }
 
+    public void setEngineverify(boolean engineverify) {
+      this.engineverify = engineverify;
+    }
+
     public String getRunAsUser() {
       return runAsUser;
+    }
+
+    public void setRunAsUser(String runAsUser) {
+      this.runAsUser = runAsUser;
     }
 
     public String getInlineScanExtraParams() {
@@ -198,20 +187,32 @@ public class SysdigBuilder extends Builder implements SimpleBuildStep {
       return inlinescanimage;
     }
 
+    public void setInlinescanimage(String inlinescanimage) {
+      this.inlinescanimage = inlinescanimage;
+    }
+
     public boolean getForceinlinescan() {
       return forceinlinescan;
+    }
+
+    public void setForceinlinescan(boolean forceinlinescan) {
+      this.forceinlinescan = forceinlinescan;
     }
 
     public boolean getForceNewEngine() {
       return forceNewEngine;
     }
 
+    public void setForceNewEngine(boolean forceNewEngine) {
+      this.forceNewEngine = forceNewEngine;
+    }
+
     public String getScannerBinaryPath() {
       return scannerBinaryPath;
     }
 
-    public DescriptorImpl() {
-      load();
+    public void setScannerBinaryPath(String scannerBinaryPath) {
+      this.scannerBinaryPath = scannerBinaryPath;
     }
 
     @Override

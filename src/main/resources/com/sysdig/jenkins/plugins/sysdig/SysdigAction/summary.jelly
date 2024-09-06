@@ -1,8 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <t:summary href="sysdig-secure-results" icon="/plugin/sysdig-secure/images/sysdig-shovel.png">
         <a href="sysdig-secure-results">Sysdig Secure Report (${it.gateStatus})</a>
-         <j:if test="${ (it.legacyEngine!= null) &amp;&amp; !(it.legacyEngine)}">
+        <j:if test="${ (it.legacyEngine!= null) &amp;&amp; !(it.legacyEngine)}">
             <st:include page="newEngineSummary.jelly" it="${it}"/>
         </j:if>
     </t:summary>

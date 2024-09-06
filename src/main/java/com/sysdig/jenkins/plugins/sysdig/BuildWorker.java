@@ -45,19 +45,16 @@ public class BuildWorker {
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
   private static final String RAW_VULN_REPORT_FILENAME = "sysdig_secure_raw_vulns_report-%s.json";
-
+  private final ReportConverter reportConverter;
+  private final NewEngineScanner scanner;
+  /* Initialized by the constructor */
+  protected SysdigLogger logger; // Log handler for logging to build console
   // Private members
   Run<?, ?> run;
   FilePath workspace;
   Launcher launcher;
   TaskListener listener;
-
-  /* Initialized by the constructor */
-  protected SysdigLogger logger; // Log handler for logging to build console
-
   private String jenkinsOutputDirName;
-  private final ReportConverter reportConverter;
-  private final NewEngineScanner scanner;
 
   public BuildWorker(Run<?, ?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, NewEngineScanner scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
     try {

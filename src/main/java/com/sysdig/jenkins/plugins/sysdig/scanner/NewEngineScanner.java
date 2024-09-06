@@ -26,19 +26,17 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class NewEngineScanner {
 
   protected final NewEngineBuildConfig config;
+  protected final SysdigLogger logger;
   private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
   private final EnvVars envVars;
-  protected final SysdigLogger logger;
 
   public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
     this.logger = logger;
@@ -72,7 +70,7 @@ public class NewEngineScanner {
 
       this.scanOutputs.put(digest, scanOutput);
 
-      return this.buildImageScanningResult(scanOutput.getJSONObject("policies"), scanOutput.getJSONObject("packages"), digest, tag );
+      return this.buildImageScanningResult(scanOutput.getJSONObject("policies"), scanOutput.getJSONObject("packages"), digest, tag);
 
     } catch (ImageScanningException e) {
       logger.logError(e.getMessage());
