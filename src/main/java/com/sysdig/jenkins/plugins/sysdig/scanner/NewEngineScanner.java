@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner implements ScannerInterface<JSONObject> {
+public class NewEngineScanner implements ScannerInterface {
 
   protected final NewEngineBuildConfig config;
   private final Map<String, JSONObject> scanOutputs;
