@@ -108,15 +108,13 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   private final ScannerPaths scannerPaths;
   private final String imageName;
-  private final String dockerFile;
   private final NewEngineBuildConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
 
-  public NewEngineRemoteExecutor(FilePath workspace, String imageName, String dockerFile, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
+  public NewEngineRemoteExecutor(FilePath workspace, String imageName, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
-    this.dockerFile = dockerFile;
     this.config = config;
     this.logger = logger;
     this.envVars = envVars;
@@ -136,13 +134,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
 
   @Override
   public String call() throws AbortException {
-    if (!Strings.isNullOrEmpty(dockerFile)) {
-      File f = new File(dockerFile);
-      if (!f.exists()) {
-        throw new AbortException("Dockerfile '" + dockerFile + "' does not exist");
-      }
-    }
-
     try {
       // Create all the necessary folders to store execution temp files and such
       createExecutionWorkspace();

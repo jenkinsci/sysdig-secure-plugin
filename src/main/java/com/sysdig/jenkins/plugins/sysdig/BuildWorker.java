@@ -29,9 +29,7 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -99,30 +97,22 @@ public class BuildWorker {
   }
 
   public Util.GATE_ACTION scanAndBuildReports(String imageName) throws AbortException, InterruptedException {
-    Map<String, String> imagesAndDockerfiles = new HashMap<>();
-    imagesAndDockerfiles.put(imageName, null); // FIXME(fede): refactor this to not use null, we only need one image after all, we don't need the hashmap
+    ImageScanningResult scanResult = scanner.scanImage(imageName);
 
-    /* Run analysis */
-    ArrayList<ImageScanningResult> scanResults = scanner.scanImages(imagesAndDockerfiles);
-
-    if (scanResults.isEmpty()) {
-      logger.logError("Image(s) were not added to sysdig-secure-engine (or a prior attempt to add images may have failed). Re-submit image(s) to sysdig-secure-engine before attempting policy evaluation");
-      throw new AbortException("Submit image(s) to sysdig-secure-engine for analysis before attempting policy evaluation");
-    }
-
-    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(scanResults);
+    // FIXME(fede): do not use a list in those methods, just use the result
+    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(List.of(scanResult));
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
       FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
       FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
-      JSONObject gateSummary = reportConverter.processPolicyEvaluation(scanResults, jenkinsGatesOutputFP);
+      JSONObject gateSummary = reportConverter.processPolicyEvaluation(List.of(scanResult), jenkinsGatesOutputFP);
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
-      reportConverter.processVulnerabilities(scanResults, jenkinsQueryOutputFP);
+      reportConverter.processVulnerabilities(List.of(scanResult), jenkinsQueryOutputFP);
 
-      for (ImageScanningResult result : scanResults) {
+      for (ImageScanningResult result : List.of(scanResult)) {
         FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, result.getImageDigest()));
         logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
         rawVulnerabilityReportFP.write(result.getVulnerabilityReport().toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -191,38 +181,6 @@ public class BuildWorker {
       logger.logWarn("Failed to initialize Jenkins workspace", e);
       throw e;
     }
-  }
-
-  private Map<String, String> readImagesAndDockerfilesFromPath(FilePath workspace, String manifestFile) throws AbortException {
-
-    Map<String, String> imageDockerfileMap = new HashMap<>();
-    logger.logDebug("Initializing Sysdig Secure workspace");
-
-    // get the input and store it in tag/dockerfile map
-    FilePath filePath = new FilePath(workspace, manifestFile);
-    logger.logDebug("Processing images file '" + filePath.getRemote() + "'");
-    try {
-      if (!filePath.exists()) {
-        throw new AbortException("Image list file '" + manifestFile + "' not found at: " + filePath.getRemote());
-      }
-
-      String[] fileLines = filePath.readToString().split("\\r?\\n");
-      for (String line : fileLines) {
-        logger.logDebug("Processing line: " + line);
-        String[] lineSplit = line.split("\\s+", 2);
-        String tag = lineSplit[0];
-        String dockerfile = lineSplit.length > 1 ? lineSplit[1] : null;
-        logger.logDebug("Adding tag '" + lineSplit[0] + "' with Dockerfile '" + dockerfile + "'");
-        imageDockerfileMap.put(tag, Strings.isNullOrEmpty(dockerfile) ? null : new FilePath(workspace, dockerfile).getRemote());
-      }
-    } catch (AbortException e) {
-      throw e;
-    } catch (Exception e) { // caught unknown exception, console.log it and wrap it
-      logger.logError("Failed to initialize Sysdig Secure workspace due to an unexpected error", e);
-      throw new AbortException("Failed to initialize Sysdig Secure workspace due to an unexpected error. Please refer to above logs for more information");
-    }
-
-    return imageDockerfileMap;
   }
 
   private void cleanJenkinsWorkspaceQuietly() throws IOException, InterruptedException {

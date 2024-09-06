@@ -28,6 +28,7 @@ import net.sf.json.JSONObject;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class NewEngineScanner {
@@ -48,7 +49,7 @@ public class NewEngineScanner {
     this.envVars = envVars;
   }
 
-  public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException, InterruptedException {
+  public ImageScanningResult scanImage(String imageTag) throws AbortException, InterruptedException {
 
     if (this.workspace == null) {
       throw new AbortException("Inline-scan failed. No workspace available");
@@ -56,7 +57,7 @@ public class NewEngineScanner {
 
     try {
 
-      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, dockerFile, config, logger, envVars);
+      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, config, logger, envVars);
 
       String scanRawOutput = workspace.act(task);
 
@@ -71,7 +72,7 @@ public class NewEngineScanner {
 
       this.scanOutputs.put(digest, scanOutput);
 
-      return new ImageScanningSubmission(tag, digest);
+      return this.buildImageScanningResult(scanOutput.getJSONObject("policies"), scanOutput.getJSONObject("packages"), digest, tag );
 
     } catch (ImageScanningException e) {
       logger.logError(e.getMessage());
@@ -83,51 +84,11 @@ public class NewEngineScanner {
   }
 
 
-  public JSONObject getGateResults(ImageScanningSubmission submission) {
-    if (this.scanOutputs.containsKey(submission.getImageDigest())) {
-      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("policies");
-    }
-
-    return null;
-  }
-
-  public JSONObject getVulnsReport(ImageScanningSubmission submission) {
-    if (this.scanOutputs.containsKey(submission.getImageDigest())) {
-      return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("packages");
-    }
-
-    return null;
-  }
-
-
   public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
     final String evalStatus = scanReport.getString("status");
     final JSONArray gatePolicies = scanReport.optJSONArray("list") != null ? scanReport.getJSONArray("list") : new JSONArray();
 
     return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, gatePolicies);
   }
-
-  public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
-    if (imagesAndDockerfiles == null) {
-      return new ArrayList<>();
-    }
-
-    ArrayList<ImageScanningResult> resultList = new ArrayList<>();
-
-    for (Map.Entry<String, String> entry : imagesAndDockerfiles.entrySet()) {
-      String dockerfile = entry.getValue();
-
-      ImageScanningSubmission submission = this.scanImage(entry.getKey(), dockerfile);
-
-      JSONObject scanReport = this.getGateResults(submission);
-      JSONObject vulnsReport = this.getVulnsReport(submission);
-
-      ImageScanningResult result = this.buildImageScanningResult(scanReport, vulnsReport, submission.getImageDigest(), submission.getTag());
-      resultList.add(result);
-    }
-
-    return resultList;
-  }
-
 }
 
