@@ -80,34 +80,6 @@
       <groupId>org.jenkins-ci.plugins.workflow</groupId>
       <artifactId>workflow-step-api</artifactId>
     </dependency>
-    <!-- FIXME(fede): This has to be removed once we get rid of the legacy scanner -->
-    <!-- From here, it's required for the legacy scanner -->
-    <dependency>
-      <groupId>com.github.docker-java</groupId>
-      <artifactId>docker-java</artifactId>
-      <version>3.4.0</version>
-      <exclusions>
-        <exclusion>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </exclusion>
-        <exclusion>
-            <groupId>com.google.errorprone</groupId>
-            <artifactId>error_prone_annotations</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.github.docker-java</groupId>
-      <artifactId>docker-java-transport-httpclient5</artifactId>
-      <version>3.4.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.17.0</version>
-    </dependency>
-    <!-- Until here, it's required for the legacy scanner -->
 
     <!--TEST Dependencies-->
     <dependency>
