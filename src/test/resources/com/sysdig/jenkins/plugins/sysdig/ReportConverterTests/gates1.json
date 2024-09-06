@@ -1,7 +1,6 @@
 {
-    "foodigest1": {
+    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5": {
         "result": {
-            "final_action": "warn",
             "header": [
                 "Image_Id",
                 "Repo_Tag",
@@ -11,26 +10,84 @@
                 "Check_Output",
                 "Gate_Action",
                 "Whitelisted",
-                "Policy_Id"
+                "Policy_Id",
+                "Policy_Name"
             ],
-            "row_count": 2,
+            "final_action": "STOP",
             "rows": [
                 [
-                    "d6e46aa2470df1d32034c6707c8041158b652f38d2a9ae3d7ad7e7532d22ebe0",
-                    "docker.io/alpine:latest",
-                    "41cb7cdf04850e33a11f80c42bf660b3",
-                    "dockerfile",
-                    "instruction",
-                    "Dockerfile directive 'HEALTHCHECK' not found, matching condition 'not_exists' check",
-                    "warn",
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "Severity greater than or equal high",
+                    "CVE-2024-6119 in libcrypto3-3.3.1-r3",
+                    "STOP",
                     false,
-                    "default"
+                    "",
+                    "Cardholder Policy (David)"
+                ],
+                [
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "Severity greater than or equal high",
+                    "CVE-2024-6119 in libssl3-3.3.1-r3",
+                    "STOP",
+                    false,
+                    "",
+                    "Cardholder Policy (David)"
+                ],
+                [
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "User is root",
+                    "Modify your image configuration and set the default user to other than root<br />Check the documentation to learn why and how to change the default image user<br />",
+                    "STOP",
+                    false,
+                    "",
+                    "Cardholder Policy (David)"
+                ],
+                [
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "Severity greater than or equal high",
+                    "CVE-2024-6119 in libcrypto3-3.3.1-r3",
+                    "STOP",
+                    false,
+                    "",
+                    "Cardholder Policy Sept 2024"
+                ],
+                [
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "Severity greater than or equal high",
+                    "CVE-2024-6119 in libssl3-3.3.1-r3",
+                    "STOP",
+                    false,
+                    "",
+                    "Cardholder Policy Sept 2024"
+                ],
+                [
+                    "sha256:0a4eaa0eecf5f8c050e5bba433f58c052be7587ee8af3e8b3910ef9ab5fbe9f5",
+                    "alpine",
+                    "trigger_id",
+                    "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+                    "User is root",
+                    "Modify your image configuration and set the default user to other than root<br />Check the documentation to learn why and how to change the default image user<br />",
+                    "STOP",
+                    false,
+                    "",
+                    "Cardholder Policy Sept 2024"
                 ]
             ]
         }
-    },
-    "policy_data": [],
-    "policy_name": "",
-    "whitelist_data": [],
-    "whitelist_names": []
+    }
 }

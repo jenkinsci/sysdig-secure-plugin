@@ -1,37 +1,693 @@
 {
-    "imageDigest": "sha256:8421d9a84432575381bfabd248f1eb56f3aa21d9d7cd2511583c68c9b7511d10",
-    "vulnerabilities": [
+    "total": 14,
+    "list": [
         {
-            "feed": "vulnerabilities",
-            "feed_group": "alpine:3.7",
-            "fix": "1.1.18-r4",
-            "nvd_data": [
+            "type": "os",
+            "name": "libcrypto3",
+            "version": "3.3.1-r3",
+            "suggestedFix": "3.3.2-r0",
+            "packagePath": null,
+            "vulnsBySeverity": [
                 {
-                    "cvss_v2": {
-                        "base_score": 7.5,
-                        "exploitability_score": 10,
-                        "impact_score": 6.4
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
                     },
-                    "cvss_v3": {
-                        "base_score": 9.8,
-                        "exploitability_score": 3.9,
-                        "impact_score": 5.9
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
                     },
-                    "id": "CVE-2019-14697"
+                    "total": 1
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
                 }
             ],
-            "package": "musl-1.1.18-r3",
-            "package_cpe": "None",
-            "package_cpe23": "None",
-            "package_name": "musl",
-            "package_path": "pkgdb",
-            "package_type": "APKG",
-            "package_version": "1.1.18-r3",
-            "severity": "High",
-            "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-14697",
-            "vendor_data": [],
-            "vuln": "CVE-2019-14697"
+            "vulnerabilities": [
+                {
+                    "name": "CVE-2024-6119",
+                    "severity": {
+                        "value": 1,
+                        "label": "High",
+                        "sourceName": "vulndb"
+                    },
+                    "originalSeverity": null,
+                    "cvssScore": {
+                        "value": {
+                            "version": "3.0",
+                            "score": 7.5,
+                            "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                        },
+                        "sourceName": "vulndb"
+                    },
+                    "disclosureDate": "2024-09-03T00:00:00Z",
+                    "solutionDate": "2024-09-03T00:00:00Z",
+                    "exploitable": false,
+                    "exploit": null
+                }
+            ],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "libssl3",
+            "version": "3.3.1-r3",
+            "suggestedFix": "3.3.2-r0",
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 1
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [
+                {
+                    "name": "CVE-2024-6119",
+                    "severity": {
+                        "value": 1,
+                        "label": "High",
+                        "sourceName": "vulndb"
+                    },
+                    "originalSeverity": null,
+                    "cvssScore": {
+                        "value": {
+                            "version": "3.0",
+                            "score": 7.5,
+                            "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                        },
+                        "sourceName": "vulndb"
+                    },
+                    "disclosureDate": "2024-09-03T00:00:00Z",
+                    "solutionDate": "2024-09-03T00:00:00Z",
+                    "exploitable": false,
+                    "exploit": null
+                }
+            ],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "alpine-baselayout",
+            "version": "3.6.5-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "alpine-baselayout-data",
+            "version": "3.6.5-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "alpine-keys",
+            "version": "2.4-r1",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "apk-tools",
+            "version": "2.14.4-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "busybox",
+            "version": "1.36.1-r29",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "busybox-binsh",
+            "version": "1.36.1-r29",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "ca-certificates-bundle",
+            "version": "20240705-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "musl",
+            "version": "1.2.5-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "musl-utils",
+            "version": "1.2.5-r0",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "scanelf",
+            "version": "1.3.7-r2",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "ssl_client",
+            "version": "1.36.1-r29",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
+        },
+        {
+            "type": "os",
+            "name": "zlib",
+            "version": "1.3.1-r1",
+            "suggestedFix": null,
+            "packagePath": null,
+            "vulnsBySeverity": [
+                {
+                    "severity": {
+                        "value": 0,
+                        "label": "Critical"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 1,
+                        "label": "High"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 2,
+                        "label": "Medium"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 3,
+                        "label": "Low"
+                    },
+                    "total": 0
+                },
+                {
+                    "severity": {
+                        "value": 4,
+                        "label": "Negligible"
+                    },
+                    "total": 0
+                }
+            ],
+            "vulnerabilities": [],
+            "exploitCount": 0
         }
-    ],
-    "vulnerability_type": "all"
+    ]
 }

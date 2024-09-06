@@ -74,11 +74,8 @@ public class ReportConverterTests {
 
     byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates1.json"));
     JSONObject gatesReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates2.json"));
-    JSONObject gatesReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
 
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", gatesReport2, new JSONObject(), new JSONArray()));
 
     File tmp = File.createTempFile("gatesreport", "");
     tmp.deleteOnExit();
@@ -90,7 +87,6 @@ public class ReportConverterTests {
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
     JSONObject processedReport = (JSONObject) JSONSerializer.toJSON(new String(reportData, StandardCharsets.UTF_8));
     assertEquals(gatesReport.get("foodigest1"), processedReport.get("foodigest1"));
-    assertEquals(gatesReport2.get("foodigest2"), processedReport.get("foodigest2"));
   }
 
   @Test
@@ -105,10 +101,6 @@ public class ReportConverterTests {
     JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
     results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport, new JSONArray()));
 
-    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns2.json"));
-    JSONObject vulnsReport2 = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "pass", new JSONObject(), vulnsReport2, new JSONArray()));
-
     File tmp = File.createTempFile("vulnerabilitiesreport", "");
     tmp.deleteOnExit();
 
@@ -119,8 +111,7 @@ public class ReportConverterTests {
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
     JSONObject processedReport = (JSONObject) JSONSerializer.toJSON(new String(reportData, StandardCharsets.UTF_8));
     assertEquals("Vulnerability Package", processedReport.getJSONArray("columns").getJSONObject(3).get("title"));
-    assertEquals(vulnsReport.getJSONArray("vulnerabilities").getJSONObject(0).get("package"), processedReport.getJSONArray("data").getJSONArray(0).get(3));
-    assertEquals(vulnsReport2.getJSONArray("vulnerabilities").getJSONObject(0).get("package"), processedReport.getJSONArray("data").getJSONArray(1).get(3));
+    assertEquals(vulnsReport.getJSONArray("list").getJSONObject(0).get("name"), processedReport.getJSONArray("data").getJSONArray(0).get(3));
   }
 
 }

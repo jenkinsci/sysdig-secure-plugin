@@ -60,7 +60,7 @@ public class NewEngineBuilderExecutor {
     try {
 
       NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
-      ReportConverter reporter = new NewEngineReportConverter(logger);
+      ReportConverter reporter = new ReportConverter(logger);
       worker = new BuildWorker(run, workspace, listener, logger, scanner, reporter);
       finalAction = worker.scanAndBuildReports(config.getImageName());
 
