@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NewEngineScanner implements ScannerInterface {
+public class NewEngineScanner {
 
   protected final NewEngineBuildConfig config;
   private final Map<String, JSONObject> scanOutputs;
@@ -48,7 +48,6 @@ public class NewEngineScanner implements ScannerInterface {
     this.envVars = envVars;
   }
 
-  @Override
   public ImageScanningSubmission scanImage(String imageTag, String dockerFile) throws AbortException, InterruptedException {
 
     if (this.workspace == null) {
@@ -92,7 +91,6 @@ public class NewEngineScanner implements ScannerInterface {
     return null;
   }
 
-  @Override
   public JSONObject getVulnsReport(ImageScanningSubmission submission) {
     if (this.scanOutputs.containsKey(submission.getImageDigest())) {
       return this.scanOutputs.get(submission.getImageDigest()).getJSONObject("packages");
@@ -102,7 +100,6 @@ public class NewEngineScanner implements ScannerInterface {
   }
 
 
-  @Override
   public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
     final String evalStatus = scanReport.getString("status");
     final JSONArray gatePolicies = scanReport.optJSONArray("list") != null ? scanReport.getJSONArray("list") : new JSONArray();
@@ -110,7 +107,6 @@ public class NewEngineScanner implements ScannerInterface {
     return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, gatePolicies);
   }
 
-  @Override
   public ArrayList<ImageScanningResult> scanImages(Map<String, String> imagesAndDockerfiles) throws AbortException, InterruptedException {
     if (imagesAndDockerfiles == null) {
       return new ArrayList<>();
