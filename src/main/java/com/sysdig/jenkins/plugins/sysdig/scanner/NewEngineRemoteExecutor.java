@@ -32,7 +32,6 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
@@ -49,6 +48,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
+
   public NewEngineRemoteExecutor(FilePath workspace, String imageName, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
     this.imageName = imageName;
     this.config = config;
@@ -109,21 +109,6 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
         } else {
           throw e;
         }
-      }
-    }
-  }
-
-  private String getInlineScanLatestVersion() throws IOException {
-    URL url = new URL("https://download.sysdig.com/scanning/sysdig-cli-scanner/latest_version.txt");
-    Proxy proxy = getHttpProxy();
-    boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
-    if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openConnection(proxy).getInputStream(), StandardCharsets.UTF_8))) {
-        return reader.readLine();
-      }
-    } else {
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
-        return reader.readLine();
       }
     }
   }
