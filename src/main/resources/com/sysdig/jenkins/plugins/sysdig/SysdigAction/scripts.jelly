@@ -1,30 +1,12 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/bootstrap.min.css"/>
-    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/dataTables.bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/2.1.7/css/dataTables.bootstrap4.css"/>
     <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/sysdig.css"/>
-    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/jquery.min.js"></script>
-    <!-- To prevent conflicts with Jenkins prototype.js. Otherwise tabs go missing after moving to the next tab -->
-    <script>
-        jQuery.noConflict(); <!-- To prevent overwriting $ function -->
-        window.legacyEngine = ${it.legacyEngine};
-        var disablePrototypeJS = function (method, pluginsToDisable) {
-            var handler = function (event) {
-            event.target[method] = undefined;
-            setTimeout(function () {
-                delete event.target[method];
-            }, 0);
-            };
-            pluginsToDisable.each(function (plugin) {
-            jQuery(window).on(method + '.bs.' + plugin, handler);
-            });
-        },
-        pluginsToDisable = ['collapse', 'dropdown', 'modal', 'tooltip', 'popover', 'tab'];
-        disablePrototypeJS('show', pluginsToDisable);
-        disablePrototypeJS('hide', pluginsToDisable);
-    </script>
-    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/dataTables.bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/2.1.7/js/dataTables.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/2.1.7/js/dataTables.bootstrap4.js"></script>
     <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/renderOutput.js"></script>
 </j:jelly>
