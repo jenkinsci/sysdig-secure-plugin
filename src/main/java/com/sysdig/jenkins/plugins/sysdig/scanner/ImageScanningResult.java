@@ -20,14 +20,17 @@ import net.sf.json.JSONObject;
 
 import java.io.Serializable;
 
-public class ImageScanningResult extends ImageScanningSubmission implements Serializable {
+public class ImageScanningResult implements Serializable {
+  private final String tag;
+  private final String imageDigest;
   private final String evalStatus;
-  private final JSONObject gateResult;
-  private final JSONObject vulnsReport;
-  private final JSONArray gatePolicies;
+  private final JSONObject gateResult; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
+  private final JSONObject vulnsReport; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
+  private final JSONArray gatePolicies; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
 
   public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult, JSONObject vulnsReport, JSONArray gatePolicies) {
-    super(tag, imageDigest);
+    this.tag = tag;
+    this.imageDigest = imageDigest;
     this.evalStatus = evalStatus;
     this.gateResult = gateResult;
     this.vulnsReport = vulnsReport;
@@ -48,5 +51,13 @@ public class ImageScanningResult extends ImageScanningSubmission implements Seri
 
   public JSONArray getGatePolicies() {
     return gatePolicies;
+  }
+
+  public String getTag() {
+    return tag;
+  }
+
+  public String getImageDigest() {
+    return imageDigest;
   }
 }
