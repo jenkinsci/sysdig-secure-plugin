@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // FIXME(fede): Wow this is unmaintainable. We should not be handling jsons but report structures.
 public class ReportConverter {
@@ -38,20 +39,15 @@ public class ReportConverter {
     return headers;
   }
 
-  public Util.GATE_ACTION getFinalAction(List<ImageScanningResult> results) throws AbortException {
-    Util.GATE_ACTION finalAction = Util.GATE_ACTION.PASS;
+  public Util.GATE_ACTION getFinalAction(ImageScanningResult result) {
+    String evalStatus = result.getEvalStatus();
+    logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
 
-    for (ImageScanningResult result : results) {
-      String evalStatus = result.getEvalStatus();
-
-      logger.logDebug(String.format("Get policy evaluation status for image '%s': %s", result.getTag(), evalStatus));
-
-      if (!evalStatus.equalsIgnoreCase(LEGACY_PASSED_STATUS) && !evalStatus.equalsIgnoreCase(PASSED_STATUS) && !evalStatus.equalsIgnoreCase(ACCEPTED_STATUS) && !evalStatus.equalsIgnoreCase(NO_POLICY_STATUS)) {
-        finalAction = Util.GATE_ACTION.FAIL;
-      }
+    if (Stream.of(LEGACY_PASSED_STATUS, PASSED_STATUS, ACCEPTED_STATUS, NO_POLICY_STATUS).anyMatch(evalStatus::equalsIgnoreCase)) {
+      return Util.GATE_ACTION.PASS;
     }
 
-    return finalAction;
+    return Util.GATE_ACTION.FAIL;
   }
 
   public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {

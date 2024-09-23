@@ -97,7 +97,7 @@ public class BuildWorker {
     ImageScanningResult scanResult = scanner.scanImage(imageName);
 
     // FIXME(fede): do not use a list in those methods, just use the result
-    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(List.of(scanResult));
+    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(scanResult);
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {

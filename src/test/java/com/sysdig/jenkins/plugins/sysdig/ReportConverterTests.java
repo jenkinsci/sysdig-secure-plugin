@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -38,44 +37,39 @@ public class ReportConverterTests {
   }
 
   @Test
-  public void reportFinalActionPass() throws AbortException {
+  public void reportFinalActionPass() {
     // Given
-    List<ImageScanningResult> results = new ArrayList<>();
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "passed", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag4", "foo-digest2", "ACCEPTED", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag5", "foo-digest2", "noPolicy", new JSONObject(), new JSONObject(), new JSONArray()));
+    var results = List.of(
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()),
+      new ImageScanningResult("foo-tag2", "foo-digest2", "passed", new JSONObject(), new JSONObject(), new JSONArray()),
+      new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()),
+      new ImageScanningResult("foo-tag4", "foo-digest2", "ACCEPTED", new JSONObject(), new JSONObject(), new JSONArray()),
+      new ImageScanningResult("foo-tag5", "foo-digest2", "noPolicy", new JSONObject(), new JSONObject(), new JSONArray())
+    );
 
     // Then
-    assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(results));
+    results.forEach(result -> assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(result)));
   }
 
   @Test
-  public void reportFinalActionFail() throws AbortException {
+  public void reportFinalActionFail() {
     // Given
-    List<ImageScanningResult> results = new ArrayList<>();
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()));
-    results.add(new ImageScanningResult("foo-tag5", "foo-digest2", "noPolicy", new JSONObject(), new JSONObject(), new JSONArray()));
-
+    var result = new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject(), new JSONArray());
 
     // Then
-    assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(results));
+    assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(result));
   }
 
   @Test
   public void generateGatesArtifact() throws IOException, InterruptedException {
-    // Given
-    List<ImageScanningResult> results = new ArrayList<>();
-
     // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
-
     byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates1.json"));
     JSONObject gatesReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
 
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject(), new JSONArray()));
+    // Given
+    var results = List.of(
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject(), new JSONArray())
+    );
 
     File tmp = File.createTempFile("gatesreport", "");
     tmp.deleteOnExit();
@@ -91,15 +85,14 @@ public class ReportConverterTests {
 
   @Test
   public void generateVulnerabilitiesArtifact() throws IOException, InterruptedException {
-    byte[] data;
+    // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
+    byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns1.json"));
+    JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
 
     // Given
-    List<ImageScanningResult> results = new ArrayList<>();
-
-    // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
-    data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns1.json"));
-    JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
-    results.add(new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport, new JSONArray()));
+    var results = List.of(
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport, new JSONArray())
+    );
 
     File tmp = File.createTempFile("vulnerabilitiesreport", "");
     tmp.deleteOnExit();
