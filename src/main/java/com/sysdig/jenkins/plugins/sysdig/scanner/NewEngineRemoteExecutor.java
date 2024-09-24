@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 
 public class NewEngineRemoteExecutor implements Callable<String, Exception>, Serializable {
 
-  private static final String FIXED_SCANNED_VERSION = "1.10.1";
+  private static final String FIXED_SCANNED_VERSION = "1.16.1";
   private final ScannerPaths scannerPaths;
   private final String imageName;
   private final NewEngineBuildConfig config;
@@ -202,7 +202,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
       command.add(String.format("--apiurl=%s", this.config.getEngineurl()));
       command.add(String.format("--dbpath=%s", this.scannerPaths.getDatabaseFolder()));
       command.add(String.format("--cachepath=%s", this.scannerPaths.getCacheFolder()));
-      command.add(String.format("--output-json=%s", scannerJsonOutputFile.getAbsolutePath()));
+      command.add(String.format("--json-scan-result=%s", scannerJsonOutputFile.getAbsolutePath()));
       command.add("--console-log");
 
       if (this.config.getDebug()) {

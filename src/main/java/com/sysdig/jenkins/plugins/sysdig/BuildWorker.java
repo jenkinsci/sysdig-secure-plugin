@@ -16,6 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
@@ -112,7 +113,7 @@ public class BuildWorker {
       for (ImageScanningResult result : List.of(scanResult)) {
         FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, result.getImageDigest()));
         logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
-        rawVulnerabilityReportFP.write(result.getVulnerabilityReport().toString(), String.valueOf(StandardCharsets.UTF_8));
+        rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(result.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
       }
 
       /* Setup reports */

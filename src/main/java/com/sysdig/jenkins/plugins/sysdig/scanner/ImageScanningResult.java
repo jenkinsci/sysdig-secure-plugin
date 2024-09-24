@@ -15,42 +15,37 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.scanner;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class ImageScanningResult implements Serializable {
   private final String tag;
   private final String imageDigest;
   private final String evalStatus;
-  private final JSONObject gateResult; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
-  private final JSONObject vulnsReport; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
-  private final JSONArray gatePolicies; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
+  private final List<Package> packages; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
+  private final List<PolicyEvaluation> evaluationPolicies; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
 
-  public ImageScanningResult(String tag, String imageDigest, String evalStatus, JSONObject gateResult, JSONObject vulnsReport, JSONArray gatePolicies) {
+  public ImageScanningResult(String tag, String imageDigest, String evalStatus, List<Package> vulnsReport, List<PolicyEvaluation> evaluationPolicies) {
     this.tag = tag;
     this.imageDigest = imageDigest;
     this.evalStatus = evalStatus;
-    this.gateResult = gateResult;
-    this.vulnsReport = vulnsReport;
-    this.gatePolicies = gatePolicies;
+    this.packages = vulnsReport;
+    this.evaluationPolicies = evaluationPolicies;
   }
 
   public String getEvalStatus() {
     return evalStatus;
   }
 
-  public JSONObject getGateResult() {
-    return gateResult;
+  public List<Package> getVulnerabilityReport() {
+    return packages;
   }
 
-  public JSONObject getVulnerabilityReport() {
-    return vulnsReport;
-  }
-
-  public JSONArray getGatePolicies() {
-    return gatePolicies;
+  public List<PolicyEvaluation> getEvaluationPolicies() {
+    return evaluationPolicies;
   }
 
   public String getTag() {

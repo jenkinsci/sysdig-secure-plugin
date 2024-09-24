@@ -17,60 +17,42 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
+import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.*;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.TaskListener;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 public class NewEngineScanner {
 
   protected final NewEngineBuildConfig config;
   protected final SysdigLogger logger;
-  private final Map<String, JSONObject> scanOutputs;
   private final TaskListener listener;
   private final FilePath workspace;
   private final EnvVars envVars;
 
-  public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, FilePath workspace, EnvVars envVars, SysdigLogger logger) {
+  public NewEngineScanner(@Nonnull TaskListener listener, @Nonnull NewEngineBuildConfig config, @Nonnull FilePath workspace, EnvVars envVars, SysdigLogger logger) {
     this.logger = logger;
     this.config = config;
-    this.scanOutputs = new HashMap<>();
     this.listener = listener;
     this.workspace = workspace;
     this.envVars = envVars;
   }
 
-  public ImageScanningResult scanImage(String imageTag) throws AbortException, InterruptedException {
-
-    if (this.workspace == null) {
-      throw new AbortException("Inline-scan failed. No workspace available");
-    }
-
+  public ImageScanningResult scanImage(String imageTag) throws InterruptedException {
     try {
 
       NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, config, logger, envVars);
-
       String scanRawOutput = workspace.act(task);
+      JsonScanResult scanOutput = GsonBuilder.build().fromJson(scanRawOutput, JsonScanResult.class);
 
-      JSONObject scanOutput = JSONObject.fromObject(scanRawOutput);
-
-      if (scanOutput.has("error")) {
-        throw new ImageScanningException(scanOutput.getString("error"));
-      }
-
-      String digest = scanOutput.getJSONObject("metadata").getString("digest");
-      String tag = scanOutput.getJSONObject("metadata").getString("pullString");
-
-      this.scanOutputs.put(digest, scanOutput);
-
-      return this.buildImageScanningResult(scanOutput.getJSONObject("policies"), scanOutput.getJSONObject("packages"), digest, tag);
+      return this.buildImageScanningResult(scanOutput.getResult().orElseThrow());
 
     } catch (ImageScanningException e) {
       logger.logError(e.getMessage());
@@ -82,11 +64,14 @@ public class NewEngineScanner {
   }
 
 
-  public ImageScanningResult buildImageScanningResult(JSONObject scanReport, JSONObject vulnsReport, String imageDigest, String tag) {
-    final String evalStatus = scanReport.getString("status");
-    final JSONArray gatePolicies = scanReport.optJSONArray("list") != null ? scanReport.getJSONArray("list") : new JSONArray();
+  public ImageScanningResult buildImageScanningResult(Result result) {
+    final String tag = result.getMetadata().orElseThrow().getPullString().orElseThrow();
+    final String imageDigest = result.getMetadata().orElseThrow().getDigest().orElseThrow();
+    final String evalStatus = result.getPolicyEvaluationsResult().orElseThrow();
+    final List<Package> packages = result.getPackages().orElseThrow();
+    final List<PolicyEvaluation> policies = result.getPolicyEvaluations().orElseThrow();
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, scanReport, vulnsReport, gatePolicies);
+    return new ImageScanningResult(tag, imageDigest, evalStatus, packages, policies);
   }
 }
 

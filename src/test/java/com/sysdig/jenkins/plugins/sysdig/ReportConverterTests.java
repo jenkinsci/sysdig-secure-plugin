@@ -1,11 +1,14 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
+import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.AbortException;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
 import hudson.FilePath;
 import hudson.model.Run;
-import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.apache.commons.io.IOUtils;
@@ -14,6 +17,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -40,11 +44,11 @@ public class ReportConverterTests {
   public void reportFinalActionPass() {
     // Given
     var results = List.of(
-      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), new JSONObject(), new JSONArray()),
-      new ImageScanningResult("foo-tag2", "foo-digest2", "passed", new JSONObject(), new JSONObject(), new JSONArray()),
-      new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", new JSONObject(), new JSONObject(), new JSONArray()),
-      new ImageScanningResult("foo-tag4", "foo-digest2", "ACCEPTED", new JSONObject(), new JSONObject(), new JSONArray()),
-      new ImageScanningResult("foo-tag5", "foo-digest2", "noPolicy", new JSONObject(), new JSONObject(), new JSONArray())
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", List.of(), List.of()),
+      new ImageScanningResult("foo-tag2", "foo-digest2", "passed", List.of(), List.of()),
+      new ImageScanningResult("foo-tag3", "foo-digest2", "accepted", List.of(), List.of()),
+      new ImageScanningResult("foo-tag4", "foo-digest2", "ACCEPTED", List.of(), List.of()),
+      new ImageScanningResult("foo-tag5", "foo-digest2", "noPolicy", List.of(), List.of())
     );
 
     // Then
@@ -54,7 +58,7 @@ public class ReportConverterTests {
   @Test
   public void reportFinalActionFail() {
     // Given
-    var result = new ImageScanningResult("foo-tag2", "foo-digest2", "fail", new JSONObject(), new JSONObject(), new JSONArray());
+    var result = new ImageScanningResult("foo-tag2", "foo-digest2", "fail", List.of(), List.of());
 
     // Then
     assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(result));
@@ -64,11 +68,11 @@ public class ReportConverterTests {
   public void generateGatesArtifact() throws IOException, InterruptedException {
     // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
     byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/gates1.json"));
-    JSONObject gatesReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
+    Result result = GsonBuilder.build().fromJson(new String(data, StandardCharsets.UTF_8), Result.class);
 
     // Given
     var results = List.of(
-      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", gatesReport, new JSONObject(), new JSONArray())
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", result.getPackages().orElseThrow(), result.getPolicyEvaluations().orElseThrow())
     );
 
     File tmp = File.createTempFile("gatesreport", "");
@@ -79,19 +83,21 @@ public class ReportConverterTests {
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
-    JSONObject processedReport = (JSONObject) JSONSerializer.toJSON(new String(reportData, StandardCharsets.UTF_8));
-    assertEquals(gatesReport.get("foodigest1"), processedReport.get("foodigest1"));
+    var reportFromDisk = GsonBuilder.build().fromJson(new String(reportData, StandardCharsets.UTF_8), JsonObject.class);
+    assertEquals(reportFromDisk.getAsJsonObject("foo-digest1").getAsJsonObject("result").getAsJsonArray("rows").asList().size(), 45);
   }
 
   @Test
   public void generateVulnerabilitiesArtifact() throws IOException, InterruptedException {
     // Need getAbsolutePath to fix issue in Windows path starting with a / (like "/C:/..." )
     byte[] data = IOUtils.toByteArray(getClass().getResourceAsStream("ReportConverterTests/vulns1.json"));
-    JSONObject vulnsReport = (JSONObject) JSONSerializer.toJSON(new String(data, StandardCharsets.UTF_8));
+
+    Type listType = new TypeToken<List<Package>>() {}.getType();
+    List<Package> vulnsReport = GsonBuilder.build().fromJson(new String(data, StandardCharsets.UTF_8), listType);
 
     // Given
     var results = List.of(
-      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", new JSONObject(), vulnsReport, new JSONArray())
+      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", vulnsReport, List.of())
     );
 
     File tmp = File.createTempFile("vulnerabilitiesreport", "");
@@ -104,7 +110,6 @@ public class ReportConverterTests {
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
     JSONObject processedReport = (JSONObject) JSONSerializer.toJSON(new String(reportData, StandardCharsets.UTF_8));
     assertEquals("Vulnerability Package", processedReport.getJSONArray("columns").getJSONObject(3).get("title"));
-    assertEquals(vulnsReport.getJSONArray("list").getJSONObject(0).get("name"), processedReport.getJSONArray("data").getJSONArray(0).get(3));
+    assertEquals(vulnsReport.get(1).getName().orElseThrow(), processedReport.getJSONArray("data").getJSONArray(0).get(3));
   }
-
 }

@@ -3,12 +3,13 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.AbortException;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.*;
 import hudson.FilePath;
 import net.sf.json.JSONArray;
-import net.sf.json.JSONNull;
 import net.sf.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -79,12 +80,10 @@ public class ReportConverter {
     Map<String, String> imageDigestsToTags = new HashMap<>(resultList.size());
 
     for (ImageScanningResult result : resultList) {
-      JSONObject gateResult = result.getGateResult();
-      JSONArray gatePolicies = result.getGatePolicies();
+      List<PolicyEvaluation> gatePolicies = result.getEvaluationPolicies();
 
       if (logger.isDebugEnabled()) {
         logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
-        logger.logDebug(String.format("sysdig-secure-engine get policy evaluation result for '%s': %s ", result.getTag(), gateResult.toString()));
       }
       fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
       imageDigestsToTags.put(result.getImageDigest(), result.getTag());
@@ -94,11 +93,6 @@ public class ReportConverter {
     jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
     return generateGatesSummary(fullGateResults, imageDigestsToTags);
-  }
-
-  private String getPkgVulnFailuresString(JSONObject failure) {
-    return failure.getString("vulnerabilityName") + " in " + failure.getString("packageName") + "-"
-      + failure.getString("packageVersion");
   }
 
   private JSONArray getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
@@ -116,39 +110,41 @@ public class ReportConverter {
     return row;
   }
 
-  private JSONArray getPkgVulnFailures(JSONObject rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
-    return rule.getJSONArray("pkgVulnFailures").stream().map(failure -> {
-        String failureName = getPkgVulnFailuresString((JSONObject) failure);
-        return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
-      })
-      .collect(Collectors.toCollection(JSONArray::new));
-  }
-
-  private JSONArray getImageConfFailures(JSONObject rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
-    return rule.getJSONArray("imageConfFailures").stream().map(failure -> {
-        String failureName = ((JSONObject) failure).getString("remediationText").replaceAll("(\r\n|\n)", "<br />");
-        return getFailure(failureName, imageResult, policyName, ruleString, ruleName);
-      })
-      .collect(Collectors.toCollection(JSONArray::new));
-  }
-
-  private JSONArray getRuleFailures(JSONObject item, ImageScanningResult imageResult, String policyName) {
-    return item.getJSONArray("rules")
+  private JSONArray getPkgVulnFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+    return rule.getFailures()
       .stream()
-      .filter(rule -> ((JSONObject) rule).getInt("failuresCount") > 0)
+      .flatMap(Collection::stream)
+      .map(failure ->
+        getFailure(failure.getDescription().orElseThrow(), imageResult, policyName, ruleString, ruleName))
+      .collect(Collectors.toCollection(JSONArray::new));
+  }
+
+  private JSONArray getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+    return rule.getFailures()
+      .stream()
+      .flatMap(Collection::stream)
+      .map(failure ->
+        getFailure(failure.getRemediation().orElseThrow().replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName)
+      ).collect(Collectors.toCollection(JSONArray::new));
+  }
+
+  private JSONArray getRuleFailures(Bundle item, ImageScanningResult imageResult, String policyName) {
+    return item.getRules().orElseThrow()
+      .stream()
+      .filter(rule -> rule.getEvaluationResult().orElse("").equals("failed"))
       .map(rule -> {
         JSONArray results = new JSONArray();
-        String ruleName = item.getString("name");
-        String ruleString = getRuleString(((JSONObject) rule).getJSONArray("predicates"));
-        boolean hasPkgVulnFailures = ((JSONObject) rule).has("pkgVulnFailures");
-        boolean hasImageConfFailures = ((JSONObject) rule).has("imageConfFailures");
+        String ruleName = item.getName().orElseThrow();
+        String ruleString = getRuleString(rule.getPredicates().orElseThrow());
+        boolean hasPkgVulnFailures = rule.getFailureType().orElse("unknown").equals("pkgVulnFailure");
+        boolean hasImageConfFailures = rule.getFailureType().orElse("unknown").equals("imageConfigFailure");
 
         if (hasPkgVulnFailures) {
-          results = getPkgVulnFailures((JSONObject) rule, imageResult, policyName, ruleName, ruleString);
+          results = getPkgVulnFailures(rule, imageResult, policyName, ruleName, ruleString);
           return results;
         }
         if (hasImageConfFailures) {
-          results = getImageConfFailures((JSONObject) rule, imageResult, policyName, ruleName, ruleString);
+          results = getImageConfFailures(rule, imageResult, policyName, ruleName, ruleString);
         }
         return results;
       })
@@ -157,7 +153,7 @@ public class ReportConverter {
   }
 
   private JSONObject generateCompatibleGatesResult(ImageScanningResult imageResult) {
-    JSONObject oldEngineResult = new JSONObject();
+    JSONObject newEngineResult = new JSONObject();
     String[] headersList = {
       "Image_Id",
       "Repo_Tag",
@@ -172,20 +168,21 @@ public class ReportConverter {
     };
 
     JSONArray headers = JSONArray.fromObject(headersList);
-    JSONArray gateList = imageResult.getGateResult().optJSONArray("list") != null ? imageResult.getGateResult().getJSONArray("list") : new JSONArray();
     JSONObject result = new JSONObject();
+
+    var gateList = imageResult.getEvaluationPolicies();
+
 
     JSONArray rows = gateList
       .stream()
-      .filter(policy -> ((JSONObject) policy).getInt("failuresCount") > 0)
+      .filter(policy -> policy.getEvaluationResult().orElse("").equals("failed"))
       .map(policy -> {
-        String policyName = ((JSONObject) policy).getString("name");
-        JSONArray bundles = ((JSONObject) policy).getJSONArray("bundle");
+        String policyName = policy.getName().orElseThrow();
+        List<Bundle> bundles = policy.getBundles().orElseThrow();
 
         return bundles
           .stream()
-          .filter(item -> ((JSONObject) item).getInt("failuresCount") > 0)
-          .map(item -> getRuleFailures(((JSONObject) item), imageResult, policyName))
+          .map(item -> getRuleFailures(item, imageResult, policyName))
           .flatMap(Collection::stream)
           .collect(Collectors.toCollection(JSONArray::new));
       })
@@ -197,9 +194,9 @@ public class ReportConverter {
     result.put("final_action", finalAction);
     result.put("rows", rows);
 
-    oldEngineResult.put("result", result);
+    newEngineResult.put("result", result);
 
-    return oldEngineResult;
+    return newEngineResult;
   }
 
   protected JSONObject generateGatesSummary(JSONObject gatesJson, final Map<String, String> digestsToTags) {
@@ -344,76 +341,71 @@ public class ReportConverter {
     return gateSummary;
   }
 
-  protected JSONArray getVulnerabilitiesArray(String tag, JSONObject vulnsReport) {
+  protected JSONArray getVulnerabilitiesArray(@Nonnull String tag, @Nonnull List<Package> vulList) {
     JSONArray dataJson = new JSONArray();
-    final JSONArray vulList = vulnsReport.optJSONArray("list");
-    if (vulList != null) {
-      for (int i = 0; i < vulList.size(); i++) {
-        JSONObject packageJson = vulList.getJSONObject(i);
-        packageJson.getJSONArray("vulnerabilities").forEach(item -> {
-          JSONObject vulnJson = (JSONObject) item;
-          JSONArray vulnArray = new JSONArray();
-          vulnArray.addAll(Arrays.asList
-            (
-              tag,
-              vulnJson.getString("name"),
-              vulnJson.getJSONObject("severity").getString("label"),
-              packageJson.getString("name"),
-              packageJson.get("suggestedFix") == JSONNull.getInstance() ? "None" : packageJson.getString("suggestedFix"),
-              vulnJson.getJSONObject("severity").has("sourceUrl") ? vulnJson.getJSONObject("severity").getString("sourceUrl") : "",
-              packageJson.getString("type"),
-              packageJson.containsKey("packagePath") ? packageJson.get("packagePath") == JSONNull.getInstance() ? "N/A" : packageJson.getString("packagePath") : "N/A",
-              vulnJson.getString("disclosureDate"),
-              vulnJson.get("solutionDate") == JSONNull.getInstance() ? "None" : vulnJson.getString("solutionDate"))
-          );
-          dataJson.add(vulnArray);
-        });
-      }
+
+    for (Package packageJson : vulList) {
+      packageJson.getVulns().orElseGet(List::of).forEach(vulnJson -> {
+        JSONArray vulnArray = new JSONArray();
+        vulnArray.addAll(Arrays.asList
+          (
+            tag,
+            vulnJson.getName().orElseThrow(),
+            vulnJson.getSeverity().orElseThrow().getValue().orElseThrow(),
+            packageJson.getName().orElseThrow(),
+            packageJson.getSuggestedFix().orElse("None"),
+            vulnJson.getSeverity().orElseThrow().getSourceName().orElse(""),
+            packageJson.getType().orElseThrow(),
+            packageJson.getPath().orElse("N/A"),
+            vulnJson.getDisclosureDate().orElseThrow(),
+            vulnJson.getSolutionDate().orElse("None")
+          )
+        );
+        dataJson.add(vulnArray);
+      });
+
     }
 
     return dataJson;
   }
 
-  private String getRuleString(JSONArray rule) {
+  private String getRuleString(List<Predicate> predicates) {
     ArrayList<String> ruleResult = new ArrayList<>();
 
-    for (Object p : rule.toArray()) {
-      JSONObject predicate = (JSONObject) p;
-      String type = predicate.getString("type");
-      JSONObject extra = predicate.getJSONObject("extra");
+    for (Predicate p : predicates) {
+      String type = p.getType().orElseThrow();
       switch (type) {
         case "denyCVE":
           break;
         case "vulnSeverity":
-          ruleResult.add("Severity greater than or equal " + extra.getString("level"));
+          ruleResult.add("Severity greater than or equal " + p.getExtra().orElseThrow().getLevel().orElseThrow());
           break;
         case "vulnSeverityEquals":
-          ruleResult.add("Severity equal " + extra.getString("level"));
+          ruleResult.add("Severity equal " + p.getExtra().orElseThrow().getLevel().orElseThrow());
           break;
         case "vulnIsFixable":
           ruleResult.add("Fixable");
           break;
         case "vulnIsFixableWithAge":
-          int days = extra.getInt("age");
-          String period = " days";
-          period = days < 2 ? " day" : " days";
+          Long days = p.getExtra().orElseThrow().getAge().orElseThrow();
+          String period = days < 2 ? " day" : " days";
           ruleResult.add("Fixable since " + days + period);
           break;
         case "vulnExploitable":
           ruleResult.add("Public Exploit available");
           break;
         case "vulnExploitableWithAge":
-          days = extra.getInt("age");
+          days = p.getExtra().orElseThrow().getAge().orElseThrow();
           period = days < 2 ? " day" : " days";
           ruleResult.add("Public Exploit available since " + days + period);
           break;
         case "vulnAge":
-          days = extra.getInt("age");
+          days = p.getExtra().orElseThrow().getAge().orElseThrow();
           period = days < 2 ? " day" : " days";
           ruleResult.add("Disclosure date older than or equal " + days + period);
           break;
         case "vulnCVSS":
-          double cvssScore = extra.getDouble("value");
+          double cvssScore = Double.parseDouble(p.getExtra().orElseThrow().getValue().orElseThrow());
           ruleResult.add("CVSS Score greater than or equal to %.1f" + cvssScore);
           break;
         case "vulnExploitableViaNetwork":
@@ -429,37 +421,38 @@ public class ReportConverter {
           ruleResult.add("User is root");
           break;
         case "imageConfigDefaultUserIsNot":
-          String user = extra.getString("user");
+          String user = p.getExtra().orElseThrow().getUser().orElseThrow();
+          ;
           ruleResult.add("User is not " + user);
           break;
         case "imageConfigLabelExists":
-          String key = extra.getString("key");
+          String key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Image label " + key + " exists");
           break;
         case "imageConfigLabelNotExists":
-          key = extra.getString("key");
+          key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Image label " + key + " does not exist");
           break;
         case "imageConfigEnvVariableExists":
-          key = extra.getString("key");
+          key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Variable " + key + " exist");
           break;
         case "imageConfigEnvVariableNotExists":
-          key = extra.getString("key");
+          key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Variable " + key + " does not exist");
           break;
         case "imageConfigEnvVariableContains":
-          String value = extra.getString("value");
-          key = extra.getString("key");
+          String value = p.getExtra().orElseThrow().getValue().orElseThrow();
+          key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Variable " + key + " contains value " + value);
           break;
         case "imageConfigLabelNotContains":
-          value = extra.getString("value");
-          key = extra.getString("key");
+          value = p.getExtra().orElseThrow().getValue().orElseThrow();
+          key = p.getExtra().orElseThrow().getKey().orElseThrow();
           ruleResult.add("Value " + value + " not found in label " + key);
           break;
         case "imageConfigCreationDateWithAge":
-          days = extra.has("age") ? extra.getInt("age") : 0;
+          days = p.getExtra().orElseThrow().getAge().orElseGet(() -> Long.valueOf(0));
           period = days < 2 ? " day" : " days";
           ruleResult.add("Image is older than " + days + period + " or Creation date is not present");
           break;
