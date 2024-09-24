@@ -12,7 +12,10 @@ import net.sf.json.JSONObject;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,13 +54,8 @@ public class ReportConverter {
     return Util.GATE_ACTION.FAIL;
   }
 
-  public void processVulnerabilities(List<ImageScanningResult> scanResults, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
+  public void processVulnerabilities(ImageScanningResult result, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
 
-    JSONArray dataJson = new JSONArray();
-    for (ImageScanningResult entry : scanResults) {
-      String tag = entry.getTag();
-      dataJson.addAll(getVulnerabilitiesArray(tag, entry.getVulnerabilityReport()));
-    }
 
     JSONObject securityJson = new JSONObject();
     JSONArray columnsJson = new JSONArray();
@@ -69,30 +67,25 @@ public class ReportConverter {
     }
 
     securityJson.put("columns", columnsJson);
+
+    JSONArray dataJson = new JSONArray();
+    dataJson.addAll(getVulnerabilitiesArray(result.getTag(), result.getVulnerabilityReport()));
     securityJson.put("data", dataJson);
 
     jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
   }
 
-  public JSONObject processPolicyEvaluation(List<ImageScanningResult> resultList, FilePath jenkinsGatesOutputFP)
-    throws IOException, InterruptedException {
-    JSONObject fullGateResults = new JSONObject();
-    Map<String, String> imageDigestsToTags = new HashMap<>(resultList.size());
+  public JSONObject processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
+    List<PolicyEvaluation> gatePolicies = result.getEvaluationPolicies();
 
-    for (ImageScanningResult result : resultList) {
-      List<PolicyEvaluation> gatePolicies = result.getEvaluationPolicies();
-
-      if (logger.isDebugEnabled()) {
-        logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
-      }
-      fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
-      imageDigestsToTags.put(result.getImageDigest(), result.getTag());
-    }
-
+    logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
+
+    JSONObject fullGateResults = new JSONObject();
+    fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
     jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
 
-    return generateGatesSummary(fullGateResults, imageDigestsToTags);
+    return generateGatesSummary(fullGateResults, result.getTag());
   }
 
   private JSONArray getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
@@ -199,7 +192,7 @@ public class ReportConverter {
     return newEngineResult;
   }
 
-  protected JSONObject generateGatesSummary(JSONObject gatesJson, final Map<String, String> digestsToTags) {
+  protected JSONObject generateGatesSummary(JSONObject gatesJson, String tag) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -318,12 +311,8 @@ public class ReportConverter {
           ));
 
           JSONObject summaryRow = new JSONObject();
-          String imageName = digestsToTags.get(imageKey.toString());
-          if (Strings.isNullOrEmpty(imageName)) {
-            imageName = imageKey.toString();
-          }
 
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), imageName);
+          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), tag);
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
           summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));

@@ -30,7 +30,6 @@ import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -105,20 +104,17 @@ public class BuildWorker {
       FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
       FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
-      JSONObject gateSummary = reportConverter.processPolicyEvaluation(List.of(scanResult), jenkinsGatesOutputFP);
+      JSONObject gateSummary = reportConverter.processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
-      reportConverter.processVulnerabilities(List.of(scanResult), jenkinsQueryOutputFP);
+      reportConverter.processVulnerabilities(scanResult, jenkinsQueryOutputFP);
 
-      for (ImageScanningResult result : List.of(scanResult)) {
-        FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, result.getImageDigest()));
-        logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
-        rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(result.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
-      }
+      FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
+      logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
+      rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
 
       /* Setup reports */
       this.setupBuildReports(finalAction, gateSummary);
-
     } catch (Exception e) {
       logger.logError("Recording failure to build reports and moving on with plugin operation", e);
     }

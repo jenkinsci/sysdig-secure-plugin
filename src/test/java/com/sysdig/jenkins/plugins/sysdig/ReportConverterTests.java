@@ -71,15 +71,13 @@ public class ReportConverterTests {
     Result result = GsonBuilder.build().fromJson(new String(data, StandardCharsets.UTF_8), Result.class);
 
     // Given
-    var results = List.of(
-      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", result.getPackages().orElseThrow(), result.getPolicyEvaluations().orElseThrow())
-    );
+    var imageScanningResult = new ImageScanningResult("foo-tag1", "foo-digest1", "pass", result.getPackages().orElseThrow(), result.getPolicyEvaluations().orElseThrow());
 
     File tmp = File.createTempFile("gatesreport", "");
     tmp.deleteOnExit();
 
     // When
-    converter.processPolicyEvaluation(results, new FilePath(tmp));
+    converter.processPolicyEvaluation(imageScanningResult, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
@@ -94,17 +92,14 @@ public class ReportConverterTests {
 
     Type listType = new TypeToken<List<Package>>() {}.getType();
     List<Package> vulnsReport = GsonBuilder.build().fromJson(new String(data, StandardCharsets.UTF_8), listType);
-
-    // Given
-    var results = List.of(
-      new ImageScanningResult("foo-tag1", "foo-digest1", "pass", vulnsReport, List.of())
-    );
-
     File tmp = File.createTempFile("vulnerabilitiesreport", "");
     tmp.deleteOnExit();
 
+    // Given
+    ImageScanningResult imageScanningResult = new ImageScanningResult("foo-tag1", "foo-digest1", "pass", vulnsReport, List.of());
+
     // When
-    converter.processVulnerabilities(results, new FilePath(tmp));
+    converter.processVulnerabilities(imageScanningResult, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
