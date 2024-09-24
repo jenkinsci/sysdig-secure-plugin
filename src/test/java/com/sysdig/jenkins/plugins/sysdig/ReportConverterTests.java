@@ -7,6 +7,7 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
+import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyReport;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.FilePath;
 import hudson.model.Run;
@@ -31,10 +32,11 @@ import static org.mockito.Mockito.when;
 public class ReportConverterTests {
 
   private ReportConverter converter;
+  private SysdigLogger logger;
 
   @Before
   public void BeforeEach() {
-    SysdigLogger logger = mock(SysdigLogger.class);
+    logger = mock(SysdigLogger.class);
     Run<?, ?> build = mock(Run.class);
     when(build.getNumber()).thenReturn(0);
     FilePath ws = mock(FilePath.class);
@@ -78,7 +80,7 @@ public class ReportConverterTests {
     tmp.deleteOnExit();
 
     // When
-    converter.processPolicyEvaluation(imageScanningResult, new FilePath(tmp));
+    new PolicyReport(logger).processPolicyEvaluation(imageScanningResult, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));
