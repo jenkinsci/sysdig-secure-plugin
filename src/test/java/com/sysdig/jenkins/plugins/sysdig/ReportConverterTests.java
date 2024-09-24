@@ -8,6 +8,7 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyReport;
+import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.FilePath;
 import hudson.model.Run;
@@ -30,8 +31,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class ReportConverterTests {
-
-  private ReportConverter converter;
   private SysdigLogger logger;
 
   @Before
@@ -40,7 +39,6 @@ public class ReportConverterTests {
     Run<?, ?> build = mock(Run.class);
     when(build.getNumber()).thenReturn(0);
     FilePath ws = mock(FilePath.class);
-    converter = new ReportConverter(logger);
   }
 
   @Test
@@ -55,7 +53,7 @@ public class ReportConverterTests {
     );
 
     // Then
-    results.forEach(result -> assertEquals(Util.GATE_ACTION.PASS, converter.getFinalAction(result)));
+    results.forEach(result -> assertEquals(Util.GATE_ACTION.PASS, ReportConverter.getFinalAction(result)));
   }
 
   @Test
@@ -64,7 +62,7 @@ public class ReportConverterTests {
     var result = new ImageScanningResult("foo-tag2", "foo-digest2", "fail", List.of(), List.of());
 
     // Then
-    assertEquals(Util.GATE_ACTION.FAIL, converter.getFinalAction(result));
+    assertEquals(Util.GATE_ACTION.FAIL, ReportConverter.getFinalAction(result));
   }
 
   @Test

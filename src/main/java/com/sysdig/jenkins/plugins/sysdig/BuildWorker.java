@@ -21,6 +21,7 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyReport;
+import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -47,7 +48,6 @@ public class BuildWorker {
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
   private static final String RAW_VULN_REPORT_FILENAME = "sysdig_secure_raw_vulns_report-%s.json";
-  private final ReportConverter reportConverter;
   private final NewEngineScanner scanner;
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
@@ -58,7 +58,7 @@ public class BuildWorker {
   TaskListener listener;
   private String jenkinsOutputDirName;
 
-  public BuildWorker(Run<?, ?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, NewEngineScanner scanner, ReportConverter reportConverter) throws IOException, InterruptedException {
+  public BuildWorker(Run<?, ?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, NewEngineScanner scanner) throws IOException, InterruptedException {
     try {
       if (listener == null) {
         LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
@@ -80,7 +80,6 @@ public class BuildWorker {
       logger.logDebug("Build worker initialized");
 
       this.scanner = scanner;
-      this.reportConverter = reportConverter;
 
     } catch (Exception e) {
       try {
@@ -99,7 +98,7 @@ public class BuildWorker {
     ImageScanningResult scanResult = scanner.scanImage(imageName);
 
     // FIXME(fede): do not use a list in those methods, just use the result
-    Util.GATE_ACTION finalAction = reportConverter.getFinalAction(scanResult);
+    Util.GATE_ACTION finalAction = ReportConverter.getFinalAction(scanResult);
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
