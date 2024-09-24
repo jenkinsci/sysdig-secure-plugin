@@ -7,6 +7,7 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
+import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.FilePath;
 import hudson.model.Run;
 import net.sf.json.JSONObject;
@@ -99,7 +100,7 @@ public class ReportConverterTests {
     ImageScanningResult imageScanningResult = new ImageScanningResult("foo-tag1", "foo-digest1", "pass", vulnsReport, List.of());
 
     // When
-    converter.processVulnerabilities(imageScanningResult, new FilePath(tmp));
+    VulnerabilityReport.processVulnerabilities(imageScanningResult, new FilePath(tmp));
 
     // Then
     byte[] reportData = Files.readAllBytes(Paths.get(tmp.getAbsolutePath()));

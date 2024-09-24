@@ -20,6 +20,7 @@ import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -107,7 +108,7 @@ public class BuildWorker {
       JSONObject gateSummary = reportConverter.processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
-      reportConverter.processVulnerabilities(scanResult, jenkinsQueryOutputFP);
+      VulnerabilityReport.processVulnerabilities(scanResult, jenkinsQueryOutputFP);
 
       FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
       logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));

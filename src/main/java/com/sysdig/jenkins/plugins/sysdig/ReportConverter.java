@@ -3,17 +3,17 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
-import com.sysdig.jenkins.plugins.sysdig.scanner.report.*;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Bundle;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Predicate;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Rule;
 import hudson.FilePath;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,27 +52,6 @@ public class ReportConverter {
     }
 
     return Util.GATE_ACTION.FAIL;
-  }
-
-  public void processVulnerabilities(ImageScanningResult result, FilePath jenkinsQueryOutputFP) throws IOException, InterruptedException {
-
-
-    JSONObject securityJson = new JSONObject();
-    JSONArray columnsJson = new JSONArray();
-
-    for (String column : Arrays.asList("Tag", "CVE ID", "Severity", "Vulnerability Package", "Fix Available", "URL", "Package Type", "Package Path", "Disclosure Date", "Solution Date")) {
-      JSONObject columnJson = new JSONObject();
-      columnJson.put("title", column);
-      columnsJson.add(columnJson);
-    }
-
-    securityJson.put("columns", columnsJson);
-
-    JSONArray dataJson = new JSONArray();
-    dataJson.addAll(getVulnerabilitiesArray(result.getTag(), result.getVulnerabilityReport()));
-    securityJson.put("data", dataJson);
-
-    jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
   }
 
   public JSONObject processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
@@ -328,34 +307,6 @@ public class ReportConverter {
     gateSummary.put("rows", summaryRows);
 
     return gateSummary;
-  }
-
-  protected JSONArray getVulnerabilitiesArray(@Nonnull String tag, @Nonnull List<Package> vulList) {
-    JSONArray dataJson = new JSONArray();
-
-    for (Package packageJson : vulList) {
-      packageJson.getVulns().orElseGet(List::of).forEach(vulnJson -> {
-        JSONArray vulnArray = new JSONArray();
-        vulnArray.addAll(Arrays.asList
-          (
-            tag,
-            vulnJson.getName().orElseThrow(),
-            vulnJson.getSeverity().orElseThrow().getValue().orElseThrow(),
-            packageJson.getName().orElseThrow(),
-            packageJson.getSuggestedFix().orElse("None"),
-            vulnJson.getSeverity().orElseThrow().getSourceName().orElse(""),
-            packageJson.getType().orElseThrow(),
-            packageJson.getPath().orElse("N/A"),
-            vulnJson.getDisclosureDate().orElseThrow(),
-            vulnJson.getSolutionDate().orElse("None")
-          )
-        );
-        dataJson.add(vulnArray);
-      });
-
-    }
-
-    return dataJson;
   }
 
   private String getRuleString(List<Predicate> predicates) {
