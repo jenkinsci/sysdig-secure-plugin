@@ -64,7 +64,7 @@
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.440.x</artifactId> <!-- This should match the Jenkins version configured. You can find out existing ones in https://repo.jenkins-ci.org/artifactory/public/io/jenkins/tools/bom/ -->
-        <version>3334.v18e2a_2f48356</version>
+        <version>3413.v0d896b_76a_30d</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
