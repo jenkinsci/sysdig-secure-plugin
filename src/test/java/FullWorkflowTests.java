@@ -1,3 +1,4 @@
+import hudson.model.Descriptor;
 import org.apache.commons.lang.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
@@ -273,7 +274,7 @@ public class FullWorkflowTests {
     jenkins.assertLogContains("final result PASS", build);
   }
 
-  private void configureCredentials() {
+  private void configureCredentials() throws Descriptor.FormException {
     UsernamePasswordCredentials creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
     SystemCredentialsProvider.getInstance().getCredentials().add(creds);
   }
