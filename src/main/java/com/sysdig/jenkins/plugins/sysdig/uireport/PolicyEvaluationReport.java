@@ -6,20 +6,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SysdigSecureGates {
-  private final Map<String, List<SysdigSecureGateResult>> resultsForEachImage;
+public class PolicyEvaluationReport {
+  private final Map<String, List<PolicyEvaluationReportLine>> resultsForEachImage;
   private final boolean failed;
 
-  public SysdigSecureGates(boolean failed) {
+  public PolicyEvaluationReport(boolean failed) {
     this.failed = failed;
     resultsForEachImage = new HashMap<>();
   }
 
-  public Map<String, List<SysdigSecureGateResult>> getResultsForEachImage() {
+  public Map<String, List<PolicyEvaluationReportLine>> getResultsForEachImage() {
     return resultsForEachImage;
   }
 
-  public void addResult(@Nonnull SysdigSecureGateResult result) {
+  public void addResult(@Nonnull PolicyEvaluationReportLine result) {
     resultsForEachImage.putIfAbsent(result.getImageID(), new ArrayList<>());
     resultsForEachImage
       .get(result.getImageID())
@@ -38,7 +38,7 @@ public class SysdigSecureGates {
     String policyID,
     String policyName
   ) {
-    this.addResult(new SysdigSecureGateResult(
+    this.addResult(new PolicyEvaluationReportLine(
       imageID,
       repoTag,
       triggerID,

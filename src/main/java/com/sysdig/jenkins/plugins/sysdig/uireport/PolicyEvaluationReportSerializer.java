@@ -7,22 +7,22 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureGates> {
+public class PolicyEvaluationReportSerializer implements JsonSerializer<PolicyEvaluationReport> {
   @Override
-  public JsonElement serialize(SysdigSecureGates sysdigSecureGates, Type type, JsonSerializationContext jsonSerializationContext) {
+  public JsonElement serialize(PolicyEvaluationReport policyEvaluationReport, Type type, JsonSerializationContext jsonSerializationContext) {
     JsonObject jsonObject = new JsonObject();
 
-    sysdigSecureGates.getResultsForEachImage().entrySet().forEach(keyPair -> {
-      jsonObject.add(keyPair.getKey(), serializeTopLevelResultsList(sysdigSecureGates, keyPair.getValue()));
+    policyEvaluationReport.getResultsForEachImage().entrySet().forEach(keyPair -> {
+      jsonObject.add(keyPair.getKey(), serializeTopLevelResultsList(policyEvaluationReport, keyPair.getValue()));
     });
 
     return jsonObject;
   }
 
-  private JsonElement serializeTopLevelResultsList(SysdigSecureGates sysdigSecureGates, List<SysdigSecureGateResult> results) {
+  private JsonElement serializeTopLevelResultsList(PolicyEvaluationReport policyEvaluationReport, List<PolicyEvaluationReportLine> results) {
     JsonObject resultObject = new JsonObject();
     resultObject.add("header", header());
-    resultObject.add("final_action", new JsonPrimitive(sysdigSecureGates.isFailed() ? "STOP" : "GO"));
+    resultObject.add("final_action", new JsonPrimitive(policyEvaluationReport.isFailed() ? "STOP" : "GO"));
     resultObject.add("rows", serializeRows(results));
 
     JsonObject jsonObject = new JsonObject();
@@ -31,7 +31,7 @@ public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureG
     return jsonObject;
   }
 
-  private JsonArray serializeRows(List<SysdigSecureGateResult> results) {
+  private JsonArray serializeRows(List<PolicyEvaluationReportLine> results) {
     JsonArray array = new JsonArray();
 
     results.stream().map(this::serializeRow).forEach(array::add);
@@ -39,7 +39,7 @@ public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureG
     return array;
   }
 
-  private JsonArray serializeRow(SysdigSecureGateResult result) {
+  private JsonArray serializeRow(PolicyEvaluationReportLine result) {
     JsonArray array = new JsonArray();
 
     array.add(result.getImageID());

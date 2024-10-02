@@ -20,12 +20,12 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 public class PolicyReportTest {
-  private PolicyReport policyReport;
+  private PolicyEvaluationReportProcessor policyReport;
 
   @Before
   public void BeforeEach() {
     SysdigLogger logger = mock(SysdigLogger.class);
-    policyReport = new PolicyReport(logger);
+    policyReport = new PolicyEvaluationReportProcessor(logger);
   }
 
   @Test

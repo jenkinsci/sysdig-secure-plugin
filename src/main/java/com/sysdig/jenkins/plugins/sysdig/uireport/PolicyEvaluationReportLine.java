@@ -1,6 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
-public class SysdigSecureGateResult {
+public class PolicyEvaluationReportLine {
   private final String imageID;
   private final String repoTag;
   private final String triggerID;
@@ -12,7 +12,7 @@ public class SysdigSecureGateResult {
   private final String policyID;
   private final String policyName;
 
-  SysdigSecureGateResult(String imageID, String repoTag, String triggerID, String gate, String trigger, String checkOutput, String gateAction, Boolean whitelisted, String policyID, String policyName) {
+  PolicyEvaluationReportLine(String imageID, String repoTag, String triggerID, String gate, String trigger, String checkOutput, String gateAction, Boolean whitelisted, String policyID, String policyName) {
     this.imageID = imageID;
     this.repoTag = repoTag;
     this.triggerID = triggerID;

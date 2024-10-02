@@ -20,7 +20,7 @@ import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
-import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyReport;
+import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.AbortException;
@@ -105,7 +105,7 @@ public class BuildWorker {
       FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
       FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
-      JSONObject gateSummary = new PolicyReport(this.logger).processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
+      JSONObject gateSummary = new PolicyEvaluationReportProcessor(this.logger).processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
       VulnerabilityReport.processVulnerabilities(scanResult, jenkinsQueryOutputFP);

@@ -19,28 +19,28 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class PolicyReport {
+public class PolicyEvaluationReportProcessor {
   private final SysdigLogger logger;
 
-  public PolicyReport(SysdigLogger logger) {
+  public PolicyEvaluationReportProcessor(SysdigLogger logger) {
     this.logger = logger;
   }
 
   public JSONObject processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
-    List<PolicyEvaluation> gatePolicies = result.getEvaluationPolicies();
+    List<PolicyEvaluation> evaluationPolicies = result.getEvaluationPolicies();
 
-    logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
+    logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), evaluationPolicies.toString()));
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
 
-    SysdigSecureGates fullGateResults = generateCompatibleGatesResult(result);
-    jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(fullGateResults), String.valueOf(StandardCharsets.UTF_8));
+    PolicyEvaluationReport policyEvaluationReport = generatePolicyEvaluationReport(result);
+    jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
 
-    return generateGatesSummary(fullGateResults, result.getTag());
+    return generateGatesSummary(policyEvaluationReport, result.getTag());
   }
 
-  private SysdigSecureGates generateCompatibleGatesResult(ImageScanningResult imageResult) {
+  private PolicyEvaluationReport generatePolicyEvaluationReport(ImageScanningResult imageResult) {
     boolean failed = imageResult.getEvalStatus().equalsIgnoreCase("failed");
-    var result = new SysdigSecureGates(failed);
+    var result = new PolicyEvaluationReport(failed);
 
     Stream<PolicyEvaluation> policyEvaluations = imageResult
       .getEvaluationPolicies()
@@ -49,7 +49,7 @@ public class PolicyReport {
     Stream<PolicyEvaluation> failedPolicyEvaluations = policyEvaluations
       .filter(policy -> policy.getEvaluationResult().orElse("").equals("failed"));
 
-    Stream<SysdigSecureGateResult> rows = failedPolicyEvaluations
+    Stream<PolicyEvaluationReportLine> rows = failedPolicyEvaluations
       .flatMap(policy -> {
         String policyName = policy.getName().orElseThrow();
         Stream<Bundle> bundlesFromThePolicy = policy.getBundles()
@@ -66,7 +66,7 @@ public class PolicyReport {
   }
 
 
-  protected JSONObject generateGatesSummary(SysdigSecureGates gatesJson, String tag) {
+  protected JSONObject generateGatesSummary(PolicyEvaluationReport gatesJson, String tag) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -81,12 +81,12 @@ public class PolicyReport {
         logger.logDebug(gatesJson.toString());
       }
 
-      List<SysdigSecureGateResult> rows = imageKey.getValue();
+      List<PolicyEvaluationReportLine> rows = imageKey.getValue();
 
       int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
       String imageDigest = imageKey.getKey();
 
-      for (SysdigSecureGateResult row : rows) {
+      for (PolicyEvaluationReportLine row : rows) {
         switch (row.getGateAction().toLowerCase()) {
           case "stop":
             stop++;
@@ -129,14 +129,14 @@ public class PolicyReport {
   }
 
 
-  private Stream<SysdigSecureGateResult> getRuleFailures(Bundle bundle, ImageScanningResult imageResult, String policyName) {
+  private Stream<PolicyEvaluationReportLine> getRuleFailures(Bundle bundle, ImageScanningResult imageResult, String policyName) {
     Stream<Rule> rules = bundle.getRules().orElseThrow()
       .stream();
 
     Stream<Rule> failedRules = rules
       .filter(rule -> rule.getEvaluationResult().orElse("").equals("failed"));
 
-    Stream<SysdigSecureGateResult> failedRulesConvertedToSecureGateResults = failedRules
+    Stream<PolicyEvaluationReportLine> failedRulesConvertedToSecureGateResults = failedRules
       .flatMap(rule -> {
         String ruleName = bundle.getName().orElseThrow();
         String ruleString = getRuleString(rule.getPredicates().orElseThrow());
@@ -268,7 +268,7 @@ public class PolicyReport {
   }
 
 
-  private Stream<SysdigSecureGateResult> getPkgVulnFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+  private Stream<PolicyEvaluationReportLine> getPkgVulnFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
     return rule.getFailures()
       .stream()
       .flatMap(Collection::stream)
@@ -276,7 +276,7 @@ public class PolicyReport {
         getFailure(failure.getDescription().orElseThrow(), imageResult, policyName, ruleString, ruleName));
   }
 
-  private Stream<SysdigSecureGateResult> getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+  private Stream<PolicyEvaluationReportLine> getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
     return rule.getFailures()
       .stream()
       .flatMap(Collection::stream)
@@ -284,8 +284,8 @@ public class PolicyReport {
         getFailure(failure.getRemediation().orElseThrow().replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName));
   }
 
-  private SysdigSecureGateResult getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
-    return new SysdigSecureGateResult(
+  private PolicyEvaluationReportLine getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
+    return new PolicyEvaluationReportLine(
       imageResult.getImageDigest(),
       imageResult.getTag(),
       "trigger_id",
