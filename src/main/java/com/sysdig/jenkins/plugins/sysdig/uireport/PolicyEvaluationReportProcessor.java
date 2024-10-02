@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
-import com.sysdig.jenkins.plugins.sysdig.Util;
 import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
@@ -9,9 +8,8 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Predicate;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Rule;
 import hudson.FilePath;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -26,7 +24,7 @@ public class PolicyEvaluationReportProcessor {
     this.logger = logger;
   }
 
-  public JSONObject processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
+  public PolicyEvaluationSummary processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
     List<PolicyEvaluation> evaluationPolicies = result.getEvaluationPolicies();
 
     logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), evaluationPolicies.toString()));
@@ -66,46 +64,30 @@ public class PolicyEvaluationReportProcessor {
   }
 
 
-  protected JSONObject generateGatesSummary(PolicyEvaluationReport gatesJson, String tag) {
+  protected PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, String tag) {
     logger.logDebug("Summarizing policy evaluation results");
-    JSONObject gateSummary = new JSONObject();
+    PolicyEvaluationSummary gateSummary = new PolicyEvaluationSummary();
 
-    if (gatesJson == null) { // could not load gates output to json object
-      logger.logWarn("Invalid input to generate gates summary");
-      return gateSummary;
-    }
-
-    JSONArray summaryRows = new JSONArray();
     for (var imageKey : gatesJson.getResultsForEachImage().entrySet()) {
-      if (logger.isDebugEnabled()) {
-        logger.logDebug(gatesJson.toString());
-      }
-
-      List<PolicyEvaluationReportLine> rows = imageKey.getValue();
-
       int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
-      String imageDigest = imageKey.getKey();
-
-      for (PolicyEvaluationReportLine row : rows) {
-        switch (row.getGateAction().toLowerCase()) {
+      for (PolicyEvaluationReportLine line : imageKey.getValue()) {
+        switch (line.getGateAction().toLowerCase()) {
           case "stop":
             stop++;
-            stop_wl += row.getWhitelisted() ? 1 : 0;
+            stop_wl += line.getWhitelisted() ? 1 : 0;
             break;
           case "warn":
             warn++;
-            warn_wl += row.getWhitelisted() ? 1 : 0;
+            warn_wl += line.getWhitelisted() ? 1 : 0;
             break;
           case "go":
             go++;
-            go_wl += row.getWhitelisted() ? 1 : 0;
+            go_wl += line.getWhitelisted() ? 1 : 0;
             break;
           default:
             break;
         }
-
       }
-
 
       var finalAction = gatesJson.isFailed() ? "STOP" : "GO";
       logger.logInfo(String.format(
@@ -113,17 +95,8 @@ public class PolicyEvaluationReportProcessor {
         tag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, finalAction
       ));
 
-      JSONObject summaryRow = new JSONObject();
-      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), tag);
-      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
-      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
-      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
-      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), finalAction);
-      summaryRows.add(summaryRow);
+      gateSummary.addSummaryLine(tag, (stop - stop_wl), (warn - warn_wl), (go - go_wl), finalAction);
     }
-
-    gateSummary.put("header", generateDataTablesColumnsForGateSummary());
-    gateSummary.put("rows", summaryRows);
 
     return gateSummary;
   }
@@ -148,18 +121,6 @@ public class PolicyEvaluationReportProcessor {
       });
 
     return failedRulesConvertedToSecureGateResults;
-  }
-
-
-  protected static JSONArray generateDataTablesColumnsForGateSummary() {
-    JSONArray headers = new JSONArray();
-    for (Util.GATE_SUMMARY_COLUMN column : Util.GATE_SUMMARY_COLUMN.values()) {
-      JSONObject header = new JSONObject();
-      header.put("data", column.toString());
-      header.put("title", column.toString().replaceAll("_", " "));
-      headers.add(header);
-    }
-    return headers;
   }
 
 

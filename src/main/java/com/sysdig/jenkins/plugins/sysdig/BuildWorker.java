@@ -21,6 +21,7 @@ import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
+import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.AbortException;
@@ -29,7 +30,6 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.ArtifactArchiver;
-import net.sf.json.JSONObject;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -105,7 +105,7 @@ public class BuildWorker {
       FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
       FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
-      JSONObject gateSummary = new PolicyEvaluationReportProcessor(this.logger).processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
+      PolicyEvaluationSummary policyEvaluationSummary = new PolicyEvaluationReportProcessor(this.logger).processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
       VulnerabilityReport.processVulnerabilities(scanResult, jenkinsQueryOutputFP);
@@ -115,7 +115,7 @@ public class BuildWorker {
       rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
 
       /* Setup reports */
-      this.setupBuildReports(finalAction, gateSummary);
+      this.setupBuildReports(finalAction, policyEvaluationSummary);
     } catch (Exception e) {
       logger.logError("Recording failure to build reports and moving on with plugin operation", e);
     }
@@ -123,7 +123,7 @@ public class BuildWorker {
     return finalAction;
   }
 
-  private void setupBuildReports(Util.GATE_ACTION finalAction, JSONObject gateSummary) throws AbortException {
+  private void setupBuildReports(Util.GATE_ACTION finalAction, PolicyEvaluationSummary gateSummary) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
@@ -133,7 +133,7 @@ public class BuildWorker {
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary.toString(), CVE_LISTING_FILENAME));
+      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, GsonBuilder.build().toJson(gateSummary), CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException(
