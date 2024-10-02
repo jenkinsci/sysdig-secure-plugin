@@ -1,9 +1,10 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
+
 import com.google.gson.*;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureGates> {
@@ -11,17 +12,17 @@ public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureG
   public JsonElement serialize(SysdigSecureGates sysdigSecureGates, Type type, JsonSerializationContext jsonSerializationContext) {
     JsonObject jsonObject = new JsonObject();
 
-    sysdigSecureGates.resultsForEachImage.entrySet().forEach(keyPair -> {
-      jsonObject.add(keyPair.getKey(), serializeTopLevelResultsList(keyPair.getValue()));
+    sysdigSecureGates.getResultsForEachImage().entrySet().forEach(keyPair -> {
+      jsonObject.add(keyPair.getKey(), serializeTopLevelResultsList(sysdigSecureGates, keyPair.getValue()));
     });
 
     return jsonObject;
   }
 
-  private JsonElement serializeTopLevelResultsList(ArrayList<SysdigSecureGateResult> results) {
+  private JsonElement serializeTopLevelResultsList(SysdigSecureGates sysdigSecureGates, List<SysdigSecureGateResult> results) {
     JsonObject resultObject = new JsonObject();
     resultObject.add("header", header());
-    resultObject.add("final_action", new JsonPrimitive("STOP"));
+    resultObject.add("final_action", new JsonPrimitive(sysdigSecureGates.isFailed() ? "STOP" : "GO"));
     resultObject.add("rows", serializeRows(results));
 
     JsonObject jsonObject = new JsonObject();
@@ -30,7 +31,7 @@ public class SysdigSecureGatesSerializer implements JsonSerializer<SysdigSecureG
     return jsonObject;
   }
 
-  private JsonArray serializeRows(ArrayList<SysdigSecureGateResult> results) {
+  private JsonArray serializeRows(List<SysdigSecureGateResult> results) {
     JsonArray array = new JsonArray();
 
     results.stream().map(this::serializeRow).forEach(array::add);

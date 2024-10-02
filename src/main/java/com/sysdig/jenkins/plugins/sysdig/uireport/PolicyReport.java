@@ -1,7 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
-import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.Util;
+import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Bundle;
@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PolicyReport {
   private final SysdigLogger logger;
@@ -32,62 +32,41 @@ public class PolicyReport {
     logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), gatePolicies.toString()));
     logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
 
-    JSONObject fullGateResults = new JSONObject();
-    fullGateResults.put(result.getImageDigest(), generateCompatibleGatesResult(result));
-    jenkinsGatesOutputFP.write(fullGateResults.toString(), String.valueOf(StandardCharsets.UTF_8));
+    SysdigSecureGates fullGateResults = generateCompatibleGatesResult(result);
+    jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(fullGateResults), String.valueOf(StandardCharsets.UTF_8));
 
     return generateGatesSummary(fullGateResults, result.getTag());
   }
 
-  private JSONObject generateCompatibleGatesResult(ImageScanningResult imageResult) {
-    JSONObject newEngineResult = new JSONObject();
-    String[] headersList = {
-      "Image_Id",
-      "Repo_Tag",
-      "Trigger_Id",
-      "Gate",
-      "Trigger",
-      "Check_Output",
-      "Gate_Action",
-      "Whitelisted",
-      "Policy_Id",
-      "Policy_Name"
-    };
+  private SysdigSecureGates generateCompatibleGatesResult(ImageScanningResult imageResult) {
+    boolean failed = imageResult.getEvalStatus().equalsIgnoreCase("failed");
+    var result = new SysdigSecureGates(failed);
 
-    JSONArray headers = JSONArray.fromObject(headersList);
-    JSONObject result = new JSONObject();
+    Stream<PolicyEvaluation> policyEvaluations = imageResult
+      .getEvaluationPolicies()
+      .stream();
 
-    var gateList = imageResult.getEvaluationPolicies();
+    Stream<PolicyEvaluation> failedPolicyEvaluations = policyEvaluations
+      .filter(policy -> policy.getEvaluationResult().orElse("").equals("failed"));
 
-
-    JSONArray rows = gateList
-      .stream()
-      .filter(policy -> policy.getEvaluationResult().orElse("").equals("failed"))
-      .map(policy -> {
+    Stream<SysdigSecureGateResult> rows = failedPolicyEvaluations
+      .flatMap(policy -> {
         String policyName = policy.getName().orElseThrow();
-        List<Bundle> bundles = policy.getBundles().orElseThrow();
-
-        return bundles
+        Stream<Bundle> bundlesFromThePolicy = policy.getBundles()
           .stream()
-          .map(item -> getRuleFailures(item, imageResult, policyName))
-          .flatMap(Collection::stream)
-          .collect(Collectors.toCollection(JSONArray::new));
-      })
-      .flatMap(Collection::stream)
-      .collect(Collectors.toCollection(JSONArray::new));
+          .flatMap(Collection::stream);
 
-    result.put("header", headers);
-    String finalAction = imageResult.getEvalStatus().equalsIgnoreCase("failed") ? "STOP" : "GO";
-    result.put("final_action", finalAction);
-    result.put("rows", rows);
+        return bundlesFromThePolicy
+          .flatMap(bundle -> getRuleFailures(bundle, imageResult, policyName));
+      });
 
-    newEngineResult.put("result", result);
+    rows.forEach(result::addResult);
 
-    return newEngineResult;
+    return result;
   }
 
 
-  protected JSONObject generateGatesSummary(JSONObject gatesJson, String tag) {
+  protected JSONObject generateGatesSummary(SysdigSecureGates gatesJson, String tag) {
     logger.logDebug("Summarizing policy evaluation results");
     JSONObject gateSummary = new JSONObject();
 
@@ -97,126 +76,50 @@ public class PolicyReport {
     }
 
     JSONArray summaryRows = new JSONArray();
-    // Populate once and reuse
-    int numColumns = 0, repoTagIndex = -1, gateNameIndex = -1, gateActionIndex = -1, whitelistedIndex = -1;
-
-    for (Object imageKey : gatesJson.keySet()) {
+    for (var imageKey : gatesJson.getResultsForEachImage().entrySet()) {
       if (logger.isDebugEnabled()) {
         logger.logDebug(gatesJson.toString());
       }
 
-      JSONObject content = gatesJson.getJSONObject((String) imageKey);
-      if (null == content) { // no content found for a given image id, log and move on
-        logger.logWarn(String.format("No mapped object found in gate output, skipping summary computation for %s", imageKey));
-        continue;
-      }
+      List<SysdigSecureGateResult> rows = imageKey.getValue();
 
-      JSONObject result = content.getJSONObject("result");
-      if (null == result) { // result object not found, log and move on
-        logger.logWarn(String.format("'result' element not found in gate output, skipping summary computation for %s", imageKey));
-        continue;
-      }
+      int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
+      String imageDigest = imageKey.getKey();
 
-      // populate data from header element once, most likely for the first image
-      if (numColumns <= 0 || repoTagIndex < 0 || gateNameIndex < 0 || gateActionIndex < 0 || whitelistedIndex < 0) {
-        JSONArray header = result.getJSONArray("header");
-        if (null == header) {
-          logger.logWarn(String.format("'header' element not found in gate output, skipping summary computation for %s", imageKey));
-          continue;
+      for (SysdigSecureGateResult row : rows) {
+        switch (row.getGateAction().toLowerCase()) {
+          case "stop":
+            stop++;
+            stop_wl += row.getWhitelisted() ? 1 : 0;
+            break;
+          case "warn":
+            warn++;
+            warn_wl += row.getWhitelisted() ? 1 : 0;
+            break;
+          case "go":
+            go++;
+            go_wl += row.getWhitelisted() ? 1 : 0;
+            break;
+          default:
+            break;
         }
 
-        numColumns = header.size();
-        for (int i = 0; i < header.size(); i++) {
-          switch (header.getString(i)) {
-            case "Repo_Tag":
-              repoTagIndex = i;
-              break;
-            case "Gate":
-              gateNameIndex = i;
-              break;
-            case "Gate_Action":
-              gateActionIndex = i;
-              break;
-            case "Whitelisted":
-              whitelistedIndex = i;
-              break;
-            default:
-              break;
-          }
-        }
       }
 
-      if (numColumns <= 0 || repoTagIndex < 0 || gateNameIndex < 0 || gateActionIndex < 0) {
-        logger.logWarn(String.format(
-          "Either 'header' element has no columns or column indices (for Repo_Tag, Gate, Gate_Action) not initialized, skipping summary computation for %s", imageKey));
-        continue;
-      }
 
-      JSONArray rows = result.getJSONArray("rows");
-      if (null != rows) {
-        int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
-        String repoTag = null;
+      var finalAction = gatesJson.isFailed() ? "STOP" : "GO";
+      logger.logInfo(String.format(
+        "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
+        tag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, finalAction
+      ));
 
-        for (int i = 0; i < rows.size(); i++) {
-          JSONArray row = rows.getJSONArray(i);
-          if (row.size() == numColumns) {
-            if (Strings.isNullOrEmpty(repoTag)) {
-              repoTag = row.getString(repoTagIndex);
-            }
-            if (!row.getString(gateNameIndex).equalsIgnoreCase("FINAL")) {
-              switch (row.getString(gateActionIndex).toLowerCase()) {
-                case "stop":
-                  stop++;
-                  stop_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row.getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
-                  break;
-                case "warn":
-                  warn++;
-                  warn_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row.getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
-                  break;
-                case "go":
-                  go++;
-                  go_wl += (whitelistedIndex != -1 && !(row.getString(whitelistedIndex).equalsIgnoreCase("none") || row.getString(whitelistedIndex).equalsIgnoreCase("false"))) ? 1 : 0;
-                  break;
-                default:
-                  break;
-              }
-            }
-          } else {
-            logger.logWarn(String.format("Expected %d elements but got %d, skipping row %s in summary computation for %s", numColumns, row.size(), row, imageKey));
-          }
-        }
-
-        if (!Strings.isNullOrEmpty(repoTag)) {
-          logger.logInfo(String.format(
-            "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
-            repoTag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")
-          ));
-
-          JSONObject summaryRow = new JSONObject();
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), repoTag);
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
-          summaryRows.add(summaryRow);
-        } else {
-          logger.logInfo(String.format(
-            "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
-            imageKey, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, result.getString("final_action")
-          ));
-
-          JSONObject summaryRow = new JSONObject();
-
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), tag);
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
-          summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), result.getString("final_action"));
-          summaryRows.add(summaryRow);
-        }
-      } else { // rows object not found
-        logger.logWarn(String.format("'rows' element not found in gate output, skipping summary computation for %s", imageKey));
-      }
+      JSONObject summaryRow = new JSONObject();
+      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Repo_Tag.toString(), tag);
+      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Stop_Actions.toString(), (stop - stop_wl));
+      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Warn_Actions.toString(), (warn - warn_wl));
+      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Go_Actions.toString(), (go - go_wl));
+      summaryRow.put(Util.GATE_SUMMARY_COLUMN.Final_Action.toString(), finalAction);
+      summaryRows.add(summaryRow);
     }
 
     gateSummary.put("header", generateDataTablesColumnsForGateSummary());
@@ -226,28 +129,25 @@ public class PolicyReport {
   }
 
 
-  private JSONArray getRuleFailures(Bundle item, ImageScanningResult imageResult, String policyName) {
-    return item.getRules().orElseThrow()
-      .stream()
-      .filter(rule -> rule.getEvaluationResult().orElse("").equals("failed"))
-      .map(rule -> {
-        JSONArray results = new JSONArray();
-        String ruleName = item.getName().orElseThrow();
+  private Stream<SysdigSecureGateResult> getRuleFailures(Bundle bundle, ImageScanningResult imageResult, String policyName) {
+    Stream<Rule> rules = bundle.getRules().orElseThrow()
+      .stream();
+
+    Stream<Rule> failedRules = rules
+      .filter(rule -> rule.getEvaluationResult().orElse("").equals("failed"));
+
+    Stream<SysdigSecureGateResult> failedRulesConvertedToSecureGateResults = failedRules
+      .flatMap(rule -> {
+        String ruleName = bundle.getName().orElseThrow();
         String ruleString = getRuleString(rule.getPredicates().orElseThrow());
         boolean hasPkgVulnFailures = rule.getFailureType().orElse("unknown").equals("pkgVulnFailure");
-        boolean hasImageConfFailures = rule.getFailureType().orElse("unknown").equals("imageConfigFailure");
 
-        if (hasPkgVulnFailures) {
-          results = getPkgVulnFailures(rule, imageResult, policyName, ruleName, ruleString);
-          return results;
-        }
-        if (hasImageConfFailures) {
-          results = getImageConfFailures(rule, imageResult, policyName, ruleName, ruleString);
-        }
-        return results;
-      })
-      .flatMap(Collection::stream)
-      .collect(Collectors.toCollection(JSONArray::new));
+        return hasPkgVulnFailures ?
+          getPkgVulnFailures(rule, imageResult, policyName, ruleName, ruleString) :
+          getImageConfFailures(rule, imageResult, policyName, ruleName, ruleString);
+      });
+
+    return failedRulesConvertedToSecureGateResults;
   }
 
 
@@ -368,37 +268,34 @@ public class PolicyReport {
   }
 
 
-  private JSONArray getPkgVulnFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+  private Stream<SysdigSecureGateResult> getPkgVulnFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
     return rule.getFailures()
       .stream()
       .flatMap(Collection::stream)
       .map(failure ->
-        getFailure(failure.getDescription().orElseThrow(), imageResult, policyName, ruleString, ruleName))
-      .collect(Collectors.toCollection(JSONArray::new));
+        getFailure(failure.getDescription().orElseThrow(), imageResult, policyName, ruleString, ruleName));
   }
 
-  private JSONArray getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
+  private Stream<SysdigSecureGateResult> getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
     return rule.getFailures()
       .stream()
       .flatMap(Collection::stream)
       .map(failure ->
-        getFailure(failure.getRemediation().orElseThrow().replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName)
-      ).collect(Collectors.toCollection(JSONArray::new));
+        getFailure(failure.getRemediation().orElseThrow().replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName));
   }
 
-  private JSONArray getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
-    JSONArray row = new JSONArray();
-    row.element(imageResult.getImageDigest());
-    row.element(imageResult.getTag());
-    row.element("trigger_id");
-    row.element(ruleName);
-    row.element(ruleString);
-    row.element(failure);
-    row.element("STOP");
-    row.element(false);
-    row.element("");
-    row.element(policyName);
-    return row;
+  private SysdigSecureGateResult getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
+    return new SysdigSecureGateResult(
+      imageResult.getImageDigest(),
+      imageResult.getTag(),
+      "trigger_id",
+      ruleName,
+      ruleString,
+      failure,
+      "STOP",
+      false,
+      "",
+      policyName
+    );
   }
-
 }
