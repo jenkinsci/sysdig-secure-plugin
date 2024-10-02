@@ -15,6 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
+import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
 import hudson.model.Action;
 import hudson.model.Run;
 import jenkins.model.Jenkins;
@@ -32,7 +34,7 @@ public class SysdigAction implements Action {
   private final Run<?, ?> build;
   private final String gateStatus;
   private final String gateOutputUrl;
-  private final String gateSummary;
+  private final PolicyEvaluationSummary gateSummary;
   private final String cveListingUrl;
 
   // For backwards compatibility
@@ -42,7 +44,7 @@ public class SysdigAction implements Action {
   private Map<String, String> queries;
 
 
-  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, String gateSummary, String cveListingFileName) {
+  public SysdigAction(Run<?, ?> build, String gateStatus, final String jenkinsOutputDirName, String gateReport, PolicyEvaluationSummary gateSummary, String cveListingFileName) {
     this.build = build;
     this.gateStatus = gateStatus;
     this.gateOutputUrl = "../artifact/" + jenkinsOutputDirName + "/" + gateReport;
@@ -77,16 +79,8 @@ public class SysdigAction implements Action {
     return this.gateOutputUrl;
   }
 
-  public JSONObject getGateSummary() {
-    // gateSummary was a JSON object in plugin version <= 1.0.12. Jenkins does not handle this type change correctly post upgrade.
-    // Summary data from the previous versions is lost during deserialization due to the type change and plugin versions > 1.0.12
-    // won't be able to render the summary table only for builds that were executed using older versions of the plugin. This check
-    // is necessary to ensure plugin doesn't exception out in the process
-    if (null != this.gateSummary && this.gateSummary.trim().length() > 0) {
-      return JSONObject.fromObject(this.gateSummary);
-    } else {
-      return null;
-    }
+  public String getGateSummary() {
+    return GsonBuilder.build().toJson(this.gateSummary);
   }
 
   public String getCveListingUrl() {
