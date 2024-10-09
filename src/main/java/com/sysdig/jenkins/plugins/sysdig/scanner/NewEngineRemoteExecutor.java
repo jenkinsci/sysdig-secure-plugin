@@ -27,7 +27,9 @@ import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListenerAdapter;
 import org.jenkinsci.remoting.RoleChecker;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URL;
@@ -118,13 +120,19 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   }
 
   private String getInlineScanVersion() throws IOException {
-    if (this.config.getCliVersionToApply().equals("custom")) {
-      if (this.config.getCustomCliVersion().isEmpty()) {
-        return getInlineScanPinnedVersion();
-      }
-      return this.config.getCustomCliVersion();
+    if (Strings.isNullOrEmpty(this.config.getCliVersionToApply())) {
+      return getInlineScanPinnedVersion();
     }
-    return getInlineScanPinnedVersion();
+
+    if (!this.config.getCliVersionToApply().equals("custom")) {
+      return getInlineScanPinnedVersion();
+    }
+
+    if (this.config.getCustomCliVersion().isEmpty()) {
+      return getInlineScanPinnedVersion();
+    }
+
+    return this.config.getCustomCliVersion();
   }
 
   private Proxy getHttpProxy() throws IOException {
@@ -173,7 +181,7 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   private File retrieveScannerBinFile() throws AbortException {
     File scannerBinaryPath;
 
-    if (!config.getScannerBinaryPath().isEmpty()) {
+    if (!Strings.isNullOrEmpty(config.getScannerBinaryPath())) {
       scannerBinaryPath = new File(config.getScannerBinaryPath());
       logger.logInfo("Inlinescan binary globally defined to* " + scannerBinaryPath.getPath());
     } else {

@@ -20,7 +20,6 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
-import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -47,8 +46,8 @@ public class NewEngineBuilderExecutor {
 
 
     /* Instantiate config and a new build worker */
-    SysdigBuilder.DescriptorImpl globalConfig = (SysdigBuilder.DescriptorImpl) Jenkins.get().getDescriptorOrDie(SysdigBuilder.class);
-    logger = new ConsoleLog("SysdigSecurePlugin", listener, globalConfig.getDebug());
+    NewEngineBuilder.GlobalConfiguration globalConfig = (NewEngineBuilder.GlobalConfiguration) Jenkins.get().getDescriptorOrDie(NewEngineBuilder.class);
+    logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
     final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
@@ -97,7 +96,7 @@ public class NewEngineBuilderExecutor {
     }
   }
 
-  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, SysdigBuilder.DescriptorImpl globalConfig, Run<?, ?> run) throws AbortException {
+  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, NewEngineBuilder.GlobalConfiguration globalConfig, Run<?, ?> run) throws AbortException {
 
     //Prefer the job credentials set by the user and fallback to the global ones
     String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();

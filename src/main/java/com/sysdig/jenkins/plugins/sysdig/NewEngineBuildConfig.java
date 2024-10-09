@@ -28,7 +28,6 @@ public class NewEngineBuildConfig implements Serializable {
   private final String imageName;
   private final boolean bailOnFail;
   private final boolean bailOnPluginFail;
-  private final boolean debug;
   private final String engineurl;
   private final boolean engineverify;
   private final String inlineScanExtraParams;
@@ -38,17 +37,17 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(SysdigBuilder.DescriptorImpl globalConfig, NewEngineBuilder engineBuilder, String sysdigToken) {
+  public NewEngineBuildConfig(NewEngineBuilder.GlobalConfiguration globalConfig, NewEngineBuilder engineBuilder, String sysdigToken) {
     imageName = engineBuilder.getImageName();
     bailOnFail = engineBuilder.getBailOnFail();
     bailOnPluginFail = engineBuilder.getBailOnPluginFail();
-    debug = globalConfig.getDebug();
+
     if (!Strings.isNullOrEmpty(engineBuilder.getEngineURL())) {
       engineurl = engineBuilder.getEngineURL();
       engineverify = engineBuilder.getEngineVerify();
     } else {
-      engineurl = globalConfig.getEngineurl();
-      engineverify = globalConfig.getEngineverify();
+      engineurl = globalConfig.getEngineURL();
+      engineverify = globalConfig.getEngineVerify();
     }
 
     if (!Strings.isNullOrEmpty(engineBuilder.getInlineScanExtraParams())) {
@@ -93,10 +92,6 @@ public class NewEngineBuildConfig implements Serializable {
 
   public boolean getBailOnPluginFail() {
     return bailOnPluginFail;
-  }
-
-  public boolean getDebug() {
-    return debug;
   }
 
   public String getEngineurl() {
@@ -148,7 +143,7 @@ public class NewEngineBuildConfig implements Serializable {
 
     logger.logInfo("Using new-scanning engine");
     logger.logInfo(String.format("Image Name: %s", this.getImageName()));
-    logger.logInfo(String.format("Debug: %s", this.getDebug()));
+//    logger.logInfo(String.format("Debug: %s", this.getDebug())); //FIXME(fede): check how to reenable debug
     logger.logInfo(String.format("EngineURL: %s", this.getEngineurl()));
     logger.logInfo(String.format("EngineVerify: %s", this.getEngineverify()));
     logger.logInfo(String.format("Policies: %s", this.getPoliciesToApply()));
@@ -157,5 +152,9 @@ public class NewEngineBuildConfig implements Serializable {
     logger.logInfo(String.format("InlineScanExtraParams: %s", this.getInlineScanExtraParams()));
     logger.logInfo(String.format("BailOnFail: %s", this.getBailOnFail()));
     logger.logInfo(String.format("BailOnPluginFail: %s", this.getBailOnPluginFail()));
+  }
+
+  public boolean getDebug() {
+    return false;
   }
 }

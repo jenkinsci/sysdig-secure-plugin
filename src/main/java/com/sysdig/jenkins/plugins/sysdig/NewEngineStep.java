@@ -194,10 +194,10 @@ public class NewEngineStep extends Step implements BuildStep {
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
     public static final boolean DEFAULT_ENGINE_VERIFY = true;
 
-    NewEngineBuilder.DescriptorImpl builderDescriptor;
+    NewEngineBuilder.GlobalConfiguration builderDescriptor;
 
     public DescriptorImpl() {
-      builderDescriptor = new NewEngineBuilder.DescriptorImpl();
+      builderDescriptor = new NewEngineBuilder.GlobalConfiguration();
       builderDescriptor.load();
     }
 

@@ -46,18 +46,18 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
 
   // Assigning the defaults here for pipeline builds
   private final String imageName;
-  private boolean bailOnFail = SysdigBuilder.DescriptorImpl.DEFAULT_BAIL_ON_FAIL;
-  private boolean bailOnPluginFail = SysdigBuilder.DescriptorImpl.DEFAULT_BAIL_ON_PLUGIN_FAIL;
+  private boolean bailOnFail = GlobalConfiguration.DEFAULT_BAIL_ON_FAIL;
+  private boolean bailOnPluginFail = GlobalConfiguration.DEFAULT_BAIL_ON_PLUGIN_FAIL;
 
   // Override global config. Supported for sysdig-secure-engine mode config only
-  private String engineURL = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
-  private String engineCredentialsId = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
-  private boolean engineVerify = SysdigBuilder.DescriptorImpl.DEFAULT_ENGINE_VERIFY;
-  private String inlineScanExtraParams = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
+  private String engineURL = "";
+  private String engineCredentialsId = "";
+  private boolean engineVerify = GlobalConfiguration.DEFAULT_ENGINE_VERIFY;
+  private String inlineScanExtraParams = "";
   private String policiesToApply = "";
   private String cliVersionToApply = "global_default"; //FIXME(fede) why needs this to be global_default and not empty?
   private String customCliVersion = "";
-  private String scannerBinaryPath = SysdigBuilder.DescriptorImpl.EMPTY_STRING;
+  private String scannerBinaryPath = "";
 
 
   // Fields in config.jelly must match the parameter names in the "DataBoundConstructor" or "DataBoundSetter"
@@ -74,6 +74,7 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     return bailOnFail;
   }
 
+  @DataBoundSetter
   public void setBailOnFail(boolean bailOnFail) {
     this.bailOnFail = bailOnFail;
   }
@@ -178,19 +179,30 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public DescriptorImpl getDescriptor() {
-    return (DescriptorImpl) super.getDescriptor();
+  public GlobalConfiguration getDescriptor() {
+    return (GlobalConfiguration) super.getDescriptor();
   }
 
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-  public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+  public static final class GlobalConfiguration extends BuildStepDescriptor<Builder> {
     public static final String DEFAULT_NAME = "sysdig_secure_images";
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
     public static final boolean DEFAULT_ENGINE_VERIFY = true;
 
-    public DescriptorImpl() {
+    private String engineURL = DEFAULT_ENGINE_URL;
+    private String engineCredentialsId = "";
+    private String inlineScanExtraParams = "";
+    private String cliVersionToApply = "";
+    private String customCliVersion = "";
+    private String scannerBinaryPath = "";
+    private boolean bailOnFail = true;
+    private boolean bailOnPluginFail = true;
+    private String policiesToApply = "";
+    private boolean engineVerify = true;
+
+    public GlobalConfiguration() {
       load();
     }
 
@@ -237,6 +249,98 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());
+    }
+
+
+    public boolean getBailOnFail() {
+      return this.bailOnFail;
+    }
+
+    @DataBoundSetter
+    public void setBailOnFail(boolean bailOnFail) {
+      this.bailOnFail = bailOnFail;
+    }
+
+    public boolean getBailOnPluginFail() {
+      return this.bailOnPluginFail;
+    }
+
+    @DataBoundSetter
+    public void setBailOnPluginFail(boolean bailOnPluginFail) {
+      this.bailOnPluginFail = bailOnPluginFail;
+    }
+
+    public String getPoliciesToApply() {
+      return this.policiesToApply;
+    }
+
+    @DataBoundSetter
+    public void setPoliciesToApply(String policiesToApply) {
+      this.policiesToApply = policiesToApply;
+    }
+
+    @DataBoundSetter
+    public void setCliVersionToApply(String cliVersionToApply) {
+      this.cliVersionToApply = cliVersionToApply;
+    }
+
+    @DataBoundSetter
+    public void setCustomCliVersion(String customCliVersion) {
+      this.customCliVersion = customCliVersion;
+    }
+
+    public String getEngineURL() {
+      return engineURL;
+    }
+
+    @DataBoundSetter
+    public void setEngineURL(String engineURL) {
+      this.engineURL = engineURL;
+    }
+
+    public String getEngineCredentialsId() {
+      return engineCredentialsId;
+    }
+
+    @DataBoundSetter
+    public void setEngineCredentialsId(String engineCredentialsId) {
+      this.engineCredentialsId = engineCredentialsId;
+    }
+
+    public boolean getEngineVerify() {
+      return engineVerify;
+    }
+
+    @DataBoundSetter
+    public void setEngineVerify(boolean engineVerify) {
+      this.engineVerify = engineVerify;
+    }
+
+    public String getInlineScanExtraParams() {
+      return inlineScanExtraParams;
+    }
+
+    @DataBoundSetter
+    public void setInlineScanExtraParams(String inlineScanExtraParams) {
+      this.inlineScanExtraParams = inlineScanExtraParams;
+    }
+
+    public String getScannerBinaryPath() {
+      return scannerBinaryPath;
+    }
+
+    @DataBoundSetter
+    public void setScannerBinaryPath(String scannerBinaryPath) {
+      this.scannerBinaryPath = scannerBinaryPath;
+    }
+
+
+    public String getCliVersionToApply() {
+      return this.cliVersionToApply;
+    }
+
+    public String getCustomCliVersion() {
+      return this.customCliVersion;
     }
   }
 

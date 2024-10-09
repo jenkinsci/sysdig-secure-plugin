@@ -1,7 +1,6 @@
 
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuilder;
 import hudson.model.Descriptor;
-import org.apache.commons.lang.SystemUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -31,7 +30,7 @@ public class FullWorkflowTests {
 
   @Before
   public void BeforeEach() {
-    NewEngineBuilder.DescriptorImpl desc = new NewEngineBuilder("temp").getDescriptor();
+    NewEngineBuilder.GlobalConfiguration desc = new NewEngineBuilder("temp").getDescriptor();
     desc.save();
   }
 

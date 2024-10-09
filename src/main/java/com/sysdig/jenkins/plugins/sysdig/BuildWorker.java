@@ -94,7 +94,7 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(String imageName) throws AbortException, InterruptedException {
+  public Util.GATE_ACTION scanAndBuildReports(String imageName) throws InterruptedException {
     ImageScanningResult scanResult = scanner.scanImage(imageName);
 
     Util.GATE_ACTION finalAction = ReportConverter.getFinalAction(scanResult);
@@ -135,8 +135,7 @@ public class BuildWorker {
       run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary, CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
-      throw new AbortException(
-        "Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
+      throw new AbortException("Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
     }
   }
 
