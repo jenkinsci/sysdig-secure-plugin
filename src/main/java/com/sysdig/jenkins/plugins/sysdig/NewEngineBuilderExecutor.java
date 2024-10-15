@@ -26,7 +26,6 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
 
 import java.util.Collections;
 import java.util.logging.Logger;
@@ -47,13 +46,12 @@ public class NewEngineBuilderExecutor {
 
 
     /* Instantiate config and a new build worker */
-    NewEngineBuilder.GlobalConfiguration globalConfig = (NewEngineBuilder.GlobalConfiguration) Jenkins.get().getDescriptorOrDie(NewEngineBuilder.class);
     logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-    final String sysdigToken = getSysdigTokenFromCredentials(builder, globalConfig, run);
+    final String sysdigToken = getSysdigTokenFromCredentials(builder, run);
 
-    NewEngineBuildConfig config = new NewEngineBuildConfig(globalConfig, builder, sysdigToken);
+    NewEngineBuildConfig config = new NewEngineBuildConfig(builder, sysdigToken);
     config.print(logger);
 
     BuildWorker worker = null;
@@ -97,10 +95,10 @@ public class NewEngineBuilderExecutor {
     }
   }
 
-  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, NewEngineBuilder.GlobalConfiguration globalConfig, Run<?, ?> run) throws AbortException {
+  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, Run<?, ?> run) throws AbortException {
 
     //Prefer the job credentials set by the user and fallback to the global ones
-    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : globalConfig.getEngineCredentialsId();
+    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : builder.getDescriptor().getEngineCredentialsId();
     logger.logDebug("Processing Jenkins credential ID " + credID);
 
     // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build

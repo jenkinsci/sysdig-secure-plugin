@@ -1,158 +1,181 @@
-
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuilder;
 import hudson.model.Descriptor;
+import hudson.model.FreeStyleProject;
+import hudson.model.Result;
+import hudson.model.Run;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
-import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
-import com.cloudbees.plugins.credentials.common.UsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-
+import static org.junit.Assert.*;
 
 public class FullWorkflowTests {
-
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
 
   @Before
-  public void BeforeEach() {
-    NewEngineBuilder.GlobalConfiguration desc = new NewEngineBuilder("temp").getDescriptor();
+  public void setUp() throws Exception {
+    var desc = new NewEngineBuilder("temp").getDescriptor();
     desc.save();
+    configureSysdigCredentials();
+  }
+
+  private void configureSysdigCredentials() throws Descriptor.FormException {
+    var creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
+    SystemCredentialsProvider.getInstance().getCredentials().add(creds);
   }
 
   @Test
-  public void configurationRoundTrip() throws Exception {
-    // Given
-    FreeStyleProject project = jenkins.createFreeStyleProject();
-    project.getBuildersList().add(new NewEngineBuilder("test"));
+  public void testConfigurationPersistenceAfterRoundTrip() throws Exception {
+    var project = createFreestyleProjectWithNewEngineBuilder("test");
 
-    // When - this makes sure that the config is saved and retrieved again
     project = jenkins.configRoundtrip(project);
 
-    // Then - the config should be preserved
     jenkins.assertEqualDataBoundBeans(new NewEngineBuilder("test"), project.getBuildersList().get(0));
   }
 
   @Test
-  public void noCredentialsSetError() throws Exception {
-    // Given
-    FreeStyleProject project = jenkins.createFreeStyleProject();
-    NewEngineBuilder builder = new NewEngineBuilder("images_file");
-    project.getBuildersList().add(builder);
+  public void testDefaultGlobalConfigurationValues() throws Exception {
+    var globalConfig = jenkins.getInstance()
+      .getDescriptorByType(NewEngineBuilder.GlobalConfiguration.class);
 
-    // When
-    FreeStyleBuild build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+    assertEquals("https://secure.sysdig.com", globalConfig.getEngineURL());
+    assertEquals("", globalConfig.getEngineCredentialsId());
+    assertTrue(globalConfig.getEngineVerify());
+    assertEquals("", globalConfig.getInlineScanExtraParams());
+    assertEquals("", globalConfig.getScannerBinaryPath());
+    assertEquals("", globalConfig.getPoliciesToApply());
+    assertEquals("", globalConfig.getCliVersionToApply());
+    assertEquals("", globalConfig.getCustomCliVersion());
+    assertTrue(globalConfig.getBailOnFail());
+    assertTrue(globalConfig.getBailOnPluginFail());
+  }
 
-    // Then
+  @Test
+  public void testGlobalConfigurationRoundTrip() throws Exception {
+    // Access global configuration using Jenkins.getDescriptorByType()
+    var globalConfig = jenkins.getInstance()
+      .getDescriptorByType(NewEngineBuilder.GlobalConfiguration.class);
+
+    // Change configuration values
+    globalConfig.setEngineURL("https://custom.sysdig.com");
+    globalConfig.setEngineCredentialsId("sysdig-secure");
+    globalConfig.setEngineVerify(false);
+    globalConfig.setInlineScanExtraParams("--some-extra-param");
+    globalConfig.setScannerBinaryPath("/path/to/scanner");
+    globalConfig.setPoliciesToApply("policy1,policy2");
+    globalConfig.setCliVersionToApply("custom");
+    globalConfig.setCustomCliVersion("1.5.0");
+    globalConfig.setBailOnFail(false);
+    globalConfig.setBailOnPluginFail(false);
+
+    // Save the new configuration
+    globalConfig.save();
+
+    // Perform a configuration round-trip to simulate saving through the UI
+    jenkins.configRoundtrip();
+
+    // Reload the configuration to ensure the changes persist after the round-trip
+    var reloadedConfig = jenkins.getInstance()
+      .getDescriptorByType(NewEngineBuilder.GlobalConfiguration.class);
+
+    // Assert that the values were saved and reloaded correctly after the round-trip
+    assertEquals("https://custom.sysdig.com", reloadedConfig.getEngineURL());
+    assertEquals("sysdig-secure", reloadedConfig.getEngineCredentialsId());
+    assertFalse(reloadedConfig.getEngineVerify());
+    assertEquals("--some-extra-param", reloadedConfig.getInlineScanExtraParams());
+    assertEquals("/path/to/scanner", reloadedConfig.getScannerBinaryPath());
+    assertEquals("policy1,policy2", reloadedConfig.getPoliciesToApply());
+    assertEquals("custom", reloadedConfig.getCliVersionToApply());
+    assertEquals("1.5.0", reloadedConfig.getCustomCliVersion());
+    assertFalse(reloadedConfig.getBailOnFail());
+    assertFalse(reloadedConfig.getBailOnPluginFail());
+  }
+
+
+  @Test
+  public void testBuildFailsWhenNoCredentialsSet() throws Exception {
+    var project = createFreestyleProjectWithNewEngineBuilder("images_file");
+
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
     jenkins.assertLogContains("API Credentials not defined", build);
   }
 
   @Test
-  public void credentialsNotFoundError() throws Exception {
-    // Given
-    FreeStyleProject project = jenkins.createFreeStyleProject();
-    NewEngineBuilder builder = new NewEngineBuilder("alpine");
-    builder.setEngineCredentialsId("non-existing");
-    project.getBuildersList().add(builder);
+  public void testBuildFailsWhenCredentialsNotFound() throws Exception {
+    var project = createFreestyleProjectWithNewEngineBuilder("alpine", "non-existing");
 
-    // When
-    FreeStyleBuild build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
 
-    // Then
     jenkins.assertLogContains("Cannot find Jenkins credentials by ID", build);
   }
 
   @Test
-  public void performFreestyleScanJob() throws Exception {
-    // Given
-    configureCredentials();
+  public void testPipelineFailsWhenNoImageSpecified() throws Exception {
+    var job = createPipelineJobWithScript(
+      "node {\n" +
+        "  sysdigImageScan engineCredentialsId: 'sysdig-secure'\n"
+        + "}"
+    );
 
-    FreeStyleProject project = jenkins.createFreeStyleProject();
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
-    NewEngineBuilder builder = new NewEngineBuilder("alpine");
-    builder.setEngineCredentialsId("sysdig-secure");
-    project.getBuildersList().add(builder);
-
-    // When
-    // FIXME(fede): Adjust mocks to assert success
-    FreeStyleBuild build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
-
-    // Then
-    jenkins.assertLogContains("Retrieving MainDB", build);
-  }
-
-  @Test
-  public void noImageSpecified() throws Exception {
-    // Given
-    configureCredentials();
-    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "no-image-specified");
-    String pipelineScript
-      = "node {\n"
-      + "  sysdigImageScan engineCredentialsId: 'sysdig-secure'\n"
-      + "}";
-    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
-    WorkflowRun build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
-
-    // Then
-    // FIXME(fede) we need to validate that the image has been provided, not just an error
     jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
   }
 
-  // FIXME(fede) use this helper method to create tests that bailOnFail after mocks are in place.
-  private WorkflowJob performScriptedPipelineScanJob(boolean bailOnFail) throws Exception {
-    // Given
-    configureCredentials();
-    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-scripted-pipeline");
-    String pipelineScript
-      = "node {\n"
-      + "  sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'"
-      + (!bailOnFail ? ", bailOnFail: false" : "")
-      + "\n"
-      + "}";
-    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
+  @Test
+  public void testFreestyleScanJobLogOutput() throws Exception {
+    var project = createFreestyleProjectWithNewEngineBuilder("alpine", "sysdig-secure");
+
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+    // FIXME(fede): We should be using mocks that verify that everything is working properly, and the run succeeds.
+    assertScanJobLogOutput(build);
+  }
+
+  @Test
+  public void testPipelineScanJobLogOutput() throws Exception {
+    var job = createPipelineJobWithScript("node {\n" + "  sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'\n" + "}");
+
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
+
+    // FIXME(fede): We should be using mocks that verify that everything is working properly, and the run succeeds.
+    assertScanJobLogOutput(build);
+  }
+
+  private void assertScanJobLogOutput(Run<?, ?> build) throws Exception {
+    jenkins.assertLogContains("Using new-scanning engine", build);
+    jenkins.assertLogContains("Image Name: alpine", build);
+    jenkins.assertLogContains("Downloading inlinescan v1.16.1", build);
+    jenkins.assertLogContains("Unable to retrieve MainDB", build);
+    jenkins.assertLogContains("401 Unauthorized", build);
+    jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
+  }
+
+  private FreeStyleProject createFreestyleProjectWithNewEngineBuilder(String imageName) throws Exception {
+    var project = jenkins.createFreeStyleProject();
+    var builder = new NewEngineBuilder(imageName);
+    project.getBuildersList().add(builder);
+    return project;
+  }
+
+  private FreeStyleProject createFreestyleProjectWithNewEngineBuilder(String imageName, String credentialsId) throws Exception {
+    var project = createFreestyleProjectWithNewEngineBuilder(imageName);
+    var builder = (NewEngineBuilder) project.getBuildersList().get(0);
+    builder.setEngineCredentialsId(credentialsId);
+    return project;
+  }
+
+  private WorkflowJob createPipelineJobWithScript(String script) throws Exception {
+    var job = jenkins.createProject(WorkflowJob.class, "test-pipeline");
+    job.setDefinition(new CpsFlowDefinition(script, true));
     return job;
   }
-
-  // FIXME(fede) use this helper method to create tests after mocks are in place.
-  private void performDeclarativePipelineScanJob() throws Exception {
-    // Given
-    configureCredentials();
-    WorkflowJob job = jenkins.createProject(WorkflowJob.class, "test-declarative-pipeline");
-    String pipelineScript
-      = "pipeline {\n"
-      + "  agent any\n"
-      + "  stages {\n"
-      + "    stage('Test') {\n"
-      + "      steps {\n"
-      + "        sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'\n"
-      + "      }\n"
-      + "    }\n"
-      + "  }\n"
-      + "}\n";
-    job.setDefinition(new CpsFlowDefinition(pipelineScript, true));
-    WorkflowRun build = jenkins.buildAndAssertSuccess(job);
-
-    // Then
-    jenkins.assertLogContains("final result PASS", build);
-  }
-
-  private void configureCredentials() throws Descriptor.FormException {
-    UsernamePasswordCredentials creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
-    SystemCredentialsProvider.getInstance().getCredentials().add(creds);
-  }
-
 }

@@ -37,7 +37,9 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(NewEngineBuilder.GlobalConfiguration globalConfig, NewEngineBuilder engineBuilder, String sysdigToken) {
+  public NewEngineBuildConfig(NewEngineBuilder engineBuilder, String sysdigToken) {
+    var globalConfig = engineBuilder.getDescriptor();
+
     imageName = engineBuilder.getImageName();
     bailOnFail = engineBuilder.getBailOnFail();
     bailOnPluginFail = engineBuilder.getBailOnPluginFail();

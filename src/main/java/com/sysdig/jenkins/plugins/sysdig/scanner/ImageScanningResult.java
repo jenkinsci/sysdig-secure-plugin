@@ -23,7 +23,22 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ImageScanningResult implements Serializable {
-  public enum FinalAction {ActionPass, ActionFail}
+  public enum FinalAction {
+    ActionPass,
+    ActionFail;
+
+    @Override
+    public String toString() {
+      switch (this) {
+        case ActionPass:
+          return "PASS";
+        case ActionFail:
+          return "FAIL";
+        default:
+          return super.toString();
+      }
+    }
+  }
 
   private final String tag;
   private final String imageDigest;
