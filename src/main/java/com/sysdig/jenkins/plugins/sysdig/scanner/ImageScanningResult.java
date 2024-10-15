@@ -20,13 +20,16 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ImageScanningResult implements Serializable {
+  public enum FinalAction {ActionPass, ActionFail}
+
   private final String tag;
   private final String imageDigest;
   private final String evalStatus;
-  private final List<Package> packages; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
-  private final List<PolicyEvaluation> evaluationPolicies; // FIXME(fede) Change this to not export the raw JSON but a structure with relevant data.
+  private final List<Package> packages;
+  private final List<PolicyEvaluation> evaluationPolicies;
 
   public ImageScanningResult(String tag, String imageDigest, String evalStatus, List<Package> vulnsReport, List<PolicyEvaluation> evaluationPolicies) {
     this.tag = tag;
@@ -54,5 +57,14 @@ public class ImageScanningResult implements Serializable {
 
   public String getImageDigest() {
     return imageDigest;
+  }
+
+
+  public FinalAction getFinalAction() {
+    if (Stream.of("pass", "passed", "accepted", "noPolicy").anyMatch(this.getEvalStatus()::equalsIgnoreCase)) {
+      return FinalAction.ActionPass;
+    }
+
+    return FinalAction.ActionFail;
   }
 }

@@ -22,7 +22,6 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.uireport.ReportConverter;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
 import hudson.AbortException;
 import hudson.FilePath;
@@ -94,10 +93,10 @@ public class BuildWorker {
     }
   }
 
-  public Util.GATE_ACTION scanAndBuildReports(String imageName) throws InterruptedException {
+  public ImageScanningResult.FinalAction scanAndBuildReports(String imageName) throws InterruptedException {
     ImageScanningResult scanResult = scanner.scanImage(imageName);
 
-    Util.GATE_ACTION finalAction = ReportConverter.getFinalAction(scanResult);
+    ImageScanningResult.FinalAction finalAction = scanResult.getFinalAction();
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
@@ -122,7 +121,7 @@ public class BuildWorker {
     return finalAction;
   }
 
-  private void setupBuildReports(Util.GATE_ACTION finalAction, PolicyEvaluationSummary gateSummary) throws AbortException {
+  private void setupBuildReports(ImageScanningResult.FinalAction finalAction, PolicyEvaluationSummary gateSummary) throws AbortException {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");

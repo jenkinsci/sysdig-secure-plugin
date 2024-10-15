@@ -19,6 +19,7 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -56,7 +57,7 @@ public class NewEngineBuilderExecutor {
     config.print(logger);
 
     BuildWorker worker = null;
-    Util.GATE_ACTION finalAction = null;
+    ImageScanningResult.FinalAction finalAction = null;
     try {
 
       NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
@@ -88,7 +89,7 @@ public class NewEngineBuilderExecutor {
     /* Evaluate result of step based on gate action */
     if (null == finalAction) {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if ((config.getBailOnFail() || builder.getBailOnFail()) && Util.GATE_ACTION.FAIL.equals(finalAction)) {
+    } else if ((config.getBailOnFail() || builder.getBailOnFail()) && ImageScanningResult.FinalAction.ActionFail.equals(finalAction)) {
       logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
       throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction);
     } else {

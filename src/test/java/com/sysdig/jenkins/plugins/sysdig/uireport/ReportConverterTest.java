@@ -1,17 +1,12 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
-import com.sysdig.jenkins.plugins.sysdig.Util;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import hudson.FilePath;
-import hudson.model.Run;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class ReportConverterTest {
   @Test
@@ -26,7 +21,7 @@ public class ReportConverterTest {
     );
 
     // Then
-    results.forEach(result -> assertEquals(Util.GATE_ACTION.PASS, ReportConverter.getFinalAction(result)));
+    results.forEach(result -> assertEquals(ImageScanningResult.FinalAction.ActionPass, result.getFinalAction()));
   }
 
   @Test
@@ -35,6 +30,6 @@ public class ReportConverterTest {
     var result = new ImageScanningResult("foo-tag2", "foo-digest2", "fail", List.of(), List.of());
 
     // Then
-    assertEquals(Util.GATE_ACTION.FAIL, ReportConverter.getFinalAction(result));
+    assertEquals(ImageScanningResult.FinalAction.ActionFail, result.getFinalAction());
   }
 }
