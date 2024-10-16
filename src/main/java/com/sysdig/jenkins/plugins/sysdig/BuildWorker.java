@@ -20,6 +20,7 @@ import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
@@ -102,8 +103,13 @@ public class BuildWorker {
     try {
       FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
+      PolicyEvaluationReportProcessor policyEvaluationReportProcessor = new PolicyEvaluationReportProcessor(this.logger);
+      PolicyEvaluationReport policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
+      PolicyEvaluationSummary policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
+
       FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
-      PolicyEvaluationSummary policyEvaluationSummary = new PolicyEvaluationReportProcessor(this.logger).processPolicyEvaluation(scanResult, jenkinsGatesOutputFP);
+      logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
+      jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
       VulnerabilityReport.processVulnerabilities(scanResult, jenkinsQueryOutputFP);

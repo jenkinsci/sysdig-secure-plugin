@@ -1,5 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
+import java.util.Objects;
+
 public class PolicyEvaluationReportLine {
   private final String imageID;
   private final String repoTag;
@@ -63,5 +65,27 @@ public class PolicyEvaluationReportLine {
 
   public String getPolicyName() {
     return policyName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PolicyEvaluationReportLine)) return false;
+    PolicyEvaluationReportLine line = (PolicyEvaluationReportLine) o;
+    return Objects.equals(imageID, line.imageID) &&
+      Objects.equals(repoTag, line.repoTag) &&
+      Objects.equals(triggerID, line.triggerID) &&
+      Objects.equals(gate, line.gate) &&
+      Objects.equals(trigger, line.trigger) &&
+      Objects.equals(checkOutput, line.checkOutput) &&
+      Objects.equals(gateAction, line.gateAction) &&
+      Objects.equals(whitelisted, line.whitelisted) &&
+      Objects.equals(policyID, line.policyID) &&
+      Objects.equals(policyName, line.policyName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(imageID, repoTag, triggerID, gate, trigger, checkOutput, gateAction, whitelisted, policyID, policyName);
   }
 }

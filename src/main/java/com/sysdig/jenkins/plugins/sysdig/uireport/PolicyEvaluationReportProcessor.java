@@ -1,17 +1,13 @@
 package com.sysdig.jenkins.plugins.sysdig.uireport;
 
-import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Bundle;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Predicate;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Rule;
-import hudson.FilePath;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,16 +20,10 @@ public class PolicyEvaluationReportProcessor {
     this.logger = logger;
   }
 
-  public PolicyEvaluationSummary processPolicyEvaluation(ImageScanningResult result, FilePath jenkinsGatesOutputFP) throws IOException, InterruptedException {
+  public PolicyEvaluationReport processPolicyEvaluation(ImageScanningResult result) {
     List<PolicyEvaluation> evaluationPolicies = result.getEvaluationPolicies();
-
     logger.logDebug(String.format("sysdig-secure-engine gate policies for '%s': %s ", result.getTag(), evaluationPolicies.toString()));
-    logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
-
-    PolicyEvaluationReport policyEvaluationReport = generatePolicyEvaluationReport(result);
-    jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
-
-    return generateGatesSummary(policyEvaluationReport, result.getTag());
+    return generatePolicyEvaluationReport(result);
   }
 
   private PolicyEvaluationReport generatePolicyEvaluationReport(ImageScanningResult imageResult) {
@@ -64,7 +54,7 @@ public class PolicyEvaluationReportProcessor {
   }
 
 
-  protected PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, String tag) {
+  public PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, @Nonnull ImageScanningResult imageScanningResult) {
     logger.logDebug("Summarizing policy evaluation results");
     PolicyEvaluationSummary gateSummary = new PolicyEvaluationSummary();
 
@@ -92,10 +82,10 @@ public class PolicyEvaluationReportProcessor {
       var finalAction = gatesJson.isFailed() ? "STOP" : "GO";
       logger.logInfo(String.format(
         "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
-        tag, stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, finalAction
+        imageScanningResult.getTag(), stop - stop_wl, stop_wl, warn - warn_wl, warn_wl, go - go_wl, go_wl, finalAction
       ));
 
-      gateSummary.addSummaryLine(tag, (stop - stop_wl), (warn - warn_wl), (go - go_wl), finalAction);
+      gateSummary.addSummaryLine(imageScanningResult.getTag(), (stop - stop_wl), (warn - warn_wl), (go - go_wl), finalAction);
     }
 
     return gateSummary;
