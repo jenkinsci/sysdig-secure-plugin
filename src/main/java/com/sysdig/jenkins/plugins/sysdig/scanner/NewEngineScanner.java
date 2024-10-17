@@ -19,15 +19,12 @@ import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.client.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.*;
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 public class NewEngineScanner {
 
@@ -47,13 +44,10 @@ public class NewEngineScanner {
 
   public ImageScanningResult scanImage(String imageTag) throws InterruptedException {
     try {
-
       NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(workspace, imageTag, config, logger, envVars);
       String scanRawOutput = workspace.act(task);
       JsonScanResult scanOutput = GsonBuilder.build().fromJson(scanRawOutput, JsonScanResult.class);
-
-      return this.buildImageScanningResult(scanOutput.getResult().orElseThrow());
-
+      return ImageScanningResult.fromReportResult(scanOutput.getResult().orElseThrow());
     } catch (ImageScanningException e) {
       logger.logError(e.getMessage());
       throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
@@ -64,14 +58,5 @@ public class NewEngineScanner {
   }
 
 
-  public ImageScanningResult buildImageScanningResult(Result result) {
-    final String tag = result.getMetadata().orElseThrow().getPullString().orElseThrow();
-    final String imageDigest = result.getMetadata().orElseThrow().getDigest().orElseThrow();
-    final String evalStatus = result.getPolicyEvaluationsResult().orElseThrow();
-    final List<Package> packages = result.getPackages().orElseThrow();
-    final List<PolicyEvaluation> policies = result.getPolicyEvaluations().orElseThrow();
-
-    return new ImageScanningResult(tag, imageDigest, evalStatus, packages, policies);
-  }
 }
 

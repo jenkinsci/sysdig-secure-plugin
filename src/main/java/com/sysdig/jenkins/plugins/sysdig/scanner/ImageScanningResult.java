@@ -17,6 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.PolicyEvaluation;
+import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
 
 import java.io.Serializable;
 import java.util.List;
@@ -52,6 +53,16 @@ public class ImageScanningResult implements Serializable {
     this.evalStatus = evalStatus;
     this.packages = vulnsReport;
     this.evaluationPolicies = evaluationPolicies;
+  }
+
+  public static ImageScanningResult fromReportResult(Result result) {
+    final String tag = result.getMetadata().orElseThrow().getPullString().orElseThrow();
+    final String imageDigest = result.getMetadata().orElseThrow().getDigest().orElseThrow();
+    final String evalStatus = result.getPolicyEvaluationsResult().orElseThrow();
+    final List<Package> packages = result.getPackages().orElseThrow();
+    final List<PolicyEvaluation> policies = result.getPolicyEvaluations().orElseThrow();
+
+    return new ImageScanningResult(tag, imageDigest, evalStatus, packages, policies);
   }
 
   public String getEvalStatus() {

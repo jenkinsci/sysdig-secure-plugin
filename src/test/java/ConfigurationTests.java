@@ -26,7 +26,7 @@ public class ConfigurationTests {
   }
 
   @Test
-  public void testDefaultGlobalConfigurationValues() throws Exception {
+  public void testDefaultGlobalConfigurationValues() {
     var globalConfig = jenkins.getInstance().getDescriptorByType(NewEngineBuilder.GlobalConfiguration.class);
 
     assertEquals("https://secure.sysdig.com", globalConfig.getEngineURL());

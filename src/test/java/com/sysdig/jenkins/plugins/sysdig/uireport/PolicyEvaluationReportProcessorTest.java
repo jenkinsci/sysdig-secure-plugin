@@ -5,49 +5,39 @@ import com.sysdig.jenkins.plugins.sysdig.log.NopLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.report.Result;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.springframework.util.Assert.notEmpty;
-import static org.springframework.util.Assert.notNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PolicyEvaluationReportProcessorTest {
   private final PolicyEvaluationReportProcessor policyReport = new PolicyEvaluationReportProcessor(new NopLogger());
+  private final String imageID = "sha256:04ba374043ccd2fc5c593885c0eacddebabd5ca375f9323666f28dfd5a9710e3";
 
   @Test
-  public void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException, InterruptedException {
+  public void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
-    var result = GsonBuilder.build()
-      .fromJson(
-        IOUtils.toString(getClass().getResourceAsStream("gates1.json"), StandardCharsets.UTF_8),
-        Result.class);
-    var imageScanningResult = new ImageScanningResult("foo-tag1", "foo-digest1", "pass",
-      result.getPackages().orElseThrow(),
-      result.getPolicyEvaluations().orElseThrow());
+    var result = getTestingReportResult();
+    var imageScanningResult = ImageScanningResult.fromReportResult(result);
 
     // When
-    PolicyEvaluationReport report = policyReport.processPolicyEvaluation(imageScanningResult);
+    var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
 
     // Then
-    assertFalse(report.isFailed());
+    assertTrue(policyEvaluationReport.isFailed());
 
-    var results = report.getResultsForEachImage();
-    notEmpty(results, "no results found");
+    var resultsForEachImage = policyEvaluationReport.getResultsForEachImage();
+    assertTrue(resultsForEachImage.containsKey(imageID));
 
-    List<PolicyEvaluationReportLine> reportLines = results.get("foo-digest1");
-    notNull(reportLines, "report lines is null");
-    assertEquals(reportLines.size(), 45);
-    assertEquals(reportLines.get(0), new PolicyEvaluationReportLine(
-      "foo-digest1",
-      "foo-tag1",
+    var policyEvaluationReportLines = resultsForEachImage.get(imageID);
+    assertEquals(policyEvaluationReportLines.size(), 45);
+    assertEquals(policyEvaluationReportLines.get(0), new PolicyEvaluationReportLine(
+      imageID,
+      "nginx",
       "trigger_id",
       "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
       "Severity greater than or equal high",
@@ -56,5 +46,31 @@ public class PolicyEvaluationReportProcessorTest {
       false,
       "",
       "Cardholder Policy (David)"));
+  }
+
+  @Test
+  public void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
+    // Given
+    var result = getTestingReportResult();
+    var imageScanningResult = ImageScanningResult.fromReportResult(result);
+    var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
+
+    // When
+    var policyEvaluationSummary = policyReport.generateGatesSummary(policyEvaluationReport, imageScanningResult);
+
+    // Then
+    assertEquals(1, policyEvaluationSummary.getLines().size());
+
+    var policyEvaluationSummaryLine = policyEvaluationSummary.getLines().get(0);
+    assertEquals("nginx", policyEvaluationSummaryLine.getImageTag());
+    assertEquals(45, policyEvaluationSummaryLine.getNonWhitelistedStopActions());
+    assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedWarnActions());
+    assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedGoActions());
+    assertEquals("STOP", policyEvaluationSummaryLine.getFinalAction());
+  }
+
+  private Result getTestingReportResult() throws IOException {
+    var jsonContents = Objects.requireNonNull(getClass().getResourceAsStream("gates1.json"));
+    return GsonBuilder.build().fromJson(IOUtils.toString(jsonContents, StandardCharsets.UTF_8), Result.class);
   }
 }

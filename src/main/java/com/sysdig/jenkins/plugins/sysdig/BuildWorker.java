@@ -16,6 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
+import com.google.gson.JsonObject;
 import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
@@ -23,7 +24,7 @@ import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReport;
+import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReportProcessor;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -112,7 +113,8 @@ public class BuildWorker {
       jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
 
       FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
-      VulnerabilityReport.processVulnerabilities(scanResult, jenkinsQueryOutputFP);
+      JsonObject securityJson = VulnerabilityReportProcessor.generateVulnerabilityReport(scanResult);
+      jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
 
       FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
       logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
