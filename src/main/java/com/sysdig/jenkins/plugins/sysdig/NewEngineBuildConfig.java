@@ -131,7 +131,7 @@ public class NewEngineBuildConfig implements Serializable {
   /**
    * Print versions info and configuration
    */
-  public void print(SysdigLogger logger) {
+  public void printWith(SysdigLogger logger) {
     logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
     if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {

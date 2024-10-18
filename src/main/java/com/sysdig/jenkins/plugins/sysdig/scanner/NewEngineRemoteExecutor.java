@@ -17,6 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import hudson.AbortException;
 import hudson.EnvVars;
@@ -27,6 +28,7 @@ import org.apache.commons.io.input.Tailer;
 import org.apache.commons.io.input.TailerListenerAdapter;
 import org.jenkinsci.remoting.RoleChecker;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -51,12 +53,12 @@ public class NewEngineRemoteExecutor implements Callable<String, Exception>, Ser
   private final EnvVars envVars;
   private final String[] noProxy;
 
-  public NewEngineRemoteExecutor(FilePath workspace, String imageName, NewEngineBuildConfig config, SysdigLogger logger, EnvVars envVars) {
+  public NewEngineRemoteExecutor(String imageName, NewEngineBuildConfig config, @Nonnull RunContext runContext) {
     this.imageName = imageName;
     this.config = config;
-    this.logger = logger;
-    this.envVars = envVars;
-    this.scannerPaths = new ScannerPaths(workspace);
+    this.scannerPaths = new ScannerPaths(runContext.getPathFromWorkspace());
+    this.envVars = runContext.getEnvVars();
+    this.logger = runContext.getSysdigLogger();
 
     if (envVars.containsKey("no_proxy") || envVars.containsKey("NO_PROXY")) {
       String noProxy = envVars.getOrDefault("no_proxy", envVars.get("NO_PROXY"));

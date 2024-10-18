@@ -95,9 +95,4 @@ public class SysdigAction implements Action {
     return this.queries;
   }
 
-  //FIXME(fede): remove this lol
-  public Boolean getLegacyEngine() {
-    return false;
-  }
-
 }

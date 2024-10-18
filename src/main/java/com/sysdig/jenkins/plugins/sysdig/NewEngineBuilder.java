@@ -171,11 +171,12 @@ public class NewEngineBuilder extends Builder implements SimpleBuildStep {
     EnvVars buildEnvVars = run.getEnvironment(listener);
     envVars.putAll(buildEnvVars);
 
-    perform(run, workspace, launcher, listener, envVars);
+    perform(run, workspace, listener, envVars);
   }
 
-  public void perform(Run run, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars envVars) throws AbortException {
-    new NewEngineBuilderExecutor(this, run, workspace, listener, envVars);
+  public void perform(Run<?, ?> run, FilePath workspace, TaskListener listener, EnvVars envVars) throws IOException, InterruptedException {
+    var runContext = new RunContext(run, workspace, listener, envVars);
+    new NewEngineBuilderExecutor(this, runContext);
   }
 
   @Override

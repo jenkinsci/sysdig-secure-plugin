@@ -18,15 +18,13 @@ package com.sysdig.jenkins.plugins.sysdig;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.log.ConsoleLog;
+import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
 import hudson.AbortException;
-import hudson.EnvVars;
-import hudson.FilePath;
 import hudson.model.Run;
-import hudson.model.TaskListener;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.logging.Logger;
 
@@ -34,32 +32,31 @@ public class NewEngineBuilderExecutor {
   //  Log handler for logging above INFO level events to jenkins log
   private static final Logger LOG = Logger.getLogger(NewEngineBuilderExecutor.class.getName());
 
-  private final ConsoleLog logger;
+  private final SysdigLogger logger;
 
-  public NewEngineBuilderExecutor(NewEngineBuilder builder,
-                                  Run<?, ?> run,
-                                  FilePath workspace,
-                                  TaskListener listener,
-                                  EnvVars envVars) throws AbortException {
+  public NewEngineBuilderExecutor(@Nonnull NewEngineBuilder builder,
+                                @Nonnull RunContext runContext) throws AbortException {
 
-    LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", run.getParent().getDisplayName(), run.getNumber()));
+    LOG.warning(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", runContext.getProjectName(), runContext.getJobNumber()));
 
 
     /* Instantiate config and a new build worker */
-    logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
+    logger = runContext.getSysdigLogger();
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-    final String sysdigToken = getSysdigTokenFromCredentials(builder, run);
+    //Prefer the job credentials set by the user and fallback to the global ones
+    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : builder.getDescriptor().getEngineCredentialsId();
+    final String sysdigToken = runContext.getSysdigTokenFromCredentials(credID);
 
     NewEngineBuildConfig config = new NewEngineBuildConfig(builder, sysdigToken);
-    config.print(logger);
+    config.printWith(logger);
 
     BuildWorker worker = null;
     ImageScanningResult.FinalAction finalAction = null;
     try {
 
-      NewEngineScanner scanner = new NewEngineScanner(listener, config, workspace, envVars, logger);
-      worker = new BuildWorker(run, workspace, listener, logger, scanner);
+      NewEngineScanner scanner = new NewEngineScanner(config, runContext);
+      worker = new BuildWorker(runContext, scanner);
       finalAction = worker.scanAndBuildReports(config.getImageName());
 
     } catch (Exception e) {
@@ -80,8 +77,8 @@ public class NewEngineBuilderExecutor {
       }
       logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
       LOG.warning("Completed Sysdig Secure Container Image Scanner step, project: "
-        + run.getParent().getDisplayName() +
-        ", job: " + run.getNumber());
+        + runContext.getProjectName() +
+        ", job: " + runContext.getJobNumber());
     }
 
     /* Evaluate result of step based on gate action */
@@ -95,22 +92,4 @@ public class NewEngineBuilderExecutor {
     }
   }
 
-  private String getSysdigTokenFromCredentials(NewEngineBuilder builder, Run<?, ?> run) throws AbortException {
-
-    //Prefer the job credentials set by the user and fallback to the global ones
-    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : builder.getDescriptor().getEngineCredentialsId();
-    logger.logDebug("Processing Jenkins credential ID " + credID);
-
-    // We are expecting that either the job credentials or global credentials will be set, otherwise, fail the build
-    if (Strings.isNullOrEmpty(credID)) {
-      throw new AbortException("API Credentials not defined. Make sure credentials are defined globally or in job.");
-    }
-
-    StandardUsernamePasswordCredentials creds = CredentialsProvider.findCredentialById(credID, StandardUsernamePasswordCredentials.class, run, Collections.emptyList());
-    if (null == creds) {
-      throw new AbortException(String.format("Cannot find Jenkins credentials by ID: '%s'. Ensure credentials are defined in Jenkins before using them", credID));
-    }
-
-    return creds.getPassword().getPlainText();
-  }
 }

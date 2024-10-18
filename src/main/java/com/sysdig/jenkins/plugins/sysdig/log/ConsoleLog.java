@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * Logging mechanism for outputting messages to Jenkins build console
  */
-public class ConsoleLog implements SysdigLogger, Serializable {
+public class ConsoleLog implements SysdigLogger {
 
   private static final long serialVersionUID = 1;
 

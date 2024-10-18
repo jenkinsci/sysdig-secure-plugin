@@ -27,14 +27,11 @@ import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReportProcessor;
 import hudson.AbortException;
 import hudson.FilePath;
-import hudson.Launcher;
-import hudson.model.Run;
-import hudson.model.TaskListener;
 import hudson.tasks.ArtifactArchiver;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.logging.Logger;
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
@@ -43,38 +40,23 @@ import java.util.logging.Logger;
  * job.
  */
 public class BuildWorker {
-
-  private static final Logger LOG = Logger.getLogger(BuildWorker.class.getName());
   private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport_";
   private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
   private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
   private static final String RAW_VULN_REPORT_FILENAME = "sysdig_secure_raw_vulns_report-%s.json";
   private final NewEngineScanner scanner;
+  private final RunContext runContext;
   /* Initialized by the constructor */
   protected SysdigLogger logger; // Log handler for logging to build console
   // Private members
-  Run<?, ?> run;
-  FilePath workspace;
-  Launcher launcher;
-  TaskListener listener;
   private String jenkinsOutputDirName;
 
-  public BuildWorker(Run<?, ?> run, FilePath workspace, TaskListener listener, SysdigLogger logger, NewEngineScanner scanner) throws IOException, InterruptedException {
+  public BuildWorker(@Nonnull RunContext runContext, NewEngineScanner scanner) throws IOException, InterruptedException {
     try {
-      if (listener == null) {
-        LOG.warning("Sysdig Secure Container Image Scanner plugin cannot initialize Jenkins task listener");
-        throw new AbortException("Cannot initialize Jenkins task listener. Aborting step");
-      }
-
-      this.run = run;
-      this.workspace = workspace;
-      this.listener = listener;
-      this.logger = logger;
+      logger = runContext.getSysdigLogger();
 
       logger.logDebug("Initializing build worker");
-
-      // Verify and initialize Jenkins launcher for executing processes
-      this.launcher = workspace.createLauncher(listener);
+      this.runContext = runContext;
 
       initializeJenkinsWorkspace();
 
@@ -102,21 +84,20 @@ public class BuildWorker {
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
-      FilePath outputDir = new FilePath(workspace, jenkinsOutputDirName);
 
       PolicyEvaluationReportProcessor policyEvaluationReportProcessor = new PolicyEvaluationReportProcessor(this.logger);
       PolicyEvaluationReport policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
       PolicyEvaluationSummary policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
 
-      FilePath jenkinsGatesOutputFP = new FilePath(outputDir, GATE_OUTPUT_FILENAME);
+      FilePath jenkinsGatesOutputFP = runContext.getPathFromWorkspace(jenkinsOutputDirName, GATE_OUTPUT_FILENAME);
       logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
       jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
 
-      FilePath jenkinsQueryOutputFP = new FilePath(outputDir, CVE_LISTING_FILENAME);
+      FilePath jenkinsQueryOutputFP =runContext.getPathFromWorkspace(jenkinsOutputDirName,  CVE_LISTING_FILENAME);
       JsonObject securityJson = VulnerabilityReportProcessor.generateVulnerabilityReport(scanResult);
       jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
 
-      FilePath rawVulnerabilityReportFP = new FilePath(outputDir, String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
+      FilePath rawVulnerabilityReportFP = runContext.getPathFromWorkspace(jenkinsOutputDirName,  String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
       logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
       rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
 
@@ -133,13 +114,12 @@ public class BuildWorker {
     try {
       // store sysdig secure output json files using jenkins archiver (for remote storage as well)
       logger.logDebug("Archiving results");
-      ArtifactArchiver artifactArchiver = new ArtifactArchiver(jenkinsOutputDirName + "/");
-      artifactArchiver.perform(run, workspace, launcher, listener);
+      runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
 
       // add the link in jenkins UI for sysdig secure results
       logger.logDebug("Setting up build results");
       String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      run.addAction(new SysdigAction(run, finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary, CVE_LISTING_FILENAME));
+      runContext.getRun().addAction(new SysdigAction(runContext.getRun(), finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary, CVE_LISTING_FILENAME));
     } catch (Exception e) { // caught unknown exception, log it and wrap it
       logger.logError("Failed to setup build results due to an unexpected error", e);
       throw new AbortException("Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
@@ -168,8 +148,8 @@ public class BuildWorker {
     try {
       logger.logDebug("Initializing Jenkins workspace");
 
-      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + run.getNumber();
-      FilePath jenkinsReportDir = new FilePath(workspace, jenkinsOutputDirName);
+      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + runContext.getJobNumber();
+      FilePath jenkinsReportDir = runContext.getPathFromWorkspace(jenkinsOutputDirName);
 
       // Create output directories
       if (!jenkinsReportDir.exists()) {
@@ -184,7 +164,7 @@ public class BuildWorker {
   }
 
   private void cleanJenkinsWorkspaceQuietly() throws IOException, InterruptedException {
-    FilePath jenkinsOutputDirFP = new FilePath(workspace, jenkinsOutputDirName);
+    FilePath jenkinsOutputDirFP = runContext.getPathFromWorkspace(jenkinsOutputDirName);
     jenkinsOutputDirFP.deleteRecursive();
   }
 
