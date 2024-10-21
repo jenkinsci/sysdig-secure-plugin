@@ -1,8 +1,0 @@
-<?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-         xmlns:t="/lib/hudson">
-    <t:summary href="sysdig-secure-results" icon="/plugin/sysdig-secure/images/sysdig-shovel.png">
-        <a href="sysdig-secure-results">Sysdig Secure Report (${it.gateStatus})</a>
-        <st:include page="newEngineSummary.jelly" it="${it}"/>
-    </t:summary>
-</j:jelly>

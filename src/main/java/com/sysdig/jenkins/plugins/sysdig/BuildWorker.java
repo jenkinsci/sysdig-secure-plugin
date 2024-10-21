@@ -15,23 +15,14 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.google.common.base.Strings;
-import com.google.gson.JsonObject;
-import com.sysdig.jenkins.plugins.sysdig.json.GsonBuilder;
-import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.scanner.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.scanner.NewEngineScanner;
-import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationReportProcessor;
-import com.sysdig.jenkins.plugins.sysdig.uireport.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.uireport.VulnerabilityReportProcessor;
-import hudson.AbortException;
-import hudson.FilePath;
-import hudson.tasks.ArtifactArchiver;
+import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReportProcessor;
+import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanner;
+import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.ReportStorage;
+import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
@@ -40,41 +31,14 @@ import java.nio.charset.StandardCharsets;
  * job.
  */
 public class BuildWorker {
-  private static final String JENKINS_DIR_NAME_PREFIX = "SysdigSecureReport_";
-  private static final String CVE_LISTING_FILENAME = "sysdig_secure_security.json";
-  private static final String GATE_OUTPUT_FILENAME = "sysdig_secure_gates.json";
-  private static final String RAW_VULN_REPORT_FILENAME = "sysdig_secure_raw_vulns_report-%s.json";
-  private final NewEngineScanner scanner;
-  private final RunContext runContext;
-  /* Initialized by the constructor */
-  protected SysdigLogger logger; // Log handler for logging to build console
-  // Private members
-  private String jenkinsOutputDirName;
+  private final ImageScanner scanner;
+  private final ReportStorage reportStorage;
+  protected SysdigLogger logger;
 
-  public BuildWorker(@Nonnull RunContext runContext, NewEngineScanner scanner) throws IOException, InterruptedException {
-    try {
-      logger = runContext.getSysdigLogger();
-
-      logger.logDebug("Initializing build worker");
-      this.runContext = runContext;
-
-      initializeJenkinsWorkspace();
-
-      logger.logDebug("Build worker initialized");
-
-      this.scanner = scanner;
-
-    } catch (Exception e) {
-      try {
-        if (logger != null) {
-          logger.logError("Failed to initialize worker for plugin execution", e);
-        }
-        cleanJenkinsWorkspaceQuietly();
-      } catch (Exception inner) {
-      }
-      throw e;
-      //throw new AbortException("Failed to initialize worker for plugin execution, check logs for corrective action");
-    }
+  public BuildWorker(@Nonnull ImageScanner scanner, @Nonnull ReportStorage reportStorage, @Nonnull SysdigLogger logger) {
+    this.scanner = scanner;
+    this.reportStorage = reportStorage;
+    this.logger = logger;
   }
 
   public ImageScanningResult.FinalAction scanAndBuildReports(String imageName) throws InterruptedException {
@@ -84,25 +48,7 @@ public class BuildWorker {
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {
-
-      PolicyEvaluationReportProcessor policyEvaluationReportProcessor = new PolicyEvaluationReportProcessor(this.logger);
-      PolicyEvaluationReport policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
-      PolicyEvaluationSummary policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
-
-      FilePath jenkinsGatesOutputFP = runContext.getPathFromWorkspace(jenkinsOutputDirName, GATE_OUTPUT_FILENAME);
-      logger.logDebug(String.format("Writing policy evaluation result to %s", jenkinsGatesOutputFP.getRemote()));
-      jenkinsGatesOutputFP.write(GsonBuilder.build().toJson(policyEvaluationReport), String.valueOf(StandardCharsets.UTF_8));
-
-      FilePath jenkinsQueryOutputFP =runContext.getPathFromWorkspace(jenkinsOutputDirName,  CVE_LISTING_FILENAME);
-      JsonObject securityJson = VulnerabilityReportProcessor.generateVulnerabilityReport(scanResult);
-      jenkinsQueryOutputFP.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
-
-      FilePath rawVulnerabilityReportFP = runContext.getPathFromWorkspace(jenkinsOutputDirName,  String.format(RAW_VULN_REPORT_FILENAME, scanResult.getImageDigest()));
-      logger.logDebug(String.format("Writing raw vulnerability report to %s", rawVulnerabilityReportFP.getRemote()));
-      rawVulnerabilityReportFP.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
-
-      /* Setup reports */
-      this.setupBuildReports(finalAction, policyEvaluationSummary);
+      archiveScanResultReporting(scanResult);
     } catch (Exception e) {
       logger.logError("Recording failure to build reports and moving on with plugin operation", e);
     }
@@ -110,62 +56,14 @@ public class BuildWorker {
     return finalAction;
   }
 
-  private void setupBuildReports(ImageScanningResult.FinalAction finalAction, PolicyEvaluationSummary gateSummary) throws AbortException {
-    try {
-      // store sysdig secure output json files using jenkins archiver (for remote storage as well)
-      logger.logDebug("Archiving results");
-      runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
+  private void archiveScanResultReporting(ImageScanningResult scanResult) throws IOException, InterruptedException {
+    var policyEvaluationReportProcessor = new PolicyEvaluationReportProcessor(this.logger); // FIXME(fede): domain must not use application code.
+    var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
+    var policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
 
-      // add the link in jenkins UI for sysdig secure results
-      logger.logDebug("Setting up build results");
-      String finalActionStr = (finalAction != null) ? finalAction.toString() : "";
-      runContext.getRun().addAction(new SysdigAction(runContext.getRun(), finalActionStr, jenkinsOutputDirName, GATE_OUTPUT_FILENAME, gateSummary, CVE_LISTING_FILENAME));
-    } catch (Exception e) { // caught unknown exception, log it and wrap it
-      logger.logError("Failed to setup build results due to an unexpected error", e);
-      throw new AbortException("Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
-    }
+    reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
+    reportStorage.saveVulnerabilityReport(scanResult);
+    reportStorage.saveRawVulnerabilityReport(scanResult);
+    reportStorage.archiveResults(scanResult, policyEvaluationSummary);
   }
-
-  public void cleanup() {
-    try {
-      logger.logDebug("Cleaning up build artifacts");
-
-      if (!Strings.isNullOrEmpty(jenkinsOutputDirName)) {
-        try {
-          logger.logDebug("Deleting Jenkins workspace " + jenkinsOutputDirName);
-          cleanJenkinsWorkspaceQuietly();
-        } catch (IOException | InterruptedException e) {
-          logger.logDebug("Unable to delete Jenkins workspace " + jenkinsOutputDirName, e);
-        }
-      }
-
-    } catch (RuntimeException e) { // caught unknown exception, log it
-      logger.logDebug("Failed to clean up build artifacts due to an unexpected error", e);
-    }
-  }
-
-  private void initializeJenkinsWorkspace() throws IOException, InterruptedException {
-    try {
-      logger.logDebug("Initializing Jenkins workspace");
-
-      jenkinsOutputDirName = JENKINS_DIR_NAME_PREFIX + runContext.getJobNumber();
-      FilePath jenkinsReportDir = runContext.getPathFromWorkspace(jenkinsOutputDirName);
-
-      // Create output directories
-      if (!jenkinsReportDir.exists()) {
-        logger.logDebug(String.format("Creating workspace directory %s", jenkinsOutputDirName));
-        jenkinsReportDir.mkdirs();
-      }
-    } catch (IOException |
-             InterruptedException e) { // probably caught one of the thrown exceptions, let it pass through
-      logger.logWarn("Failed to initialize Jenkins workspace", e);
-      throw e;
-    }
-  }
-
-  private void cleanJenkinsWorkspaceQuietly() throws IOException, InterruptedException {
-    FilePath jenkinsOutputDirFP = runContext.getPathFromWorkspace(jenkinsOutputDirName);
-    jenkinsOutputDirFP.deleteRecursive();
-  }
-
 }

@@ -16,7 +16,8 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.log.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningBuilder;
+import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import hudson.PluginWrapper;
 import jenkins.model.Jenkins;
 
@@ -37,7 +38,7 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(NewEngineBuilder engineBuilder, String sysdigToken) {
+  public NewEngineBuildConfig(ImageScanningBuilder engineBuilder, String sysdigToken) {
     var globalConfig = engineBuilder.getDescriptor();
 
     imageName = engineBuilder.getImageName();
