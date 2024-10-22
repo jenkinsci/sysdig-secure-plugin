@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
-import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.BuildWorker;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
@@ -38,10 +37,8 @@ public class ImageScanningService {
 
     /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
     //Prefer the job credentials set by the user and fallback to the global ones
-    String credID = !Strings.isNullOrEmpty(builder.getEngineCredentialsId()) ? builder.getEngineCredentialsId() : builder.getDescriptor().getEngineCredentialsId();
-    final String sysdigToken = runContext.getSysdigTokenFromCredentials(credID);
 
-    NewEngineBuildConfig config = new NewEngineBuildConfig(builder, sysdigToken);
+    NewEngineBuildConfig config = new NewEngineBuildConfig(runContext, builder);
     config.printWith(logger);
 
     Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(runContext, builder, config);

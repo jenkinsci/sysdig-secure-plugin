@@ -62,7 +62,7 @@
         <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply"
                  description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!"
                  help="/plugin/sysdig-secure/help/help-OverrideCliVersionToApply.html">
-            <f:radio name="cliVersionToApply" title="Use global setting" value="global_default"
+            <f:radio name="cliVersionToApply" title="Use global setting" value=""
                      checked="true"/>
             <f:radio name="cliVersionToApply" title="Override global version setting" value="custom"
                      checked="${instance.cliVersionToApply == 'custom'}">

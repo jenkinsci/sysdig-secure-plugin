@@ -16,8 +16,10 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.google.common.base.Strings;
+import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningBuilder;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import hudson.AbortException;
 import hudson.PluginWrapper;
 import jenkins.model.Jenkins;
 
@@ -38,40 +40,35 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(ImageScanningBuilder engineBuilder, String sysdigToken) {
+  public NewEngineBuildConfig(RunContext runContext, ImageScanningBuilder engineBuilder) throws AbortException {
     var globalConfig = engineBuilder.getDescriptor();
+
+    String credID = firstNonEmpty(engineBuilder.getEngineCredentialsId(), globalConfig.getEngineCredentialsId());
+    this.sysdigToken = runContext.getSysdigTokenFromCredentials(credID);
+
 
     imageName = engineBuilder.getImageName();
     bailOnFail = engineBuilder.getBailOnFail();
     bailOnPluginFail = engineBuilder.getBailOnPluginFail();
 
     if (!Strings.isNullOrEmpty(engineBuilder.getEngineURL())) {
-      engineurl = engineBuilder.getEngineURL();
-      engineverify = engineBuilder.getEngineVerify();
+      this.engineurl = engineBuilder.getEngineURL();
+      this.engineverify = engineBuilder.getEngineVerify();
     } else {
-      engineurl = globalConfig.getEngineURL();
-      engineverify = globalConfig.getEngineVerify();
+      this.engineurl = globalConfig.getEngineURL();
+      this.engineverify = globalConfig.getEngineVerify();
     }
 
-    if (!Strings.isNullOrEmpty(engineBuilder.getInlineScanExtraParams())) {
-      inlineScanExtraParams = engineBuilder.getInlineScanExtraParams();
-    } else {
-      inlineScanExtraParams = globalConfig.getInlineScanExtraParams();
-    }
+    this.inlineScanExtraParams = firstNonEmpty(engineBuilder.getInlineScanExtraParams(), globalConfig.getInlineScanExtraParams());
+    this.policiesToApply = firstNonEmpty(engineBuilder.getPoliciesToApply(), globalConfig.getPoliciesToApply());
 
-    this.sysdigToken = sysdigToken;
-
-    this.policiesToApply = engineBuilder.getPoliciesToApply();
-
-    if (!Strings.isNullOrEmpty(engineBuilder.getCliVersionToApply())
-      && !engineBuilder.getCliVersionToApply().equals("global_default")) {
+    if (!Strings.isNullOrEmpty(engineBuilder.getCliVersionToApply())) {
       this.cliVersionToApply = engineBuilder.getCliVersionToApply();
     } else {
       this.cliVersionToApply = globalConfig.getCliVersionToApply();
     }
 
-    if (!Strings.isNullOrEmpty(engineBuilder.getCustomCliVersion())
-      && !engineBuilder.getCliVersionToApply().equals("global_default")) {
+    if (!Strings.isNullOrEmpty(engineBuilder.getCustomCliVersion())) {
       this.customCliVersion = engineBuilder.getCustomCliVersion();
     } else {
       this.customCliVersion = globalConfig.getCustomCliVersion();
@@ -82,7 +79,15 @@ public class NewEngineBuildConfig implements Serializable {
     } else {
       this.scannerBinaryPath = globalConfig.getScannerBinaryPath();
     }
+  }
 
+  private String firstNonEmpty(String... strings) {
+    for (String s : strings) {
+      if (!Strings.isNullOrEmpty(s)) {
+        return s;
+      }
+    }
+    return "";
   }
 
   public String getImageName() {

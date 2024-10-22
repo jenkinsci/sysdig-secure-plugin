@@ -56,7 +56,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
   private boolean engineVerify = GlobalConfiguration.DEFAULT_ENGINE_VERIFY;
   private String inlineScanExtraParams = "";
   private String policiesToApply = "";
-  private String cliVersionToApply = "global_default"; //FIXME(fede) why needs this to be global_default and not empty?
+  private String cliVersionToApply = "";
   private String customCliVersion = "";
   private String scannerBinaryPath = "";
 
@@ -194,14 +194,12 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
 
     private String engineURL = DEFAULT_ENGINE_URL;
     private String engineCredentialsId = "";
+    private boolean engineVerify = true;
     private String inlineScanExtraParams = "";
+    private String scannerBinaryPath = "";
+    private String policiesToApply = "";
     private String cliVersionToApply = "";
     private String customCliVersion = "";
-    private String scannerBinaryPath = "";
-    private boolean bailOnFail = true;
-    private boolean bailOnPluginFail = true;
-    private String policiesToApply = "";
-    private boolean engineVerify = true;
 
     public GlobalConfiguration() {
       load();
@@ -250,25 +248,6 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());
-    }
-
-
-    public boolean getBailOnFail() {
-      return this.bailOnFail;
-    }
-
-    @DataBoundSetter
-    public void setBailOnFail(boolean bailOnFail) {
-      this.bailOnFail = bailOnFail;
-    }
-
-    public boolean getBailOnPluginFail() {
-      return this.bailOnPluginFail;
-    }
-
-    @DataBoundSetter
-    public void setBailOnPluginFail(boolean bailOnPluginFail) {
-      this.bailOnPluginFail = bailOnPluginFail;
     }
 
     public String getPoliciesToApply() {

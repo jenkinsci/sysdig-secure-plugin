@@ -19,7 +19,7 @@ public class ConfigurationTests {
 
   @Test
   public void testConfigurationPersistenceAfterRoundTrip() throws Exception {
-    var project = helpers.createFreestyleProjectWithNewEngineBuilder("test");
+    var project = helpers.createFreestyleProjectWithImageScanningBuilder("test").build();
 
     project = jenkins.configRoundtrip(project);
 
@@ -38,8 +38,6 @@ public class ConfigurationTests {
     assertEquals("", globalConfig.getPoliciesToApply());
     assertEquals("", globalConfig.getCliVersionToApply());
     assertEquals("", globalConfig.getCustomCliVersion());
-    assertTrue(globalConfig.getBailOnFail());
-    assertTrue(globalConfig.getBailOnPluginFail());
   }
 
   @Test
@@ -56,8 +54,6 @@ public class ConfigurationTests {
     globalConfig.setPoliciesToApply("policy1,policy2");
     globalConfig.setCliVersionToApply("custom");
     globalConfig.setCustomCliVersion("1.5.0");
-    globalConfig.setBailOnFail(false);
-    globalConfig.setBailOnPluginFail(false);
 
     // Save the new configuration
     globalConfig.save();
@@ -77,8 +73,5 @@ public class ConfigurationTests {
     assertEquals("policy1,policy2", reloadedConfig.getPoliciesToApply());
     assertEquals("custom", reloadedConfig.getCliVersionToApply());
     assertEquals("1.5.0", reloadedConfig.getCustomCliVersion());
-    assertFalse(reloadedConfig.getBailOnFail());
-    assertFalse(reloadedConfig.getBailOnPluginFail());
   }
-
 }
