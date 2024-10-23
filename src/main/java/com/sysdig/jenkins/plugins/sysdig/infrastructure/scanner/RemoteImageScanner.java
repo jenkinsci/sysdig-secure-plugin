@@ -16,7 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
@@ -46,17 +46,17 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
-public class NewEngineRemoteExecutor implements Callable<ImageScanningResult, Exception>, Serializable {
+public class RemoteImageScanner implements Callable<ImageScanningResult, Exception>, Serializable {
 
   private static final String FIXED_SCANNED_VERSION = "1.16.1";
   private final ScannerPaths scannerPaths;
   private final String imageName;
-  private final NewEngineBuildConfig config;
+  private final ImageScanningConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
 
-  public NewEngineRemoteExecutor(@Nonnull RunContext runContext, String imageName, NewEngineBuildConfig config) {
+  public RemoteImageScanner(@Nonnull RunContext runContext, String imageName, ImageScanningConfig config) {
     this.imageName = imageName;
     this.config = config;
     this.scannerPaths = new ScannerPaths(runContext.getPathFromWorkspace());

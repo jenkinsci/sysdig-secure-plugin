@@ -15,19 +15,18 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
-import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
 
 import javax.annotation.Nonnull;
 
-public class NewEngineScanner implements ImageScanner {
-  protected final NewEngineBuildConfig config;
+public class ImageScanner implements com.sysdig.jenkins.plugins.sysdig.domain.ImageScanner {
+  protected final ImageScanningConfig config;
   private final RunContext runContext;
 
-  public NewEngineScanner(@Nonnull RunContext runContext, @Nonnull NewEngineBuildConfig config) {
+  public ImageScanner(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) {
     this.runContext = runContext;
     this.config = config;
   }
@@ -35,7 +34,7 @@ public class NewEngineScanner implements ImageScanner {
   @Override
   public ImageScanningResult scanImage(String imageTag) throws InterruptedException {
     try {
-      NewEngineRemoteExecutor task = new NewEngineRemoteExecutor(runContext, imageTag, config);
+      RemoteImageScanner task = new RemoteImageScanner(runContext, imageTag, config);
       return runContext.call(task);
     } catch (ImageScanningException e) {
       runContext.getLogger().logError(e.getMessage());

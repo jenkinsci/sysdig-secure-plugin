@@ -15,12 +15,11 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.JenkinsReportStorage;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.NewEngineScanner;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.ImageScanner;
 import hudson.AbortException;
 
 import javax.annotation.Nonnull;
@@ -28,7 +27,7 @@ import java.util.Optional;
 
 public class ImageScanningApplicationService {
 
-  public static void runScan(@Nonnull RunContext runContext, @Nonnull NewEngineBuildConfig config) throws AbortException {
+  public static void runScan(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) throws AbortException {
     /* Instantiate config and a new build worker */
     var logger = runContext.getLogger();
     logger.logWarn(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", runContext.getProjectName(), runContext.getJobNumber()));
@@ -47,10 +46,10 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private static Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull RunContext runContext, @Nonnull NewEngineBuildConfig config) throws AbortException {
+  private static Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) throws AbortException {
     var logger = runContext.getLogger();
 
-    NewEngineScanner scanner = new NewEngineScanner(runContext, config);
+    ImageScanner scanner = new ImageScanner(runContext, config);
     JenkinsReportStorage reportStorage = new JenkinsReportStorage(runContext);
     ImageScanningService imageScanningService = new ImageScanningService(scanner, reportStorage, logger);
     Optional<ImageScanningResult.FinalAction> finalAction = Optional.empty();

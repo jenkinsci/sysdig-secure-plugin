@@ -13,11 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningBuilder;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import hudson.AbortException;
 import hudson.PluginWrapper;
@@ -26,7 +25,7 @@ import jenkins.model.Jenkins;
 import java.io.Serializable;
 import java.util.List;
 
-public class NewEngineBuildConfig implements Serializable {
+public class ImageScanningConfig implements Serializable {
 
   private final String imageName;
   private final boolean bailOnFail;
@@ -40,7 +39,7 @@ public class NewEngineBuildConfig implements Serializable {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public NewEngineBuildConfig(RunContext runContext, ImageScanningBuilder engineBuilder) throws AbortException {
+  public ImageScanningConfig(RunContext runContext, ImageScanningBuilder engineBuilder) throws AbortException {
     var globalConfig = engineBuilder.getDescriptor();
 
     String credID = firstNonEmpty(engineBuilder.getEngineCredentialsId(), globalConfig.getEngineCredentialsId());

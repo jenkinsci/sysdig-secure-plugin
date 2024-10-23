@@ -20,7 +20,6 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import hudson.*;
 import hudson.model.AbstractProject;
@@ -177,7 +176,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
 
   public void perform(Run<?, ?> run, FilePath workspace, TaskListener listener, EnvVars envVars) throws IOException, InterruptedException {
     var runContext = new RunContext(run, workspace, listener, envVars);
-    NewEngineBuildConfig config = new NewEngineBuildConfig(runContext, this);
+    ImageScanningConfig config = new ImageScanningConfig(runContext, this);
     ImageScanningApplicationService.runScan(runContext, config);
   }
 
