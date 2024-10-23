@@ -176,7 +176,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
 
   public void perform(Run<?, ?> run, FilePath workspace, TaskListener listener, EnvVars envVars) throws IOException, InterruptedException {
     var runContext = new RunContext(run, workspace, listener, envVars);
-    ImageScanningService.runScan(runContext, this);
+    ImageScanningApplicationService.runScan(runContext, this);
   }
 
   @Override

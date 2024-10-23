@@ -13,13 +13,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.domain;
 
 import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReportProcessor;
-import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.ReportStorage;
-import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -30,12 +26,12 @@ import java.io.IOException;
  * worker instance via its constructor. That specific worker instance is responsible for the bulk of the plugin operations for a given
  * job.
  */
-public class BuildWorker {
+public class ImageScanningService {
   private final ImageScanner scanner;
   private final ReportStorage reportStorage;
   protected SysdigLogger logger;
 
-  public BuildWorker(@Nonnull ImageScanner scanner, @Nonnull ReportStorage reportStorage, @Nonnull SysdigLogger logger) {
+  public ImageScanningService(@Nonnull ImageScanner scanner, @Nonnull ReportStorage reportStorage, @Nonnull SysdigLogger logger) {
     this.scanner = scanner;
     this.reportStorage = reportStorage;
     this.logger = logger;

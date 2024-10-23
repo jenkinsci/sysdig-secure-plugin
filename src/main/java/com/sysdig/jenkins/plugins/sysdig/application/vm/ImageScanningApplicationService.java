@@ -15,7 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.BuildWorker;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
@@ -26,7 +25,7 @@ import hudson.AbortException;
 import javax.annotation.Nonnull;
 import java.util.Optional;
 
-public class ImageScanningService {
+public class ImageScanningApplicationService {
 
   // FIXME(fede) Do not use the builder, use the config.
   public static void runScan(@Nonnull RunContext runContext, @Nonnull ImageScanningBuilder builder) throws AbortException {
@@ -59,7 +58,7 @@ public class ImageScanningService {
 
     NewEngineScanner scanner = new NewEngineScanner(runContext, config);
     JenkinsReportStorage reportStorage = new JenkinsReportStorage(runContext);
-    BuildWorker worker = new BuildWorker(scanner, reportStorage, logger);
+    com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService worker = new com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService(scanner, reportStorage, logger);
     Optional<ImageScanningResult.FinalAction> finalAction = Optional.empty();
 
     try (reportStorage) {

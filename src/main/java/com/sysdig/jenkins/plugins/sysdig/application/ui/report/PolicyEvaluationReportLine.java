@@ -14,7 +14,7 @@ public class PolicyEvaluationReportLine {
   private final String policyID;
   private final String policyName;
 
-  PolicyEvaluationReportLine(String imageID, String repoTag, String triggerID, String gate, String trigger, String checkOutput, String gateAction, Boolean whitelisted, String policyID, String policyName) {
+  public PolicyEvaluationReportLine(String imageID, String repoTag, String triggerID, String gate, String trigger, String checkOutput, String gateAction, Boolean whitelisted, String policyID, String policyName) {
     this.imageID = imageID;
     this.repoTag = repoTag;
     this.triggerID = triggerID;
