@@ -18,6 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.NewEngineBuildConfig;
 import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.JenkinsReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.NewEngineScanner;
 import hudson.AbortException;
@@ -27,25 +28,18 @@ import java.util.Optional;
 
 public class ImageScanningApplicationService {
 
-  // FIXME(fede) Do not use the builder, use the config.
-  public static void runScan(@Nonnull RunContext runContext, @Nonnull ImageScanningBuilder builder) throws AbortException {
+  public static void runScan(@Nonnull RunContext runContext, @Nonnull NewEngineBuildConfig config) throws AbortException {
     /* Instantiate config and a new build worker */
     var logger = runContext.getLogger();
-
     logger.logWarn(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", runContext.getProjectName(), runContext.getJobNumber()));
-
-    /* Fetch Jenkins creds first, can't push this lower down the chain since it requires Jenkins instance object */
-    //Prefer the job credentials set by the user and fallback to the global ones
-
-    NewEngineBuildConfig config = new NewEngineBuildConfig(runContext, builder);
     config.printWith(logger);
 
-    Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(runContext, builder, config);
+    Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(runContext, config);
 
     /* Evaluate result of step based on gate action */
     if (finalAction.isEmpty()) {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if ((config.getBailOnFail() || builder.getBailOnFail()) && ImageScanningResult.FinalAction.ActionFail.equals(finalAction.get())) {
+    } else if (config.getBailOnFail() && ImageScanningResult.FinalAction.ActionFail.equals(finalAction.get())) {
       logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
       throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
     } else {
@@ -53,18 +47,18 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private static Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull RunContext runContext, @Nonnull ImageScanningBuilder step, @Nonnull NewEngineBuildConfig config) throws AbortException {
+  private static Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull RunContext runContext, @Nonnull NewEngineBuildConfig config) throws AbortException {
     var logger = runContext.getLogger();
 
     NewEngineScanner scanner = new NewEngineScanner(runContext, config);
     JenkinsReportStorage reportStorage = new JenkinsReportStorage(runContext);
-    com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService worker = new com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService(scanner, reportStorage, logger);
+    ImageScanningService imageScanningService = new ImageScanningService(scanner, reportStorage, logger);
     Optional<ImageScanningResult.FinalAction> finalAction = Optional.empty();
 
     try (reportStorage) {
-      finalAction = Optional.ofNullable(worker.scanAndBuildReports(config.getImageName()));
+      finalAction = Optional.ofNullable(imageScanningService.scanAndBuildReports(config.getImageName()));
     } catch (Exception e) {
-      if (config.getBailOnPluginFail() || step.getBailOnPluginFail()) {
+      if (config.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
         throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
       } else {
