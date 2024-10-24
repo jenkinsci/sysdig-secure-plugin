@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
-import com.sysdig.jenkins.plugins.sysdig.application.vm.JenkinsTestHelpers;
 import hudson.model.Result;
 import org.junit.Before;
 import org.junit.Rule;

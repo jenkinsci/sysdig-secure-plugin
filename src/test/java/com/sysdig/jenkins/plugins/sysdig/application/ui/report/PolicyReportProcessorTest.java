@@ -1,17 +1,13 @@
 package com.sysdig.jenkins.plugins.sysdig.application.ui.report;
 
+import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReportLine;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.log.NopLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Result;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +19,7 @@ public class PolicyReportProcessorTest {
   @Test
   public void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
-    var result = getTestingReportResult();
+    var result = TestMother.rawScanResult();
     var imageScanningResult = ImageScanningResult.fromReportResult(result);
 
     // When
@@ -53,7 +49,7 @@ public class PolicyReportProcessorTest {
   @Test
   public void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
     // Given
-    var result = getTestingReportResult();
+    var result = TestMother.rawScanResult();
     var imageScanningResult = ImageScanningResult.fromReportResult(result);
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
 
@@ -69,10 +65,5 @@ public class PolicyReportProcessorTest {
     assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedWarnActions());
     assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedGoActions());
     assertEquals("STOP", policyEvaluationSummaryLine.getFinalAction());
-  }
-
-  private Result getTestingReportResult() throws IOException {
-    var jsonContents = Objects.requireNonNull(getClass().getResourceAsStream("gates1.json"));
-    return GsonBuilder.build().fromJson(IOUtils.toString(jsonContents, StandardCharsets.UTF_8), Result.class);
   }
 }

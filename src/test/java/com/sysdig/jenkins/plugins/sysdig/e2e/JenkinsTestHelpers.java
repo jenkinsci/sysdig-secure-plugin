@@ -1,4 +1,4 @@
-package com.sysdig.jenkins.plugins.sysdig.application.vm;
+package com.sysdig.jenkins.plugins.sysdig.e2e;
 
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;

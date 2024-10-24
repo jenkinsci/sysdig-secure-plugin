@@ -1,5 +1,6 @@
-package com.sysdig.jenkins.plugins.sysdig.application.vm;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.vm.entrypoint;
 
+import com.sysdig.jenkins.plugins.sysdig.e2e.JenkinsTestHelpers;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
 import org.junit.Before;
 import org.junit.Rule;
