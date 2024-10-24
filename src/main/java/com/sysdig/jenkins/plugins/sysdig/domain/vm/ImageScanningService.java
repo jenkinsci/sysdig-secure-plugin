@@ -37,6 +37,9 @@ public class ImageScanningService {
   }
 
   public ImageScanningResult.FinalAction scanAndArchiveResult(String imageName) throws InterruptedException {
+    if (imageName.trim().isEmpty()) {
+      throw new IllegalArgumentException("the image name to scan must not be empty");
+    }
     ImageScanningResult scanResult = scanner.scanImage(imageName);
 
     ImageScanningResult.FinalAction finalAction = scanResult.getFinalAction();
