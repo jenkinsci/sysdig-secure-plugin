@@ -15,25 +15,31 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.application.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.ImageScanningService;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.JenkinsReportStorage;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.ImageScanner;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
+import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import hudson.AbortException;
 
 import javax.annotation.Nonnull;
 import java.util.Optional;
 
 public class ImageScanningApplicationService {
+  private final ReportStorage reportStorage;
+  private final ImageScanner scanner;
+  private final SysdigLogger logger;
 
-  public static void runScan(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) throws AbortException {
-    /* Instantiate config and a new build worker */
-    var logger = runContext.getLogger();
-    logger.logWarn(String.format("Starting Sysdig Secure Container Image Scanner step, project: %s, job: %d", runContext.getProjectName(), runContext.getJobNumber()));
+  public ImageScanningApplicationService(ReportStorage reportStorage, ImageScanner scanner, SysdigLogger logger) {
+    this.reportStorage = reportStorage;
+    this.scanner = scanner;
+    this.logger = logger;
+  }
+
+  public void runScan(@Nonnull ScanningConfig config) throws AbortException {
     config.printWith(logger);
 
-    Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(runContext, config);
+    Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(config);
 
     /* Evaluate result of step based on gate action */
     if (finalAction.isEmpty()) {
@@ -46,16 +52,15 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private static Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) throws AbortException {
-    var logger = runContext.getLogger();
+  private Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull ScanningConfig config) throws AbortException {
+    PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
+    ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
 
-    ImageScanner scanner = new ImageScanner(runContext, config);
-    JenkinsReportStorage reportStorage = new JenkinsReportStorage(runContext);
-    ImageScanningService imageScanningService = new ImageScanningService(scanner, reportStorage, logger);
+    ImageScanningService imageScanningService = new ImageScanningService(scanner, imageScanningArchiver, logger);
     Optional<ImageScanningResult.FinalAction> finalAction = Optional.empty();
 
-    try (reportStorage) {
-      finalAction = Optional.ofNullable(imageScanningService.scanAndBuildReports(config.getImageName()));
+    try {
+      finalAction = Optional.ofNullable(imageScanningService.scanAndArchiveResult(config.getImageName()));
     } catch (Exception e) {
       if (config.getBailOnPluginFail()) {
         logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
@@ -65,10 +70,7 @@ public class ImageScanningApplicationService {
       }
     }
 
-
     logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
-    logger.logWarn(String.format("Completed Sysdig Secure Container Image Scanner step, project: %s, job: %d", runContext.getProjectName(), runContext.getJobNumber()));
-
     return finalAction;
   }
 

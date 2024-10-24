@@ -3,7 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationSummary;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

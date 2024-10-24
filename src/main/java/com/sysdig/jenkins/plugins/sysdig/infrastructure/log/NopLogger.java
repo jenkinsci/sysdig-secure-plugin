@@ -42,9 +42,4 @@ public class NopLogger implements SysdigLogger {
   public void logError(String msg, Throwable t) {
 
   }
-
-  @Override
-  public boolean isDebugEnabled() {
-    return false;
-  }
 }

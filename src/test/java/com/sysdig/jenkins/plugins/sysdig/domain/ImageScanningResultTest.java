@@ -1,5 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.domain;
 
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import org.junit.Test;
 
 import java.util.List;

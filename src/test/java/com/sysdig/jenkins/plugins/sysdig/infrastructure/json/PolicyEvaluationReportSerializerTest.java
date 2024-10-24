@@ -3,8 +3,8 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReportLine;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReportLine;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;

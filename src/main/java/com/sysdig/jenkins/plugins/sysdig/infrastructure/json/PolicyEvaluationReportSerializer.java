@@ -2,8 +2,8 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 
 
 import com.google.gson.*;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReportLine;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReportLine;
 
 import java.lang.reflect.Type;
 import java.util.List;

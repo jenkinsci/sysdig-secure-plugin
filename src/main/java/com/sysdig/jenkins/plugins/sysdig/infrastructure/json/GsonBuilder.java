@@ -1,8 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 
 import com.google.gson.Gson;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.application.ui.report.PolicyEvaluationSummary;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 
 public class GsonBuilder {
   public static Gson build() {
