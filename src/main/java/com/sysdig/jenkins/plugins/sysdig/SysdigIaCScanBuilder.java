@@ -15,10 +15,15 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -38,13 +43,14 @@ import java.util.Vector;
 
 public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
-  private final String secureAPIToken;
-  private boolean listUnsupported; // --list-unsupported-resources
+  private String secureAPIToken;
+  private boolean listUnsupported = false; // --list-unsupported-resources
   private boolean isRecursive = true;
-  private String path;
+  private String path = "";
   private String severityThreshold = "h";
   private String sysdigEnv = "";
   private String version = "latest";
+
   @DataBoundConstructor
   public SysdigIaCScanBuilder(String secureAPIToken) {
     this.secureAPIToken = secureAPIToken;
@@ -99,6 +105,11 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     return secureAPIToken;
   }
 
+  // FIXME(fede): We are temporarily passing the actual token. We need to be passing the secretID in jenkins instead.
+  public void setSecureAPIToken(String secureAPIToken) {
+    this.secureAPIToken = secureAPIToken;
+  }
+
   @DataBoundSetter
   public void setSeverityThreshold(String severityThreshold) {
     this.severityThreshold = severityThreshold;
@@ -119,7 +130,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   }
 
   private Vector<String> buildCommand(String exec) {
-    Vector<String> cmd = new Vector<String>();
+    Vector<String> cmd = new Vector<>();
     cmd.add(exec);
     cmd.add("--iac");
     cmd.add("-a");
@@ -151,35 +162,26 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   @Override
   public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
     throws InterruptedException, IOException {
+    RunContext runContext = new RunContext(run, workspace, listener, launcher);
+    SysdigLogger logger = runContext.getLogger();
 
-  }
-
-  @Override
-  public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
-    throws InterruptedException, IOException {
-    super.perform(build, launcher, listener);
-
-    CLIDownloadAction act = null;
+    logger.logInfo("Attempting to download CLI");
+    String cwd = run.getRootDir().getAbsolutePath();
+    CLIDownloadAction act;
     try {
-      listener.getLogger().println("trying to download cli");
-      String cwd = System.getProperty("user.home");
       act = new CLIDownloadAction("IaC scanner", cwd, version);
     } catch (Exception e) {
-      listener.getLogger().printf("failed to download cli version: %s%n", version);
-
-      e.printStackTrace();
-
-      listener.error("failed:%s", e.getMessage());
-      return false;
+      logger.logError(String.format("Failed to download CLI version: %s", version), e);
+      run.setResult(Result.FAILURE);
+      return;
     }
-    build.addAction(act);
-    listener.getLogger().println(act.cliExecPath());
+    run.addAction(act);
+    logger.logInfo(String.format("CLI executable path: %s", act.cliExecPath()));
 
-    listener.getLogger().println("starting to scan");
+    logger.logInfo("Starting scan");
     try {
       if (act.cliExecPath().isEmpty()) {
-        listener.error("failed empty path");
-
+        logger.logError("CLI executable path is empty");
         throw new Exception("empty path");
       }
       String exec = act.cliExecPath();
@@ -187,48 +189,45 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
       Map<String, String> envv = pb.environment();
       envv.put("SECURE_API_TOKEN", secureAPIToken);
 
-      listener.getLogger().println(pb.command());
+      logger.logDebug("Command to execute: " + pb.command());
 
       Process p = pb.start();
-      listener.getLogger().println("started...");
+      logger.logInfo("Process started...");
       p.waitFor();
 
       String output = getProcessOutput(p);
       int exitCode = p.exitValue();
-      listener.getLogger().printf("finished status %d%n", exitCode);
-
-      listener.getLogger().printf("%s", output);
+      logger.logInfo(String.format("Process finished with status %d", exitCode));
+      logger.logInfo(output);
 
       switch (exitCode) {
+        case 0:
+          run.setResult(Result.SUCCESS);
+          break;
         case 1:
-          throw new FailedCLIScan(String.format("scan failed %n %s", output));
-
+          throw new FailedCLIScan(String.format("Scan failed%n%s", output));
         case 2:
-          throw new BadParamCLIScan(String.format("scan failed %n %s", output));
+          throw new BadParamCLIScan(String.format("Scan failed%n%s", output));
+        case 3:
+          throw new FailedCLIScan(String.format("Unable to complete scan, check if your token is valid%n%s", output));
         default:
-
+          logger.logError(String.format("Unknown error: %s", output));
+          run.setResult(Result.FAILURE);
           break;
       }
-
     } catch (FailedCLIScan e) {
-      listener.error("iac scan %s", e.getMessage());
-      listener.getLogger().printf("iac scan failed(status 1) %s", e.getMessage());
-      return false;
+      logger.logError(String.format("IaC scan failed (status 1): %s", e.getMessage()), e);
+      run.setResult(Result.FAILURE);
     } catch (BadParamCLIScan e) {
-      listener.error("iac scan %s", e.getMessage());
-      listener.getLogger().printf("iac scan failed due to missing params %s", e.getMessage());
-
-      return false;
+      logger.logError(String.format("IaC scan failed due to missing parameters: %s", e.getMessage()), e);
+      run.setResult(Result.FAILURE);
     } catch (Exception e) {
-      listener.error("failed processing output:%s", e.getMessage());
-      listener.getLogger().printf("iac scan failed %s", e.getMessage());
-
-      e.printStackTrace();
-      return false;
+      logger.logError(String.format("Failed processing output: %s", e.getMessage()), e);
+      run.setResult(Result.FAILURE);
     }
-    listener.getLogger().println("done");
-    return true;
+    logger.logInfo("Process completed");
   }
+
 
   public static class FailedCLIScan extends Exception {
     public FailedCLIScan(String errorMessage) {

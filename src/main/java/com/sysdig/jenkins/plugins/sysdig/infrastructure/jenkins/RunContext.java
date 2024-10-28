@@ -79,6 +79,25 @@ public class RunContext implements Serializable {
   }
 
   /**
+   * Constructs a new RunContext with the given parameters.
+   *
+   * @param run       The Jenkins run.
+   * @param workspace The workspace directory.
+   * @param listener  The task listener for logging.
+   * @param launcher  Process launcher.
+   * @throws IOException          If an I/O error occurs.
+   * @throws InterruptedException If the thread is interrupted.
+   */
+  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull TaskListener listener, @Nonnull Launcher launcher) throws IOException, InterruptedException {
+    this.run = run;
+    this.workspace = workspace;
+    this.listener = listener;
+    this.envVars = run.getEnvironment(listener);
+    this.logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
+    this.launcher = launcher;
+  }
+
+  /**
    * Retrieves the Jenkins run associated with this context.
    *
    * @return The Jenkins run.

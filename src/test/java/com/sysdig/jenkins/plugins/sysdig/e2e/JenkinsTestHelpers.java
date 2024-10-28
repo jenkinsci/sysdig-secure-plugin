@@ -3,6 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig.e2e;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.sysdig.jenkins.plugins.sysdig.SysdigIaCScanBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
@@ -63,6 +64,23 @@ public class JenkinsTestHelpers {
     }
   }
 
+  public static class IaCScanProjectBuilder {
+    private final FreeStyleProject project;
+
+    private IaCScanProjectBuilder(FreeStyleProject project) {
+      this.project = project;
+    }
+
+    public FreeStyleProject build() {
+      return this.project;
+    }
+
+    public IaCScanProjectBuilder withConfig(Consumer<SysdigIaCScanBuilder> func) {
+      var builder = (SysdigIaCScanBuilder) project.getBuildersList().get(0);
+      func.accept(builder);
+      return this;
+    }
+  }
 
   public JenkinsTestHelpers(JenkinsRule jenkins) {
     this.jenkins = jenkins;
@@ -79,6 +97,14 @@ public class JenkinsTestHelpers {
     var job = jenkins.createProject(WorkflowJob.class, "test-pipeline");
     return new PipelineJobBuilder(jenkins, job, script);
   }
+
+  public IaCScanProjectBuilder createFreestyleProjectWithIaCScanBuilder() throws Exception {
+    var project = jenkins.createFreeStyleProject();
+    var builder = new SysdigIaCScanBuilder("");
+    project.getBuildersList().add(builder);
+    return new IaCScanProjectBuilder(project);
+  }
+
 
   public void configureSysdigCredentials() throws Descriptor.FormException {
     var creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");
