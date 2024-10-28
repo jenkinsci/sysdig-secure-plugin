@@ -241,7 +241,6 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
     }
   }
 
-  @Symbol("greet")
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
