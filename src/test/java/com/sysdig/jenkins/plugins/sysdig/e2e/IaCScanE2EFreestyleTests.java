@@ -26,13 +26,26 @@ public class IaCScanE2EFreestyleTests {
 
     jenkins.assertLogContains("Attempting to download CLI", build);
     jenkins.assertLogContains("Starting scan", build);
-    jenkins.assertLogContains("environment variable SECURE_API_TOKEN cannot be empty", build);
+    jenkins.assertLogContains("API Credentials not defined. Make sure credentials are defined globally or in job.", build);
+  }
+
+  @Test
+  public void testFreestyleWithNonExistingToken() throws Exception {
+    var project = helpers.createFreestyleProjectWithIaCScanBuilder()
+      .withConfig(c -> c.setEngineCredentialsId("non-existing-token"))
+      .build();
+
+    var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+    jenkins.assertLogContains("Attempting to download CLI", build);
+    jenkins.assertLogContains("Starting scan", build);
+    jenkins.assertLogContains("Cannot find Jenkins credentials by ID: 'non-existing-token'. Ensure credentials are defined in Jenkins before using them", build);
   }
 
   @Test
   public void testFreestyleWithCredentialsAndAssertLogOutput() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder()
-      .withConfig(b -> b.setSecureAPIToken("valid-token"))
+      .withConfig(b -> b.setEngineCredentialsId("sysdig-secure"))
       .build();
 
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
@@ -47,7 +60,7 @@ public class IaCScanE2EFreestyleTests {
   @Test
   public void testFreestyleWithAllConfigs() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder().withConfig(b -> {
-      b.setSecureAPIToken("valid-token");
+      b.setEngineCredentialsId("sysdig-secure");
       b.setPath("custom/path/to/scan");
       b.setListUnsupported(true);
       b.setIsRecursive(false);

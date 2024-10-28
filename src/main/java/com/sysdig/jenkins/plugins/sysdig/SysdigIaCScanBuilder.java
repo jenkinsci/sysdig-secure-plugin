@@ -15,6 +15,11 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig;
 
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import hudson.Extension;
@@ -24,11 +29,13 @@ import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
-import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -38,12 +45,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Vector;
 
 public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
 
-  private String secureAPIToken;
+  private String engineCredentialsId;
   private boolean listUnsupported = false; // --list-unsupported-resources
   private boolean isRecursive = true;
   private String path = "";
@@ -52,8 +60,8 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   private String version = "latest";
 
   @DataBoundConstructor
-  public SysdigIaCScanBuilder(String secureAPIToken) {
-    this.secureAPIToken = secureAPIToken;
+  public SysdigIaCScanBuilder(String engineCredentialsId) {
+    this.engineCredentialsId = engineCredentialsId;
   }
 
   public boolean isListUnsupported() {
@@ -99,15 +107,6 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   @DataBoundSetter
   public void setSysdigEnv(String env) {
     this.sysdigEnv = env;
-  }
-
-  public String getSecureAPIToken() {
-    return secureAPIToken;
-  }
-
-  // FIXME(fede): We are temporarily passing the actual token. We need to be passing the secretID in jenkins instead.
-  public void setSecureAPIToken(String secureAPIToken) {
-    this.secureAPIToken = secureAPIToken;
   }
 
   @DataBoundSetter
@@ -187,7 +186,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
       String exec = act.cliExecPath();
       ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
       Map<String, String> envv = pb.environment();
-      envv.put("SECURE_API_TOKEN", secureAPIToken);
+      envv.put("SECURE_API_TOKEN", runContext.getSysdigTokenFromCredentials(engineCredentialsId));
 
       logger.logDebug("Command to execute: " + pb.command());
 
@@ -216,16 +215,25 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
           break;
       }
     } catch (FailedCLIScan e) {
-      logger.logError(String.format("IaC scan failed (status 1): %s", e.getMessage()), e);
+      logger.logError(String.format("IaC scan failed (status 1): %s", e.getMessage()));
       run.setResult(Result.FAILURE);
     } catch (BadParamCLIScan e) {
-      logger.logError(String.format("IaC scan failed due to missing parameters: %s", e.getMessage()), e);
+      logger.logError(String.format("IaC scan failed due to missing parameters: %s", e.getMessage()));
       run.setResult(Result.FAILURE);
     } catch (Exception e) {
       logger.logError(String.format("Failed processing output: %s", e.getMessage()), e);
       run.setResult(Result.FAILURE);
     }
     logger.logInfo("Process completed");
+  }
+
+  public String getEngineCredentialsId() {
+    return engineCredentialsId;
+  }
+
+  @DataBoundSetter
+  public void setEngineCredentialsId(String engineCredentialsId) {
+    this.engineCredentialsId = engineCredentialsId;
   }
 
 
@@ -272,6 +280,44 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
       throws IOException, ServletException {
       if (value.length() == 0)
         return FormValidation.error("missing field");
+
+      return FormValidation.ok();
+    }
+
+    @SuppressWarnings("unused")
+    public ListBoxModel doFillEngineCredentialsIdItems(@QueryParameter String credentialsId) {
+      StandardListBoxModel result = new StandardListBoxModel();
+
+      if (!Jenkins.get().hasPermission(Jenkins.ADMINISTER)) {
+        return result.includeCurrentValue(credentialsId);
+      }
+
+      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
+        Jenkins.get(),
+        StandardUsernamePasswordCredentials.class,
+        Collections.emptyList(),
+        CredentialsMatchers.always());
+    }
+
+    public FormValidation doCheckCredentialsId(@QueryParameter String value) throws IOException, ServletException {
+      if (value == null || value.trim().isEmpty()) {
+        return FormValidation.error("Credentials ID must be provided.");
+      }
+
+      // Optionally, verify that the credentials exist
+      StandardCredentials credentials = CredentialsMatchers.firstOrNull(
+        CredentialsProvider.lookupCredentials(
+          StandardCredentials.class,
+          Jenkins.get(),
+          ACL.SYSTEM,
+          Collections.emptyList()
+        ),
+        CredentialsMatchers.withId(value)
+      );
+
+      if (credentials == null) {
+        return FormValidation.error("No credentials found with the given ID.");
+      }
 
       return FormValidation.ok();
     }
