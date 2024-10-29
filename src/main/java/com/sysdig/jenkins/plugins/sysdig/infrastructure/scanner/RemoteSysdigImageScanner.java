@@ -16,14 +16,14 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.JsonScanResult;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
-import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.remoting.Callable;
 import org.apache.commons.io.FileUtils;
@@ -35,40 +35,32 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
-public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, Exception>, Serializable {
-
+public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, Exception> {
   private static final String FIXED_SCANNED_VERSION = "1.16.1";
   private final ScannerPaths scannerPaths;
   private final String imageName;
+  private final RetriableRemoteDownloader retriableRemoteDownloader;
   private final ImageScanningConfig config;
   private final SysdigLogger logger;
-  private final EnvVars envVars;
-  private final String[] noProxy;
+  private final RunContext runContext;
 
-  public RemoteSysdigImageScanner(@Nonnull RunContext runContext, String imageName, ImageScanningConfig config) {
+  public RemoteSysdigImageScanner(@Nonnull RunContext runContext, RetriableRemoteDownloader retriableRemoteDownloader, String imageName, ImageScanningConfig config) {
+    this.runContext = runContext;
     this.imageName = imageName;
+    this.retriableRemoteDownloader = retriableRemoteDownloader;
     this.config = config;
     this.scannerPaths = new ScannerPaths(runContext.getPathFromWorkspace());
-    this.envVars = runContext.getEnvVars();
     this.logger = runContext.getLogger();
-
-    if (envVars.containsKey("no_proxy") || envVars.containsKey("NO_PROXY")) {
-      String noProxy = envVars.getOrDefault("no_proxy", envVars.get("NO_PROXY"));
-      this.noProxy = noProxy.split(",");
-    } else {
-      this.noProxy = new String[0];
-    }
   }
 
   @Override
@@ -81,7 +73,7 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       // Create all the necessary folders to store execution temp files and such
       createExecutionWorkspace();
       // Retrieve the scanner bin file
-      final File scannerBinaryFile = retrieveScannerBinFile();
+      final FilePath scannerBinaryFile = retrieveScannerBinFile();
       // Execute the scanner bin file and retrieves its json output
       String imageScanningResultJSON = executeScan(scannerBinaryFile);
       JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
@@ -91,35 +83,16 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     }
   }
 
-  private File downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
-    final File scannerBinFile = Files.createFile(Paths.get(this.scannerPaths.getBinFolder(), String.format("inlinescan-%s.bin", latestVersion))).toFile();
-    logger.logInfo(System.getProperty("os.name"));
+  private FilePath downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
+    URL url = sysdigCLIScannerURLForVersion(latestVersion);
+    return retriableRemoteDownloader.downloadExecutable(url, String.format("inlinescan-%s.bin", latestVersion));
+  }
 
+  private static URL sysdigCLIScannerURLForVersion(String latestVersion) throws MalformedURLException {
     String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin" : "linux";
     String arch = System.getProperty("os.arch").toLowerCase().startsWith("aarch64") ? "arm64" : "amd64";
     URL url = new URL("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/" + latestVersion + "/" + os + "/" + arch + "/sysdig-cli-scanner");
-    Proxy proxy = getHttpProxy();
-    boolean proxyException = Arrays.asList(noProxy).contains("sysdig.com") || Arrays.asList(noProxy).contains("download.sysdig.com");
-    int downloadRetriesLeft = 5;
-    while (true) {
-      try {
-        if (proxy != Proxy.NO_PROXY && proxy.type() != Proxy.Type.DIRECT && !proxyException) {
-          FileUtils.copyInputStreamToFile(url.openConnection(proxy).getInputStream(), scannerBinFile);
-        } else {
-          FileUtils.copyURLToFile(url, scannerBinFile);
-        }
-
-        Files.setPosixFilePermissions(scannerBinFile.toPath(), EnumSet.of(PosixFilePermission.OWNER_EXECUTE));
-        return scannerBinFile;
-      } catch (Exception e) {
-        downloadRetriesLeft--;
-        if (downloadRetriesLeft > 0) {
-          TimeUnit.SECONDS.sleep(2L);
-        } else {
-          throw e;
-        }
-      }
-    }
+    return url;
   }
 
   private String getInlineScanPinnedVersion() {
@@ -142,32 +115,6 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     return this.config.getCustomCliVersion();
   }
 
-  private Proxy getHttpProxy() throws IOException {
-    Proxy proxy;
-    String address = "";
-    int port;
-    URL proxyURL;
-
-    if (envVars.containsKey("https_proxy") || envVars.containsKey("HTTPS_PROXY")) {
-      address = envVars.getOrDefault("https_proxy", envVars.get("HTTPS_PROXY"));
-    } else if (envVars.containsKey("http_proxy") || envVars.containsKey("HTTP_PROXY")) {
-      address = envVars.getOrDefault("https_proxy", envVars.get("HTTPS_PROXY"));
-    }
-
-    if (!address.isEmpty()) {
-      if (!address.startsWith("http://") && !address.startsWith("https://")) {
-        address = "http://" + address;
-      }
-      proxyURL = new URL(address);
-      port = proxyURL.getPort() != -1 ? proxyURL.getPort() : 80;
-      proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyURL.getHost(), port));
-    } else {
-      proxy = Proxy.NO_PROXY;
-    }
-    logger.logDebug("Inline scan proxy: " + proxy);
-    return proxy;
-  }
-
   private void createExecutionWorkspace() throws AbortException {
     try {
       this.scannerPaths.create();
@@ -185,26 +132,26 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     }
   }
 
-  private File retrieveScannerBinFile() throws AbortException {
-    File scannerBinaryPath;
-
+  private FilePath retrieveScannerBinFile() throws AbortException {
     if (!Strings.isNullOrEmpty(config.getScannerBinaryPath())) {
-      scannerBinaryPath = new File(config.getScannerBinaryPath());
-      logger.logInfo("Inlinescan binary globally defined to* " + scannerBinaryPath.getPath());
-    } else {
-      try {
-        String latestVersion = getInlineScanVersion();
-        logger.logInfo("Downloading inlinescan v" + latestVersion);
-        scannerBinaryPath = downloadInlineScan(latestVersion);
-        logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getPath());
-      } catch (IOException | InterruptedException e) {
-        throw new AbortException("Error downloading inlinescan binary: " + e);
-      }
+      FilePath scannerBinaryPath = runContext.getPathFromWorkspace(config.getScannerBinaryPath());
+      logger.logInfo("Inlinescan binary globally defined to* " + scannerBinaryPath.getRemote());
+      return scannerBinaryPath;
     }
-    return scannerBinaryPath;
+
+    try {
+      String latestVersion = getInlineScanVersion();
+      logger.logInfo("Downloading inlinescan v" + latestVersion);
+      FilePath scannerBinaryPath = downloadInlineScan(latestVersion);
+      logger.logInfo("Inlinescan binary downloaded to " + scannerBinaryPath.getRemote());
+      return scannerBinaryPath;
+    } catch (IOException | InterruptedException e) {
+      throw new AbortException("Error downloading inlinescan binary: " + e);
+    }
   }
 
-  private String executeScan(final File scannerBinFile) throws AbortException {
+
+  private String executeScan(final FilePath scannerBinFile) throws AbortException {
     try {
       final long logsFileTrailerCheckingInterval = 200L;
       final long logsCollectionWaitingTime = 2000L;
@@ -212,37 +159,11 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       final File scannerExecLogsFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan-logs.log")).toFile();
       final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), logsFileTrailerCheckingInterval);
 
-      List<String> command = new ArrayList<>();
-      command.add(scannerBinFile.getPath());
-      command.add(String.format("--apiurl=%s", this.config.getEngineurl()));
-      command.add(String.format("--dbpath=%s", this.scannerPaths.getDatabaseFolder()));
-      command.add(String.format("--cachepath=%s", this.scannerPaths.getCacheFolder()));
-      command.add(String.format("--json-scan-result=%s", scannerJsonOutputFile.getAbsolutePath()));
-      command.add("--console-log");
-
-      if (this.config.getDebug()) {
-        command.add("--loglevel=debug");
-      }
-      if (!this.config.getEngineverify()) {
-        command.add("--skiptlsverify");
-      }
-
-      for (String extraParam : this.config.getInlineScanExtraParams().split(" ")) {
-        if (!Strings.isNullOrEmpty(extraParam)) {
-          command.add(extraParam);
-        }
-      }
-      for (String policyId : this.config.getPoliciesToApply().split(" ")) {
-        if (!Strings.isNullOrEmpty(policyId)) {
-          command.add(String.format("--policy=%s", policyId));
-        }
-      }
-
-      command.add(this.imageName);
+      List<String> command = getCommandLineArgs(scannerBinFile, scannerJsonOutputFile);
 
       final ProcessBuilder processBuilder = new ProcessBuilder().command(command).redirectOutput(scannerExecLogsFile).redirectError(scannerExecLogsFile);
       final Map<String, String> processEnv = processBuilder.environment();
-      processEnv.putAll(this.envVars);
+      processEnv.putAll(this.runContext.getEnvVars());
       processEnv.put("TMPDIR", this.scannerPaths.getTmpFolder());
       processEnv.put("SECURE_API_TOKEN", this.config.getSysdigToken());
 
@@ -270,6 +191,37 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     } catch (Exception e) {
       throw new AbortException("Error executing inlinescan binary: " + e);
     }
+  }
+
+  private List<String> getCommandLineArgs(FilePath scannerBinFile, File scannerJsonOutputFile) {
+    List<String> command = new ArrayList<>();
+    command.add(scannerBinFile.getRemote());
+    command.add(String.format("--apiurl=%s", this.config.getEngineurl()));
+    command.add(String.format("--dbpath=%s", this.scannerPaths.getDatabaseFolder()));
+    command.add(String.format("--cachepath=%s", this.scannerPaths.getCacheFolder()));
+    command.add(String.format("--json-scan-result=%s", scannerJsonOutputFile.getAbsolutePath()));
+    command.add("--console-log");
+
+    if (this.config.getDebug()) {
+      command.add("--loglevel=debug");
+    }
+    if (!this.config.getEngineverify()) {
+      command.add("--skiptlsverify");
+    }
+
+    for (String extraParam : this.config.getInlineScanExtraParams().split(" ")) {
+      if (!Strings.isNullOrEmpty(extraParam)) {
+        command.add(extraParam);
+      }
+    }
+    for (String policyId : this.config.getPoliciesToApply().split(" ")) {
+      if (!Strings.isNullOrEmpty(policyId)) {
+        command.add(String.format("--policy=%s", policyId));
+      }
+    }
+
+    command.add(this.imageName);
+    return command;
   }
 
   public static class LogsFileToLoggerForwarder extends TailerListenerAdapter {
