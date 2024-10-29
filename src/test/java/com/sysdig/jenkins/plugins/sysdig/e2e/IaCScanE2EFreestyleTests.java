@@ -51,7 +51,7 @@ public class IaCScanE2EFreestyleTests {
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
 
     jenkins.assertLogContains("Attempting to download CLI", build);
-    jenkins.assertLogContains("CLI executable path:", build);
+    jenkins.assertLogContains("Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner", build);
     jenkins.assertLogContains("Starting scan", build);
     jenkins.assertLogContains("Process finished with status 3", build);
     jenkins.assertLogContains("(status 401):", build);
@@ -72,8 +72,7 @@ public class IaCScanE2EFreestyleTests {
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
 
     jenkins.assertLogContains("Attempting to download CLI", build);
-    jenkins.assertLogContains("CLI executable path:", build);
-    jenkins.assertLogContains("1.13.0", build);
+    jenkins.assertLogContains("Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.13.0", build);
     jenkins.assertLogContains("Starting scan", build);
     jenkins.assertLogContains("Process finished with status 3", build);
   }

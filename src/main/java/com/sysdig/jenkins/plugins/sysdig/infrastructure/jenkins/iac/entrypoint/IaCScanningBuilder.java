@@ -20,8 +20,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.sysdig.jenkins.plugins.sysdig.CLIDownloadAction;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -47,12 +47,15 @@ import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Vector;
 
 public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
+  private static final String FIXED_SCANNED_VERSION = "1.16.1";
 
   private String engineCredentialsId;
   private boolean listUnsupported = false; // --list-unsupported-resources
@@ -60,7 +63,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   private String path = "";
   private String severityThreshold = "h";
   private String sysdigEnv = "";
-  private String version = "latest";
+  private String version = FIXED_SCANNED_VERSION;
 
   @DataBoundConstructor
   public IaCScanningBuilder(String engineCredentialsId) {
@@ -169,24 +172,24 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
     logger.logInfo("Attempting to download CLI");
     String cwd = run.getRootDir().getAbsolutePath();
-    CLIDownloadAction act;
+    RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(runContext);
+
+    FilePath filePath;
     try {
-      act = new CLIDownloadAction("IaC scanner", cwd, version);
+      filePath = downloader.downloadExecutable(sysdigCLIScannerURLForVersion(version), "sysdig-cli-scanner");
     } catch (Exception e) {
       logger.logError(String.format("Failed to download CLI version: %s", version), e);
       run.setResult(Result.FAILURE);
       return;
     }
-    run.addAction(act);
-    logger.logInfo(String.format("CLI executable path: %s", act.cliExecPath()));
 
     logger.logInfo("Starting scan");
     try {
-      if (act.cliExecPath().isEmpty()) {
+      if (filePath == null) {
         logger.logError("CLI executable path is empty");
         throw new Exception("empty path");
       }
-      String exec = act.cliExecPath();
+      String exec = filePath.getRemote();
       ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
       Map<String, String> envv = pb.environment();
       envv.put("SECURE_API_TOKEN", runContext.getSysdigTokenFromCredentials(engineCredentialsId));
@@ -237,6 +240,15 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   @DataBoundSetter
   public void setEngineCredentialsId(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
+  }
+
+
+  // FIXME(fede): Remove this duplicate method
+  private static URL sysdigCLIScannerURLForVersion(String latestVersion) throws MalformedURLException {
+    String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin" : "linux";
+    String arch = System.getProperty("os.arch").toLowerCase().startsWith("aarch64") ? "arm64" : "amd64";
+    URL url = new URL(String.format("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/%s/%s/%s/sysdig-cli-scanner", latestVersion, os, arch));
+    return url;
   }
 
 

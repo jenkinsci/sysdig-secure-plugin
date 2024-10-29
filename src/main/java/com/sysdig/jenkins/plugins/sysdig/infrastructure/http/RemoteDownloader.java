@@ -24,10 +24,6 @@ public class RemoteDownloader implements Serializable {
     this.envVars = runContext.getEnvVars();
   }
 
-  public FilePath downloadExecutable(URL url) throws IOException, InterruptedException {
-    return downloadExecutable(url, url.getFile());
-  }
-
   public FilePath downloadExecutable(URL url, String fileName) throws IOException, InterruptedException {
     FilePath executableFile = downloadFile(url, fileName);
 
@@ -36,10 +32,6 @@ public class RemoteDownloader implements Serializable {
     logger.logInfo("Permissions set: " + executableFile.getRemote());
 
     return executableFile;
-  }
-
-  public FilePath downloadFile(URL url) throws IOException, InterruptedException {
-    return downloadFile(url, url.getFile());
   }
 
   public FilePath downloadFile(URL url, String fileName) throws IOException, InterruptedException {
@@ -52,6 +44,7 @@ public class RemoteDownloader implements Serializable {
     // Obtain the proxy configuration
     Proxy proxy = getHttpProxyFromEnvVars(envVars);
 
+    logger.logInfo(String.format("Downloading %s to %s", url, fileName));
     boolean hostMustBeProxied = proxy != Proxy.NO_PROXY && !isThereAProxyExceptionForHost(url.getHost());
     if (hostMustBeProxied) {
       // Use proxy for the connection
