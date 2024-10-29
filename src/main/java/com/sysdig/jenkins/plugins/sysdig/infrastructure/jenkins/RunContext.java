@@ -193,4 +193,8 @@ public class RunContext implements Serializable {
   public <V, E extends Throwable> V call(@Nonnull Callable<V, E> act) throws IOException, InterruptedException, E {
     return workspace.act(act);
   }
+
+  public Launcher getLauncher() {
+    return launcher;
+  }
 }

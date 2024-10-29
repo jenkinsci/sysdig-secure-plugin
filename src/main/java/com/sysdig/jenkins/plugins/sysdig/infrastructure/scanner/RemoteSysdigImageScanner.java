@@ -25,6 +25,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.remoting.Callable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.Tailer;
@@ -43,6 +44,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 
 public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, Exception> {
@@ -153,27 +155,27 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
 
   private String executeScan(final FilePath scannerBinFile) throws AbortException {
     try {
-      final long logsFileTrailerCheckingInterval = 200L;
-      final long logsCollectionWaitingTime = 2000L;
       final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan.json")).toFile();
-      final File scannerExecLogsFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan-logs.log")).toFile();
-      final Tailer logsFileTailer = Tailer.create(scannerExecLogsFile, new LogsFileToLoggerForwarder(this.logger), logsFileTrailerCheckingInterval);
-
       List<String> command = getCommandLineArgs(scannerBinFile, scannerJsonOutputFile);
 
-      final ProcessBuilder processBuilder = new ProcessBuilder().command(command).redirectOutput(scannerExecLogsFile).redirectError(scannerExecLogsFile);
-      final Map<String, String> processEnv = processBuilder.environment();
+      final Map<String, String> processEnv = new TreeMap<>();
       processEnv.putAll(this.runContext.getEnvVars());
       processEnv.put("TMPDIR", this.scannerPaths.getTmpFolder());
       processEnv.put("SECURE_API_TOKEN", this.config.getSysdigToken());
 
+      // FIXME: Do not violate the Law of Demeter here. Implement process launching in the context.
+      Launcher.ProcStarter procStarter = this.runContext.getLauncher().launch().cmds(command).pwd(this.runContext.getPathFromWorkspace()).envs(processEnv);
+      LogOutputStreamAdapter outputStreamAdapter = new LogOutputStreamAdapter(this.logger);
+      procStarter.stdout(outputStreamAdapter);
+      procStarter.stderr(outputStreamAdapter);
+
       logger.logInfo("Executing: " + String.join(" ", command));
-      final Process scannerProcess = processBuilder.start();
+//      final Process scannerProcess = processBuilder.start();
 
       logger.logInfo("Waiting for scanner execution to be completed...");
-      int scannerExitCode = scannerProcess.waitFor();
-      Thread.sleep(logsCollectionWaitingTime); //just to be sure that all the logs have been written to the file for being successfully retrieved
-      logsFileTailer.stop();
+//      int scannerExitCode = scannerProcess.waitFor();
+      int scannerExitCode = procStarter.join();
+
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
       String jsonOutput = new String(Files.readAllBytes(Paths.get(scannerJsonOutputFile.getAbsolutePath())), Charset.defaultCharset());
