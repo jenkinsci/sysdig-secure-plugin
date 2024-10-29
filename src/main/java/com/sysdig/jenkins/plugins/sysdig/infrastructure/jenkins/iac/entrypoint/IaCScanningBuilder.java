@@ -13,15 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.entrypoint;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.sysdig.jenkins.plugins.sysdig.CLIDownloadAction;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -40,6 +42,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -49,7 +52,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Vector;
 
-public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
+public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
   private String engineCredentialsId;
   private boolean listUnsupported = false; // --list-unsupported-resources
@@ -60,7 +63,7 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   private String version = "latest";
 
   @DataBoundConstructor
-  public SysdigIaCScanBuilder(String engineCredentialsId) {
+  public IaCScanningBuilder(String engineCredentialsId) {
     this.engineCredentialsId = engineCredentialsId;
   }
 
@@ -159,9 +162,9 @@ public class SysdigIaCScanBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener)
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
     throws InterruptedException, IOException {
-    RunContext runContext = new RunContext(run, workspace, listener, launcher);
+    RunContext runContext = new RunContext(run, workspace, envVars, launcher, listener);
     SysdigLogger logger = runContext.getLogger();
 
     logger.logInfo("Attempting to download CLI");

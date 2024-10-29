@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.ScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
 import hudson.AbortException;
@@ -27,7 +26,7 @@ import jenkins.model.Jenkins;
 import java.io.Serializable;
 import java.util.List;
 
-public class ImageScanningConfig implements Serializable, ScanningConfig {
+public class ImageImageScanningConfig implements Serializable, com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig {
 
   private final String imageName;
   private final boolean bailOnFail;
@@ -41,7 +40,7 @@ public class ImageScanningConfig implements Serializable, ScanningConfig {
   private final String cliVersionToApply;
   private final String customCliVersion;
 
-  public ImageScanningConfig(RunContext runContext, ImageScanningBuilder engineBuilder) throws AbortException {
+  public ImageImageScanningConfig(RunContext runContext, ImageScanningBuilder engineBuilder) throws AbortException {
     var globalConfig = engineBuilder.getDescriptor();
 
     String credID = firstNonEmpty(engineBuilder.getEngineCredentialsId(), globalConfig.getEngineCredentialsId());

@@ -3,7 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig.e2e;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.SystemCredentialsProvider;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.sysdig.jenkins.plugins.sysdig.SysdigIaCScanBuilder;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.entrypoint.IaCScanningBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
 import hudson.model.Descriptor;
 import hudson.model.FreeStyleProject;
@@ -75,8 +75,8 @@ public class JenkinsTestHelpers {
       return this.project;
     }
 
-    public IaCScanProjectBuilder withConfig(Consumer<SysdigIaCScanBuilder> func) {
-      var builder = (SysdigIaCScanBuilder) project.getBuildersList().get(0);
+    public IaCScanProjectBuilder withConfig(Consumer<IaCScanningBuilder> func) {
+      var builder = (IaCScanningBuilder) project.getBuildersList().get(0);
       func.accept(builder);
       return this;
     }
@@ -100,7 +100,7 @@ public class JenkinsTestHelpers {
 
   public IaCScanProjectBuilder createFreestyleProjectWithIaCScanBuilder() throws Exception {
     var project = jenkins.createFreeStyleProject();
-    var builder = new SysdigIaCScanBuilder("");
+    var builder = new IaCScanningBuilder("");
     project.getBuildersList().add(builder);
     return new IaCScanProjectBuilder(project);
   }

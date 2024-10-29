@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
-public interface ScanningConfig {
+public interface ImageScanningConfig {
   String getImageName();
 
   boolean getBailOnFail();

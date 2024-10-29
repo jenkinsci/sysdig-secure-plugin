@@ -169,7 +169,7 @@ public class ImageScanningStep extends Step implements BuildStep {
   public BuildStepMonitor getRequiredMonitorService() {
     return builder.getRequiredMonitorService();
   }
-  
+
   private final static class Execution extends SynchronousNonBlockingStepExecution {
 
     private static final long serialVersionUID = 1;
@@ -191,8 +191,10 @@ public class ImageScanningStep extends Step implements BuildStep {
       builder.perform(
         getContext().get(Run.class),
         workspace,
-        getContext().get(TaskListener.class),
-        getContext().get(EnvVars.class));
+        getContext().get(EnvVars.class),
+        getContext().get(Launcher.class),
+        getContext().get(TaskListener.class)
+      );
 
       return null;
     }

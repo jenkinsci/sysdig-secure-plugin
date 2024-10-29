@@ -13,8 +13,6 @@ import org.junit.Test;
 import hudson.AbortException;
 
 import static org.mockito.Mockito.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.junit.Assert.*;
 
 public class ImageScanningApplicationServiceTest {
 
@@ -22,7 +20,7 @@ public class ImageScanningApplicationServiceTest {
   private ImageScanner scanner;
   private SysdigLogger logger;
   private ImageScanningApplicationService service;
-  private ScanningConfig config;
+  private ImageScanningConfig config;
 
   @Before
   public void setUp() {
@@ -30,7 +28,7 @@ public class ImageScanningApplicationServiceTest {
     scanner = mock(ImageScanner.class);
     logger = mock(SysdigLogger.class);
     service = new ImageScanningApplicationService(reportStorage, scanner, logger);
-    config = mock(ScanningConfig.class);
+    config = mock(ImageScanningConfig.class);
   }
 
   @Test

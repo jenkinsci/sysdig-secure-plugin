@@ -16,7 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.ScanningConfig;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
@@ -24,10 +24,10 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import javax.annotation.Nonnull;
 
 public class SysdigImageScanner implements ImageScanner {
-  protected final ScanningConfig config;
+  protected final ImageScanningConfig config;
   private final RunContext runContext;
 
-  public SysdigImageScanner(@Nonnull RunContext runContext, @Nonnull ScanningConfig config) {
+  public SysdigImageScanner(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) {
     this.runContext = runContext;
     this.config = config;
   }

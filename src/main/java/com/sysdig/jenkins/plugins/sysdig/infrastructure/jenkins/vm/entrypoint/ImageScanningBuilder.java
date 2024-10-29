@@ -20,14 +20,16 @@ import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningApplicationService;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ImageScanningConfig;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ImageImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.JenkinsReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigImageScanner;
-import hudson.*;
+import hudson.EnvVars;
+import hudson.Extension;
+import hudson.FilePath;
+import hudson.Launcher;
 import hudson.model.AbstractProject;
-import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
@@ -162,23 +164,10 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
-    Computer computer = workspace.toComputer();
-    EnvVars envVars = new EnvVars();
-    if (computer != null) {
-      envVars.putAll(computer.buildEnvironment(listener));
-    }
-
-    EnvVars buildEnvVars = run.getEnvironment(listener);
-    envVars.putAll(buildEnvVars);
-
-    perform(run, workspace, listener, envVars);
-  }
-
-  public void perform(Run<?, ?> run, FilePath workspace, TaskListener listener, EnvVars envVars) throws IOException, InterruptedException {
-    var runContext = new RunContext(run, workspace, listener, envVars);
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+    var runContext = new RunContext(run, workspace, envVars, launcher, listener);
     var logger = runContext.getLogger();
-    ImageScanningConfig config = new ImageScanningConfig(runContext, this);
+    ImageImageScanningConfig config = new ImageImageScanningConfig(runContext, this);
 
     JenkinsReportStorage reportStorage = new JenkinsReportStorage(runContext);
     SysdigImageScanner scanner = new SysdigImageScanner(runContext, config);

@@ -36,7 +36,7 @@ public class ImageScanningApplicationService {
     this.logger = logger;
   }
 
-  public void runScan(@Nonnull ScanningConfig config) throws AbortException {
+  public void runScan(@Nonnull ImageScanningConfig config) throws AbortException {
     config.printWith(logger);
 
     Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(config);
@@ -52,7 +52,7 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull ScanningConfig config) throws AbortException {
+  private Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull ImageScanningConfig config) throws AbortException {
     PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
     ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
 

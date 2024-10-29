@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.ScanningConfig;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.JsonScanResult;
@@ -51,12 +51,12 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
   private static final String FIXED_SCANNED_VERSION = "1.16.1";
   private final ScannerPaths scannerPaths;
   private final String imageName;
-  private final ScanningConfig config;
+  private final ImageScanningConfig config;
   private final SysdigLogger logger;
   private final EnvVars envVars;
   private final String[] noProxy;
 
-  public RemoteSysdigImageScanner(@Nonnull RunContext runContext, String imageName, ScanningConfig config) {
+  public RemoteSysdigImageScanner(@Nonnull RunContext runContext, String imageName, ImageScanningConfig config) {
     this.imageName = imageName;
     this.config = config;
     this.scannerPaths = new ScannerPaths(runContext.getPathFromWorkspace());
