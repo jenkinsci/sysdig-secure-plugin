@@ -56,28 +56,22 @@ public class RunContext implements Serializable {
   // Custom logger for Sysdig-specific logging
   private final SysdigLogger logger;
 
-  // Launcher to execute processes
-  private final transient Launcher launcher;
-
-
   /**
    * Constructs a new RunContext with the given parameters.
    *
    * @param run       The Jenkins run.
    * @param workspace The workspace directory.
    * @param envVars   The environment variables of the run execution.
-   * @param launcher  Process launcher.
    * @param listener  The task listener for logging.
    * @throws IOException          If an I/O error occurs.
    * @throws InterruptedException If the thread is interrupted.
    */
-  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull TaskListener listener) {
     this.run = run;
     this.workspace = workspace;
     this.listener = listener;
     this.envVars = envVars;
     this.logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
-    this.launcher = launcher;
   }
 
   /**
@@ -157,7 +151,7 @@ public class RunContext implements Serializable {
    * @throws InterruptedException If the thread is interrupted.
    */
   public void perform(@Nonnull SimpleBuildStep buildStep) throws IOException, InterruptedException {
-    buildStep.perform(run, workspace, envVars, launcher, listener);
+    buildStep.perform(run, workspace, envVars, getLauncher(), listener);
   }
 
   /**
@@ -194,7 +188,7 @@ public class RunContext implements Serializable {
     return workspace.act(act);
   }
 
-  public Launcher getLauncher() {
-    return launcher;
+  public Launcher getLauncher() throws IOException, InterruptedException {
+    return workspace.createLauncher(listener);
   }
 }

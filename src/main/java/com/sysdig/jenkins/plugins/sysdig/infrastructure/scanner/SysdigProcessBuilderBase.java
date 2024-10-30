@@ -5,6 +5,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -115,7 +116,7 @@ public abstract class SysdigProcessBuilderBase<T extends SysdigProcessBuilderBas
     return withStderrRedirectedTo(new LogOutputStreamAdapter(sysdigLogger));
   }
 
-  public int launchAndWait(Launcher launcher) throws IOException, InterruptedException {
+  public int launchAndWait(@Nonnull  Launcher launcher) throws IOException, InterruptedException {
     Launcher.ProcStarter procStarter = launcher.launch().cmds(this.toCommandLineArguments()).envs(this.extraEnvVars);
 
     if (workingDirectory != null) procStarter.pwd(workingDirectory);
