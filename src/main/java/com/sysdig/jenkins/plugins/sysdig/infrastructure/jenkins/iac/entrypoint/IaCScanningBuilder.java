@@ -171,7 +171,6 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     SysdigLogger logger = runContext.getLogger();
 
     logger.logInfo("Attempting to download CLI");
-    String cwd = run.getRootDir().getAbsolutePath();
     RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(runContext);
 
     FilePath filePath;
@@ -185,10 +184,6 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
     logger.logInfo("Starting scan");
     try {
-      if (filePath == null) {
-        logger.logError("CLI executable path is empty");
-        throw new Exception("empty path");
-      }
       String exec = filePath.getRemote();
       ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
       Map<String, String> envv = pb.environment();

@@ -25,11 +25,8 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;
-import hudson.Launcher;
 import hudson.remoting.Callable;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.input.Tailer;
-import org.apache.commons.io.input.TailerListenerAdapter;
 import org.jenkinsci.remoting.RoleChecker;
 
 import javax.annotation.Nonnull;
@@ -41,10 +38,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 
 public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, Exception> {
@@ -156,29 +149,14 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
   private String executeScan(final FilePath scannerBinFile) throws AbortException {
     try {
       final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan.json")).toFile();
-      List<String> command = getCommandLineArgs(scannerBinFile, scannerJsonOutputFile);
+      SysdigImageScanningProcessBuilder processBuilder = createProcessBuilder(scannerBinFile, scannerJsonOutputFile);
 
-      final Map<String, String> processEnv = new TreeMap<>();
-      processEnv.putAll(this.runContext.getEnvVars());
-      processEnv.put("TMPDIR", this.scannerPaths.getTmpFolder());
-      processEnv.put("SECURE_API_TOKEN", this.config.getSysdigToken());
-
-      // FIXME: Do not violate the Law of Demeter here. Implement process launching in the context.
-      Launcher.ProcStarter procStarter = this.runContext.getLauncher().launch().cmds(command).pwd(this.runContext.getPathFromWorkspace()).envs(processEnv);
-      LogOutputStreamAdapter outputStreamAdapter = new LogOutputStreamAdapter(this.logger);
-      procStarter.stdout(outputStreamAdapter);
-      procStarter.stderr(outputStreamAdapter);
-
-      logger.logInfo("Executing: " + String.join(" ", command));
-//      final Process scannerProcess = processBuilder.start();
-
+      logger.logInfo("Executing: " + String.join(" ", processBuilder.toCommandLineArguments()));
       logger.logInfo("Waiting for scanner execution to be completed...");
-//      int scannerExitCode = scannerProcess.waitFor();
-      int scannerExitCode = procStarter.join();
-
+      int scannerExitCode = processBuilder.launchAndWait(this.runContext.getLauncher());
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
-      String jsonOutput = new String(Files.readAllBytes(Paths.get(scannerJsonOutputFile.getAbsolutePath())), Charset.defaultCharset());
+      String jsonOutput = Files.readString(Paths.get(scannerJsonOutputFile.getAbsolutePath()), Charset.defaultCharset());
       logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
 
       if (scannerExitCode == 2) {
@@ -195,72 +173,38 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     }
   }
 
-  private List<String> getCommandLineArgs(FilePath scannerBinFile, File scannerJsonOutputFile) {
-    List<String> command = new ArrayList<>();
-    command.add(scannerBinFile.getRemote());
-    command.add(String.format("--apiurl=%s", this.config.getEngineurl()));
-    command.add(String.format("--dbpath=%s", this.scannerPaths.getDatabaseFolder()));
-    command.add(String.format("--cachepath=%s", this.scannerPaths.getCacheFolder()));
-    command.add(String.format("--json-scan-result=%s", scannerJsonOutputFile.getAbsolutePath()));
-    command.add("--console-log");
+  private SysdigImageScanningProcessBuilder createProcessBuilder(FilePath scannerBinFile, File scannerJsonOutputFile) {
+    SysdigImageScanningProcessBuilder processBuilder = new SysdigImageScanningProcessBuilder(scannerBinFile.getRemote(), this.config.getSysdigToken())
+      .withExtraEnvVars(this.runContext.getEnvVars())
+      .withEngineURL(this.config.getEngineurl())
+      .withDBPath(this.scannerPaths.getDatabaseFolder())
+      .withCachePath(this.scannerPaths.getCacheFolder())
+      .withScanResultOutputPath(scannerJsonOutputFile.getAbsolutePath())
+      .withConsoleLog()
+      .withExtraParametersSeparatedBySpace(this.config.getInlineScanExtraParams())
+      .withPoliciesToApplySeparatedBySpace(this.config.getPoliciesToApply())
+      .withStdoutRedirectedTo(this.logger)
+      .withStderrRedirectedTo(this.logger)
+      .withLogLevel(config.getDebug() ? SysdigImageScanningProcessBuilder.LogLevel.DEBUG : SysdigImageScanningProcessBuilder.LogLevel.INFO)
+      .withTLSVerification(config.getEngineverify());
 
-    if (this.config.getDebug()) {
-      command.add("--loglevel=debug");
-    }
-    if (!this.config.getEngineverify()) {
-      command.add("--skiptlsverify");
-    }
-
-    for (String extraParam : this.config.getInlineScanExtraParams().split(" ")) {
-      if (!Strings.isNullOrEmpty(extraParam)) {
-        command.add(extraParam);
-      }
-    }
-    for (String policyId : this.config.getPoliciesToApply().split(" ")) {
-      if (!Strings.isNullOrEmpty(policyId)) {
-        command.add(String.format("--policy=%s", policyId));
-      }
-    }
-
-    command.add(this.imageName);
-    return command;
-  }
-
-  public static class LogsFileToLoggerForwarder extends TailerListenerAdapter {
-
-    private final SysdigLogger logger;
-
-    public LogsFileToLoggerForwarder(final SysdigLogger forwardTo) {
-      this.logger = forwardTo;
-    }
-
-    public void handle(String line) {
-      this.logger.logInfo(line);
-    }
+    return processBuilder.withImageToScan(imageName);
   }
 
   private static class ScannerPaths implements Serializable {
     private static final String SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN = "sysdig-secure-scan-%d";
     private final String baseFolder;
-    private final String binFolder;
     private final String databaseFolder;
     private final String cacheFolder;
-    private final String tmpFolder;
 
     public ScannerPaths(final FilePath basePath) {
       this.baseFolder = Paths.get(basePath.getRemote(), String.format(SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN, System.currentTimeMillis())).toString();
-      this.binFolder = Paths.get(this.baseFolder, "bin").toString();
       this.databaseFolder = Paths.get(this.baseFolder, "db").toString();
       this.cacheFolder = Paths.get(this.baseFolder, "cache").toString();
-      this.tmpFolder = Paths.get(this.baseFolder, "tmp").toString();
     }
 
     public String getBaseFolder() {
       return this.baseFolder;
-    }
-
-    public String getBinFolder() {
-      return this.binFolder;
     }
 
     public String getDatabaseFolder() {
@@ -271,16 +215,10 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       return this.cacheFolder;
     }
 
-    public String getTmpFolder() {
-      return this.tmpFolder;
-    }
-
     public void create() throws Exception {
       Files.createDirectories(Paths.get(this.baseFolder));
-      Files.createDirectory(Paths.get(this.binFolder));
       Files.createDirectory(Paths.get(this.databaseFolder));
       Files.createDirectory(Paths.get(this.cacheFolder));
-      Files.createDirectory(Paths.get(this.tmpFolder));
     }
 
     public void purge() throws IOException {
