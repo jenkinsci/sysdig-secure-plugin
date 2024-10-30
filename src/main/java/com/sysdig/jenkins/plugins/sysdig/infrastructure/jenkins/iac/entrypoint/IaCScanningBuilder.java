@@ -23,10 +23,8 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigIaCScanningProcessBuilder;
+import hudson.*;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -120,43 +118,28 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     this.severityThreshold = severityThreshold;
   }
 
-  private String getProcessOutput(Process p) throws IOException {
-
-    BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
-    StringBuilder builder = new StringBuilder();
-    String line = null;
-    while ((line = reader.readLine()) != null) {
-      builder.append(line);
-      builder.append(System.getProperty("line.separator"));
-    }
-    String output = builder.toString();
-    reader.close();
-    return output;
+  public String getEngineCredentialsId() {
+    return engineCredentialsId;
   }
 
-  private Vector<String> buildCommand(String exec) {
-    Vector<String> cmd = new Vector<>();
-    cmd.add(exec);
-    cmd.add("--iac");
-    cmd.add("-a");
-    if (sysdigEnv.isEmpty()) {
-      sysdigEnv = "https://secure-staging.sysdig.com";
-    }
-    cmd.add(sysdigEnv);
+  @DataBoundSetter
+  public void setEngineCredentialsId(String engineCredentialsId) {
+    this.engineCredentialsId = engineCredentialsId;
+  }
 
-    if (isRecursive) {
-      cmd.add("-r");
-    }
 
-    if (listUnsupported) {
-      cmd.add("--list-unsupported-resources");
-    }
+  private SysdigIaCScanningProcessBuilder buildCommand(RunContext runContext, String exec) throws AbortException {
+    SysdigIaCScanningProcessBuilder processBuilder = new SysdigIaCScanningProcessBuilder(exec, runContext.getSysdigTokenFromCredentials(engineCredentialsId))
+      .withRecursive(isRecursive)
+      .withUnsupportedResources(listUnsupported)
+      .withSeverity(SysdigIaCScanningProcessBuilder.Severity.fromString(severityThreshold))
+      .withPathsToScan(path)
+      .withStdoutRedirectedTo(runContext.getLogger())
+      .withStderrRedirectedTo(runContext.getLogger());
 
-    severity(cmd);
+    if (!sysdigEnv.isEmpty()) processBuilder = processBuilder.withEngineURL(sysdigEnv);
 
-    cmd.add(path);
-
-    return cmd;
+    return processBuilder;
   }
 
   private void severity(Vector<String> cmd) {
@@ -175,9 +158,9 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
     FilePath filePath;
     try {
-      filePath = downloader.downloadExecutable(sysdigCLIScannerURLForVersion(version), "sysdig-cli-scanner");
+      filePath = downloader.downloadExecutable(sysdigCLIScannerURLForVersion(getVersion()), "sysdig-cli-scanner");
     } catch (Exception e) {
-      logger.logError(String.format("Failed to download CLI version: %s", version), e);
+      logger.logError(String.format("Failed to download CLI version: %s", getVersion()), e);
       run.setResult(Result.FAILURE);
       return;
     }
@@ -185,33 +168,24 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     logger.logInfo("Starting scan");
     try {
       String exec = filePath.getRemote();
-      ProcessBuilder pb = new ProcessBuilder(buildCommand(exec));
-      Map<String, String> envv = pb.environment();
-      envv.put("SECURE_API_TOKEN", runContext.getSysdigTokenFromCredentials(engineCredentialsId));
+      var processBuilder = buildCommand(runContext, exec);
+      logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
-      logger.logDebug("Command to execute: " + pb.command());
-
-      Process p = pb.start();
-      logger.logInfo("Process started...");
-      p.waitFor();
-
-      String output = getProcessOutput(p);
-      int exitCode = p.exitValue();
+      int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
       logger.logInfo(String.format("Process finished with status %d", exitCode));
-      logger.logInfo(output);
 
       switch (exitCode) {
         case 0:
           run.setResult(Result.SUCCESS);
           break;
         case 1:
-          throw new FailedCLIScan(String.format("Scan failed%n%s", output));
+          throw new FailedCLIScan("Scan failed");
         case 2:
-          throw new BadParamCLIScan(String.format("Scan failed%n%s", output));
+          throw new BadParamCLIScan("Scan failed");
         case 3:
-          throw new FailedCLIScan(String.format("Unable to complete scan, check if your token is valid%n%s", output));
+          throw new FailedCLIScan("Unable to complete scan, check if your token is valid");
         default:
-          logger.logError(String.format("Unknown error: %s", output));
+          logger.logError("Unknown error");
           run.setResult(Result.FAILURE);
           break;
       }
@@ -228,21 +202,14 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     logger.logInfo("Process completed");
   }
 
-  public String getEngineCredentialsId() {
-    return engineCredentialsId;
-  }
-
-  @DataBoundSetter
-  public void setEngineCredentialsId(String engineCredentialsId) {
-    this.engineCredentialsId = engineCredentialsId;
-  }
-
 
   // FIXME(fede): Remove this duplicate method
-  private static URL sysdigCLIScannerURLForVersion(String latestVersion) throws MalformedURLException {
+  private static URL sysdigCLIScannerURLForVersion(String version) throws MalformedURLException {
+    if (version.trim().equalsIgnoreCase("latest")) version = FIXED_SCANNED_VERSION;
+
     String os = System.getProperty("os.name").toLowerCase().startsWith("mac") ? "darwin" : "linux";
     String arch = System.getProperty("os.arch").toLowerCase().startsWith("aarch64") ? "arm64" : "amd64";
-    URL url = new URL(String.format("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/%s/%s/%s/sysdig-cli-scanner", latestVersion, os, arch));
+    URL url = new URL(String.format("https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/%s/%s/%s/sysdig-cli-scanner", version, os, arch));
     return url;
   }
 
@@ -261,14 +228,13 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
   @Extension
   public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-
     public static final boolean DEFAULT_IS_RECURSIVE = true;
     public static final String DEFAULT_CLI_VERSION = "latest";
 
-
+    @SuppressWarnings("unused")
     public FormValidation doCheckSysdigEnv(@QueryParameter String value, @QueryParameter boolean useFrench)
       throws IOException, ServletException {
-      if (value.length() == 0)
+      if (value.isEmpty())
         return FormValidation.error("missing field");
       if (value.length() < 4)
         return FormValidation.warning("too");
@@ -276,9 +242,10 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
       return FormValidation.ok();
     }
 
+    @SuppressWarnings("unused")
     public FormValidation doCheckSecureAPIToken(@QueryParameter String value, @QueryParameter boolean useFrench)
       throws IOException, ServletException {
-      if (value.length() == 0)
+      if (value.isEmpty())
         return FormValidation.error("missing field");
       if (value.length() < 4)
         return FormValidation.warning("too");
@@ -286,9 +253,10 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
       return FormValidation.ok();
     }
 
+    @SuppressWarnings("unused")
     public FormValidation doCheckPath(@QueryParameter String value, @QueryParameter boolean useFrench)
       throws IOException, ServletException {
-      if (value.length() == 0)
+      if (value.isEmpty())
         return FormValidation.error("missing field");
 
       return FormValidation.ok();
