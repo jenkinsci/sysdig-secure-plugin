@@ -38,7 +38,7 @@ public class ImageScanningE2EFreestyleTests {
     jenkins.assertLogContains("Image Name: alpine", build);
     jenkins.assertLogContains("Downloading inlinescan v1.16.1", build);
     jenkins.assertLogContains("--apiurl=https://secure.sysdig.com", build);
-    jenkins.assertLogContains("--console-log --loglevel=info alpine", build);
+    jenkins.assertLogContains("--loglevel=info --console-log alpine", build);
     jenkins.assertLogContains("Unable to retrieve MainDB", build);
     jenkins.assertLogContains("401 Unauthorized", build);
     jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);

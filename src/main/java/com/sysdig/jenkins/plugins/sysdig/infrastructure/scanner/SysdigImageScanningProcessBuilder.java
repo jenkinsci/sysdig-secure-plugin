@@ -29,6 +29,7 @@ public class SysdigImageScanningProcessBuilder implements Cloneable {
   private EnvVars extraEnvVars;
   private OutputStream redirectedStdoutStream;
   private OutputStream redirectedStdErrStream;
+  private boolean separateByLayer;
 
 
   SysdigImageScanningProcessBuilder(String sysdigCLIPath, String sysdigAPIToken) {
@@ -46,6 +47,7 @@ public class SysdigImageScanningProcessBuilder implements Cloneable {
     this.workingDirectory = null;
     this.extraEnvVars = new EnvVars();
     this.extraEnvVars.put("SECURE_API_TOKEN", sysdigAPIToken);
+    this.separateByLayer = false;
   }
 
   public SysdigImageScanningProcessBuilder withEngineURL(String engineurl) {
@@ -146,6 +148,12 @@ public class SysdigImageScanningProcessBuilder implements Cloneable {
     return withStderrRedirectedTo(new LogOutputStreamAdapter(sysdigLogger));
   }
 
+  public SysdigImageScanningProcessBuilder withSeparateByLayer(boolean separateByLayer) {
+    var clone = this.clone();
+    clone.separateByLayer = separateByLayer;
+    return clone;
+  }
+
   public int launchAndWait(Launcher launcher) throws IOException, InterruptedException {
     Launcher.ProcStarter procStarter = launcher
       .launch()
@@ -163,14 +171,15 @@ public class SysdigImageScanningProcessBuilder implements Cloneable {
     var arguments = new ArrayList<String>();
     arguments.add(this.sysdigCLIPath);
     if (!Strings.isNullOrEmpty(engineURL)) arguments.add("--apiurl=" + engineURL);
+    if (!Strings.isNullOrEmpty(scanResultOutputPath)) arguments.add("--json-scan-result=" + scanResultOutputPath);
+    policiesToApply.stream().map(policy -> "--policy=" + policy).forEach(arguments::add);
     if (!Strings.isNullOrEmpty(dbPath)) arguments.add("--dbpath=" + dbPath);
     if (!Strings.isNullOrEmpty(cachePath)) arguments.add("--cachepath=" + cachePath);
-    if (!Strings.isNullOrEmpty(scanResultOutputPath)) arguments.add("--json-scan-result=" + scanResultOutputPath);
-    if (consoleLogEnabled) arguments.add("--console-log");
     arguments.add("--loglevel=" + logLevel.toString());
+    if (consoleLogEnabled) arguments.add("--console-log");
     if (!verifyTLS) arguments.add("--skiptlsverify");
+    if (separateByLayer) arguments.add("--separate-by-layer");
     arguments.addAll(extraParams);
-    policiesToApply.stream().map(policy -> "--policy=" + policy).forEach(arguments::add);
     arguments.add(imageToScan);
     return arguments;
   }
