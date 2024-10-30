@@ -42,21 +42,17 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Vector;
 
 public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   private static final String FIXED_SCANNED_VERSION = "1.16.1";
 
   private String engineCredentialsId;
-  private boolean listUnsupported = false; // --list-unsupported-resources
+  private boolean listUnsupported = false;
   private boolean isRecursive = true;
   private String path = "";
   private String severityThreshold = "h";
@@ -130,8 +126,8 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
 
   private SysdigIaCScanningProcessBuilder buildCommand(RunContext runContext, String exec) throws AbortException {
     SysdigIaCScanningProcessBuilder processBuilder = new SysdigIaCScanningProcessBuilder(exec, runContext.getSysdigTokenFromCredentials(engineCredentialsId))
-      .withRecursive(isRecursive)
-      .withUnsupportedResources(listUnsupported)
+      .withRecursive(getIsRecursive())
+      .withUnsupportedResources(isListUnsupported())
       .withSeverity(SysdigIaCScanningProcessBuilder.Severity.fromString(severityThreshold))
       .withPathsToScan(path)
       .withStdoutRedirectedTo(runContext.getLogger())
@@ -168,7 +164,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     logger.logInfo("Starting scan");
     try {
       String exec = filePath.getRemote();
-      var processBuilder = buildCommand(runContext, exec);
+      SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec);
       logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
       int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
