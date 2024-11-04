@@ -7,7 +7,6 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class ImageScanningE2EPipelineTests {
-
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
   private final JenkinsTestHelpers helpers = new JenkinsTestHelpers(jenkins);
@@ -20,10 +19,8 @@ public class ImageScanningE2EPipelineTests {
   @Test
   public void testPipelineWithDefaultConfig() throws Exception {
     var job = helpers.createPipelineJobWithScript(
-      "node {\n" +
-        "  sysdigImageScan imageName: 'nginx'\n" +
-        "}"
-    ).build();
+      "sysdigImageScan imageName: 'nginx'"
+    ).buildWithRemoteExecution();
 
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
@@ -33,26 +30,22 @@ public class ImageScanningE2EPipelineTests {
   @Test
   public void testPipelineWithCredentialsAndAssertLogOutput() throws Exception {
     var job = helpers.createPipelineJobWithScript(
-      "node {\n" +
-        "  sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'\n" +
-        "}"
-    ).build();
+      "sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'"
+    ).buildWithRemoteExecution();
 
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
+    jenkins.waitUntilNoActivity();
 
     jenkins.assertLogContains("Using new-scanning engine", build);
     jenkins.assertLogContains("Image Name: alpine", build);
     jenkins.assertLogContains("Downloading inlinescan v1.16.1", build);
-    jenkins.assertLogContains("Unable to retrieve MainDB", build);
-    jenkins.assertLogContains("401 Unauthorized", build);
-    jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
+    jenkins.assertLogContains("Check that the API token is provided and is valid for the specified URL.", build);
   }
 
   @Test
   public void testPipelineWithAllConfigs() throws Exception {
     var job = helpers.createPipelineJobWithScript(
-      "node {\n" +
-        "  sysdigImageScan engineCredentialsId: 'sysdig-secure',\n" +
+        "sysdigImageScan engineCredentialsId: 'sysdig-secure',\n" +
         "                  engineURL: 'https://custom-engine-url.com',\n" +
         "                  engineVerify: false,\n" +
         "                  imageName: 'nginx',\n" +
@@ -61,9 +54,8 @@ public class ImageScanningE2EPipelineTests {
         "                  cliVersionToApply: 'custom',\n" +
         "                  policiesToApply: 'custom-policy-name',\n" +
         "                  bailOnFail: false,\n" +
-        "                  bailOnPluginFail: false\n" +
-        "}"
-    ).build();
+        "                  bailOnPluginFail: false"
+    ).buildWithRemoteExecution();
 
     var build = jenkins.buildAndAssertSuccess(job);
 
@@ -82,9 +74,7 @@ public class ImageScanningE2EPipelineTests {
   @Test
   public void testPipelineWithMinimalConfigButAlsoGlobalConfig() throws Exception {
     var job = helpers.createPipelineJobWithScript(
-      "node {\n" +
-        "  sysdigImageScan 'nginx' " +
-        "}"
+      "sysdigImageScan 'nginx'"
     ).withGlobalConfig(b -> {
       b.setEngineCredentialsId("sysdig-secure");
       b.setEngineURL("https://custom-engine-url.com");
@@ -93,7 +83,7 @@ public class ImageScanningE2EPipelineTests {
       b.setCustomCliVersion("2.0.0");
       b.setCliVersionToApply("custom");
       b.setPoliciesToApply("custom-policy-name");
-    }).build();
+    }).buildWithRemoteExecution();
 
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 

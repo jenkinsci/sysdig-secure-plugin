@@ -30,16 +30,6 @@
               self.overlays.default
             ];
           };
-
-          helm_with_plugins =
-            with pkgs;
-            wrapHelm kubernetes-helm {
-              # https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=kubernetes-helmPlugins
-              plugins = with kubernetes-helmPlugins; [
-                helm-diff # Required for `helm diff` and `helmfile apply`
-              ];
-            };
-          helmfile_with_plugins = pkgs.helmfile-wrapped.override { inherit (helm_with_plugins) pluginsDir; };
         in
         {
           packages = {
@@ -51,9 +41,6 @@
               jdt-language-server
               maven
               jdk
-
-              helm_with_plugins
-              helmfile_with_plugins
             ];
           };
           formatter = pkgs.nixfmt-rfc-style;

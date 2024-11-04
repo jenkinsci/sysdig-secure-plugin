@@ -7,9 +7,9 @@ import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class ImageScanningE2EFreestyleTests {
-
   @Rule
   public JenkinsRule jenkins = new JenkinsRule();
+
   private final JenkinsTestHelpers helpers = new JenkinsTestHelpers(jenkins);
 
   @Before
@@ -33,15 +33,14 @@ public class ImageScanningE2EFreestyleTests {
       .build();
 
     var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+    jenkins.waitUntilNoActivity();
 
     jenkins.assertLogContains("Using new-scanning engine", build);
     jenkins.assertLogContains("Image Name: alpine", build);
     jenkins.assertLogContains("Downloading inlinescan v1.16.1", build);
     jenkins.assertLogContains("--apiurl=https://secure.sysdig.com", build);
     jenkins.assertLogContains("--loglevel=info --console-log alpine", build);
-    jenkins.assertLogContains("Unable to retrieve MainDB", build);
-    jenkins.assertLogContains("401 Unauthorized", build);
-    jenkins.assertLogContains("Failed to perform inline-scan due to an unexpected error", build);
+    jenkins.assertLogContains("Check that the API token is provided and is valid for the specified URL.", build);
   }
 
   @Test

@@ -72,7 +72,7 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       // Execute the scanner bin file and retrieves its json output
       String imageScanningResultJSON = executeScan(scannerBinaryFile);
       JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
-      return ImageScanningResult.fromReportResult(jsonScanResult.getResult().orElseThrow());
+      return ImageScanningResult.fromReportResult(jsonScanResult.getResult().orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON))));
     } finally {
       purgeExecutionWorkspace();
     }
@@ -162,7 +162,7 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       if (scannerExitCode == 2) {
         jsonOutput = "{error:\"Wrong parameters in call to inline scanner\"}";
       } else if (scannerExitCode == 3) {
-        jsonOutput = "{error:\"Unexpected error when executing scan\"}";
+        jsonOutput = "{error:\"Unexpected error when executing scan. Check that the API token is provided and is valid for the specified URL.\"}";
       } else if (scannerExitCode != 0 && scannerExitCode != 1) {
         throw new Exception("Cannot manage return code");
       }
