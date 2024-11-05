@@ -63,8 +63,6 @@ public class RunContext implements Serializable {
    * @param workspace The workspace directory.
    * @param envVars   The environment variables of the run execution.
    * @param listener  The task listener for logging.
-   * @throws IOException          If an I/O error occurs.
-   * @throws InterruptedException If the thread is interrupted.
    */
   public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull TaskListener listener) {
     this.run = run;

@@ -6,3 +6,6 @@ update-parent-pom:
 
 update-dependencies:
 	mvn versions:use-latest-versions
+
+verify:
+	mvn clean verify javadoc:jar
