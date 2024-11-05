@@ -1,0 +1,133 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <l:layout norefresh="true">
+        <st:include it="${it.build}" page="sidepanel.jelly"/>
+
+        <l:main-panel>
+            <j:choose>
+                <j:when test="${!empty(it.gateOutputUrl)}">
+                    <st:include page="scripts.jelly" it="${it}"/>
+                    <div class="secure-report">
+                        <ul class="nav nav-pills" role="tablist" style="height: 50px;">
+                            <li role="presentation" class="active">
+                                <a href="#gates" aria-controls="gates" role="tab" data-toggle="tab">Policy</a>
+                            </li>
+                            <j:set var="counter" value="0"/>
+                            <j:if test="${!empty(it.cveListingUrl)}">
+                                <li role="presentation">
+                                    <a href="#security" aria-controls="security" role="tab" data-toggle="tab">Security
+                                    </a>
+                                </li>
+                            </j:if>
+                        </ul>
+
+                        <!-- Tab panes -->
+                        <div class="tab-content">
+                            <div role="tabpanel" class="tab-pane active fade in" id="gates">
+                                <j:if test="${!empty(it.gateSummary)}">
+                                    <h3 class="title">Sysdig Secure Policy Evaluation Summary</h3>
+                                    <div class="d-flex flex-column">
+                                        <table id="gates_summary_table"
+                                               class="table table-striped table-bordered dataTable no-footer"
+                                               style="width: 100%;"></table>
+                                    </div>
+                                    <script type="text/javascript">
+                                        buildPolicyEvalSummaryTable("#gates_summary_table", ${it.gateSummary});
+                                    </script>
+                                </j:if>
+
+                                <h3 class="title">Sysdig Secure Policy Evaluation Report</h3>
+                                <table id="gates_table" class="table table-striped table-bordered dataTable no-footer"
+                                       style="width: 100%;"></table>
+                                <script type="text/javascript">
+                                    buildPolicyEvalTable("#gates_table", "${it.gateOutputUrl}");
+                                </script>
+                            </div>
+
+                            <j:if test="${!empty(it.cveListingUrl)}">
+                                <div role="tabpanel" class="tab-pane fade" id="security">
+                                    <h3 class="title">Common Vulnerabilities and Exposures (CVE) List</h3>
+                                    <div class="d-flex flex-column">
+                                        <div class="row">
+                                            <div class="col-sm-11 filter-bar dataTables_wrapper">
+                                                <div class="flex-container dataTables_length">
+                                                    <label for="fix_select">Fix</label>
+                                                    <select
+                                                        name="fix_select"
+                                                        class="form-control input-sm select-field"
+                                                        id="fix_select"
+                                                        style="width: auto;"
+                                                    >
+                                                        >
+                                                        <option></option>
+                                                        <option value="Available">Available</option>
+                                                        <option value="None">Not Available</option>
+                                                    </select>
+                                                </div>
+                                                <div class="flex-container dataTables_length">
+                                                    <label for="severity_select">Severity
+                                                    </label
+                                                    >
+                                                    <select
+                                                        name="severity_select_criteria"
+                                                        id="severity_select_criteria"
+                                                        class="form-control input-sm select-field"
+                                                        style="width: auto;"
+                                                    >
+                                                        <option value="geq">&gt;=</option>
+                                                        <option value="eq">=</option>
+                                                        <option value="leq">&lt;=</option>
+                                                    </select>
+                                                    <select
+                                                        name="severity_select"
+                                                        id="severity_select"
+                                                        class="form-control input-sm"
+                                                        style="width: auto;"
+                                                    >
+                                                        <option></option>
+                                                        <option value="Critical">Critical</option>
+                                                        <option value="High">High</option>
+                                                        <option value="Medium">Medium</option>
+                                                        <option value="Low">Low</option>
+                                                        <option value="Negligible">Negligible</option>
+                                                        <option value="Unknown">Unknown</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-1 download-csv">
+                                                <button class="btn btn-primary" onclick="download_csv()">
+                                                    Download CSV
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column">
+                                        <table id="security_table" class="table table-striped table-bordered dataTable "
+                                               style="width: 100%;"></table>
+                                    </div>
+                                    <script type="text/javascript">
+                                        buildSecurityTable("#security_table", "${it.cveListingUrl}");
+                                    </script>
+                                </div>
+                            </j:if>
+                        </div>
+                    </div>
+                </j:when>
+
+                <j:otherwise>
+                    <h3>Sysdig Secure Policy Evaluation Report</h3>
+                    <iframe width="100%" height="300" frameborder="1" src="${it.gateReportUrl}"/>
+                    <br></br>
+
+                    <j:forEach var="e" items="${it.queries}">
+                        <h3>Sysdig Secure Image Query Report (${e.value})</h3>
+                        <iframe width="100%" height="300" frameborder="1" src="${e.key}"/>
+                        <br></br>
+                    </j:forEach>
+                </j:otherwise>
+
+            </j:choose>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

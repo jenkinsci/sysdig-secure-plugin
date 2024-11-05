@@ -1,0 +1,49 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+    <f:section title="Sysdig Secure Plugin">
+
+        <f:entry title="Sysdig Secure Engine URL" field="engineURL"
+                 help="/plugin/sysdig-secure/help/help-OverrideAEURL.html">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry field="engineCredentialsId" title="Sysdig Secure API credentials"
+                 help="/plugin/sysdig-secure/help/help-OverrideAECredentials.html">
+            <c:select/>
+        </f:entry>
+
+        <f:entry>
+            <f:checkbox name="engineVerify" checked="${instance.engineVerify}" title="Verify SSL"
+                        default="${descriptor.DEFAULT_ENGINE_VERIFY}"/>
+        </f:entry>
+
+        <f:entry title="Extra parameters for inlinescan execution" field="inlineScanExtraParams">
+            <f:textbox default=""/>
+        </f:entry>
+
+        <f:entry title="Scanner binary path" field="scannerBinaryPath"
+                 help="/plugin/sysdig-secure/help/help-OverrideScannerBinaryPath.html">
+            <f:textbox/>
+        </f:entry>
+
+        <f:advanced title="Advanced Image Scanning Options">
+            <f:entry title="Identifiers of policies to apply" field="policiesToApply">
+                <f:textbox/>
+            </f:entry>
+
+            <f:entry title="Sysdig Secure CLI Version To Use" field="cliVersionToApply"
+                     description="WARNING: Using custom versions of the CLI may result in failures due to compatibility issues. Use at your own risk!"
+                     help="/plugin/sysdig-secure/help/help-OverrideCliVersionToApply.html">
+                <f:radio name="cliVersionToApply" title="Use global setting" value=""
+                         checked="true"/>
+                <f:radio name="cliVersionToApply" title="Override global version setting" value="custom"
+                         checked="${instance.cliVersionToApply == 'custom'}">
+                    <f:textbox name="customCliVersion" field="customCliVersion"/>
+                </f:radio>
+            </f:entry>
+        </f:advanced>
+
+    </f:section>
+
+</j:jelly>

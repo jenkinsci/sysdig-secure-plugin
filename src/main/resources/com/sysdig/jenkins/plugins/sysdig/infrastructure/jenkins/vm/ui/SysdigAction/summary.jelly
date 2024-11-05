@@ -1,0 +1,8 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
+         xmlns:t="/lib/hudson">
+    <t:summary href="${it.urlName}" icon="/plugin/sysdig-secure/images/sysdig-shovel.png">
+        <a href="${it.urlName}">${it.displayName}</a>
+        <st:include page="newEngineSummary.jelly" it="${it}"/>
+    </t:summary>
+</j:jelly>

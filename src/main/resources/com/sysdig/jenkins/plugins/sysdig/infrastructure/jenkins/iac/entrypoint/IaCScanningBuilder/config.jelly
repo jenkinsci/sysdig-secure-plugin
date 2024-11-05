@@ -1,0 +1,42 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+
+    <f:entry title="Sysdig Secure Engine URL" field="sysdigEnv" help="/plugin/sysdig-secure/help/help-sysdigEnv.html">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry field="engineCredentialsId" title="Sysdig Secure API credentials">
+        <c:select/>
+    </f:entry>
+
+    <f:entry title="Path to scan" field="path" help="/plugin/sysdig-secure/help/help-path.html">
+        <f:textbox/>
+    </f:entry>
+
+    <f:advanced>
+
+        <f:entry title="List Unsupported Resources" field="listUnsupported"
+                 description="Toggle output of detailed list of unsupported resources">
+            <f:checkbox/>
+        </f:entry>
+
+        <f:entry title="Recursive"
+                 field="isRecursive">
+            <f:checkbox default="${descriptor.DEFAULT_IS_RECURSIVE}"/>
+        </f:entry>
+
+        <f:entry title="Choose Severity Threshold" field="severityThreshold">
+            <select name="severityThreshold">
+                <option value="h">High</option>
+                <option value="m">Medium</option>
+                <option value="l">Low</option>
+                <option value="n">Never</option>
+            </select>
+        </f:entry>
+
+        <f:entry title="CLI Version to use" field="version">
+            <f:textbox default="${descriptor.DEFAULT_CLI_VERSION}"/>
+        </f:entry>
+
+    </f:advanced>
+</j:jelly>

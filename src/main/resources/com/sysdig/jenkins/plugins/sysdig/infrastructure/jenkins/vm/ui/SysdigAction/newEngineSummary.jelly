@@ -1,0 +1,9 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <st:include page="scripts.jelly" it="${it}"/>
+    <script type="text/javascript">
+        getSummaryRecap('#result-summary', '${it.cveListingUrl}', '${it.gateOutputUrl}');
+    </script>
+    <div id="result-summary"/>
+</j:jelly>

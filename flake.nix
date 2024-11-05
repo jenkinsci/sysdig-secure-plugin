@@ -3,59 +3,49 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
   outputs =
-    { self, nixpkgs }:
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+
     let
-      supportedSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
+      overlays.default = final: prev: { plugin = final.callPackage ./plugin.nix { }; };
 
       setJavaVersion = final: prev: {
         jdk = prev.temurin-bin-17;
         jdt-language-server = prev.jdt-language-server.override { jdk = prev.jdk; };
       };
 
-      forEachSystem =
-        f:
-        nixpkgs.lib.genAttrs supportedSystems (
-          system:
-          let
-            pkgs = import nixpkgs {
-              inherit system;
-              overlays = [
-                setJavaVersion
-                self.overlays.default
-              ];
-            };
-          in
-          f pkgs
-        );
-    in
-    {
-      overlays.default = final: prev: { plugin = final.pkgs.callPackage ./plugin.nix { }; };
-
-      packages = forEachSystem (
-        pkgs: with pkgs; {
-          inherit plugin;
-          default = plugin;
-        }
-      );
-      devShells = forEachSystem (
-        pkgs: with pkgs; {
-          default = mkShell {
-            buildInputs = [
+      flake = flake-utils.lib.eachDefaultSystem (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [
+              setJavaVersion
+              self.overlays.default
+            ];
+          };
+        in
+        {
+          packages = {
+            inherit (pkgs) plugin;
+            default = pkgs.plugin;
+          };
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [
               jdt-language-server
               maven
               jdk
             ];
           };
+          formatter = pkgs.nixfmt-rfc-style;
         }
       );
-
-      formatter = forEachSystem (pkgs: pkgs.nixfmt-rfc-style);
-    };
+    in
+    flake // { inherit overlays; };
 }
