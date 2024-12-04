@@ -31,16 +31,13 @@ import jenkins.tasks.SimpleBuildStep;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Collections;
 
 /**
  * Wraps the context of a Jenkins run.
  * A run represents the runtime execution of a Jenkins job.
  */
-public class RunContext implements Serializable {
-  private static final long serialVersionUID = 1;
-
+public class RunContext {
   // The Jenkins run associated with this context
   private final transient Run<?, ?> run;
 
@@ -56,6 +53,9 @@ public class RunContext implements Serializable {
   // Custom logger for Sysdig-specific logging
   private final SysdigLogger logger;
 
+  // Launcher to launch processes;
+  private final Launcher launcher;
+
   /**
    * Constructs a new RunContext with the given parameters.
    *
@@ -64,11 +64,12 @@ public class RunContext implements Serializable {
    * @param envVars   The environment variables of the run execution.
    * @param listener  The task listener for logging.
    */
-  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull TaskListener listener) {
+  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
     this.run = run;
     this.workspace = workspace;
     this.listener = listener;
     this.envVars = envVars;
+    this.launcher = launcher;
     this.logger = new ConsoleLog("SysdigSecurePlugin", listener, false);
   }
 
@@ -186,7 +187,12 @@ public class RunContext implements Serializable {
     return workspace.act(act);
   }
 
-  public Launcher getLauncher() throws IOException, InterruptedException {
-    return workspace.createLauncher(listener);
+  /**
+   * Returns a launcher that is able to perform commands either locally or remotely, based on the context of the run.
+   *
+   * @return The launcher to perform commands.
+   */
+  public Launcher getLauncher() {
+    return launcher;
   }
 }

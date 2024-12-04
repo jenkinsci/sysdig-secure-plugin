@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningException;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
@@ -38,14 +37,10 @@ public class SysdigImageScanner implements ImageScanner {
     try {
       RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(this.runContext);
       RemoteSysdigImageScanner task = new RemoteSysdigImageScanner(runContext, downloader, imageTag, config);
-      return runContext.call(task);
-    } catch (ImageScanningException e) {
-      runContext.getLogger().logError(e.getMessage());
-      throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
+      return task.performScan();
     } catch (Exception e) {
       runContext.getLogger().logError("Failed to perform inline-scan due to an unexpected error", e);
       throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
     }
   }
 }
-

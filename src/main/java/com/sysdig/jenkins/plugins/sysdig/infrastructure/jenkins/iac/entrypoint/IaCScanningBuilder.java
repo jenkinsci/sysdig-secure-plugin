@@ -146,7 +146,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
     throws InterruptedException, IOException {
-    RunContext runContext = new RunContext(run, workspace, envVars, listener);
+    RunContext runContext = new RunContext(run, workspace, envVars, launcher, listener);
     SysdigLogger logger = runContext.getLogger();
 
     logger.logInfo("Attempting to download CLI");

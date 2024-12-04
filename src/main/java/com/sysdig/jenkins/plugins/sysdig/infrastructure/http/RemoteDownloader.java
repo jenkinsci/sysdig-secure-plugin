@@ -7,13 +7,12 @@ import hudson.FilePath;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class RemoteDownloader implements Serializable {
+public class RemoteDownloader {
   private final RunContext runContext;
   protected final SysdigLogger logger;
   private final EnvVars envVars;

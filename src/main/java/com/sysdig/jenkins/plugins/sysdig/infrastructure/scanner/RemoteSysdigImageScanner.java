@@ -25,22 +25,15 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;
-import hudson.remoting.Callable;
-import org.apache.commons.io.FileUtils;
-import org.jenkinsci.remoting.RoleChecker;
 
 import javax.annotation.Nonnull;
-import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 
-public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, Exception> {
+public class RemoteSysdigImageScanner {
   private static final String FIXED_SCANNED_VERSION = "1.16.1";
   private final ScannerPaths scannerPaths;
   private final String imageName;
@@ -58,24 +51,15 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     this.logger = runContext.getLogger();
   }
 
-  @Override
-  public void checkRoles(RoleChecker checker) throws SecurityException {
-  }
-
-  @Override
-  public ImageScanningResult call() throws AbortException {
-    try {
-      // Create all the necessary folders to store execution temp files and such
-      createExecutionWorkspace();
-      // Retrieve the scanner bin file
-      final FilePath scannerBinaryFile = retrieveScannerBinFile();
-      // Execute the scanner bin file and retrieves its json output
-      String imageScanningResultJSON = executeScan(scannerBinaryFile);
-      JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
-      return ImageScanningResult.fromReportResult(jsonScanResult.getResult().orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON))));
-    } finally {
-      purgeExecutionWorkspace();
-    }
+  public ImageScanningResult performScan() throws AbortException {
+    // Create all the necessary folders to store execution temp files and such
+    createExecutionWorkspace();
+    // Retrieve the scanner bin file
+    final FilePath scannerBinaryFile = retrieveScannerBinFile();
+    // Execute the scanner bin file and retrieves its json output
+    String imageScanningResultJSON = executeScan(scannerBinaryFile);
+    JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
+    return ImageScanningResult.fromReportResult(jsonScanResult.getResult().orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON))));
   }
 
   private FilePath downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {
@@ -119,14 +103,6 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     }
   }
 
-  private void purgeExecutionWorkspace() {
-    try {
-      this.scannerPaths.purge();
-    } catch (IOException e) {
-      logger.logError("Unable to delete scanner execution workspace", e);
-    }
-  }
-
   private FilePath retrieveScannerBinFile() throws AbortException {
     if (!Strings.isNullOrEmpty(config.getScannerBinaryPath())) {
       FilePath scannerBinaryPath = runContext.getPathFromWorkspace(config.getScannerBinaryPath());
@@ -148,7 +124,7 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
 
   private String executeScan(final FilePath scannerBinFile) throws AbortException {
     try {
-      final File scannerJsonOutputFile = Files.createFile(Paths.get(this.scannerPaths.getBaseFolder(), "inlinescan.json")).toFile();
+      final FilePath scannerJsonOutputFile = this.scannerPaths.getBaseFolder().child("inlinescan.json");
       SysdigImageScanningProcessBuilder processBuilder = createProcessBuilder(scannerBinFile, scannerJsonOutputFile);
 
       logger.logInfo("Executing: " + String.join(" ", processBuilder.toCommandLineArguments()));
@@ -156,7 +132,8 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
       int scannerExitCode = processBuilder.launchAndWait(this.runContext.getLauncher());
       logger.logInfo(String.format("Scanner exit code: %d", scannerExitCode));
 
-      String jsonOutput = Files.readString(Paths.get(scannerJsonOutputFile.getAbsolutePath()), Charset.defaultCharset());
+      String jsonOutput = "";
+      if (scannerJsonOutputFile.exists()) jsonOutput = scannerJsonOutputFile.readToString();
       logger.logDebug("Inline scan JSON output:\n" + jsonOutput);
 
       if (scannerExitCode == 2) {
@@ -173,13 +150,13 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
     }
   }
 
-  private SysdigImageScanningProcessBuilder createProcessBuilder(FilePath scannerBinFile, File scannerJsonOutputFile) {
+  private SysdigImageScanningProcessBuilder createProcessBuilder(FilePath scannerBinFile, FilePath scannerJsonOutputFile) {
     SysdigImageScanningProcessBuilder processBuilder = new SysdigImageScanningProcessBuilder(scannerBinFile.getRemote(), this.config.getSysdigToken())
       .withExtraEnvVars(this.runContext.getEnvVars())
       .withEngineURL(this.config.getEngineurl())
-      .withDBPath(this.scannerPaths.getDatabaseFolder())
-      .withCachePath(this.scannerPaths.getCacheFolder())
-      .withScanResultOutputPath(scannerJsonOutputFile.getAbsolutePath())
+      .withDBPath(this.scannerPaths.getDatabaseFolder().getRemote())
+      .withCachePath(this.scannerPaths.getCacheFolder().getRemote())
+      .withScanResultOutputPath(scannerJsonOutputFile.getRemote())
       .withConsoleLog()
       .withExtraParametersSeparatedBySpace(this.config.getInlineScanExtraParams())
       .withPoliciesToApplySeparatedBySpace(this.config.getPoliciesToApply())
@@ -193,36 +170,32 @@ public class RemoteSysdigImageScanner implements Callable<ImageScanningResult, E
 
   private static class ScannerPaths implements Serializable {
     private static final String SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN = "sysdig-secure-scan-%d";
-    private final String baseFolder;
-    private final String databaseFolder;
-    private final String cacheFolder;
+    private final FilePath baseFolder;
+    private final FilePath databaseFolder;
+    private final FilePath cacheFolder;
 
     public ScannerPaths(final FilePath basePath) {
-      this.baseFolder = Paths.get(basePath.getRemote(), String.format(SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN, System.currentTimeMillis())).toString();
-      this.databaseFolder = Paths.get(this.baseFolder, "db").toString();
-      this.cacheFolder = Paths.get(this.baseFolder, "cache").toString();
+      this.baseFolder = basePath.child(String.format(SCANNER_EXEC_FOLDER_BASE_PATH_PATTERN, System.currentTimeMillis()));
+      this.databaseFolder = baseFolder.child("db");
+      this.cacheFolder = baseFolder.child("cache");
     }
 
-    public String getBaseFolder() {
+    public FilePath getBaseFolder() {
       return this.baseFolder;
     }
 
-    public String getDatabaseFolder() {
+    public FilePath getDatabaseFolder() {
       return this.databaseFolder;
     }
 
-    public String getCacheFolder() {
+    public FilePath getCacheFolder() {
       return this.cacheFolder;
     }
 
     public void create() throws Exception {
-      Files.createDirectories(Paths.get(this.baseFolder));
-      Files.createDirectory(Paths.get(this.databaseFolder));
-      Files.createDirectory(Paths.get(this.cacheFolder));
-    }
-
-    public void purge() throws IOException {
-      FileUtils.deleteDirectory(new File(this.baseFolder));
+      this.baseFolder.mkdirs();
+      this.databaseFolder.mkdirs();
+      this.cacheFolder.mkdirs();
     }
   }
 

@@ -16,8 +16,8 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm;
 
 import com.google.common.base.Strings;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
 import hudson.AbortException;
 import hudson.PluginWrapper;
