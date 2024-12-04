@@ -17,14 +17,14 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonObject;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.ReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.VulnerabilityReportProcessor;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.ReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;

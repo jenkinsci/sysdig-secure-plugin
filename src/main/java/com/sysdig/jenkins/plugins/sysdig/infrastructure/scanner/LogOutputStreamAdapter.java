@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-class LogOutputStreamAdapter extends OutputStream {
+public class LogOutputStreamAdapter extends OutputStream {
   private final SysdigLogger logger;
   private final StringBuilder buffer = new StringBuilder();
   private final String newline = System.lineSeparator();

@@ -165,7 +165,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
 
   @Override
   public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
-    var runContext = new RunContext(run, workspace, envVars, listener);
+    var runContext = new RunContext(run, workspace, envVars, launcher, listener);
     var logger = runContext.getLogger();
     ImageImageScanningConfig config = new ImageImageScanningConfig(runContext, this);
 

@@ -16,10 +16,10 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
+import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
-import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import hudson.AbortException;
 
 import javax.annotation.Nonnull;
