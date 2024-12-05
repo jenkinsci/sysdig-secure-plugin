@@ -204,7 +204,7 @@ public class ImageScanningStep extends Step implements BuildStep {
   @Extension // This indicates to Jenkins that this is an implementation of an extension point.
   public static final class DescriptorImpl extends StepDescriptor {
 
-    public static final String DEFAULT_NAME = "sysdig_secure_images";
+
     public static final boolean DEFAULT_BAIL_ON_FAIL = true;
     public static final boolean DEFAULT_BAIL_ON_PLUGIN_FAIL = true;
     public static final String DEFAULT_ENGINE_URL = "https://secure.sysdig.com";
