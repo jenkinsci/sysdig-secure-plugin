@@ -32,17 +32,11 @@
                                                class="table table-striped table-bordered dataTable no-footer"
                                                style="width: 100%;"></table>
                                     </div>
-                                    <script type="text/javascript">
-                                        buildPolicyEvalSummaryTable("#gates_summary_table", ${it.gateSummary});
-                                    </script>
                                 </j:if>
 
                                 <h3 class="title">Sysdig Secure Policy Evaluation Report</h3>
                                 <table id="gates_table" class="table table-striped table-bordered dataTable no-footer"
                                        style="width: 100%;"></table>
-                                <script type="text/javascript">
-                                    buildPolicyEvalTable("#gates_table", "${it.gateOutputUrl}");
-                                </script>
                             </div>
 
                             <j:if test="${!empty(it.cveListingUrl)}">
@@ -106,10 +100,18 @@
                                         <table id="security_table" class="table table-striped table-bordered dataTable "
                                                style="width: 100%;"></table>
                                     </div>
-                                    <script type="text/javascript">
-                                        buildSecurityTable("#security_table", "${it.cveListingUrl}");
-                                    </script>
                                 </div>
+
+                                <!--
+                                    In order to prevent XSS, we need to hold the data in an HTML element called 'data-holder' and adjunct the script,
+                                    that will retrieve the contents of the div, and execute the script on DOMContentLoaded
+                                 -->
+                                <div id="index-data-holder"
+                                     data-gates-summary-table="${it.gateSummary}"
+                                     data-gates-table="${it.gateOutputUrl}"
+                                     data-security-table="${it.cveListingUrl}"
+                                />
+                                <st:adjunct includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction.index-script" />
                             </j:if>
                         </div>
                     </div>
@@ -126,7 +128,6 @@
                         <br></br>
                     </j:forEach>
                 </j:otherwise>
-
             </j:choose>
         </l:main-panel>
     </l:layout>
