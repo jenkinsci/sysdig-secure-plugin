@@ -24,9 +24,10 @@
   </licenses>
 
   <properties>
-    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/#currently-recommended-versions -->
     <!-- You can check out which versions are being used per version in https://stats.jenkins.io/pluginversions/sysdig-secure.html -->
-    <jenkins.version>2.440.3</jenkins.version>
+    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+    <jenkins.baseline>2.440</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/mark-a-plugin-incompatible/ -->
     <hpi.compatibleSinceVersion>3.0</hpi.compatibleSinceVersion>
   </properties>
@@ -65,7 +66,7 @@
       <!-- https://www.jenkins.io/doc/developer/tutorial-improve/update-base-jenkins-version/#update-minimum-required-jenkins-version -->
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId> <!-- This should match the Jenkins version configured. You can find out existing ones in https://repo.jenkins-ci.org/artifactory/public/io/jenkins/tools/bom/ -->
+        <artifactId>bom-${jenkins.baseline}.x</artifactId>
         <version>3435.v238d66a_043fb_</version>
         <type>pom</type>
         <scope>import</scope>
