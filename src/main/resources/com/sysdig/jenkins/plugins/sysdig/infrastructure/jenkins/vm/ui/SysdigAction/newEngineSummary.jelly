@@ -2,8 +2,15 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <st:include page="scripts.jelly" it="${it}"/>
-    <script type="text/javascript">
-        getSummaryRecap('#result-summary', '${it.cveListingUrl}', '${it.gateOutputUrl}');
-    </script>
+
+    <!--
+        In order to prevent XSS, we need to hold the data in an HTML element called 'data-holder' and adjunct the script,
+        that will retrieve the contents of the div, and execute the script on DOMContentLoaded
+     -->
+    <div id="result-summary-data-holder"
+         data-cve-listing-url="${it.cveListingUrl}"
+         data-gate-output-url="${it.gateOutputUrl}">
+    </div>
+    <st:adjunct includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction.new-engine-summary" />
     <div id="result-summary"/>
 </j:jelly>
