@@ -22,7 +22,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
 import hudson.AbortException;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.util.Optional;
 
 public class ImageScanningApplicationService {

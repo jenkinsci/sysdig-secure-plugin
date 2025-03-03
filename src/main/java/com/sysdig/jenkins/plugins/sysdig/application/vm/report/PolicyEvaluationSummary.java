@@ -15,7 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 

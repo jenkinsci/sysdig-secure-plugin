@@ -21,7 +21,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 public class SysdigImageScanner implements ImageScanner {
   protected final ImageScanningConfig config;

@@ -85,8 +85,7 @@ public class PolicyEvaluationReportLine {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof PolicyEvaluationReportLine)) return false;
-    PolicyEvaluationReportLine line = (PolicyEvaluationReportLine) o;
+    if (!(o instanceof PolicyEvaluationReportLine line)) return false;
     return Objects.equals(imageID, line.imageID) &&
       Objects.equals(repoTag, line.repoTag) &&
       Objects.equals(triggerID, line.triggerID) &&

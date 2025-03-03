@@ -5,7 +5,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import hudson.EnvVars;
 import hudson.FilePath;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;

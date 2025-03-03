@@ -18,7 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 
 public class ImageScanningArchiver implements ScanResultArchiver {

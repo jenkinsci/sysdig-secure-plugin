@@ -28,9 +28,7 @@ public class PolicyEvaluationReportSerializer implements JsonSerializer<PolicyEv
   public JsonElement serialize(PolicyEvaluationReport policyEvaluationReport, Type type, JsonSerializationContext jsonSerializationContext) {
     JsonObject jsonObject = new JsonObject();
 
-    policyEvaluationReport.getResultsForEachImage().entrySet().forEach(keyPair -> {
-      jsonObject.add(keyPair.getKey(), serializeTopLevelResultsList(policyEvaluationReport, keyPair.getValue()));
-    });
+    policyEvaluationReport.getResultsForEachImage().forEach((key, value) -> jsonObject.add(key, serializeTopLevelResultsList(policyEvaluationReport, value)));
 
     return jsonObject;
   }

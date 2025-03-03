@@ -25,6 +25,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ImageImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.JenkinsReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigImageScanner;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -45,7 +46,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -164,7 +165,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException {
     var runContext = new RunContext(run, workspace, envVars, launcher, listener);
     var logger = runContext.getLogger();
     ImageImageScanningConfig config = new ImageImageScanningConfig(runContext, this);
@@ -209,6 +210,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
       return true;
     }
 
+    @NonNull
     @Override
     public String getDisplayName() {
       return "Sysdig Image Scanning";
@@ -242,7 +244,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
         return result.includeCurrentValue(credentialsId);
       }
 
-      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
+      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM2,
         Jenkins.get(),
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),

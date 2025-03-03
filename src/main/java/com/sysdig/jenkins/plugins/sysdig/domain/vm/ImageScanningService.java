@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class

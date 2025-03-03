@@ -3,7 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.http;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import hudson.FilePath;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;

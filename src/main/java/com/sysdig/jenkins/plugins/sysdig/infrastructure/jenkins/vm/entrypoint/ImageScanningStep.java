@@ -29,8 +29,9 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Set;
 
@@ -172,6 +173,7 @@ public class ImageScanningStep extends Step implements BuildStep {
 
   private final static class Execution extends SynchronousNonBlockingStepExecution {
 
+    @Serial
     private static final long serialVersionUID = 1;
     private transient final ImageScanningBuilder builder;
 

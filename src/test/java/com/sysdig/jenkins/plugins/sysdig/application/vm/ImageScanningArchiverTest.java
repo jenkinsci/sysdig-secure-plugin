@@ -62,9 +62,7 @@ class ImageScanningArchiverTest {
   void whenSavePolicyReportFailsShouldThrowIOException() throws IOException, InterruptedException {
     doThrow(new IOException("IO Error")).when(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
 
-    IOException exception = assertThrows(IOException.class, () -> {
-      imageScanningArchiver.archiveScanResult(mockScanResult);
-    });
+    IOException exception = assertThrows(IOException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult));
 
     assertEquals("IO Error", exception.getMessage());
 
@@ -78,9 +76,7 @@ class ImageScanningArchiverTest {
   void whenSaveVulnerabilityReportIsInterruptedShouldThrowInterruptedException() throws IOException, InterruptedException {
     doThrow(new InterruptedException("Interrupted")).when(reportStorage).saveVulnerabilityReport(mockScanResult);
 
-    InterruptedException exception = assertThrows(InterruptedException.class, () -> {
-      imageScanningArchiver.archiveScanResult(mockScanResult);
-    });
+    InterruptedException exception = assertThrows(InterruptedException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult));
 
     assertEquals("Interrupted", exception.getMessage());
 

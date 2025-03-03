@@ -69,7 +69,7 @@ public class SysdigIaCScanningProcessBuilder extends SysdigProcessBuilderBase<Sy
 
   @Override
   public SysdigIaCScanningProcessBuilder clone() {
-    SysdigIaCScanningProcessBuilder cloned = (SysdigIaCScanningProcessBuilder) super.clone();
+    SysdigIaCScanningProcessBuilder cloned = super.clone();
     cloned.pathsToScan = new ArrayList<>(this.pathsToScan);
     return cloned;
   }
@@ -81,37 +81,23 @@ public class SysdigIaCScanningProcessBuilder extends SysdigProcessBuilderBase<Sy
     NEVER;
 
     public static Severity fromString(String severity) {
-      switch (severity.toLowerCase().trim()) {
-        case "high":
-        case "h":
-          return HIGH;
-        case "medium":
-        case "m":
-          return MEDIUM;
-        case "low":
-        case "l":
-          return LOW;
-        case "never":
-        case "n":
-          return NEVER;
-        default:
-          throw new IllegalArgumentException("Unsupported severity: " + severity);
-      }
+      return switch (severity.toLowerCase().trim()) {
+        case "high", "h" -> HIGH;
+        case "medium", "m" -> MEDIUM;
+        case "low", "l" -> LOW;
+        case "never", "n" -> NEVER;
+        default -> throw new IllegalArgumentException("Unsupported severity: " + severity);
+      };
     }
 
     @Override
     public String toString() {
-      switch (this) {
-        case HIGH:
-          return "high";
-        case MEDIUM:
-          return "medium";
-        case LOW:
-          return "low";
-        case NEVER:
-          return "never";
-      }
-      throw new RuntimeException("Non-exhaustive switch in Severity");
+      return switch (this) {
+        case HIGH -> "high";
+        case MEDIUM -> "medium";
+        case LOW -> "low";
+        case NEVER -> "never";
+      };
     }
   }
 }

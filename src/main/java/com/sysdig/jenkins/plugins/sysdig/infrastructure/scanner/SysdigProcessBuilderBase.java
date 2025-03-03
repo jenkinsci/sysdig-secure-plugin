@@ -5,7 +5,7 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -147,13 +147,10 @@ public abstract class SysdigProcessBuilderBase<T extends SysdigProcessBuilderBas
 
     @Override
     public String toString() {
-      switch (this) {
-        case INFO:
-          return "info";
-        case DEBUG:
-          return "debug";
-      }
-      throw new RuntimeException("LogLevel not covered exhaustively");
+      return switch (this) {
+        case INFO -> "info";
+        case DEBUG -> "debug";
+      };
     }
   }
 }

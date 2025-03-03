@@ -26,7 +26,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.AbortException;
 import hudson.FilePath;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -78,7 +78,7 @@ public class RemoteSysdigImageScanner {
     return FIXED_SCANNED_VERSION;
   }
 
-  private String getInlineScanVersion() throws IOException {
+  private String getInlineScanVersion() {
     if (Strings.isNullOrEmpty(this.config.getCliVersionToApply())) {
       return getInlineScanPinnedVersion();
     }
