@@ -2,10 +2,10 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.http;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.FilePath;
 
-import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.net.*;
 import java.util.Arrays;
@@ -17,7 +17,7 @@ public class RemoteDownloader {
   protected final SysdigLogger logger;
   private final EnvVars envVars;
 
-  public RemoteDownloader(@Nonnull RunContext runContext) {
+  public RemoteDownloader(@NonNull RunContext runContext) {
     this.runContext = runContext;
     this.logger = runContext.getLogger();
     this.envVars = runContext.getEnvVars();
@@ -60,7 +60,7 @@ public class RemoteDownloader {
   }
 
 
-  private static Stream<String> getURLsThatMustNotBeProxiedFromEnvVars(@Nonnull EnvVars envVars) {
+  private static Stream<String> getURLsThatMustNotBeProxiedFromEnvVars(@NonNull EnvVars envVars) {
     var envVarStream = envVars.entrySet().stream();
     var firstNoProxyEnvVar = envVarStream
       .filter(entry -> entry.getKey().equalsIgnoreCase("no_proxy"))
@@ -73,7 +73,7 @@ public class RemoteDownloader {
     return allURLsTrimmed;
   }
 
-  private static Proxy getHttpProxyFromEnvVars(@Nonnull EnvVars envVars) throws MalformedURLException {
+  private static Proxy getHttpProxyFromEnvVars(@NonNull EnvVars envVars) throws MalformedURLException {
     var possibleProxyAddress = envVars.entrySet()
       .stream()
       .filter(ks -> ks.getKey().equalsIgnoreCase("https_proxy") || ks.getKey().equalsIgnoreCase("http_proxy"))

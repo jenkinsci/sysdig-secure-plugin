@@ -46,7 +46,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 
-import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -165,7 +164,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException {
+  public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) throws IOException {
     var runContext = new RunContext(run, workspace, envVars, launcher, listener);
     var logger = runContext.getLogger();
     ImageImageScanningConfig config = new ImageImageScanningConfig(runContext, this);

@@ -20,6 +20,7 @@ import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredenti
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.log.ConsoleLog;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.FilePath;
@@ -29,7 +30,6 @@ import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import jenkins.tasks.SimpleBuildStep;
 
-import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -64,7 +64,7 @@ public class RunContext {
    * @param envVars   The environment variables of the run execution.
    * @param listener  The task listener for logging.
    */
-  public RunContext(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+  public RunContext(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) {
     this.run = run;
     this.workspace = workspace;
     this.listener = listener;
@@ -88,7 +88,7 @@ public class RunContext {
    * @param subpaths The subpaths to append.
    * @return The resulting FilePath.
    */
-  public FilePath getPathFromWorkspace(@Nonnull String... subpaths) {
+  public FilePath getPathFromWorkspace(@NonNull String... subpaths) {
     var finalPath = workspace;
     for (String subpath : subpaths) {
       finalPath = new FilePath(finalPath, subpath);
@@ -122,7 +122,7 @@ public class RunContext {
    * @return The plain text Sysdig API token.
    * @throws AbortException If the credential ID is invalid or not found.
    */
-  public String getSysdigTokenFromCredentials(@Nonnull String credID) throws AbortException {
+  public String getSysdigTokenFromCredentials(@NonNull String credID) throws AbortException {
     logger.logDebug("Processing Jenkins credential ID " + credID);
 
     // Ensure that a credential ID is provided
@@ -149,7 +149,7 @@ public class RunContext {
    * @throws IOException          If an I/O error occurs during execution.
    * @throws InterruptedException If the thread is interrupted.
    */
-  public void perform(@Nonnull SimpleBuildStep buildStep) throws IOException, InterruptedException {
+  public void perform(@NonNull SimpleBuildStep buildStep) throws IOException, InterruptedException {
     buildStep.perform(run, workspace, envVars, getLauncher(), listener);
   }
 
@@ -183,7 +183,7 @@ public class RunContext {
    * @throws InterruptedException If the thread is interrupted.
    * @throws E                    If the Callable throws an exception.
    */
-  public <V, E extends Throwable> V call(@Nonnull Callable<V, E> act) throws IOException, InterruptedException, E {
+  public <V, E extends Throwable> V call(@NonNull Callable<V, E> act) throws IOException, InterruptedException, E {
     return workspace.act(act);
   }
 

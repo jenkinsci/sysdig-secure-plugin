@@ -23,10 +23,10 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.JsonScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import hudson.FilePath;
 
-import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.MalformedURLException;
@@ -42,7 +42,7 @@ public class RemoteSysdigImageScanner {
   private final SysdigLogger logger;
   private final RunContext runContext;
 
-  public RemoteSysdigImageScanner(@Nonnull RunContext runContext, RetriableRemoteDownloader retriableRemoteDownloader, String imageName, ImageScanningConfig config) {
+  public RemoteSysdigImageScanner(@NonNull RunContext runContext, RetriableRemoteDownloader retriableRemoteDownloader, String imageName, ImageScanningConfig config) {
     this.runContext = runContext;
     this.imageName = imageName;
     this.retriableRemoteDownloader = retriableRemoteDownloader;

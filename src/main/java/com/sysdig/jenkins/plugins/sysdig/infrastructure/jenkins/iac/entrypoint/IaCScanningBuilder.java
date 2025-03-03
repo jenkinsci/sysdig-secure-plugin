@@ -41,7 +41,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import jakarta.annotation.Nonnull;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -143,7 +142,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+  public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) {
     RunContext runContext = new RunContext(run, workspace, envVars, launcher, listener);
     SysdigLogger logger = runContext.getLogger();
 

@@ -20,14 +20,13 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
-
-import jakarta.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class SysdigImageScanner implements ImageScanner {
   protected final ImageScanningConfig config;
   private final RunContext runContext;
 
-  public SysdigImageScanner(@Nonnull RunContext runContext, @Nonnull ImageScanningConfig config) {
+  public SysdigImageScanner(@NonNull RunContext runContext, @NonNull ImageScanningConfig config) {
     this.runContext = runContext;
     this.config = config;
   }

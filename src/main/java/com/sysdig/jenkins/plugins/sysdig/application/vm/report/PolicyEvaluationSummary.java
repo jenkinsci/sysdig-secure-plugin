@@ -15,7 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
-import jakarta.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class PolicyEvaluationSummary {
     lines = new ArrayList<>();
   }
 
-  public void addSummaryLine(@Nonnull PolicyEvaluationSummaryLine line) {
+  public void addSummaryLine(@NonNull PolicyEvaluationSummaryLine line) {
     this.lines.add(line);
   }
 

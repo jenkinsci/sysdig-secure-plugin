@@ -19,10 +19,10 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 
-import jakarta.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface ReportProcessor {
   PolicyEvaluationReport processPolicyEvaluation(ImageScanningResult result);
 
-  PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, @Nonnull ImageScanningResult imageScanningResult);
+  PolicyEvaluationSummary generateGatesSummary(@NonNull PolicyEvaluationReport gatesJson, @NonNull ImageScanningResult imageScanningResult);
 }

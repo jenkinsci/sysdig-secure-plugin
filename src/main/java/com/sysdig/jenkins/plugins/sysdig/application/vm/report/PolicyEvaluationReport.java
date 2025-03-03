@@ -15,7 +15,7 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
-import jakarta.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +34,7 @@ public class PolicyEvaluationReport {
     return resultsForEachImage;
   }
 
-  public void addResult(@Nonnull PolicyEvaluationReportLine result) {
+  public void addResult(@NonNull PolicyEvaluationReportLine result) {
     resultsForEachImage.putIfAbsent(result.getImageID(), new ArrayList<>());
     resultsForEachImage
       .get(result.getImageID())
