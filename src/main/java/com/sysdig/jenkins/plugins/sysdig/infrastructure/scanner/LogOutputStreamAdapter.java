@@ -1,6 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,14 +17,14 @@ public class LogOutputStreamAdapter extends OutputStream {
   }
 
   @Override
-  public void write(int b) throws IOException {
+  public void write(int b) {
     // Write one byte at a time to the buffer
     buffer.append((char) b);
     checkForNewline();
   }
 
   @Override
-  public void write(byte[] b, int off, int len) throws IOException {
+  public void write(@NonNull byte[] b, int off, int len) {
     // Convert byte array to a string and accumulate in the buffer
     buffer.append(new String(b, off, len, StandardCharsets.UTF_8));
     checkForNewline();
@@ -40,9 +41,9 @@ public class LogOutputStreamAdapter extends OutputStream {
   }
 
   @Override
-  public void flush() throws IOException {
+  public void flush() {
     // Call logInfo if there is any remaining message in the buffer
-    if (buffer.length() > 0) {
+    if (!buffer.isEmpty()) {
       logger.logInfo(buffer.toString());
       buffer.setLength(0);
     }

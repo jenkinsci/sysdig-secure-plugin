@@ -23,7 +23,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Predicate;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Rule;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -72,7 +72,7 @@ public class PolicyReportProcessor implements ReportProcessor {
 
 
   @Override
-  public PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, @Nonnull ImageScanningResult imageScanningResult) {
+  public PolicyEvaluationSummary generateGatesSummary(@NonNull PolicyEvaluationReport gatesJson, @NonNull ImageScanningResult imageScanningResult) {
     logger.logDebug("Summarizing policy evaluation results");
     PolicyEvaluationSummary gateSummary = new PolicyEvaluationSummary();
 
@@ -150,7 +150,7 @@ public class PolicyReportProcessor implements ReportProcessor {
           ruleResult.add("Fixable");
           break;
         case "vulnIsFixableWithAge":
-          Long days = p.getExtra().orElseThrow().getAge().orElseThrow();
+          long days = p.getExtra().orElseThrow().getAge().orElseThrow();
           String period = days < 2 ? " day" : " days";
           ruleResult.add("Fixable since " + days + period);
           break;
@@ -185,7 +185,6 @@ public class PolicyReportProcessor implements ReportProcessor {
           break;
         case "imageConfigDefaultUserIsNot":
           String user = p.getExtra().orElseThrow().getUser().orElseThrow();
-          ;
           ruleResult.add("User is not " + user);
           break;
         case "imageConfigLabelExists":

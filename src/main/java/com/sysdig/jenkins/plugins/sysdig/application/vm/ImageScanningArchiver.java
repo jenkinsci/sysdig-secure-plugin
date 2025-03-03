@@ -18,14 +18,14 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
 public class ImageScanningArchiver implements ScanResultArchiver {
   private final ReportProcessor policyEvaluationReportProcessor;
   private final ReportStorage reportStorage;
 
-  public ImageScanningArchiver(@Nonnull ReportProcessor policyEvaluationReportProcessor, @Nonnull ReportStorage reportStorage) {
+  public ImageScanningArchiver(@NonNull ReportProcessor policyEvaluationReportProcessor, @NonNull ReportStorage reportStorage) {
     this.policyEvaluationReportProcessor = policyEvaluationReportProcessor;
     this.reportStorage = reportStorage;
   }
