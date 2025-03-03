@@ -1,10 +1,13 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
+import hudson.Functions;
 import hudson.model.Result;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import static org.junit.Assume.assumeFalse;
 
 public class ImageScanningE2EFreestyleTests {
   @Rule
@@ -14,6 +17,7 @@ public class ImageScanningE2EFreestyleTests {
 
   @Before
   public void setUp() throws Exception {
+    assumeFalse(Functions.isWindows());
     helpers.configureSysdigCredentials();
   }
 

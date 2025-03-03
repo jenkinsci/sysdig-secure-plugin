@@ -43,7 +43,7 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -215,7 +215,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) {
+    public boolean configure(StaplerRequest2 req, JSONObject formData) {
       req.bindJSON(this, formData); // Use stapler request to bind
       save();
       return true;
