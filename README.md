@@ -66,15 +66,10 @@ To configure the Sysdig Secure plugin:
 
 # Usage
 
-## Build Step
-
 In order to use the plugin you need to include the Sysdig Image Scanning build step either on your freestyle projects or
-your pipelines. It is possible to globally enforce jobs configured with legacy build step to execute the redesigned
-engine by selecting the option force usage of new scanning engine in the global configuration.
+your pipelines.
 
-![docs/images/ForceNewEngine.png](docs/images/ForceNewEngine.png)
-
-## Example 1: Integrate the Sysdig Secure Plugin with a Freestyle Project
+## Integrate the Sysdig Secure Plugin with a Freestyle Project
 
 1. Using the Jenkins Docker plugin for this example, you could start by building the image and writing the image name to
    the `sysdig_secure_images` file
@@ -89,7 +84,7 @@ engine by selecting the option force usage of new scanning engine in the global 
 
    <img src="docs/images/new/FreestyleConfigStep.png" height="600px" />
 
-## Example 2: Executing the Sysdig plugin inside a pipeline
+## Executing the Sysdig plugin inside a pipeline
 
 The following is a simplified example executing the Sysdig plugin as a stage inside a pipeline
 
@@ -113,22 +108,81 @@ stages {
 }
 ```
 
-The table below describes each of the configuration options.
-
 ## Execution options
 
+The table below describes the available configuration options.
+
+
 | Option                                 | Parameter        | Description                                                                                                                                                                                                                                                  | Default |
-|----------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ----- |
-| Image name                             | ImageName        | The name of the image to scan. This parameter is now mandatory, and there is no default value (null).                                                                                                                                                          | `null`  |
+|----------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ------ |
+| Image name                             | imageName        | The name of the image to scan. This parameter is now mandatory, and there is no default value (null).                                                                                                                                                        | `null` |
 | Fail build on policy check STOP result | bailOnFail       | If the Sysdig Secure policy evaluate returns a fail (STOP), then the Jenkins job should be failed. If this is not selected then a failed policy evaluation will allow the build to continue.                                                                 | `true` |
 | Fail build on critical plugin error    | bailOnPluginFail | If selected, and the Sysdig Secure Plugin experiences a critical error, the build will be failed. This is typically used to ensure that a fault with Sysdig Secure (eg. service not available) does not permit a failing image to be promoted to production. | `true` |
-| Identifiers of policies to apply       | policiesToApply   | List of policies to apply to the image in addition to those marked as always apply in the sysdig ui                                                                                                                                                          | |
+| Identifiers of policies to apply       | policiesToApply  | List of policies to apply to the image in addition to those marked as always apply in the sysdig ui                                                                                                                                                          | |
+| Sysdig Secure URL                      | engineURL        | Override the Sysdig Secure URL from the global options                                                                                                                                                                                                       | |
+| Sysdig Secure API Credentials          | engineCredentialsId | Override the Sysdig Secure API Credentials from the global options                                                                                                                                                                                        | |
+| Verify SSL                             | engineVerify     | Override the Verify SSL option from the global options                                                                                                                                                                                                       | |
+| CLI Scanner extra parameters           | inlineScanExtraParams  | Override the additional parameters for the Sysdig CLI Scanner execution from the global options                                                                                                                                                        | |
+| Scanner Binary Path                    | scannerBinaryPath | Override the default path for the CLI scanner binary from the global options                                                                                                                                                                                | |
 
-The following is an example of executing the Sysdig Secure plugin as a Jenkinsfile step, modifying the default
-parameters
+### Examples
+
+
+The following is simple example of executing the Sysdig Secure plugin as a Jenkinsfile step:
+
+```
+sysdigImageScan imageName: 'ruby'
+```
+
+
+You can override any of the default parameters:
 
 ```
 sysdigImageScan bailOnFail: false, bailOnPluginFail: false, engineCredentialsId: 'sysdig-secure-api-credentials', engineURL: 'https://secure.sysdig.com', engineVerify: false, imageName: 'ruby', policiesToApply: 'foo', scannerBinaryPath: '/bin/sysdig-cli-scanner'
+```
+
+### Example: enable the debug log for CLI execution
+
+You can use the `inlineScanExtraParams` option to enable the debug logging when executing the CLI, useful for troubleshooting:
+
+```
+sysdigImageScan imageName: ' ruby:latest', inlineScanExtraParams: '--console-log --loglevel=debug'
+```
+
+## Providing registry credentials
+
+The CLI scanner will try to use locally available credentials, i.e. from the docker daemon configuration, when available. Additionally, it supports registry user and password credentials via `REGISTRY_USER` and `REGISTRY_PASSWORD` environmental variables as described in https://docs.sysdig.com/en/sysdig-secure/cli-scanner-vm-mode/#registry-credentials
+
+You can use the [Credentials Binding Plugin](https://www.jenkins.io/doc/pipeline/steps/credentials-binding/) to map Jenkins credentials to the corresponding variables, for example:
+
+```
+withCredentials([usernamePassword(credentialsId: 'my-registry-credentials', passwordVariable: 'REGISTRY_PASSWORD', usernameVariable: 'REGISTRY_USER')]) {
+    sysdigImageScan sysdigImageScan imageName: 'myregistry.com/repo/my-private-image:latest'
+}
+```
+
+In case of dynamic credentials (i.e. a temporary ECR token), you can fetch the token and then bind to the corresponding variables like in the following example:
+
+```
+ stages {
+        stage('Get ECR Registry Token') {
+            steps {
+                script {
+                    REGISTRY_PASSWORD = sh(script: 'aws ecr get-login-password --region us-east-1', returnStdout: true).trim()
+                }
+            }
+        }
+        stage('Sysdig Vulnerability Scanning') {
+            steps {
+                script {
+                    env.REGISTRY_USER = "AWS";
+                    env.REGISTRY_PASSWORD = REGISTRY_PASSWORD;
+                }
+                sysdigImageScan imageName: "123456789012.dkr.ecr.us-east-1.amazonaws.com/myrepo/myprivate-image:latest"
+            }
+        }
+    }
+
 ```
 
 # Plugin outputs
