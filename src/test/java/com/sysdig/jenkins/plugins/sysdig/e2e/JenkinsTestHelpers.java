@@ -15,22 +15,6 @@ import java.util.function.Consumer;
 public class JenkinsTestHelpers {
   private final JenkinsRule jenkins;
 
-  public void waitForLogsToStabilize(Run<?,?> build, long timeoutMillis) throws Exception {
-    long startTime = System.currentTimeMillis();
-    long previousLength = 0;
-
-    while (System.currentTimeMillis() - startTime < timeoutMillis) {
-      long currentLength = build.getLog().length();
-      if (currentLength == previousLength) {
-        return; // stabilized
-      }
-      previousLength = currentLength;
-      Thread.sleep(1000);
-    }
-
-    throw new AssertionError("Timeout: Log did not stabilize within " + timeoutMillis + " ms");
-  }
-
   public static class FreeStyleProjectBuilder {
     private final JenkinsRule jenkins;
     private final FreeStyleProject project;
@@ -73,13 +57,11 @@ public class JenkinsTestHelpers {
       this.script = script;
     }
 
-
     public PipelineJobBuilder withGlobalConfig(Consumer<ImageScanningBuilder.GlobalConfiguration> func) {
       var globalConf = jenkins.getInstance().getDescriptorByType(ImageScanningBuilder.GlobalConfiguration.class);
       func.accept(globalConf);
       return this;
     }
-
 
     public WorkflowJob buildWithRemoteExecution() throws Exception {
       var slave = jenkins.createOnlineSlave();
@@ -148,7 +130,6 @@ public class JenkinsTestHelpers {
     project.getBuildersList().add(builder);
     return new IaCScanProjectBuilder(jenkins, project);
   }
-
 
   public void configureSysdigCredentials() throws Descriptor.FormException {
     var creds = new UsernamePasswordCredentialsImpl(CredentialsScope.GLOBAL, "sysdig-secure", "sysdig-secure", "", "foo-token");

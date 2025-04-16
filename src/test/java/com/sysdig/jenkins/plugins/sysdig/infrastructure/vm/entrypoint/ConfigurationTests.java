@@ -2,25 +2,28 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.vm.entrypoint;
 
 import com.sysdig.jenkins.plugins.sysdig.e2e.JenkinsTestHelpers;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint.ImageScanningBuilder;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ConfigurationTests {
-  @Rule
-  public JenkinsRule jenkins = new JenkinsRule();
-  private final JenkinsTestHelpers helpers = new JenkinsTestHelpers(jenkins);
+@WithJenkins
+class ConfigurationTests {
 
-  @Before
-  public void setUp() throws Exception {
+  private JenkinsRule jenkins;
+  private JenkinsTestHelpers helpers;
+
+  @BeforeEach
+  void setUp(JenkinsRule rule) throws Exception {
+    jenkins = rule;
+    helpers = new JenkinsTestHelpers(jenkins);
     helpers.configureSysdigCredentials();
   }
 
   @Test
-  public void testConfigurationPersistenceAfterRoundTrip() throws Exception {
+  void testConfigurationPersistenceAfterRoundTrip() throws Exception {
     var project = helpers.createFreestyleProjectWithImageScanningBuilder("test").build();
 
     project = jenkins.configRoundtrip(project);
@@ -29,7 +32,7 @@ public class ConfigurationTests {
   }
 
   @Test
-  public void testDefaultGlobalConfigurationValues() {
+  void testDefaultGlobalConfigurationValues() {
     var globalConfig = jenkins.getInstance().getDescriptorByType(ImageScanningBuilder.GlobalConfiguration.class);
 
     assertEquals("https://secure.sysdig.com", globalConfig.getEngineURL());
@@ -43,7 +46,7 @@ public class ConfigurationTests {
   }
 
   @Test
-  public void testGlobalConfigurationRoundTrip() throws Exception {
+  void testGlobalConfigurationRoundTrip() throws Exception {
     // Access global configuration using Jenkins.getDescriptorByType()
     var globalConfig = jenkins.getInstance().getDescriptorByType(ImageScanningBuilder.GlobalConfiguration.class);
 
