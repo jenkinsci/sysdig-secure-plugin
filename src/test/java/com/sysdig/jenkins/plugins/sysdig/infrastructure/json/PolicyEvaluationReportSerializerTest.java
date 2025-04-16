@@ -11,11 +11,11 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class PolicyEvaluationReportSerializerTest {
+class PolicyEvaluationReportSerializerTest {
   private final Gson gson = GsonBuilder.build();
 
   @Test
-  public void testSerializeEmptyReport() {
+  void testSerializeEmptyReport() {
     // Given
     PolicyEvaluationReport report = new PolicyEvaluationReport(false);
 
@@ -27,7 +27,7 @@ public class PolicyEvaluationReportSerializerTest {
   }
 
   @Test
-  public void testSerializeReportWithResults() {
+  void testSerializeReportWithResults() {
     // Given
     PolicyEvaluationReport report = new PolicyEvaluationReport(true);
     Stream.of(
