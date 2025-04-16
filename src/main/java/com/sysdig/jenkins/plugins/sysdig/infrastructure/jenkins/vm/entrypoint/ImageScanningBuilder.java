@@ -25,6 +25,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ImageImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.JenkinsReportStorage;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigImageScanner;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -43,9 +44,8 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collections;
 
@@ -164,7 +164,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws IOException, InterruptedException {
+  public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) throws IOException {
     var runContext = new RunContext(run, workspace, envVars, launcher, listener);
     var logger = runContext.getLogger();
     ImageImageScanningConfig config = new ImageImageScanningConfig(runContext, this);
@@ -209,13 +209,14 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
       return true;
     }
 
+    @NonNull
     @Override
     public String getDisplayName() {
       return "Sysdig Image Scanning";
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) {
+    public boolean configure(StaplerRequest2 req, JSONObject formData) {
       req.bindJSON(this, formData); // Use stapler request to bind
       save();
       return true;
@@ -242,7 +243,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
         return result.includeCurrentValue(credentialsId);
       }
 
-      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
+      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM2,
         Jenkins.get(),
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),

@@ -20,9 +20,9 @@ import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 
-import javax.annotation.Nonnull;
 import java.util.Optional;
 
 public class ImageScanningApplicationService {
@@ -36,7 +36,7 @@ public class ImageScanningApplicationService {
     this.logger = logger;
   }
 
-  public void runScan(@Nonnull ImageScanningConfig config) throws AbortException {
+  public void runScan(@NonNull ImageScanningConfig config) throws AbortException {
     config.printWith(logger);
 
     Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(config);
@@ -52,7 +52,7 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private Optional<ImageScanningResult.FinalAction> getFinalAction(@Nonnull ImageScanningConfig config) throws AbortException {
+  private Optional<ImageScanningResult.FinalAction> getFinalAction(@NonNull ImageScanningConfig config) throws AbortException {
     PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
     ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
 

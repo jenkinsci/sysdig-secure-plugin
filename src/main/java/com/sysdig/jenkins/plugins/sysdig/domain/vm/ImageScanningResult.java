@@ -30,14 +30,10 @@ public class ImageScanningResult implements Serializable {
 
     @Override
     public String toString() {
-      switch (this) {
-        case ActionPass:
-          return "PASS";
-        case ActionFail:
-          return "FAIL";
-        default:
-          return super.toString();
-      }
+	    return switch (this) {
+		    case ActionPass -> "PASS";
+		    case ActionFail -> "FAIL";
+      };
     }
   }
 

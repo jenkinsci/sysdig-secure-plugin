@@ -152,7 +152,7 @@ public class ImageImageScanningConfig implements Serializable, com.sysdig.jenkin
   public void printWith(SysdigLogger logger) {
     logger.logInfo("Jenkins version: " + Jenkins.VERSION);
     List<PluginWrapper> plugins;
-    if (Jenkins.get().getPluginManager() != null && (plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
+    if ((plugins = Jenkins.get().getPluginManager().getPlugins()) != null) {
       for (PluginWrapper plugin : plugins) {
         if (plugin.getShortName().equals("sysdig-secure")) { // artifact ID of the plugin,
           logger.logInfo(String.format("%s version: %s", plugin.getDisplayName(), plugin.getVersion()));

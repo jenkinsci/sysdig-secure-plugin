@@ -1,11 +1,11 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -116,7 +116,7 @@ public abstract class SysdigProcessBuilderBase<T extends SysdigProcessBuilderBas
     return withStderrRedirectedTo(new LogOutputStreamAdapter(sysdigLogger));
   }
 
-  public int launchAndWait(@Nonnull  Launcher launcher) throws IOException, InterruptedException {
+  public int launchAndWait(@NonNull Launcher launcher) throws IOException, InterruptedException {
     Launcher.ProcStarter procStarter = launcher.launch().cmds(this.toCommandLineArguments()).envs(this.extraEnvVars);
 
     if (workingDirectory != null) procStarter.pwd(workingDirectory);
@@ -147,13 +147,10 @@ public abstract class SysdigProcessBuilderBase<T extends SysdigProcessBuilderBas
 
     @Override
     public String toString() {
-      switch (this) {
-        case INFO:
-          return "info";
-        case DEBUG:
-          return "debug";
-      }
-      throw new RuntimeException("LogLevel not covered exhaustively");
+      return switch (this) {
+        case INFO -> "info";
+        case DEBUG -> "debug";
+      };
     }
   }
 }

@@ -32,7 +32,7 @@ public class PolicyReportProcessorTest {
     assertTrue(resultsForEachImage.containsKey(imageID));
 
     var policyEvaluationReportLines = resultsForEachImage.get(imageID);
-    assertEquals(policyEvaluationReportLines.size(), 45);
+    assertEquals(45, policyEvaluationReportLines.size());
     assertEquals(policyEvaluationReportLines.get(0), new PolicyEvaluationReportLine(
       imageID,
       "nginx",
