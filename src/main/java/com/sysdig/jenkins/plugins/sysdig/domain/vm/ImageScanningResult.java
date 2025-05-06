@@ -21,7 +21,6 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Result;
 
 import java.io.Serializable;
-import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
@@ -41,14 +40,14 @@ public class ImageScanningResult implements Serializable {
   }
 
   private final String tag;
-  private final String imageDigest;
+  private final String imageID;
   private final String evalStatus;
   private final List<Package> packages;
   private final List<PolicyEvaluation> evaluationPolicies;
 
-  public ImageScanningResult(String tag, String imageDigest, String evalStatus, List<Package> vulnsReport, List<PolicyEvaluation> evaluationPolicies) {
+  public ImageScanningResult(String tag, String imageID, String evalStatus, List<Package> vulnsReport, List<PolicyEvaluation> evaluationPolicies) {
     this.tag = tag;
-    this.imageDigest = imageDigest;
+    this.imageID = imageID;
     this.evalStatus = evalStatus;
     this.packages = vulnsReport;
     this.evaluationPolicies = evaluationPolicies;
@@ -60,8 +59,8 @@ public class ImageScanningResult implements Serializable {
 
     final String tag = metadata.getPullString()
         .orElseThrow(() -> new NoSuchElementException("pull string not found in metadata"));
-    final String imageDigest = metadata.getDigest()
-        .orElseThrow(() -> new NoSuchElementException("digest not found in metadata"));
+    final String imageID = metadata.getImageId()
+        .orElseThrow(() -> new NoSuchElementException("imageid not found in metadata"));
     final String evalStatus = result.getPolicyEvaluationsResult()
         .orElseThrow(() -> new NoSuchElementException("policy evaluations result not found in result"));
     final List<Package> packages = result.getPackages()
@@ -69,7 +68,7 @@ public class ImageScanningResult implements Serializable {
     final List<PolicyEvaluation> policies = result.getPolicyEvaluations()
         .orElseThrow(() -> new NoSuchElementException("policy evaluations not found in result"));
 
-    return new ImageScanningResult(tag, imageDigest, evalStatus, packages, policies);
+    return new ImageScanningResult(tag, imageID, evalStatus, packages, policies);
   }
 
   public String getEvalStatus() {
@@ -88,8 +87,8 @@ public class ImageScanningResult implements Serializable {
     return tag;
   }
 
-  public String getImageDigest() {
-    return imageDigest;
+  public String getImageID() {
+    return imageID;
   }
 
   public FinalAction getFinalAction() {

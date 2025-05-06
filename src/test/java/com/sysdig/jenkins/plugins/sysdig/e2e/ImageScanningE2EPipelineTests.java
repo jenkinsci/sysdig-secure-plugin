@@ -42,7 +42,7 @@ class ImageScanningE2EPipelineTests {
 
     jenkins.assertLogContains("Using new-scanning engine", build);
     jenkins.assertLogContains("Image Name: alpine", build);
-    jenkins.assertLogContains("Downloading inlinescan v1.16.1", build);
+    jenkins.assertLogContains("Downloading inlinescan v1.22.1", build);
     jenkins.assertLogContains("Check that the API token is provided and is valid for the specified URL.", build);
   }
 

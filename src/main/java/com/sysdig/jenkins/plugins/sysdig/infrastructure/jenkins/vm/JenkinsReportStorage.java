@@ -66,14 +66,14 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
 
   @Override
   public void savePolicyReport(ImageScanningResult scanResult, PolicyEvaluationReport report) throws IOException, InterruptedException {
-    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageDigest()));
+    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageID()));
     logger.logDebug(String.format("Writing policy evaluation result to %s", outPath.getRemote()));
     outPath.write(GsonBuilder.build().toJson(report), String.valueOf(StandardCharsets.UTF_8));
   }
 
   @Override
   public void saveVulnerabilityReport(ImageScanningResult scanResult) throws IOException, InterruptedException {
-    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageDigest()));
+    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageID()));
     JsonObject securityJson = VulnerabilityReportProcessor.generateVulnerabilityReport(scanResult);
     logger.logDebug(String.format("Writing vulnerability report to %s", outPath.getRemote()));
     outPath.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -82,7 +82,7 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
 
   @Override
   public void saveRawVulnerabilityReport(ImageScanningResult scanResult) throws IOException, InterruptedException {
-    String outFilename = String.format(RAW_VULN_REPORT_FILENAME_FORMAT, scanResult.getImageDigest());
+    String outFilename = String.format(RAW_VULN_REPORT_FILENAME_FORMAT, scanResult.getImageID());
     FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, outFilename);
     logger.logDebug(String.format("Writing raw vulnerability report to %s", outPath.getRemote()));
     outPath.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
@@ -95,8 +95,8 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
       runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
 
       logger.logDebug("Setting up build results in the UI");
-      String policyReportFilename = String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageDigest());
-      String cveListingFileName = String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageDigest());
+      String policyReportFilename = String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageID());
+      String cveListingFileName = String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageID());
       runContext.getRun().addAction(new SysdigAction(runContext.getRun(), scanResult, jenkinsOutputDirName, policyReportFilename, policyEvaluationSummary, cveListingFileName));
     } catch (Exception e) {
       logger.logError("Failed to setup build results due to an unexpected error", e);
