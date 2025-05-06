@@ -1,23 +1,26 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
 import hudson.model.Result;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class ImageScanningE2EPipelineTests {
-  @Rule
-  public JenkinsRule jenkins = new JenkinsRule();
-  private final JenkinsTestHelpers helpers = new JenkinsTestHelpers(jenkins);
+@WithJenkins
+class ImageScanningE2EPipelineTests {
 
-  @Before
-  public void setUp() throws Exception {
+  private JenkinsRule jenkins;
+  private JenkinsTestHelpers helpers;
+
+  @BeforeEach
+  void setUp(JenkinsRule rule) throws Exception {
+    jenkins = rule;
+    helpers = new JenkinsTestHelpers(jenkins);
     helpers.configureSysdigCredentials();
   }
 
   @Test
-  public void testPipelineWithDefaultConfig() throws Exception {
+  void testPipelineWithDefaultConfig() throws Exception {
     var job = helpers.createPipelineJobWithScript(
       "sysdigImageScan imageName: 'nginx'"
     ).buildWithRemoteExecution();
@@ -28,7 +31,7 @@ public class ImageScanningE2EPipelineTests {
   }
 
   @Test
-  public void testPipelineWithCredentialsAndAssertLogOutput() throws Exception {
+  void testPipelineWithCredentialsAndAssertLogOutput() throws Exception {
     var job = helpers.createPipelineJobWithScript(
       "sysdigImageScan engineCredentialsId: 'sysdig-secure', imageName: 'alpine'"
     ).buildWithRemoteExecution();
@@ -43,7 +46,7 @@ public class ImageScanningE2EPipelineTests {
   }
 
   @Test
-  public void testPipelineWithAllConfigs() throws Exception {
+  void testPipelineWithAllConfigs() throws Exception {
     var job = helpers.createPipelineJobWithScript(
         "sysdigImageScan engineCredentialsId: 'sysdig-secure',\n" +
         "                  engineURL: 'https://custom-engine-url.com',\n" +
@@ -72,7 +75,7 @@ public class ImageScanningE2EPipelineTests {
   }
 
   @Test
-  public void testPipelineWithMinimalConfigButAlsoGlobalConfig() throws Exception {
+  void testPipelineWithMinimalConfigButAlsoGlobalConfig() throws Exception {
     var job = helpers.createPipelineJobWithScript(
       "sysdigImageScan 'nginx'"
     ).withGlobalConfig(b -> {

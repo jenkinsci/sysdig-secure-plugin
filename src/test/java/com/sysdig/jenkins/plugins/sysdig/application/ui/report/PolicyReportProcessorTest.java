@@ -12,12 +12,12 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class PolicyReportProcessorTest {
+class PolicyReportProcessorTest {
   private final PolicyReportProcessor policyReport = new PolicyReportProcessor(new NopLogger());
   private final String imageID = "sha256:04ba374043ccd2fc5c593885c0eacddebabd5ca375f9323666f28dfd5a9710e3";
 
   @Test
-  public void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
+  void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
     var imageScanningResult = ImageScanningResult.fromReportResult(result);
@@ -32,7 +32,7 @@ public class PolicyReportProcessorTest {
     assertTrue(resultsForEachImage.containsKey(imageID));
 
     var policyEvaluationReportLines = resultsForEachImage.get(imageID);
-    assertEquals(policyEvaluationReportLines.size(), 45);
+    assertEquals(45, policyEvaluationReportLines.size());
     assertEquals(policyEvaluationReportLines.get(0), new PolicyEvaluationReportLine(
       imageID,
       "nginx",
@@ -47,7 +47,7 @@ public class PolicyReportProcessorTest {
   }
 
   @Test
-  public void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
+  void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
     var imageScanningResult = ImageScanningResult.fromReportResult(result);
