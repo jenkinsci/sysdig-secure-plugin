@@ -51,7 +51,7 @@ public class SysdigAction implements Action {
     this.gateStatus = scanResult.getFinalAction().toString();
     this.gateSummary = policyEvaluationSummary;
     this.imageTag = scanResult.getTag();
-    this.imageDigest = scanResult.getImageDigest().replace(':', '-');
+    this.imageDigest = scanResult.getImageID().replace(':', '-');
     this.gateOutputUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, policyReportFilename);
     this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
   }

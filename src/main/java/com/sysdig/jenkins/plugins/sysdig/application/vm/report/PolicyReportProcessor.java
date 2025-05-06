@@ -256,7 +256,7 @@ public class PolicyReportProcessor implements ReportProcessor {
 
   private PolicyEvaluationReportLine getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {
     return new PolicyEvaluationReportLine(
-      imageResult.getImageDigest(),
+      imageResult.getImageID(),
       imageResult.getTag(),
       "trigger_id",
       ruleName,

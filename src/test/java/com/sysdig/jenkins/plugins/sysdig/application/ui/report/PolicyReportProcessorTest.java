@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PolicyReportProcessorTest {
   private final PolicyReportProcessor policyReport = new PolicyReportProcessor(new NopLogger());
-  private final String imageID = "sha256:04ba374043ccd2fc5c593885c0eacddebabd5ca375f9323666f28dfd5a9710e3";
+  private final String imageID = "sha256:39286ab8a5e14aeaf5fdd6e2fac76e0c8d31a0c07224f0ee5e6be502f12e93f3";
 
   @Test
   void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
