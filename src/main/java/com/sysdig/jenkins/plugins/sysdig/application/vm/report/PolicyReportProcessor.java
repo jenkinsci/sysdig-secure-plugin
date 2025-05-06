@@ -27,6 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 public class PolicyReportProcessor implements ReportProcessor {
@@ -56,7 +57,7 @@ public class PolicyReportProcessor implements ReportProcessor {
 
     Stream<PolicyEvaluationReportLine> rows = failedPolicyEvaluations
       .flatMap(policy -> {
-        String policyName = policy.getName().orElseThrow();
+        String policyName = policy.getName().orElseThrow(()-> new NoSuchElementException("name not found in policy"));
         Stream<Bundle> bundlesFromThePolicy = policy.getBundles()
           .stream()
           .flatMap(Collection::stream);
@@ -111,7 +112,7 @@ public class PolicyReportProcessor implements ReportProcessor {
 
 
   private Stream<PolicyEvaluationReportLine> getRuleFailures(Bundle bundle, ImageScanningResult imageResult, String policyName) {
-    Stream<Rule> rules = bundle.getRules().orElseThrow()
+    Stream<Rule> rules = bundle.getRules().orElseThrow(()-> new NoSuchElementException("rules not found in rules bundle"))
       .stream();
 
     Stream<Rule> failedRules = rules
@@ -119,8 +120,8 @@ public class PolicyReportProcessor implements ReportProcessor {
 
     Stream<PolicyEvaluationReportLine> failedRulesConvertedToSecureGateResults = failedRules
       .flatMap(rule -> {
-        String ruleName = bundle.getName().orElseThrow();
-        String ruleString = getRuleString(rule.getPredicates().orElseThrow());
+        String ruleName = bundle.getName().orElseThrow(()-> new NoSuchElementException("name not found"));
+        String ruleString = getRuleString(rule.getPredicates().orElseThrow(()-> new NoSuchElementException("predicates not found in rule")));
         boolean hasPkgVulnFailures = rule.getFailureType().orElse("unknown").equals("pkgVulnFailure");
 
         return hasPkgVulnFailures ?
@@ -136,21 +137,21 @@ public class PolicyReportProcessor implements ReportProcessor {
     ArrayList<String> ruleResult = new ArrayList<>();
 
     for (Predicate p : predicates) {
-      String type = p.getType().orElseThrow();
+      String type = p.getType().orElseThrow(()-> new NoSuchElementException("type not found in the predicate"));
       switch (type) {
         case "denyCVE":
           break;
         case "vulnSeverity":
-          ruleResult.add("Severity greater than or equal " + p.getExtra().orElseThrow().getLevel().orElseThrow());
+          ruleResult.add("Severity greater than or equal " + p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getLevel().orElseThrow(()-> new NoSuchElementException("level field not found in extra field in predicates")));
           break;
         case "vulnSeverityEquals":
-          ruleResult.add("Severity equal " + p.getExtra().orElseThrow().getLevel().orElseThrow());
+          ruleResult.add("Severity equal " + p.getExtra().orElseThrow(()-> new NoSuchElementException("extra feld not found in predicate")).getLevel().orElseThrow(()-> new NoSuchElementException("level not found in extra field in predicate")));
           break;
         case "vulnIsFixable":
           ruleResult.add("Fixable");
           break;
         case "vulnIsFixableWithAge":
-          long days = p.getExtra().orElseThrow().getAge().orElseThrow();
+          Long days = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getAge().orElseThrow(()-> new NoSuchElementException("age not found in extra field in predicate"));
           String period = days < 2 ? " day" : " days";
           ruleResult.add("Fixable since " + days + period);
           break;
@@ -158,17 +159,17 @@ public class PolicyReportProcessor implements ReportProcessor {
           ruleResult.add("Public Exploit available");
           break;
         case "vulnExploitableWithAge":
-          days = p.getExtra().orElseThrow().getAge().orElseThrow();
+          days = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getAge().orElseThrow(()-> new NoSuchElementException("age not found in extra field in predicate"));
           period = days < 2 ? " day" : " days";
           ruleResult.add("Public Exploit available since " + days + period);
           break;
         case "vulnAge":
-          days = p.getExtra().orElseThrow().getAge().orElseThrow();
+          days = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getAge().orElseThrow(()-> new NoSuchElementException("age not found in extra field in predicate"));
           period = days < 2 ? " day" : " days";
           ruleResult.add("Disclosure date older than or equal " + days + period);
           break;
         case "vulnCVSS":
-          double cvssScore = Double.parseDouble(p.getExtra().orElseThrow().getValue().orElseThrow());
+          double cvssScore = Double.parseDouble(p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getValue().orElseThrow(()-> new NoSuchElementException("value not found in extra field in predicate")));
           ruleResult.add("CVSS Score greater than or equal to %.1f" + cvssScore);
           break;
         case "vulnExploitableViaNetwork":
@@ -184,37 +185,38 @@ public class PolicyReportProcessor implements ReportProcessor {
           ruleResult.add("User is root");
           break;
         case "imageConfigDefaultUserIsNot":
-          String user = p.getExtra().orElseThrow().getUser().orElseThrow();
+
+          String user = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getUser().orElseThrow(()-> new NoSuchElementException("user not found in extra field in predicate"));
           ruleResult.add("User is not " + user);
           break;
         case "imageConfigLabelExists":
-          String key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          String key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Image label " + key + " exists");
           break;
         case "imageConfigLabelNotExists":
-          key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Image label " + key + " does not exist");
           break;
         case "imageConfigEnvVariableExists":
-          key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Variable " + key + " exist");
           break;
         case "imageConfigEnvVariableNotExists":
-          key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Variable " + key + " does not exist");
           break;
         case "imageConfigEnvVariableContains":
-          String value = p.getExtra().orElseThrow().getValue().orElseThrow();
-          key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          String value = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getValue().orElseThrow(()-> new NoSuchElementException("value not found in extra field in predicate"));
+          key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Variable " + key + " contains value " + value);
           break;
         case "imageConfigLabelNotContains":
-          value = p.getExtra().orElseThrow().getValue().orElseThrow();
-          key = p.getExtra().orElseThrow().getKey().orElseThrow();
+          value = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getValue().orElseThrow(()-> new NoSuchElementException("value not found in extra field in predicate"));
+          key = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getKey().orElseThrow(()-> new NoSuchElementException("key not found in extra field in predicate"));
           ruleResult.add("Value " + value + " not found in label " + key);
           break;
         case "imageConfigCreationDateWithAge":
-          days = p.getExtra().orElseThrow().getAge().orElseGet(() -> Long.valueOf(0));
+          days = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getAge().orElseGet(() -> Long.valueOf(0));
           period = days < 2 ? " day" : " days";
           ruleResult.add("Image is older than " + days + period + " or Creation date is not present");
           break;
@@ -241,7 +243,7 @@ public class PolicyReportProcessor implements ReportProcessor {
       .stream()
       .flatMap(Collection::stream)
       .map(failure ->
-        getFailure(failure.getDescription().orElseThrow(), imageResult, policyName, ruleString, ruleName));
+        getFailure(failure.getDescription().orElseThrow(()-> new NoSuchElementException("description not found in failure")), imageResult, policyName, ruleString, ruleName));
   }
 
   private Stream<PolicyEvaluationReportLine> getImageConfFailures(Rule rule, ImageScanningResult imageResult, String policyName, String ruleName, String ruleString) {
@@ -249,7 +251,7 @@ public class PolicyReportProcessor implements ReportProcessor {
       .stream()
       .flatMap(Collection::stream)
       .map(failure ->
-        getFailure(failure.getRemediation().orElseThrow().replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName));
+        getFailure(failure.getRemediation().orElseThrow(()-> new NoSuchElementException("remediation not found in failure")).replaceAll("(\r\n|\n)", "<br />"), imageResult, policyName, ruleString, ruleName));
   }
 
   private PolicyEvaluationReportLine getFailure(String failure, ImageScanningResult imageResult, String policyName, String ruleString, String ruleName) {

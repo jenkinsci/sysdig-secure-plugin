@@ -2,27 +2,27 @@ package com.sysdig.jenkins.plugins.sysdig.e2e;
 
 import hudson.Functions;
 import hudson.model.Result;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import static org.junit.Assume.assumeFalse;
 
-public class IaCScanE2EFreestyleTests {
+@WithJenkins
+class IaCScanE2EFreestyleTests {
+  private JenkinsRule jenkins;
+  private JenkinsTestHelpers helpers;
 
-  @Rule
-  public JenkinsRule jenkins = new JenkinsRule();
-  private final JenkinsTestHelpers helpers = new JenkinsTestHelpers(jenkins);
 
-  @Before
-  public void setUp() throws Exception {
-    assumeFalse(Functions.isWindows());
+  @BeforeEach
+  void setUp(JenkinsRule rule) throws Exception {
+    jenkins = rule;
+    helpers = new JenkinsTestHelpers(jenkins);
     helpers.configureSysdigCredentials();
   }
 
   @Test
-  public void testFreestyleWithDefaultConfig() throws Exception {
+  void testFreestyleWithDefaultConfig() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder()
       .build();
 
@@ -34,7 +34,7 @@ public class IaCScanE2EFreestyleTests {
   }
 
   @Test
-  public void testFreestyleWithNonExistingToken() throws Exception {
+  void testFreestyleWithNonExistingToken() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder()
       .withConfig(c -> c.setEngineCredentialsId("non-existing-token"))
       .build();
@@ -47,7 +47,7 @@ public class IaCScanE2EFreestyleTests {
   }
 
   @Test
-  public void testFreestyleWithCredentialsAndAssertLogOutput() throws Exception {
+  void testFreestyleWithCredentialsAndAssertLogOutput() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder()
       .withConfig(b -> b.setEngineCredentialsId("sysdig-secure"))
       .build();
@@ -63,7 +63,7 @@ public class IaCScanE2EFreestyleTests {
   }
 
   @Test
-  public void testFreestyleWithAllConfigs() throws Exception {
+  void testFreestyleWithAllConfigs() throws Exception {
     var project = helpers.createFreestyleProjectWithIaCScanBuilder().withConfig(b -> {
       b.setEngineCredentialsId("sysdig-secure");
       b.setPath("custom/path/to/scan");

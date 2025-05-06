@@ -7,14 +7,14 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult.FinalAction;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
-import org.junit.Before;
-import org.junit.Test;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import hudson.AbortException;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
-public class ImageScanningApplicationServiceTest {
+class ImageScanningApplicationServiceTest {
 
   private ReportStorage reportStorage;
   private ImageScanner scanner;
@@ -22,8 +22,8 @@ public class ImageScanningApplicationServiceTest {
   private ImageScanningApplicationService service;
   private ImageScanningConfig config;
 
-  @Before
-  public void setUp() {
+  @BeforeEach
+  void setUp() {
     reportStorage = mock(ReportStorage.class);
     scanner = mock(ImageScanner.class);
     logger = mock(SysdigLogger.class);
@@ -32,7 +32,7 @@ public class ImageScanningApplicationServiceTest {
   }
 
   @Test
-  public void whenRunScanIsExecutedItHandlesAllScenarios() throws Exception {
+  void whenRunScanIsExecutedItHandlesAllScenarios() throws Exception {
     // Given
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
@@ -56,9 +56,8 @@ public class ImageScanningApplicationServiceTest {
     verify(reportStorage, times(1)).archiveResults(eq(result), any(PolicyEvaluationSummary.class));
   }
 
-  @Test(expected = AbortException.class)
-  public void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception {
-    // Given
+  @Test
+  void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception{
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
     when(config.getBailOnFail()).thenReturn(true);
@@ -66,14 +65,11 @@ public class ImageScanningApplicationServiceTest {
     when(result.getEvalStatus()).thenReturn("fail");
     PolicyEvaluationReport policyEvaluationReport = mock(PolicyEvaluationReport.class);
     PolicyEvaluationSummary policyEvaluationSummary = mock(PolicyEvaluationSummary.class);
-
     when(result.getFinalAction()).thenReturn(FinalAction.ActionFail);
     when(scanner.scanImage(anyString())).thenReturn(result);
 
-    // When
-    service.runScan(config);
+    assertThrows(AbortException.class, () -> service.runScan(config));
 
-    // Then
     verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
     verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
     verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
@@ -81,7 +77,7 @@ public class ImageScanningApplicationServiceTest {
   }
 
   @Test
-  public void whenPluginFailsAndBailOnPluginFailIsFalseItMarksAsSuccessfulDespitePluginFailureAndLogs() throws Exception {
+  void whenPluginFailsAndBailOnPluginFailIsFalseItMarksAsSuccessfulDespitePluginFailureAndLogs() throws Exception {
     // Given
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
@@ -94,14 +90,11 @@ public class ImageScanningApplicationServiceTest {
     verify(logger).logWarn(contains("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution"));
   }
 
-  @Test(expected = AbortException.class)
-  public void whenPluginFailsAndBailOnPluginFailIsTrueItThrowsAbortException() throws Exception {
-    // Given
+  @Test
+  void whenPluginFailsAndBailOnPluginFailIsTrueItThrowsAbortException() throws Exception {
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(true);
     when(scanner.scanImage(anyString())).thenThrow(new RuntimeException("Scanning failed"));
-
-    // When
-    service.runScan(config);
+    assertThrows(AbortException.class, () -> service.runScan(config));
   }
 }
