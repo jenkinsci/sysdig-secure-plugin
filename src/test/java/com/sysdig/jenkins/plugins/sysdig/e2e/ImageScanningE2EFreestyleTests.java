@@ -1,14 +1,15 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
+import hudson.Functions;
 import hudson.model.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+
 @WithJenkins
 class ImageScanningE2EFreestyleTests {
-
   private JenkinsRule jenkins;
   private JenkinsTestHelpers helpers;
 

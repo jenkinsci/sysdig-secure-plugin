@@ -1,9 +1,9 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.http;
 
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.FilePath;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -12,15 +12,15 @@ public class RetriableRemoteDownloader extends RemoteDownloader {
   private final int maxRetries;
   private final long sleepSeconds;
 
-  public RetriableRemoteDownloader(@Nonnull RunContext runContext) {
+  public RetriableRemoteDownloader(@NonNull RunContext runContext) {
     this(runContext, 5);
   }
 
-  RetriableRemoteDownloader(@Nonnull RunContext runContext, int maxRetries) {
+  RetriableRemoteDownloader(@NonNull RunContext runContext, int maxRetries) {
     this(runContext, maxRetries, 2);
   }
 
-  RetriableRemoteDownloader(@Nonnull RunContext runContext, int maxRetries, long sleepSeconds) {
+  RetriableRemoteDownloader(@NonNull RunContext runContext, int maxRetries, long sleepSeconds) {
     super(runContext);
     this.maxRetries = maxRetries;
     this.sleepSeconds = sleepSeconds;

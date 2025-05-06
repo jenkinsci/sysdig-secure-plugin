@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A helper class to ensure concurrent jobs don't step on each other's toes. Sysdig Secure plugin instantiates a new instance of this class
@@ -30,7 +30,7 @@ public class ImageScanningService {
   private final ScanResultArchiver imageScanningArchiverService;
   protected SysdigLogger logger;
 
-  public ImageScanningService(@Nonnull ImageScanner scanner, @Nonnull ScanResultArchiver imageScanningArchiverService, @Nonnull SysdigLogger logger) {
+  public ImageScanningService(@NonNull ImageScanner scanner, @NonNull ScanResultArchiver imageScanningArchiverService, @NonNull SysdigLogger logger) {
     this.scanner = scanner;
     this.imageScanningArchiverService = imageScanningArchiverService;
     this.logger = logger;

@@ -16,6 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.entrypoint;
 
 import com.google.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -29,8 +30,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.Serial;
 import java.util.Collection;
 import java.util.Set;
 
@@ -159,7 +160,7 @@ public class ImageScanningStep extends Step implements BuildStep {
     return builder.getProjectAction(abstractProject);
   }
 
-  @Nonnull
+  @NonNull
   @Override
   public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> abstractProject) {
     return builder.getProjectActions(abstractProject);
@@ -172,11 +173,12 @@ public class ImageScanningStep extends Step implements BuildStep {
 
   private final static class Execution extends SynchronousNonBlockingStepExecution {
 
+    @Serial
     private static final long serialVersionUID = 1;
     private transient final ImageScanningBuilder builder;
 
     private Execution(
-      @Nonnull StepContext context,
+      @NonNull StepContext context,
       ImageScanningBuilder builder) {
       super(context);
       this.builder = builder;
@@ -218,7 +220,7 @@ public class ImageScanningStep extends Step implements BuildStep {
     }
 
     @Override
-    @Nonnull
+    @NonNull
     public String getDisplayName() {
       return "Sysdig Image Scanning pipeline step";
     }

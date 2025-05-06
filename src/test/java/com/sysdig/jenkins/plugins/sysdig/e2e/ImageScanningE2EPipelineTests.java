@@ -1,14 +1,15 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
+import hudson.Functions;
 import hudson.model.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
+
 @WithJenkins
 class ImageScanningE2EPipelineTests {
-
   private JenkinsRule jenkins;
   private JenkinsTestHelpers helpers;
 
@@ -48,16 +49,17 @@ class ImageScanningE2EPipelineTests {
   @Test
   void testPipelineWithAllConfigs() throws Exception {
     var job = helpers.createPipelineJobWithScript(
-        "sysdigImageScan engineCredentialsId: 'sysdig-secure',\n" +
-        "                  engineURL: 'https://custom-engine-url.com',\n" +
-        "                  engineVerify: false,\n" +
-        "                  imageName: 'nginx',\n" +
-        "                  inlineScanExtraParams: '--severity high',\n" +
-        "                  customCliVersion: '2.0.0',\n" +
-        "                  cliVersionToApply: 'custom',\n" +
-        "                  policiesToApply: 'custom-policy-name',\n" +
-        "                  bailOnFail: false,\n" +
-        "                  bailOnPluginFail: false"
+      """
+        sysdigImageScan engineCredentialsId: 'sysdig-secure',
+                          engineURL: 'https://custom-engine-url.com',
+                          engineVerify: false,
+                          imageName: 'nginx',
+                          inlineScanExtraParams: '--severity high',
+                          customCliVersion: '2.0.0',
+                          cliVersionToApply: 'custom',
+                          policiesToApply: 'custom-policy-name',
+                          bailOnFail: false,
+                          bailOnPluginFail: false"""
     ).buildWithRemoteExecution();
 
     var build = jenkins.buildAndAssertSuccess(job);

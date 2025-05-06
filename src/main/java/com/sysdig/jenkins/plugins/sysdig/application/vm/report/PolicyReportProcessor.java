@@ -23,7 +23,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Predicate;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Rule;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -73,7 +73,7 @@ public class PolicyReportProcessor implements ReportProcessor {
 
 
   @Override
-  public PolicyEvaluationSummary generateGatesSummary(@Nonnull PolicyEvaluationReport gatesJson, @Nonnull ImageScanningResult imageScanningResult) {
+  public PolicyEvaluationSummary generateGatesSummary(@NonNull PolicyEvaluationReport gatesJson, @NonNull ImageScanningResult imageScanningResult) {
     logger.logDebug("Summarizing policy evaluation results");
     PolicyEvaluationSummary gateSummary = new PolicyEvaluationSummary();
 
@@ -185,8 +185,8 @@ public class PolicyReportProcessor implements ReportProcessor {
           ruleResult.add("User is root");
           break;
         case "imageConfigDefaultUserIsNot":
+
           String user = p.getExtra().orElseThrow(()-> new NoSuchElementException("extra field not found in predicate")).getUser().orElseThrow(()-> new NoSuchElementException("user not found in extra field in predicate"));
-          ;
           ruleResult.add("User is not " + user);
           break;
         case "imageConfigLabelExists":

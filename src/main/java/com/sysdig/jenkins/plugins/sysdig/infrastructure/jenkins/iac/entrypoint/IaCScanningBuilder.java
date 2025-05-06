@@ -24,6 +24,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigIaCScanningProcessBuilder;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.*;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
@@ -40,9 +41,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -144,8 +142,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
   }
 
   @Override
-  public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener)
-    throws InterruptedException, IOException {
+  public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) {
     RunContext runContext = new RunContext(run, workspace, envVars, launcher, listener);
     SysdigLogger logger = runContext.getLogger();
 
@@ -228,8 +225,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     public static final String DEFAULT_CLI_VERSION = "latest";
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckSysdigEnv(@QueryParameter String value, @QueryParameter boolean useFrench)
-      throws IOException, ServletException {
+    public FormValidation doCheckSysdigEnv(@QueryParameter String value, @QueryParameter boolean useFrench) {
       if (value.isEmpty())
         return FormValidation.error("missing field");
       if (value.length() < 4)
@@ -239,8 +235,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckSecureAPIToken(@QueryParameter String value, @QueryParameter boolean useFrench)
-      throws IOException, ServletException {
+    public FormValidation doCheckSecureAPIToken(@QueryParameter String value, @QueryParameter boolean useFrench) {
       if (value.isEmpty())
         return FormValidation.error("missing field");
       if (value.length() < 4)
@@ -250,8 +245,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     }
 
     @SuppressWarnings("unused")
-    public FormValidation doCheckPath(@QueryParameter String value, @QueryParameter boolean useFrench)
-      throws IOException, ServletException {
+    public FormValidation doCheckPath(@QueryParameter String value, @QueryParameter boolean useFrench) {
       if (value.isEmpty())
         return FormValidation.error("missing field");
 
@@ -266,24 +260,24 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         return result.includeCurrentValue(credentialsId);
       }
 
-      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM,
+      return result.includeEmptyValue().includeMatchingAs(ACL.SYSTEM2,
         Jenkins.get(),
         StandardUsernamePasswordCredentials.class,
         Collections.emptyList(),
         CredentialsMatchers.always());
     }
 
-    public FormValidation doCheckCredentialsId(@QueryParameter String value) throws IOException, ServletException {
+    public FormValidation doCheckCredentialsId(@QueryParameter String value) {
       if (value == null || value.trim().isEmpty()) {
         return FormValidation.error("Credentials ID must be provided.");
       }
 
       // Optionally, verify that the credentials exist
       StandardCredentials credentials = CredentialsMatchers.firstOrNull(
-        CredentialsProvider.lookupCredentials(
+        CredentialsProvider.lookupCredentialsInItemGroup(
           StandardCredentials.class,
           Jenkins.get(),
-          ACL.SYSTEM,
+          ACL.SYSTEM2,
           Collections.emptyList()
         ),
         CredentialsMatchers.withId(value)
@@ -301,6 +295,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
       return true;
     }
 
+    @NonNull
     @Override
     public String getDisplayName() {
       return "Sysdig Secure Code Scan";
