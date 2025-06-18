@@ -24,7 +24,7 @@ import java.util.Optional;
 public class Failure implements Serializable {
   private String remediation;
   @SerializedName("Arguments")
-  private Map<String, String> arguments;
+  private Map<String, Object> arguments;
   private Long pkgIndex;
   private Long vulnInPkgIndex;
   private String ref;
@@ -38,11 +38,11 @@ public class Failure implements Serializable {
     this.remediation = remediation;
   }
 
-  public Optional<Map<String, String>> getArguments() {
+  public Optional<Map<String, Object>> getArguments() {
     return Optional.ofNullable(arguments);
   }
 
-  public void setArguments(Map<String, String> arguments) {
+  public void setArguments(Map<String, Object> arguments) {
     this.arguments = arguments;
   }
 
