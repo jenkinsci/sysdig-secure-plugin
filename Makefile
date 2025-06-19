@@ -19,3 +19,6 @@ update-sysdig-cli-version:
 	echo "Latest: $$latest" && \
 	sed -i -E 's/(private static final String FIXED_SCANNED_VERSION = ")([^"]+)(")/\1'$$latest'\3/' src/main/java/com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/RemoteSysdigImageScanner.java && \
 	echo "Version updated"
+
+release:
+	mvn release:prepare release:perform
