@@ -13,17 +13,9 @@ public class RetriableRemoteDownloader extends RemoteDownloader {
   private final long sleepSeconds;
 
   public RetriableRemoteDownloader(@NonNull RunContext runContext) {
-    this(runContext, 5);
-  }
-
-  RetriableRemoteDownloader(@NonNull RunContext runContext, int maxRetries) {
-    this(runContext, maxRetries, 2);
-  }
-
-  RetriableRemoteDownloader(@NonNull RunContext runContext, int maxRetries, long sleepSeconds) {
     super(runContext);
-    this.maxRetries = maxRetries;
-    this.sleepSeconds = sleepSeconds;
+    this.maxRetries = 5;
+    this.sleepSeconds = 2;
   }
 
   @Override

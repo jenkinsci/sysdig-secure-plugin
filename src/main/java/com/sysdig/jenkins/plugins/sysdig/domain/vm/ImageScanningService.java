@@ -27,7 +27,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class ImageScanningService {
   private final ImageScanner scanner;
   private final ScanResultArchiver imageScanningArchiverService;
-  protected SysdigLogger logger;
+  protected final SysdigLogger logger;
 
   public ImageScanningService(@NonNull ImageScanner scanner, @NonNull ScanResultArchiver imageScanningArchiverService, @NonNull SysdigLogger logger) {
     this.scanner = scanner;

@@ -63,8 +63,7 @@ public class SysdigImageScanningProcessBuilder extends SysdigProcessBuilderBase<
 
   @Override
   public SysdigImageScanningProcessBuilder clone() {
-    SysdigImageScanningProcessBuilder cloned = super.clone();
     // Deep copy subclass-specific mutable fields if necessary
-    return cloned;
+    return super.clone();
   }
 }

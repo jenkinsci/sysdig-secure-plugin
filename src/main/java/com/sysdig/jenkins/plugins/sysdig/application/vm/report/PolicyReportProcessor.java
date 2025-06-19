@@ -80,18 +80,18 @@ public class PolicyReportProcessor implements ReportProcessor {
     for (var imageKey : gatesJson.getResultsForEachImage().entrySet()) {
       int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
       for (PolicyEvaluationReportLine line : imageKey.getValue()) {
-        switch (line.getGateAction().toLowerCase()) {
+        switch (line.gateAction().toLowerCase()) {
           case "stop":
             stop++;
-            stop_wl += line.getWhitelisted() ? 1 : 0;
+            stop_wl += line.whitelisted() ? 1 : 0;
             break;
           case "warn":
             warn++;
-            warn_wl += line.getWhitelisted() ? 1 : 0;
+            warn_wl += line.whitelisted() ? 1 : 0;
             break;
           case "go":
             go++;
-            go_wl += line.getWhitelisted() ? 1 : 0;
+            go_wl += line.whitelisted() ? 1 : 0;
             break;
           default:
             break;

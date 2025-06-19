@@ -20,20 +20,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class Rule implements Serializable {
-  private String ruleType;
   private String failureType;
-  private String description;
   private List<Failure> failures;
   private String evaluationResult;
   private List<Predicate> predicates;
-
-  public Optional<String> getRuleType() {
-    return Optional.ofNullable(ruleType);
-  }
-
-  public void setRuleType(String ruleType) {
-    this.ruleType = ruleType;
-  }
 
   public Optional<String> getFailureType() {
     return Optional.ofNullable(failureType);
@@ -41,14 +31,6 @@ public class Rule implements Serializable {
 
   public void setFailureType(String failureType) {
     this.failureType = failureType;
-  }
-
-  public Optional<String> getDescription() {
-    return Optional.ofNullable(description);
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
   }
 
   public Optional<List<Failure>> getFailures() {

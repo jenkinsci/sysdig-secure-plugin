@@ -39,11 +39,11 @@ public class PolicyEvaluationSummarySerializer implements JsonSerializer<PolicyE
     summary.getLines().forEach(line -> {
       var summaryRow = new JsonObject();
 
-      summaryRow.addProperty(GateSummaryColumn.Repo_Tag.toString(), line.getImageTag());
-      summaryRow.addProperty(GateSummaryColumn.Stop_Actions.toString(), line.getNonWhitelistedStopActions());
-      summaryRow.addProperty(GateSummaryColumn.Warn_Actions.toString(), line.getNonWhitelistedWarnActions());
-      summaryRow.addProperty(GateSummaryColumn.Go_Actions.toString(), line.getNonWhitelistedGoActions());
-      summaryRow.addProperty(GateSummaryColumn.Final_Action.toString(), line.getFinalAction());
+      summaryRow.addProperty(GateSummaryColumn.Repo_Tag.toString(), line.imageTag());
+      summaryRow.addProperty(GateSummaryColumn.Stop_Actions.toString(), line.nonWhitelistedStopActions());
+      summaryRow.addProperty(GateSummaryColumn.Warn_Actions.toString(), line.nonWhitelistedWarnActions());
+      summaryRow.addProperty(GateSummaryColumn.Go_Actions.toString(), line.nonWhitelistedGoActions());
+      summaryRow.addProperty(GateSummaryColumn.Final_Action.toString(), line.finalAction());
 
       rows.add(summaryRow);
     });

@@ -56,16 +56,16 @@ public class PolicyEvaluationReportSerializer implements JsonSerializer<PolicyEv
   private JsonArray serializeRow(PolicyEvaluationReportLine result) {
     JsonArray array = new JsonArray();
 
-    array.add(result.getImageID());
-    array.add(result.getRepoTag());
-    array.add(result.getTriggerID());
-    array.add(result.getGate());
-    array.add(result.getTrigger());
-    array.add(result.getCheckOutput());
-    array.add(result.getGateAction());
-    array.add(result.getWhitelisted());
-    array.add(result.getPolicyID());
-    array.add(result.getPolicyName());
+    array.add(result.imageID());
+    array.add(result.repoTag());
+    array.add(result.triggerID());
+    array.add(result.gate());
+    array.add(result.trigger());
+    array.add(result.checkOutput());
+    array.add(result.gateAction());
+    array.add(result.whitelisted());
+    array.add(result.policyID());
+    array.add(result.policyName());
 
     return array;
   }

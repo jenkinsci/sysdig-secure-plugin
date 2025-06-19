@@ -59,10 +59,10 @@ class PolicyReportProcessorTest {
     assertEquals(1, policyEvaluationSummary.getLines().size());
 
     var policyEvaluationSummaryLine = policyEvaluationSummary.getLines().get(0);
-    assertEquals("nginx", policyEvaluationSummaryLine.getImageTag());
-    assertEquals(45, policyEvaluationSummaryLine.getNonWhitelistedStopActions());
-    assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedWarnActions());
-    assertEquals(0, policyEvaluationSummaryLine.getNonWhitelistedGoActions());
-    assertEquals("STOP", policyEvaluationSummaryLine.getFinalAction());
+    assertEquals("nginx", policyEvaluationSummaryLine.imageTag());
+    assertEquals(45, policyEvaluationSummaryLine.nonWhitelistedStopActions());
+    assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedWarnActions());
+    assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedGoActions());
+    assertEquals("STOP", policyEvaluationSummaryLine.finalAction());
   }
 }

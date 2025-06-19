@@ -22,9 +22,7 @@ import java.util.Optional;
 public class Package implements Serializable {
   private String type;
   private String name;
-  private String version;
   private String path;
-  private String layerDigest;
   private List<Vuln> vulns;
   private String suggestedFix;
 
@@ -44,28 +42,12 @@ public class Package implements Serializable {
     this.name = name;
   }
 
-  public Optional<String> getVersion() {
-    return Optional.ofNullable(version);
-  }
-
-  public void setVersion(String version) {
-    this.version = version;
-  }
-
   public Optional<String> getPath() {
     return Optional.ofNullable(path);
   }
 
   public void setPath(String path) {
     this.path = path;
-  }
-
-  public Optional<String> getLayerDigest() {
-    return Optional.ofNullable(layerDigest);
-  }
-
-  public void setLayerDigest(String layerDigest) {
-    this.layerDigest = layerDigest;
   }
 
   public Optional<List<Vuln>> getVulns() {
