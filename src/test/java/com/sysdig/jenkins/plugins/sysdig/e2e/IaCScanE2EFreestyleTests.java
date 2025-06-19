@@ -1,6 +1,5 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
-import hudson.Functions;
 import hudson.model.Result;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -4,7 +4,6 @@ import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReportLine;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.log.NopLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

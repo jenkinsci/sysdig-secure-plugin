@@ -15,14 +15,11 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Metadata;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Package;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.PolicyEvaluation;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Result;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
 public class ImageScanningResult implements Serializable {

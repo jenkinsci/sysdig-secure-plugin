@@ -22,8 +22,8 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.B
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.PolicyEvaluation;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Predicate;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Rule;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

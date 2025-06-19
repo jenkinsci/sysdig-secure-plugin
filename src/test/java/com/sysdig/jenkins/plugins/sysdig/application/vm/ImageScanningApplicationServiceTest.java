@@ -1,15 +1,15 @@
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.TestMother;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
+import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult.FinalAction;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
+import hudson.AbortException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import hudson.AbortException;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;

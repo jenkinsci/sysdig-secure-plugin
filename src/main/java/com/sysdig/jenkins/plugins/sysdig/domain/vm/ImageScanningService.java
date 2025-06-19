@@ -16,7 +16,6 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
