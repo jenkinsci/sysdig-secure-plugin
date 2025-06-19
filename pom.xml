@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>5.7</version>
+    <version>5.17</version>
     <relativePath />
   </parent>
 
@@ -27,7 +27,7 @@
     <!-- You can check out which versions are being used per version in https://stats.jenkins.io/pluginversions/sysdig-secure.html -->
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
     <jenkins.baseline>2.479</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/mark-a-plugin-incompatible/ -->
     <hpi.compatibleSinceVersion>3.0</hpi.compatibleSinceVersion>
   </properties>
@@ -39,7 +39,7 @@
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
         <!-- You can find your version for the selected baseline in: https://repo.jenkins-ci.org/public/io/jenkins/tools/bom/ -->
-        <version>4136.vca_c3202a_7fd1</version>
+        <version>4488.v7fe26526366e</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
