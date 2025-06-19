@@ -40,7 +40,7 @@ class ImageScanningE2EFreestyleTests {
 
     jenkins.assertLogContains("Using new-scanning engine", build);
     jenkins.assertLogContains("Image Name: alpine", build);
-    jenkins.assertLogContains("Downloading inlinescan v1.22.1", build);
+    jenkins.assertLogContains("Downloading inlinescan v1.22.3", build);
     jenkins.assertLogContains("--apiurl=https://secure.sysdig.com", build);
     jenkins.assertLogContains("--loglevel=info --console-log alpine", build);
     jenkins.assertLogContains("Check that the API token is provided and is valid for the specified URL.", build);
