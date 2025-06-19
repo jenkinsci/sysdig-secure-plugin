@@ -13,28 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import java.io.Serializable;
 import java.util.Optional;
 
-public class Severity implements Serializable {
-  private String value;
-  private String sourceName;
+public class Predicate implements Serializable {
+  private String type;
+  private Extra extra;
 
-  public Optional<String> getValue() {
-    return Optional.ofNullable(value);
+  public Optional<String> getType() {
+    return Optional.ofNullable(type);
   }
 
-  public void setValue(String value) {
-    this.value = value;
+  public void setType(String type) {
+    this.type = type;
   }
 
-  public Optional<String> getSourceName() {
-    return Optional.ofNullable(sourceName);
+  public Optional<Extra> getExtra() {
+    return Optional.ofNullable(extra);
   }
 
-  public void setSourceName(String sourceName) {
-    this.sourceName = sourceName;
+  public void setExtra(Extra extra) {
+    this.extra = extra;
   }
 }

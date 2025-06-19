@@ -15,10 +15,10 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Metadata;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Package;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.PolicyEvaluation;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Result;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Metadata;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Package;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.PolicyEvaluation;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Result;
 
 import java.io.Serializable;
 import java.util.List;
@@ -45,30 +45,12 @@ public class ImageScanningResult implements Serializable {
   private final List<Package> packages;
   private final List<PolicyEvaluation> evaluationPolicies;
 
-  public ImageScanningResult(String tag, String imageID, String evalStatus, List<Package> vulnsReport, List<PolicyEvaluation> evaluationPolicies) {
+  public ImageScanningResult(String tag, String imageID, String evalStatus, List<Package> packages, List<PolicyEvaluation> evaluationPolicies) {
     this.tag = tag;
     this.imageID = imageID;
     this.evalStatus = evalStatus;
-    this.packages = vulnsReport;
+    this.packages = packages;
     this.evaluationPolicies = evaluationPolicies;
-  }
-
-  public static ImageScanningResult fromReportResult(Result result) {
-    Metadata metadata = result.getMetadata()
-        .orElseThrow(() -> new NoSuchElementException("metadata field not found in result"));
-
-    final String tag = metadata.getPullString()
-        .orElseThrow(() -> new NoSuchElementException("pull string not found in metadata"));
-    final String imageID = metadata.getImageId()
-        .orElseThrow(() -> new NoSuchElementException("imageid not found in metadata"));
-    final String evalStatus = result.getPolicyEvaluationsResult()
-        .orElseThrow(() -> new NoSuchElementException("policy evaluations result not found in result"));
-    final List<Package> packages = result.getPackages()
-        .orElseThrow(() -> new NoSuchElementException("packages not found in result"));
-    final List<PolicyEvaluation> policies = result.getPolicyEvaluations()
-        .orElseThrow(() -> new NoSuchElementException("policy evaluations not found in result"));
-
-    return new ImageScanningResult(tag, imageID, evalStatus, packages, policies);
   }
 
   public String getEvalStatus() {

@@ -1,7 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Result;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.Result;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import org.apache.commons.io.IOUtils;
 
@@ -32,6 +32,6 @@ public class TestMother {
    * @throws IOException if an error occurs during object creation.
    */
   public static ImageScanningResult imageScanResult() throws IOException {
-    return ImageScanningResult.fromReportResult(rawScanResult());
+    return rawScanResult().toImageScanningResult();
   }
 }

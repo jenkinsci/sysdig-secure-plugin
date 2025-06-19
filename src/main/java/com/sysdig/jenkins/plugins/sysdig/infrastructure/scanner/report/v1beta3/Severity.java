@@ -13,20 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import java.io.Serializable;
 import java.util.Optional;
 
-public class CvssScore implements Serializable {
-  private Value value;
+public class Severity implements Serializable {
+  private String value;
   private String sourceName;
 
-  public Optional<Value> getValue() {
+  public Optional<String> getValue() {
     return Optional.ofNullable(value);
   }
 
-  public void setValue(Value value) {
+  public void setValue(String value) {
     this.value = value;
   }
 

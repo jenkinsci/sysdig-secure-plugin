@@ -19,7 +19,7 @@ import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.JsonScanResult;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
@@ -59,7 +59,10 @@ public class RemoteSysdigImageScanner {
     // Execute the scanner bin file and retrieves its json output
     String imageScanningResultJSON = executeScan(scannerBinaryFile);
     JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
-    return ImageScanningResult.fromReportResult(jsonScanResult.getResult().orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON))));
+    return jsonScanResult
+      .getResult()
+      .orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON)))
+      .toImageScanningResult();
   }
 
   private FilePath downloadInlineScan(String latestVersion) throws IOException, UnsupportedOperationException, InterruptedException {

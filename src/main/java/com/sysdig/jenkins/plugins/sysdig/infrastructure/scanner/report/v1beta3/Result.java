@@ -13,10 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
+
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class Result implements Serializable {
@@ -100,5 +103,24 @@ public class Result implements Serializable {
 
   public void setPolicyEvaluationsResult(String policyEvaluationsResult) {
     this.policyEvaluationsResult = policyEvaluationsResult;
+  }
+
+
+  public ImageScanningResult toImageScanningResult() {
+    Metadata metadata = this.getMetadata()
+      .orElseThrow(() -> new NoSuchElementException("metadata field not found in result"));
+
+    final String tag = metadata.getPullString()
+      .orElseThrow(() -> new NoSuchElementException("pull string not found in metadata"));
+    final String imageID = metadata.getImageId()
+      .orElseThrow(() -> new NoSuchElementException("imageid not found in metadata"));
+    final String evalStatus = this.getPolicyEvaluationsResult()
+      .orElseThrow(() -> new NoSuchElementException("policy evaluations result not found in result"));
+    final List<Package> packages = this.getPackages()
+      .orElseThrow(() -> new NoSuchElementException("packages not found in result"));
+    final List<PolicyEvaluation> policies = this.getPolicyEvaluations()
+      .orElseThrow(() -> new NoSuchElementException("policy evaluations not found in result"));
+
+    return new ImageScanningResult(tag, imageID, evalStatus, packages, policies);
   }
 }

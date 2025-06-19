@@ -13,37 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
+package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import java.io.Serializable;
 import java.util.Optional;
 
-public class PublishDateByVendor implements Serializable {
-  private String nvd;
-  private String vulndb;
-  private String cisakev;
+public class CvssScore implements Serializable {
+  private Value value;
+  private String sourceName;
 
-  public Optional<String> getNvd() {
-    return Optional.ofNullable(nvd);
+  public Optional<Value> getValue() {
+    return Optional.ofNullable(value);
   }
 
-  public void setNvd(String nvd) {
-    this.nvd = nvd;
+  public void setValue(Value value) {
+    this.value = value;
   }
 
-  public Optional<String> getVulndb() {
-    return Optional.ofNullable(vulndb);
+  public Optional<String> getSourceName() {
+    return Optional.ofNullable(sourceName);
   }
 
-  public void setVulndb(String vulndb) {
-    this.vulndb = vulndb;
-  }
-
-  public Optional<String> getCisakev() {
-    return Optional.ofNullable(cisakev);
-  }
-
-  public void setCisakev(String cisakev) {
-    this.cisakev = cisakev;
+  public void setSourceName(String sourceName) {
+    this.sourceName = sourceName;
   }
 }

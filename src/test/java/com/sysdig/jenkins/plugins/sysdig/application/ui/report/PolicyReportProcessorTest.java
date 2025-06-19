@@ -20,7 +20,7 @@ class PolicyReportProcessorTest {
   void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
-    var imageScanningResult = ImageScanningResult.fromReportResult(result);
+    var imageScanningResult = result.toImageScanningResult();
 
     // When
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
@@ -50,7 +50,7 @@ class PolicyReportProcessorTest {
   void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
-    var imageScanningResult = ImageScanningResult.fromReportResult(result);
+    var imageScanningResult = result.toImageScanningResult();
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
 
     // When
