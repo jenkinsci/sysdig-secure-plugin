@@ -85,7 +85,7 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     String outFilename = String.format(RAW_VULN_REPORT_FILENAME_FORMAT, scanResult.getImageID());
     FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, outFilename);
     logger.logDebug(String.format("Writing raw vulnerability report to %s", outPath.getRemote()));
-    outPath.write(GsonBuilder.build().toJson(scanResult.getVulnerabilityReport()), String.valueOf(StandardCharsets.UTF_8));
+    outPath.write(GsonBuilder.build().toJson(scanResult.getPackages()), String.valueOf(StandardCharsets.UTF_8));
   }
 
   @Override

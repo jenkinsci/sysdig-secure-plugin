@@ -54,7 +54,7 @@ public class ImageScanningResult implements Serializable {
     return evalStatus;
   }
 
-  public List<Package> getVulnerabilityReport() {
+  public List<Package> getPackages() {
     return packages;
   }
 
