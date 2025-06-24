@@ -5,5 +5,6 @@ public enum PackageType {
   OS,
   Python,
   Java,
-  Npm,
+  Javascript,
+  Golang, Rust, Ruby, PHP, CSharp,
 }

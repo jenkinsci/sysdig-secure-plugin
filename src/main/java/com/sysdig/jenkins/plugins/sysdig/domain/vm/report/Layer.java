@@ -55,4 +55,16 @@ public class Layer implements AggregateChild<ScanResult> {
       .flatMap(p -> p.vulnerabilities().stream())
       .collect(Collectors.toUnmodifiableSet());
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    Layer layer = (Layer) o;
+    return Objects.equals(digest, layer.digest);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(digest);
+  }
 }

@@ -11,7 +11,7 @@ public class Policy implements AggregateChild<ScanResult> {
   private final Date createdAt;
   private final Date updatedAt;
   private final ScanResult root;
-  private Set<PolicyBundle> bundles;
+  private final Set<PolicyBundle> bundles;
 
   public Policy(String id, String name, PolicyType type, Date createdAt, Date updatedAt, ScanResult root) {
     this.id = id;
@@ -23,23 +23,23 @@ public class Policy implements AggregateChild<ScanResult> {
     this.root = root;
   }
 
-  public String getId() {
+  public String id() {
     return id;
   }
 
-  public String getName() {
+  public String name() {
     return name;
   }
 
-  public PolicyType getType() {
+  public PolicyType type() {
     return type;
   }
 
-  public Date getCreatedAt() {
+  public Date createdAt() {
     return createdAt;
   }
 
-  public Date getUpdatedAt() {
+  public Date updatedAt() {
     return updatedAt;
   }
 
@@ -49,10 +49,30 @@ public class Policy implements AggregateChild<ScanResult> {
   }
 
   void addBundle(PolicyBundle policyBundle) {
-    this.bundles.add(policyBundle);
+    if (this.bundles.add(policyBundle)) {
+      policyBundle.addPolicy(this);
+    }
   }
 
-  public Collection<PolicyBundle> getBundles() {
-    return Collections.unmodifiableCollection(bundles);
+  public Set<PolicyBundle> bundles() {
+    return Collections.unmodifiableSet(bundles);
+  }
+
+  public EvaluationResult evaluationResult() {
+    boolean allBundlesPassed = bundles().stream()
+      .allMatch(b -> b.evaluationResult() == EvaluationResult.Passed);
+    return allBundlesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    Policy policy = (Policy) o;
+    return Objects.equals(id, policy.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }

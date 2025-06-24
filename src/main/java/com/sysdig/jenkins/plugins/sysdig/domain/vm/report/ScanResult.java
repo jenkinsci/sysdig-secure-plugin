@@ -1,79 +1,120 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-
+import javax.annotation.Nullable;
 import java.math.BigInteger;
-import java.net.URL;
-import java.time.Duration;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 
 public class ScanResult {
-  private ScanInfo scanInfo;
-  private ScannerInfo scanner;
-  private Result result;
+  private final ScanType type;
+  private final Metadata metadata;
+  private final HashMap<String, Layer> layers;
+  private final Map<Package, Package> packages;
+  private final Map<String, Vulnerability> vulnerabilities;
+  private final Map<String, Policy> policies;
+  private final Map<String, PolicyBundle> policyBundles;
+  private final Map<String, AcceptedRisk> acceptedRisks;
 
-  private ScanResult() {
+  public ScanResult(ScanType type, String pullString, String imageID, String digest, OperatingSystem baseOS, BigInteger sizeInBytes, Architecture architecture, Map<String, String> labels, Date createdAt) {
+    this.type = type;
+    this.metadata = new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this);
+    this.layers = new HashMap<>();
+    this.packages = new HashMap<>();
+    this.vulnerabilities = new HashMap<>();
+    this.policies = new HashMap<>();
+    this.policyBundles = new HashMap<>();
+    this.acceptedRisks = new HashMap<>();
   }
 
-  public ScanInfo scanInfo() {
-    return scanInfo;
+  public Layer addLayer(String digest, BigInteger size, String command) {
+    Layer layer = new Layer(digest, size, command, this);
+    this.layers.put(digest, layer);
+    return layer;
   }
 
-  public ScannerInfo scanner() {
-    return scanner;
+  public Optional<Layer> findLayerByDigest(String digest) {
+    return Optional.ofNullable(this.layers.get(digest));
   }
 
-  public Result result() {
-    return result;
+  public Collection<Layer> layers() {
+    return Collections.unmodifiableCollection(this.layers.values());
   }
 
-  public static ScanResultBuilder createScanResult() {
-    return new ScanResultBuilder();
+  public Package addPackage(PackageType type, String name, String version, String path, Layer layer) {
+    Package aPackage = new Package(type, name, version, path, layer, this);
+    Package addedPackage = Optional.ofNullable(packages.putIfAbsent(aPackage, aPackage)).orElse(aPackage);
+
+    layer.addPackage(addedPackage);
+    return addedPackage;
   }
 
-  public static class ScanResultBuilder {
-    private ScanInfo scanInfo;
-    private ScannerInfo scanner;
-    private Result result;
-    private final ScanResult scanResult;
+  public Collection<Package> packages() {
+    return Collections.unmodifiableCollection(packages.values());
+  }
 
-    ScanResultBuilder() {
-      this.scanResult = new ScanResult();
-    }
+  public Vulnerability addVulnerability(String cve, Severity severity, Date disclosureDate, @Nullable Date solutionDate, boolean exploitable,
+                                        @Nullable String fixVersion) {
+    return vulnerabilities.computeIfAbsent(cve, k -> new Vulnerability(cve, severity, disclosureDate, solutionDate, exploitable, fixVersion, this));
+  }
 
-    public ScanResultBuilder withScanInfo(Date scanStart, Duration scanDuration, URL remoteResult, String resultID) {
-      this.scanInfo = new ScanInfo(scanStart, scanDuration, remoteResult, resultID, this.scanResult);
-      return this;
-    }
+  public Optional<Vulnerability> findVulnerabilityByCVE(String cve) {
+    return Optional.ofNullable(vulnerabilities.get(cve));
+  }
 
-    public ScanResultBuilder withScannerInfo(String name, String version) {
-      this.scanner = new ScannerInfo(name, version, this.scanResult);
-      return this;
-    }
+  public Collection<Vulnerability> vulnerabilities() {
+    return Collections.unmodifiableCollection(vulnerabilities.values());
+  }
 
-    public ScanResultBuilder withResult(ScanType type, String pullString, String imageID, String digest, OperatingSystem baseOS, BigInteger sizeInBytes, Architecture architecture, Map<String, String> labels, Date createdAt) {
-      Metadata metadata = new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this.scanResult);
-      this.result = new Result(type, metadata, this.scanResult);
-      return this;
-    }
+  public Policy addPolicy(String id, String name, PolicyType type, Date createdAt, Date updatedAt) {
+    return policies.computeIfAbsent(id, k -> new Policy(id, name, type, createdAt, updatedAt, this));
+  }
 
-    public ScanResult build() {
-      if (this.scanInfo == null) {
-        throw new IllegalStateException("scan info has not been specified");
-      }
+  public Optional<Policy> findPolicyByID(String id) {
+    return Optional.ofNullable(policies.get(id));
+  }
 
-      if (this.scanner == null) {
-        throw new IllegalStateException("scanner info has not been specified");
-      }
+  public Collection<Policy> policies() {
+    return Collections.unmodifiableCollection(policies.values());
+  }
 
-      if (this.result == null) {
-        throw new IllegalStateException("result info has not been specified");
-      }
+  public PolicyBundle addPolicyBundle(String id, String name, List<PolicyBundleRule> rules, Date createdAt, Date updatedAt, Policy policy) {
+    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, rules, createdAt, updatedAt, this));
+    policyBundle.addPolicy(policy);
+    return policyBundle;
+  }
 
-      scanResult.scanInfo = scanInfo;
-      scanResult.scanner = scanner;
-      scanResult.result = result;
-      return scanResult;
-    }
+  public Optional<PolicyBundle> findPolicyBundleByID(String id) {
+    return Optional.ofNullable(policyBundles.get(id));
+  }
+
+  public Collection<PolicyBundle> policyBundles() {
+    return Collections.unmodifiableCollection(policyBundles.values());
+  }
+
+  public AcceptedRisk addAcceptedRisk(String id, AcceptedRiskReason reason, String description, Date expirationDate, boolean isActive, Date createdAt, Date updatedAt) {
+    AcceptedRisk acceptedRisk = new AcceptedRisk(id, reason, description, expirationDate, isActive, createdAt, updatedAt, this);
+    this.acceptedRisks.put(id, acceptedRisk);
+    return acceptedRisk;
+  }
+
+  public Optional<AcceptedRisk> findAcceptedRiskByID(String id) {
+    return Optional.ofNullable(this.acceptedRisks.get(id));
+  }
+
+  public Collection<AcceptedRisk> acceptedRisks() {
+    return Collections.unmodifiableCollection(acceptedRisks.values());
+  }
+
+  public ScanType type() {
+    return type;
+  }
+
+  public Metadata metadata() {
+    return metadata;
+  }
+
+  public EvaluationResult evaluationResult() {
+    boolean allPoliciesPassed = policies().stream().allMatch(p -> p.evaluationResult() == EvaluationResult.Passed);
+
+    return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
   }
 }

@@ -24,11 +24,13 @@ public class PolicyBundle implements AggregateChild<ScanResult> {
   }
 
   void addPolicy(Policy policy) {
-    this.foundInPolicies.add(policy);
+    if (this.foundInPolicies.add(policy)) {
+      policy.addBundle(this);
+    }
   }
 
-  public Collection<Policy> getFoundInPolicies() {
-    return Collections.unmodifiableCollection(foundInPolicies);
+  public Set<Policy> foundInPolicies() {
+    return Collections.unmodifiableSet(foundInPolicies);
   }
 
   @Override
@@ -54,5 +56,23 @@ public class PolicyBundle implements AggregateChild<ScanResult> {
 
   public List<PolicyBundleRule> rules() {
     return Collections.unmodifiableList(rules);
+  }
+
+  public EvaluationResult evaluationResult() {
+    boolean allRulesPassed = rules().stream()
+      .allMatch(r -> r.evaluationResult() == EvaluationResult.Passed);
+    return allRulesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PolicyBundle that = (PolicyBundle) o;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(id);
   }
 }

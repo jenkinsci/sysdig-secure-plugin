@@ -59,6 +59,7 @@ public class RemoteSysdigImageScanner {
     // Execute the scanner bin file and retrieves its json output
     String imageScanningResultJSON = executeScan(scannerBinaryFile);
     JsonScanResult jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResult.class);
+
     return jsonScanResult
       .getResult()
       .orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON)))

@@ -16,6 +16,8 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class Vuln implements Serializable {
@@ -23,6 +25,10 @@ public class Vuln implements Serializable {
   private Severity severity;
   private String disclosureDate;
   private String solutionDate;
+  private Boolean exploitable;
+  private List<AcceptedRiskReference> acceptedRisks;
+  private String fixedInVersion;
+  private Map<String, String> annotations;
 
   public Optional<String> getName() {
     return Optional.ofNullable(name);
@@ -54,5 +60,37 @@ public class Vuln implements Serializable {
 
   public void setSolutionDate(String solutionDate) {
     this.solutionDate = solutionDate;
+  }
+
+  public Optional<Boolean> getExploitable() {
+    return Optional.ofNullable(exploitable);
+  }
+
+  public void setExploitable(Boolean exploitable) {
+    this.exploitable = exploitable;
+  }
+
+  public Optional<String> getFixedInVersion() {
+    return Optional.ofNullable(fixedInVersion);
+  }
+
+  public void setFixedInVersion(String fixedInVersion) {
+    this.fixedInVersion = fixedInVersion;
+  }
+
+  public Optional<Map<String, String>> getAnnotations() {
+    return Optional.ofNullable(annotations);
+  }
+
+  public void setAnnotations(Map<String, String> annotations) {
+    this.annotations = annotations;
+  }
+
+  public Optional<List<AcceptedRiskReference>> getAcceptedRisks() {
+    return Optional.ofNullable(acceptedRisks);
+  }
+
+  public void setAcceptedRisks(List<AcceptedRiskReference> acceptedRisks) {
+    this.acceptedRisks = acceptedRisks;
   }
 }

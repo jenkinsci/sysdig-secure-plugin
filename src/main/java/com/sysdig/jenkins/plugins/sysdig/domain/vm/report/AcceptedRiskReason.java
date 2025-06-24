@@ -6,5 +6,6 @@ public enum AcceptedRiskReason {
   RiskAvoided,
   RiskMitigated,
   RiskNotRelevant,
-  Custom
+  Custom,
+  Unknown,
 }

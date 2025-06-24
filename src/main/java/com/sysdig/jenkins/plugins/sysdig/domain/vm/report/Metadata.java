@@ -81,7 +81,7 @@ public class Metadata implements AggregateChild<ScanResult> {
     return root;
   }
 
-  long getLayerCountWithContent() {
-    return root().result().layers().stream().filter(l -> l.size().isPresent()).count();
+  long layersCount() {
+    return root().layers().stream().filter(l -> l.size().isPresent()).count();
   }
 }
