@@ -5,8 +5,9 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult.FinalAction;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Metadata;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import hudson.AbortException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class ImageScanningApplicationServiceTest {
-
   private ReportStorage reportStorage;
   private ImageScanner scanner;
   private SysdigLogger logger;
@@ -37,7 +37,7 @@ class ImageScanningApplicationServiceTest {
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
     when(config.getBailOnFail()).thenReturn(false);
-    ImageScanningResult result = TestMother.imageScanResult();
+    ScanResult result = TestMother.imageScanResult();
     PolicyEvaluationReport policyEvaluationReport = new PolicyEvaluationReport(false);
     PolicyEvaluationSummary policyEvaluationSummary = new PolicyEvaluationSummary();
 
@@ -49,7 +49,7 @@ class ImageScanningApplicationServiceTest {
 
     // Then
     verify(config).printWith(logger);
-    verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - FAIL"));
+    verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - Failed"));
     verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
     verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
     verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
@@ -61,11 +61,11 @@ class ImageScanningApplicationServiceTest {
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
     when(config.getBailOnFail()).thenReturn(true);
-    ImageScanningResult result = mock(ImageScanningResult.class);
-    when(result.getEvalStatus()).thenReturn("fail");
+    ScanResult result = mock(ScanResult.class);
+    when(result.metadata()).thenReturn(mock(Metadata.class));
+    when(result.evaluationResult()).thenReturn(EvaluationResult.Failed);
     PolicyEvaluationReport policyEvaluationReport = mock(PolicyEvaluationReport.class);
     PolicyEvaluationSummary policyEvaluationSummary = mock(PolicyEvaluationSummary.class);
-    when(result.getFinalAction()).thenReturn(FinalAction.ActionFail);
     when(scanner.scanImage(anyString())).thenReturn(result);
 
     assertThrows(AbortException.class, () -> service.runScan(config));

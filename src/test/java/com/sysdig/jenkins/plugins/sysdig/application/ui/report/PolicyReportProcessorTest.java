@@ -19,7 +19,7 @@ class PolicyReportProcessorTest {
   void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
-    var imageScanningResult = result.toImageScanningResult();
+    var imageScanningResult = result.toDomain().get();
 
     // When
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
@@ -32,7 +32,7 @@ class PolicyReportProcessorTest {
 
     var policyEvaluationReportLines = resultsForEachImage.get(imageID);
     assertEquals(45, policyEvaluationReportLines.size());
-    assertEquals(policyEvaluationReportLines.get(0), new PolicyEvaluationReportLine(
+    assertTrue(policyEvaluationReportLines.contains(new PolicyEvaluationReportLine(
       imageID,
       "nginx",
       "trigger_id",
@@ -41,15 +41,15 @@ class PolicyReportProcessorTest {
       "CVE-2023-31484 found in pkg 'perl-base:5.36.0-7+deb12u1'",
       "STOP",
       false,
-      "",
-      "Cardholder Policy (David)"));
+      "cardholder-policy-david",
+      "Cardholder Policy (David)")));
   }
 
   @Test
   void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
     // Given
     var result = TestMother.rawScanResult();
-    var imageScanningResult = result.toImageScanningResult();
+    var imageScanningResult = result.toDomain().get();
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
 
     // When

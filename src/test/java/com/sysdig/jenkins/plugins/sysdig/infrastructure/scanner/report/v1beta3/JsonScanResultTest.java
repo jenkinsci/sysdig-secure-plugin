@@ -20,7 +20,7 @@ class JsonScanResultTest {
   @BeforeEach
   void setUp() {
     JsonScanResult jsonScanResult = jsonScanResultFromImage("ubuntu_22.04");
-    scanResult = jsonScanResult.toDomain();
+    scanResult = jsonScanResult.toDomain().get();
   }
 
   @Test
@@ -110,7 +110,7 @@ class JsonScanResultTest {
     PolicyBundle failedBundle = scanResult.findPolicyBundleByID("nist-sp-800-190").get();
     assertTrue(failedPolicy.bundles().contains(failedBundle));
     assertEquals(EvaluationResult.Failed, failedBundle.evaluationResult());
-    assertEquals(EvaluationResult.Failed, failedBundle.rules().get(1).evaluationResult());
+    assertEquals(EvaluationResult.Failed, failedBundle.rules().stream().skip(1).findFirst().get().evaluationResult());
   }
 
   private JsonScanResult jsonScanResultFromImage(String image) {

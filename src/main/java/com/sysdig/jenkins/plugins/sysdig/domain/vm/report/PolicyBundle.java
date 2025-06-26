@@ -2,21 +2,22 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class PolicyBundle implements AggregateChild<ScanResult> {
+public class PolicyBundle implements AggregateChild<ScanResult>, Serializable {
   private final ScanResult root;
   private final String id;
   private final String name;
-  private final List<PolicyBundleRule> rules;
+  private final LinkedHashSet<PolicyBundleRule> rules;
   private final Date createdAt;
   private final Date updatedAt;
   private final Set<Policy> foundInPolicies;
 
-  PolicyBundle(String id, String name, List<PolicyBundleRule> rules, Date createdAt, Date updatedAt, ScanResult root) {
+  PolicyBundle(String id, String name, Date createdAt, Date updatedAt, ScanResult root) {
     this.id = id;
     this.name = name;
-    this.rules = rules;
+    this.rules = new LinkedHashSet<>();
     this.root = root;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
@@ -27,6 +28,12 @@ public class PolicyBundle implements AggregateChild<ScanResult> {
     if (this.foundInPolicies.add(policy)) {
       policy.addBundle(this);
     }
+  }
+
+  public PolicyBundleRule addRule(String id, String description, EvaluationResult evaluationResult) {
+    PolicyBundleRule rule = new PolicyBundleRule(id, description, evaluationResult, this);
+    this.rules.add(rule);
+    return rule;
   }
 
   public Set<Policy> foundInPolicies() {
@@ -54,13 +61,13 @@ public class PolicyBundle implements AggregateChild<ScanResult> {
     return updatedAt;
   }
 
-  public List<PolicyBundleRule> rules() {
-    return Collections.unmodifiableList(rules);
+  public Set<PolicyBundleRule> rules() {
+    return Collections.unmodifiableSet(rules);
   }
 
   public EvaluationResult evaluationResult() {
     boolean allRulesPassed = rules().stream()
-      .allMatch(r -> r.evaluationResult() == EvaluationResult.Passed);
+      .allMatch(r -> r.evaluationResult().isPassed());
     return allRulesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
   }
 

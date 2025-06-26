@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public class OperatingSystem {
+import java.io.Serializable;
+
+public class OperatingSystem  implements Serializable {
   private final Family family;
   private final String name;
   public OperatingSystem(Family family, String name) {

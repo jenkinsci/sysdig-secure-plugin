@@ -2,11 +2,12 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class Layer implements AggregateChild<ScanResult> {
+public class Layer implements AggregateChild<ScanResult>, Serializable {
   private final String digest;
   private final BigInteger size;
   private final String command;

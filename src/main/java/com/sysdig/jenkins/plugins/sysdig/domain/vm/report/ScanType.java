@@ -1,5 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum ScanType {
+import java.io.Serializable;
+
+public enum ScanType  implements Serializable {
   Docker
 }

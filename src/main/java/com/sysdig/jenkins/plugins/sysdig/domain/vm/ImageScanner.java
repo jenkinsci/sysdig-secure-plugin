@@ -15,6 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+
 public interface ImageScanner {
-  ImageScanningResult scanImage(String imageTag) throws InterruptedException;
+  ScanResult scanImage(String imageTag) throws InterruptedException;
 }

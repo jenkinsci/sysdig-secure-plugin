@@ -2,12 +2,13 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
-public class Metadata implements AggregateChild<ScanResult> {
+public class Metadata implements AggregateChild<ScanResult>, Serializable {
   private final String pullString;
   private final String imageID;
   private final String digest;

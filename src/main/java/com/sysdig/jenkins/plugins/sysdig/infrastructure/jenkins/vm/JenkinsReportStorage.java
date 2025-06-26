@@ -22,7 +22,7 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.VulnerabilityReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
@@ -65,15 +65,15 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
   }
 
   @Override
-  public void savePolicyReport(ImageScanningResult scanResult, PolicyEvaluationReport report) throws IOException, InterruptedException {
-    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageID()));
+  public void savePolicyReport(ScanResult scanResult, PolicyEvaluationReport report) throws IOException, InterruptedException {
+    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.metadata().imageID()));
     logger.logDebug(String.format("Writing policy evaluation result to %s", outPath.getRemote()));
     outPath.write(GsonBuilder.build().toJson(report), String.valueOf(StandardCharsets.UTF_8));
   }
 
   @Override
-  public void saveVulnerabilityReport(ImageScanningResult scanResult) throws IOException, InterruptedException {
-    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageID()));
+  public void saveVulnerabilityReport(ScanResult scanResult) throws IOException, InterruptedException {
+    FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.metadata().imageID()));
     JsonObject securityJson = VulnerabilityReportProcessor.generateVulnerabilityReport(scanResult);
     logger.logDebug(String.format("Writing vulnerability report to %s", outPath.getRemote()));
     outPath.write(securityJson.toString(), String.valueOf(StandardCharsets.UTF_8));
@@ -81,22 +81,22 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
   }
 
   @Override
-  public void saveRawVulnerabilityReport(ImageScanningResult scanResult) throws IOException, InterruptedException {
-    String outFilename = String.format(RAW_VULN_REPORT_FILENAME_FORMAT, scanResult.getImageID());
+  public void saveRawVulnerabilityReport(ScanResult scanResult) throws IOException, InterruptedException {
+    String outFilename = String.format(RAW_VULN_REPORT_FILENAME_FORMAT, scanResult.metadata().imageID());
     FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, outFilename);
     logger.logDebug(String.format("Writing raw vulnerability report to %s", outPath.getRemote()));
-    outPath.write(GsonBuilder.build().toJson(scanResult.getPackages()), String.valueOf(StandardCharsets.UTF_8));
+//    outPath.write(GsonBuilder.build().toJson(scanResult.packages()), String.valueOf(StandardCharsets.UTF_8));
   }
 
   @Override
-  public void archiveResults(ImageScanningResult scanResult, PolicyEvaluationSummary policyEvaluationSummary) throws IOException {
+  public void archiveResults(ScanResult scanResult, PolicyEvaluationSummary policyEvaluationSummary) throws IOException {
     try {
       logger.logDebug("Archiving results");
       runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
 
       logger.logDebug("Setting up build results in the UI");
-      String policyReportFilename = String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.getImageID());
-      String cveListingFileName = String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.getImageID());
+      String policyReportFilename = String.format(POLICY_REPORT_FILENAME_FORMAT, scanResult.metadata().imageID());
+      String cveListingFileName = String.format(CVE_LISTING_FILENAME_FORMAT, scanResult.metadata().imageID());
       runContext.getRun().addAction(new SysdigAction(runContext.getRun(), scanResult, jenkinsOutputDirName, policyReportFilename, policyEvaluationSummary, cveListingFileName));
     } catch (Exception e) {
       logger.logError("Failed to setup build results due to an unexpected error", e);

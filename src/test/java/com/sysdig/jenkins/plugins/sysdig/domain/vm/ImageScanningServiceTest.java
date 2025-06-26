@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,17 +32,17 @@ class ImageScanningServiceTest {
   void whenTheScannerReturnsSuccessItReturnsTheSuccessBack() throws InterruptedException, IOException {
     // Given
     String imageName = "my-image";
-    ImageScanningResult mockResult = mock(ImageScanningResult.class);
+    ScanResult mockResult = mock(ScanResult.class);
     when(mockScanner.scanImage(imageName)).thenReturn(mockResult);
-    when(mockResult.getFinalAction()).thenReturn(ImageScanningResult.FinalAction.ActionPass);
+    when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
 
     // When
-    ImageScanningResult.FinalAction finalAction = service.scanAndArchiveResult(imageName);
+    EvaluationResult finalAction = service.scanAndArchiveResult(imageName);
 
     // Then
     verify(mockScanner).scanImage(imageName);
     verify(mockArchiver).archiveScanResult(mockResult);
-    assertEquals(ImageScanningResult.FinalAction.ActionPass, finalAction);
+    assertEquals(EvaluationResult.Passed, finalAction);
   }
 
   @Test
@@ -58,9 +60,9 @@ class ImageScanningServiceTest {
   void whenArchivingFailsItLogsAnError() throws InterruptedException, IOException {
     // Given
     String imageName = "my-image";
-    ImageScanningResult mockResult = mock(ImageScanningResult.class);
+    ScanResult mockResult = mock(ScanResult.class);
     when(mockScanner.scanImage(imageName)).thenReturn(mockResult);
-    when(mockResult.getFinalAction()).thenReturn(ImageScanningResult.FinalAction.ActionPass);
+    when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
     doThrow(new IOException()).when(mockArchiver).archiveScanResult(mockResult);
 
     // When

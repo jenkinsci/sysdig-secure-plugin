@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum AcceptedRiskReason {
+import java.io.Serializable;
+
+public enum AcceptedRiskReason implements Serializable {
   RiskOwned,
   RiskTransferred,
   RiskAvoided,

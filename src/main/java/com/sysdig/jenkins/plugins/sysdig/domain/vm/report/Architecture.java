@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum Architecture {
+import java.io.Serializable;
+
+public enum Architecture implements Serializable {
   AMD64,
   ARM64,
   Unknown

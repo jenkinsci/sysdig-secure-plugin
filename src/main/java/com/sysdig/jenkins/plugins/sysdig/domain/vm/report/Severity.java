@@ -1,9 +1,12 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum Severity {
+import java.io.Serializable;
+
+public enum Severity  implements Serializable {
   Critical,
   High,
   Medium,
   Low,
-  Negligible, Unknown,
+  Negligible,
+  Unknown,
 }

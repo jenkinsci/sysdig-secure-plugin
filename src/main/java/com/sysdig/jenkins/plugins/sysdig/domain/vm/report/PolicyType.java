@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum PolicyType {
+import java.io.Serializable;
+
+public enum PolicyType implements Serializable {
   Custom,
   Unknown
 }

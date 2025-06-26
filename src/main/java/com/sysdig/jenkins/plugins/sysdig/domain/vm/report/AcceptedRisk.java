@@ -2,9 +2,10 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class AcceptedRisk implements AggregateChild<ScanResult> {
+public class AcceptedRisk implements AggregateChild<ScanResult>, Serializable {
   private final String id;
   private final AcceptedRiskReason reason;
   private final String description;

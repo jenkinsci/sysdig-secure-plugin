@@ -1,6 +1,16 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum EvaluationResult {
+import java.io.Serializable;
+
+public enum EvaluationResult implements Serializable {
   Passed,
-  Failed
+  Failed;
+
+  public boolean isFailed() {
+    return this == Failed;
+  }
+
+  public boolean isPassed() {
+    return this == Passed;
+  }
 }

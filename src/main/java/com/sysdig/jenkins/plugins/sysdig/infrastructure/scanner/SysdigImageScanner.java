@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -32,7 +32,7 @@ public class SysdigImageScanner implements ImageScanner {
   }
 
   @Override
-  public ImageScanningResult scanImage(String imageTag) throws InterruptedException {
+  public ScanResult scanImage(String imageTag) throws InterruptedException {
     try {
       RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(this.runContext);
       RemoteSysdigImageScanner task = new RemoteSysdigImageScanner(runContext, downloader, imageTag, config);

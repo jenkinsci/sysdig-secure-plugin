@@ -3,12 +3,13 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class Package implements AggregateChild<ScanResult> {
+public class Package implements AggregateChild<ScanResult>, Serializable {
   private final PackageType type;
   private final String name;
   private final String version;

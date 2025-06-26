@@ -18,8 +18,9 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 
@@ -39,12 +40,12 @@ public class ImageScanningApplicationService {
   public void runScan(@NonNull ImageScanningConfig config) throws AbortException {
     config.printWith(logger);
 
-    Optional<ImageScanningResult.FinalAction> finalAction = getFinalAction(config);
+    Optional<EvaluationResult> finalAction = getFinalAction(config);
 
     /* Evaluate result of step based on gate action */
     if (finalAction.isEmpty()) {
       logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if (config.getBailOnFail() && ImageScanningResult.FinalAction.ActionFail.equals(finalAction.get())) {
+    } else if (config.getBailOnFail() && EvaluationResult.Failed.equals(finalAction.get())) {
       logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
       throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
     } else {
@@ -52,12 +53,12 @@ public class ImageScanningApplicationService {
     }
   }
 
-  private Optional<ImageScanningResult.FinalAction> getFinalAction(@NonNull ImageScanningConfig config) throws AbortException {
+  private Optional<EvaluationResult> getFinalAction(@NonNull ImageScanningConfig config) throws AbortException {
     PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
     ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
 
     ImageScanningService imageScanningService = new ImageScanningService(scanner, imageScanningArchiver, logger);
-    Optional<ImageScanningResult.FinalAction> finalAction = Optional.empty();
+    Optional<EvaluationResult> finalAction = Optional.empty();
 
     try {
       finalAction = Optional.ofNullable(imageScanningService.scanAndArchiveResult(config.getImageName()));

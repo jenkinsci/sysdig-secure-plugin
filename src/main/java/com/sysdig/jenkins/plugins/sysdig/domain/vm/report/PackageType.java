@@ -1,6 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
-public enum PackageType {
+import java.io.Serializable;
+
+public enum PackageType implements Serializable {
   Unknown,
   OS,
   Python,

@@ -1,10 +1,11 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import javax.annotation.Nullable;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
 
-public class ScanResult {
+public class ScanResult  implements Serializable {
   private final ScanType type;
   private final Metadata metadata;
   private final HashMap<String, Layer> layers;
@@ -76,8 +77,8 @@ public class ScanResult {
     return Collections.unmodifiableCollection(policies.values());
   }
 
-  public PolicyBundle addPolicyBundle(String id, String name, List<PolicyBundleRule> rules, Date createdAt, Date updatedAt, Policy policy) {
-    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, rules, createdAt, updatedAt, this));
+  public PolicyBundle addPolicyBundle(String id, String name, Date createdAt, Date updatedAt, Policy policy) {
+    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, createdAt, updatedAt, this));
     policyBundle.addPolicy(policy);
     return policyBundle;
   }
@@ -113,7 +114,7 @@ public class ScanResult {
   }
 
   public EvaluationResult evaluationResult() {
-    boolean allPoliciesPassed = policies().stream().allMatch(p -> p.evaluationResult() == EvaluationResult.Passed);
+    boolean allPoliciesPassed = policies().stream().allMatch(p -> p.evaluationResult().isPassed());
 
     return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
   }

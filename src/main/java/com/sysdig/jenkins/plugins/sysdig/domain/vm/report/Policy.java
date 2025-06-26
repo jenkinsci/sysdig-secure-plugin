@@ -2,9 +2,10 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Policy implements AggregateChild<ScanResult> {
+public class Policy implements AggregateChild<ScanResult>, Serializable {
   private final String id;
   private final String name;
   private final PolicyType type;
@@ -60,7 +61,7 @@ public class Policy implements AggregateChild<ScanResult> {
 
   public EvaluationResult evaluationResult() {
     boolean allBundlesPassed = bundles().stream()
-      .allMatch(b -> b.evaluationResult() == EvaluationResult.Passed);
+      .allMatch(b -> b.evaluationResult().isPassed());
     return allBundlesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
   }
 

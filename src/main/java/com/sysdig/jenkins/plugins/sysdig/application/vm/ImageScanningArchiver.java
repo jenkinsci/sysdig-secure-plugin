@@ -15,8 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ public class ImageScanningArchiver implements ScanResultArchiver {
   }
 
   @Override
-  public void archiveScanResult(ImageScanningResult scanResult) throws IOException, InterruptedException {
+  public void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException {
     var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
     var policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
 

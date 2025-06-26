@@ -25,28 +25,30 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
 
 public class JsonScanResult implements Serializable {
   private Result result;
-
-  public Optional<Result> getResult() {
-    return Optional.ofNullable(result);
-  }
 
   public void setResult(Result result) {
     this.result = result;
   }
 
-  public ScanResult toDomain() {
-    ScanResult scanResult = createScanResult();
+  public Optional<ScanResult> toDomain() {
+    if (result == null) {
+      return Optional.empty();
+    }
 
+    ScanResult scanResult = createScanResult();
     addLayersTo(scanResult);
     addPackagesTo(scanResult);
     addPolicyEvaluationsTo(scanResult);
     addAcceptedRisksTo(scanResult);
 
-    return scanResult;
+    return Optional.of(scanResult);
   }
 
   private void addPolicyEvaluationsTo(ScanResult scanResult) {
@@ -78,30 +80,29 @@ public class JsonScanResult implements Serializable {
 
   private void addPolicyBundlesTo(ScanResult scanResult, PolicyEvaluation policyEvaluation, Policy addedPolicy) {
     policyEvaluation.getBundles().stream().flatMap(Collection::stream).forEach(bundle -> {
-      String id = bundle.getIdentifier().get();
-      String name = bundle.getName().get();
-      List<PolicyBundleRule> rules = bundle.getRules().stream().flatMap(Collection::stream).map(r -> {
-        String ruleId = r.getRuleId().get().toString();
-        String description = r.getDescription().get();
-        EvaluationResult evaluationResult = r.getEvaluationResult().orElse("passed").equalsIgnoreCase("failed") ? EvaluationResult.Failed : EvaluationResult.Passed;
-
-        return new PolicyBundleRule(ruleId, description, evaluationResult);
-      }).toList();
-
-      String createdAtString = bundle.getCreatedAt().get();
-      String updatedAtString = bundle.getUpdatedAt().get();
-
-      Date createdAt = Date.from(Instant.parse(createdAtString));
-      Date updatedAt = Date.from(Instant.parse(updatedAtString));
-
-      scanResult.addPolicyBundle(
-        id,
-        name,
-        rules,
-        createdAt,
-        updatedAt,
+      PolicyBundle policyBundle = scanResult.addPolicyBundle(
+        bundle.getIdentifier().get(),
+        bundle.getName().get(),
+        Date.from(Instant.parse(bundle.getCreatedAt().get())),
+        Date.from(Instant.parse(bundle.getUpdatedAt().get())),
         addedPolicy
       );
+
+      bundle.getRules().stream().flatMap(Collection::stream).forEach(r -> {
+        PolicyBundleRule policyBundleRule = policyBundle.addRule(
+          r.getRuleId().orElse(0L).toString(),
+          r.getDescription().get(),
+          r.getEvaluationResult().orElse("passed").equalsIgnoreCase("failed") ? EvaluationResult.Failed : EvaluationResult.Passed
+        );
+
+        r.getFailures().stream().flatMap(Collection::stream).forEach(f -> {
+          switch (r.getFailureType().get()) {
+            case "imageConfigFailure" -> policyBundleRule.addImageConfigFailure(f.getRemediation().get());
+            case "pkgVulnFailure" -> policyBundleRule.addPkgVulnFailure(f.getDescription().get());
+            default -> throw new IllegalStateException("Unexpected value: " + r.getFailureType().get());
+          }
+        });
+      });
     });
   }
 
@@ -170,15 +171,7 @@ public class JsonScanResult implements Serializable {
     String createdAtString = risk.getCreatedAt().get();
     String updateAtString = risk.getUpdatedAt().get();
 
-    AcceptedRiskReason reason = switch (reasonString) {
-      case "RiskOwned" -> AcceptedRiskReason.RiskOwned;
-      case "RiskTransferred" -> AcceptedRiskReason.RiskTransferred;
-      case "RiskAvoided" -> AcceptedRiskReason.RiskAvoided;
-      case "RiskMitigated" -> AcceptedRiskReason.RiskMitigated;
-      case "RiskNotRelevant" -> AcceptedRiskReason.RiskNotRelevant;
-      case "Custom" -> AcceptedRiskReason.Custom;
-      default -> AcceptedRiskReason.Unknown;
-    };
+    AcceptedRiskReason reason = acceptedRiskReasonFromString(reasonString);
 
     Date expirationDate = Date.from(LocalDate.parse(expirationDateString).atStartOfDay(ZoneId.systemDefault()).toInstant());
     Date createdAt = Date.from(Instant.parse(createdAtString));
@@ -187,21 +180,6 @@ public class JsonScanResult implements Serializable {
     return scanResult.addAcceptedRisk(id, reason, description, expirationDate, active, createdAt, updatedAt);
   }
 
-
-  private static PackageType packageTypeFromString(String string) {
-    return switch (string) {
-      case "C#" -> PackageType.CSharp;
-      case "golang" -> PackageType.Golang;
-      case "java" -> PackageType.Java;
-      case "javascript" -> PackageType.Javascript;
-      case "os" -> PackageType.OS;
-      case "php" -> PackageType.PHP;
-      case "python" -> PackageType.Python;
-      case "ruby" -> PackageType.Ruby;
-      case "rust" -> PackageType.Rust;
-      default -> PackageType.Unknown;
-    };
-  }
 
   private void addLayersTo(ScanResult scanResult) {
     result.getLayers().stream().flatMap(Collection::stream).forEach(layer -> {
@@ -232,21 +210,56 @@ public class JsonScanResult implements Serializable {
     Map<String, String> labels = metadata.labels().get();
     String createdAtStr = metadata.getCreatedAt().get();
 
-    OperatingSystem.Family osFamily = switch (os.toLowerCase()) {
+    OperatingSystem.Family osFamily = osTypeFromString(os);
+
+    Architecture arch = archFromString(architecture);
+
+    Date createdAt = Date.from(Instant.parse(createdAtStr));
+
+    return new ScanResult(ScanType.Docker, pullString, imageID, digest, new OperatingSystem(osFamily, baseOS), new BigInteger(size.toString()), arch, labels, createdAt);
+  }
+
+  private static AcceptedRiskReason acceptedRiskReasonFromString(String reasonString) {
+    return switch (reasonString) {
+      case "RiskOwned" -> AcceptedRiskReason.RiskOwned;
+      case "RiskTransferred" -> AcceptedRiskReason.RiskTransferred;
+      case "RiskAvoided" -> AcceptedRiskReason.RiskAvoided;
+      case "RiskMitigated" -> AcceptedRiskReason.RiskMitigated;
+      case "RiskNotRelevant" -> AcceptedRiskReason.RiskNotRelevant;
+      case "Custom" -> AcceptedRiskReason.Custom;
+      default -> AcceptedRiskReason.Unknown;
+    };
+  }
+
+  private static Architecture archFromString(String architecture) {
+    return switch (architecture.toLowerCase()) {
+      case "amd64" -> Architecture.AMD64;
+      case "arm64" -> Architecture.ARM64;
+      default -> Architecture.Unknown;
+    };
+  }
+
+  private static PackageType packageTypeFromString(String string) {
+    return switch (string) {
+      case "C#" -> PackageType.CSharp;
+      case "golang" -> PackageType.Golang;
+      case "java" -> PackageType.Java;
+      case "javascript" -> PackageType.Javascript;
+      case "os" -> PackageType.OS;
+      case "php" -> PackageType.PHP;
+      case "python" -> PackageType.Python;
+      case "ruby" -> PackageType.Ruby;
+      case "rust" -> PackageType.Rust;
+      default -> PackageType.Unknown;
+    };
+  }
+
+  private static OperatingSystem.Family osTypeFromString(String os) {
+    return switch (os.toLowerCase()) {
       case "linux" -> OperatingSystem.Family.Linux;
       case "darwin" -> OperatingSystem.Family.Darwin;
       case "windows" -> OperatingSystem.Family.Windows;
       default -> OperatingSystem.Family.Unknown;
     };
-
-    Architecture arch = switch (architecture.toLowerCase()) {
-      case "amd64" -> Architecture.AMD64;
-      case "arm64" -> Architecture.ARM64;
-      default -> Architecture.Unknown;
-    };
-
-    Date createdAt = Date.from(Instant.parse(createdAtStr));
-
-    return new ScanResult(ScanType.Docker, pullString, imageID, digest, new OperatingSystem(osFamily, baseOS), new BigInteger(size.toString()), arch, labels, createdAt);
   }
 }
