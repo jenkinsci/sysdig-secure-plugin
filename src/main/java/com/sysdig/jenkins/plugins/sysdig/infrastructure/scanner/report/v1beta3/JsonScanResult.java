@@ -16,18 +16,19 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.*;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Layer;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Package;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Severity;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.Optional;
 
 public class JsonScanResult implements Serializable {
@@ -43,7 +44,7 @@ public class JsonScanResult implements Serializable {
     }
 
     ScanResult scanResult = createScanResult();
-    addLayersTo(scanResult);
+    addLayersWithDigestTo(scanResult);
     addPackagesTo(scanResult);
     addPolicyEvaluationsTo(scanResult);
     addAcceptedRisksTo(scanResult);
@@ -51,27 +52,57 @@ public class JsonScanResult implements Serializable {
     return Optional.of(scanResult);
   }
 
+  private ScanResult createScanResult() {
+    Metadata metadata = result.getMetadata().orElseThrow(() -> new IllegalStateException("Metadata not present in result"));
+
+    return new ScanResult(ScanType.Docker,
+      metadata.getPullString().get(),
+      metadata.getImageId().get(),
+      metadata.getDigest().get(),
+      new OperatingSystem(
+        osTypeFromString(metadata.getOs().get()),
+        metadata.getBaseOs().get()
+      ),
+      new BigInteger(metadata.getSize().get().toString()),
+      archFromString(metadata.getArchitecture().get()),
+      metadata.labels().get(),
+      dateFromISO8601String(metadata.getCreatedAt().get()));
+  }
+
+  private void addLayersWithDigestTo(ScanResult scanResult) {
+    result.getLayers().stream().flatMap(Collection::stream)
+      .filter(l -> l.getDigest().isPresent())
+      .forEach(layer ->
+        scanResult.addLayer(layer.getDigest().get(), BigInteger.valueOf(layer.getSize().get()), layer.getCommand().get())
+      );
+  }
+
+  private void addPackagesTo(ScanResult scanResult) {
+    result.getPackages().stream().flatMap(Collection::stream).forEach(p -> {
+      String layerDigest = p.getLayerDigest().get();
+
+      Package addedPackage = scanResult.addPackage(
+        packageTypeFromString(p.getType().get().toLowerCase()),
+        p.getName().get(),
+        p.getVersion().get(),
+        p.getPath().get(),
+        scanResult.findLayerByDigest(layerDigest).get()
+      );
+
+      p.getVulns().stream().flatMap(Collection::stream).forEach(vulnerability -> {
+        addVulnerabilityTo(scanResult, vulnerability, addedPackage);
+      });
+    });
+  }
+
   private void addPolicyEvaluationsTo(ScanResult scanResult) {
     result.getPolicyEvaluations().stream().flatMap(Collection::stream).forEach(policyEvaluation -> {
-      String id = policyEvaluation.getIdentifier().get();
-      String name = policyEvaluation.getName().get();
-      PolicyType type = policyEvaluation.getType().map(policyType -> switch (policyType.toLowerCase()) {
-        case "custom" -> PolicyType.Custom;
-        default -> PolicyType.Unknown;
-      }).orElse(PolicyType.Unknown);
-
-      String createdAtString = policyEvaluation.getCreatedAt().get();
-      String updatedAtString = policyEvaluation.getUpdatedAt().get();
-
-      Date createdAt = Date.from(Instant.parse(createdAtString));
-      Date updatedAt = Date.from(Instant.parse(updatedAtString));
-
       Policy addedPolicy = scanResult.addPolicy(
-        id,
-        name,
-        type,
-        createdAt,
-        updatedAt
+        policyEvaluation.getIdentifier().get(),
+        policyEvaluation.getName().get(),
+        policyEvaluation.getType().map(JsonScanResult::policyTypeFromString).orElse(PolicyType.Unknown),
+        dateFromISO8601String(policyEvaluation.getCreatedAt().get()),
+        dateFromISO8601String(policyEvaluation.getUpdatedAt().get())
       );
 
       addPolicyBundlesTo(scanResult, policyEvaluation, addedPolicy);
@@ -79,16 +110,16 @@ public class JsonScanResult implements Serializable {
   }
 
   private void addPolicyBundlesTo(ScanResult scanResult, PolicyEvaluation policyEvaluation, Policy addedPolicy) {
-    policyEvaluation.getBundles().stream().flatMap(Collection::stream).forEach(bundle -> {
+    policyEvaluation.getBundles().stream().flatMap(Collection::stream).forEach(b -> {
       PolicyBundle policyBundle = scanResult.addPolicyBundle(
-        bundle.getIdentifier().get(),
-        bundle.getName().get(),
-        Date.from(Instant.parse(bundle.getCreatedAt().get())),
-        Date.from(Instant.parse(bundle.getUpdatedAt().get())),
+        b.getIdentifier().get(),
+        b.getName().get(),
+        dateFromISO8601String(b.getCreatedAt().get()),
+        dateFromISO8601String(b.getUpdatedAt().get()),
         addedPolicy
       );
 
-      bundle.getRules().stream().flatMap(Collection::stream).forEach(r -> {
+      b.getRules().stream().flatMap(Collection::stream).forEach(r -> {
         PolicyBundleRule policyBundleRule = policyBundle.addRule(
           r.getRuleId().orElse(0L).toString(),
           r.getDescription().get(),
@@ -106,30 +137,89 @@ public class JsonScanResult implements Serializable {
     });
   }
 
-  private void addPackagesTo(ScanResult scanResult) {
-    result.getPackages().stream().flatMap(Collection::stream).forEach(aPackage -> {
-      String layerDigest = aPackage.getLayerDigest().get();
-      Layer layer = scanResult.findLayerByDigest(layerDigest).get();
+  private void addVulnerabilityTo(ScanResult scanResult, Vuln vulnerability, Package addedPackage) {
+    Vulnerability addedVulnerability = scanResult.addVulnerability(
+      vulnerability.getName().get(),
+      severityFromString(vulnerability.getSeverity().flatMap(s -> s.getValue()).get()),
+      dateFromShortString(vulnerability.getDisclosureDate().get()),
+      vulnerability.getSolutionDate().map(JsonScanResult::dateFromShortString).orElse(null),
+      vulnerability.getExploitable().orElse(false),
+      vulnerability.getFixedInVersion().orElse(null)
+    );
+    addedPackage.addVulnerabilityFound(addedVulnerability);
 
-      String packageTypeString = aPackage.getType().get().toLowerCase();
-      PackageType packageType = packageTypeFromString(packageTypeString);
-      Package addedPackage = scanResult.addPackage(packageType, aPackage.getName().get(), aPackage.getVersion().get(), aPackage.getPath().get(), layer);
+    vulnerability.getAcceptedRisks().stream().flatMap(Collection::stream).forEach(riskRef -> {
+      AcceptedRisk risk = result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream)
+        .filter(r -> r.getId().isPresent() && r.getId().equals(riskRef.getId()))
+        .findFirst()
+        .get();
 
-      aPackage.getVulns().stream().flatMap(Collection::stream).forEach(vulnerability -> {
-        addVulnerabilityTo(scanResult, vulnerability, addedPackage);
-      });
+      var addedAcceptedRisk = scanResult.addAcceptedRisk(
+        risk.getId().get(),
+        acceptedRiskReasonFromString(risk.getReason().get()),
+        risk.getDescription().get(),
+        dateFromShortString(risk.getExpirationDate().get()),
+        risk.getStatus().map(s -> s.equals("active")).orElse(false),
+        dateFromISO8601String(risk.getCreatedAt().get()),
+        dateFromISO8601String(risk.getUpdatedAt().get())
+      );
+      addedAcceptedRisk.addForVulnerability(addedVulnerability);
+      addedAcceptedRisk.addForPackage(addedPackage);
     });
   }
 
-  private void addVulnerabilityTo(ScanResult scanResult, Vuln vulnerability, Package addedPackage) {
-    String name = vulnerability.getName().get();
-    String disclosureDateString = vulnerability.getDisclosureDate().get();
-    String severityString = vulnerability.getSeverity().flatMap(s -> s.getValue()).get();
-    Optional<String> solutionDateString = vulnerability.getSolutionDate();
-    boolean exploitable = vulnerability.getExploitable().orElse(false);
-    String fixedInVersion = vulnerability.getFixedInVersion().orElse(null);
+  private void addAcceptedRisksTo(ScanResult scanResult) {
+    result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream).forEach(acceptedRisk -> {
+      scanResult.addAcceptedRisk(
+        acceptedRisk.getId().get(),
+        acceptedRiskReasonFromString(acceptedRisk.getReason().get()),
+        acceptedRisk.getDescription().get(),
+        dateFromShortString(acceptedRisk.getExpirationDate().get()),
+        acceptedRisk.getStatus().map(s -> s.equals("active")).orElse(false),
+        dateFromISO8601String(acceptedRisk.getCreatedAt().get()),
+        dateFromISO8601String(acceptedRisk.getUpdatedAt().get())
+      );
+    });
+  }
 
-    Severity severity = switch (severityString.toLowerCase()) {
+  /**
+   * Obtains an instance of {@code Date} from a text string such as {@code 2007-12-03}.
+   * <p>
+   * The string must represent a valid date and is parsed using
+   * {@link java.time.format.DateTimeFormatter#ISO_LOCAL_DATE}.
+   *
+   * @param str the text to parse such as "2007-12-03", not null
+   * @return the parsed local date, not null
+   * @throws DateTimeParseException if the text cannot be parsed
+   */
+  private static Date dateFromShortString(@NonNull String str) {
+    return Date.from(LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant());
+  }
+
+  /**
+   * Obtains an instance of {@code Date} from a text string such as
+   * {@code 2007-12-03T10:15:30.00Z}.
+   * <p>
+   * The string must represent a valid instant in UTC and is parsed using
+   * {@link DateTimeFormatter#ISO_INSTANT}.
+   *
+   * @param str the text to parse, not null
+   * @return the parsed date, not null
+   * @throws DateTimeParseException if the text cannot be parsed
+   */
+  private static Date dateFromISO8601String(@NonNull String str) {
+    return Date.from(Instant.parse(str));
+  }
+
+  private static PolicyType policyTypeFromString(String policyType) {
+    return switch (policyType.toLowerCase()) {
+      case "custom" -> PolicyType.Custom;
+      default -> PolicyType.Unknown;
+    };
+  }
+
+  private static Severity severityFromString(String severityString) {
+    return switch (severityString.toLowerCase()) {
       case "critical" -> Severity.Critical;
       case "high" -> Severity.High;
       case "medium" -> Severity.Medium;
@@ -137,86 +227,6 @@ public class JsonScanResult implements Serializable {
       case "negligible" -> Severity.Negligible;
       default -> Severity.Unknown;
     };
-    Date disclosureDate = Date.from(LocalDate.parse(disclosureDateString).atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date solutionDate = solutionDateString
-      .map(str -> Date.from(LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant()))
-      .orElse(null);
-
-    Vulnerability addedVulnerability = scanResult.addVulnerability(name, severity, disclosureDate, solutionDate, exploitable, fixedInVersion);
-    addedPackage.addVulnerabilityFound(addedVulnerability);
-
-    vulnerability.getAcceptedRisks().stream().flatMap(Collection::stream).forEach(riskRef -> {
-      Optional<AcceptedRisk> acceptedRisk = result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream).filter(riskDef -> riskDef.getId().orElse("one").equals(riskRef.getId().orElse("other"))).findFirst();
-      if (acceptedRisk.isEmpty()) {
-        return;
-      }
-      AcceptedRisk risk = acceptedRisk.get();
-
-      addAcceptedRiskForVulnerability(scanResult, addedPackage, risk, addedVulnerability);
-    });
-  }
-
-  private void addAcceptedRiskForVulnerability(ScanResult scanResult, Package addedPackage, AcceptedRisk risk, Vulnerability addedVulnerability) {
-    var addedAcceptedRisk = addDomainAcceptedRisk(scanResult, risk);
-    addedAcceptedRisk.addForVulnerability(addedVulnerability);
-    addedAcceptedRisk.addForPackage(addedPackage);
-  }
-
-  private static com.sysdig.jenkins.plugins.sysdig.domain.vm.report.AcceptedRisk addDomainAcceptedRisk(ScanResult scanResult, AcceptedRisk risk) {
-    String id = risk.getId().get();
-    boolean active = risk.getStatus().map(s -> s.equals("active")).orElse(false);
-    String reasonString = risk.getReason().get();
-    String description = risk.getDescription().get();
-    String expirationDateString = risk.getExpirationDate().get();
-    String createdAtString = risk.getCreatedAt().get();
-    String updateAtString = risk.getUpdatedAt().get();
-
-    AcceptedRiskReason reason = acceptedRiskReasonFromString(reasonString);
-
-    Date expirationDate = Date.from(LocalDate.parse(expirationDateString).atStartOfDay(ZoneId.systemDefault()).toInstant());
-    Date createdAt = Date.from(Instant.parse(createdAtString));
-    Date updatedAt = Date.from(Instant.parse(updateAtString));
-
-    return scanResult.addAcceptedRisk(id, reason, description, expirationDate, active, createdAt, updatedAt);
-  }
-
-
-  private void addLayersTo(ScanResult scanResult) {
-    result.getLayers().stream().flatMap(Collection::stream).forEach(layer -> {
-      if (layer.getDigest().isEmpty()) {
-        return;
-      }
-
-      scanResult.addLayer(layer.getDigest().get(), BigInteger.valueOf(layer.getSize().get()), layer.getCommand().get());
-    });
-  }
-
-  private void addAcceptedRisksTo(ScanResult scanResult) {
-    result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream).forEach(acceptedRisk -> {
-      addDomainAcceptedRisk(scanResult, acceptedRisk);
-    });
-  }
-
-  private ScanResult createScanResult() {
-    Metadata metadata = result.getMetadata().orElseThrow(() -> new IllegalStateException("Metadata not present in result"));
-
-    String pullString = metadata.getPullString().get();
-    String imageID = metadata.getImageId().get();
-    String digest = metadata.getDigest().get();
-    String os = metadata.getOs().get();
-    String baseOS = metadata.getBaseOs().get();
-    Long size = metadata.getSize().get();
-    String architecture = metadata.getArchitecture().get();
-    Map<String, String> labels = metadata.labels().get();
-    String createdAtStr = metadata.getCreatedAt().get();
-
-    OperatingSystem.Family osFamily = osTypeFromString(os);
-
-    Architecture arch = archFromString(architecture);
-
-    Date createdAt = Date.from(Instant.parse(createdAtStr));
-
-    return new ScanResult(ScanType.Docker, pullString, imageID, digest, new OperatingSystem(osFamily, baseOS), new BigInteger(size.toString()), arch, labels, createdAt);
   }
 
   private static AcceptedRiskReason acceptedRiskReasonFromString(String reasonString) {
