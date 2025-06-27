@@ -15,11 +15,10 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
 
-public class JsonPackage implements Serializable {
+class JsonPackage {
   private String type;
   private String name;
   private String version;

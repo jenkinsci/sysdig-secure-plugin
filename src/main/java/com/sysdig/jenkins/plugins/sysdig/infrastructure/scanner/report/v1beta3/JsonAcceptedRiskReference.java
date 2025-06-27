@@ -1,9 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.io.Serializable;
 import java.util.Optional;
 
-public class JsonAcceptedRiskReference implements Serializable {
+class JsonAcceptedRiskReference {
   private String id;
 
   public Optional<String> getId() {

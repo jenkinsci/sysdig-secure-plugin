@@ -17,8 +17,8 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Severity;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.Serializable;
 import java.math.BigInteger;
@@ -31,11 +31,92 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 
-public class JsonScanResultV1Beta3 implements Serializable {
+public class JsonScanResultV1Beta3 {
+  @SuppressFBWarnings(value = "NP_UNWRITTEN_FIELD", justification = "Field set via Gson deserialization")
   private JsonResult result;
 
-  public void setResult(JsonResult result) {
-    this.result = result;
+  /**
+   * Obtains an instance of {@code Date} from a text string such as {@code 2007-12-03}.
+   * <p>
+   * The string must represent a valid date and is parsed using
+   * {@link java.time.format.DateTimeFormatter#ISO_LOCAL_DATE}.
+   *
+   * @param str the text to parse such as "2007-12-03", not null
+   * @return the parsed local date, not null
+   * @throws DateTimeParseException if the text cannot be parsed
+   */
+  private static Date dateFromShortString(@NonNull String str) {
+    return Date.from(LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant());
+  }
+
+  /**
+   * Obtains an instance of {@code Date} from a text string such as
+   * {@code 2007-12-03T10:15:30.00Z}.
+   * <p>
+   * The string must represent a valid instant in UTC and is parsed using
+   * {@link DateTimeFormatter#ISO_INSTANT}.
+   *
+   * @param str the text to parse, not null
+   * @return the parsed date, not null
+   * @throws DateTimeParseException if the text cannot be parsed
+   */
+  private static Date dateFromISO8601String(@NonNull String str) {
+    return Date.from(Instant.parse(str));
+  }
+
+  private static Severity severityFromString(String severityString) {
+    return switch (severityString.toLowerCase()) {
+      case "critical" -> Severity.Critical;
+      case "high" -> Severity.High;
+      case "medium" -> Severity.Medium;
+      case "low" -> Severity.Low;
+      case "negligible" -> Severity.Negligible;
+      default -> Severity.Unknown;
+    };
+  }
+
+  private static AcceptedRiskReason acceptedRiskReasonFromString(String reasonString) {
+    return switch (reasonString) {
+      case "RiskOwned" -> AcceptedRiskReason.RiskOwned;
+      case "RiskTransferred" -> AcceptedRiskReason.RiskTransferred;
+      case "RiskAvoided" -> AcceptedRiskReason.RiskAvoided;
+      case "RiskMitigated" -> AcceptedRiskReason.RiskMitigated;
+      case "RiskNotRelevant" -> AcceptedRiskReason.RiskNotRelevant;
+      case "Custom" -> AcceptedRiskReason.Custom;
+      default -> AcceptedRiskReason.Unknown;
+    };
+  }
+
+  private static Architecture archFromString(String architecture) {
+    return switch (architecture.toLowerCase()) {
+      case "amd64" -> Architecture.AMD64;
+      case "arm64" -> Architecture.ARM64;
+      default -> Architecture.Unknown;
+    };
+  }
+
+  private static PackageType packageTypeFromString(String string) {
+    return switch (string) {
+      case "C#" -> PackageType.CSharp;
+      case "golang" -> PackageType.Golang;
+      case "java" -> PackageType.Java;
+      case "javascript" -> PackageType.Javascript;
+      case "os" -> PackageType.OS;
+      case "php" -> PackageType.PHP;
+      case "python" -> PackageType.Python;
+      case "ruby" -> PackageType.Ruby;
+      case "rust" -> PackageType.Rust;
+      default -> PackageType.Unknown;
+    };
+  }
+
+  private static OperatingSystem.Family osTypeFromString(String os) {
+    return switch (os.toLowerCase()) {
+      case "linux" -> OperatingSystem.Family.Linux;
+      case "darwin" -> OperatingSystem.Family.Darwin;
+      case "windows" -> OperatingSystem.Family.Windows;
+      default -> OperatingSystem.Family.Unknown;
+    };
   }
 
   public Optional<ScanResult> toDomain() {
@@ -177,89 +258,5 @@ public class JsonScanResultV1Beta3 implements Serializable {
         dateFromISO8601String(acceptedRisk.getUpdatedAt().get())
       );
     });
-  }
-
-  /**
-   * Obtains an instance of {@code Date} from a text string such as {@code 2007-12-03}.
-   * <p>
-   * The string must represent a valid date and is parsed using
-   * {@link java.time.format.DateTimeFormatter#ISO_LOCAL_DATE}.
-   *
-   * @param str the text to parse such as "2007-12-03", not null
-   * @return the parsed local date, not null
-   * @throws DateTimeParseException if the text cannot be parsed
-   */
-  private static Date dateFromShortString(@NonNull String str) {
-    return Date.from(LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant());
-  }
-
-  /**
-   * Obtains an instance of {@code Date} from a text string such as
-   * {@code 2007-12-03T10:15:30.00Z}.
-   * <p>
-   * The string must represent a valid instant in UTC and is parsed using
-   * {@link DateTimeFormatter#ISO_INSTANT}.
-   *
-   * @param str the text to parse, not null
-   * @return the parsed date, not null
-   * @throws DateTimeParseException if the text cannot be parsed
-   */
-  private static Date dateFromISO8601String(@NonNull String str) {
-    return Date.from(Instant.parse(str));
-  }
-
-  private static Severity severityFromString(String severityString) {
-    return switch (severityString.toLowerCase()) {
-      case "critical" -> Severity.Critical;
-      case "high" -> Severity.High;
-      case "medium" -> Severity.Medium;
-      case "low" -> Severity.Low;
-      case "negligible" -> Severity.Negligible;
-      default -> Severity.Unknown;
-    };
-  }
-
-  private static AcceptedRiskReason acceptedRiskReasonFromString(String reasonString) {
-    return switch (reasonString) {
-      case "RiskOwned" -> AcceptedRiskReason.RiskOwned;
-      case "RiskTransferred" -> AcceptedRiskReason.RiskTransferred;
-      case "RiskAvoided" -> AcceptedRiskReason.RiskAvoided;
-      case "RiskMitigated" -> AcceptedRiskReason.RiskMitigated;
-      case "RiskNotRelevant" -> AcceptedRiskReason.RiskNotRelevant;
-      case "Custom" -> AcceptedRiskReason.Custom;
-      default -> AcceptedRiskReason.Unknown;
-    };
-  }
-
-  private static Architecture archFromString(String architecture) {
-    return switch (architecture.toLowerCase()) {
-      case "amd64" -> Architecture.AMD64;
-      case "arm64" -> Architecture.ARM64;
-      default -> Architecture.Unknown;
-    };
-  }
-
-  private static PackageType packageTypeFromString(String string) {
-    return switch (string) {
-      case "C#" -> PackageType.CSharp;
-      case "golang" -> PackageType.Golang;
-      case "java" -> PackageType.Java;
-      case "javascript" -> PackageType.Javascript;
-      case "os" -> PackageType.OS;
-      case "php" -> PackageType.PHP;
-      case "python" -> PackageType.Python;
-      case "ruby" -> PackageType.Ruby;
-      case "rust" -> PackageType.Rust;
-      default -> PackageType.Unknown;
-    };
-  }
-
-  private static OperatingSystem.Family osTypeFromString(String os) {
-    return switch (os.toLowerCase()) {
-      case "linux" -> OperatingSystem.Family.Linux;
-      case "darwin" -> OperatingSystem.Family.Darwin;
-      case "windows" -> OperatingSystem.Family.Windows;
-      default -> OperatingSystem.Family.Unknown;
-    };
   }
 }

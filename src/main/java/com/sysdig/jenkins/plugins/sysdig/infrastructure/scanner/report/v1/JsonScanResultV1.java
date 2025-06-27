@@ -149,6 +149,7 @@ public record JsonScanResultV1(
                             case "imageConfigFailure" -> rule.addImageConfigFailure(jsonFailure.remediation());
                             case "pkgVulnFailure" ->
                                     rule.addPkgVulnFailure(failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
+                          default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
                         }
                     });
                 });
@@ -170,7 +171,7 @@ public record JsonScanResultV1(
      * Obtains an instance of {@code Date} from a text string such as {@code 2007-12-03}.
      * <p>
      * The string must represent a valid date and is parsed using
-     * {@link java.time.format.DateTimeFormatter#ISO_LOCAL_DATE}.
+     * {@link DateTimeFormatter#ISO_LOCAL_DATE}.
      *
      * @param str the text to parse such as "2007-12-03", not null
      * @return the parsed local date, not null

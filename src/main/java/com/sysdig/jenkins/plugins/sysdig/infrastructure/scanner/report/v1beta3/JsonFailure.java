@@ -15,10 +15,9 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.io.Serializable;
 import java.util.Optional;
 
-public class JsonFailure implements Serializable {
+class JsonFailure {
   private String remediation;
   private String description;
 

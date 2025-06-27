@@ -15,14 +15,13 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class JsonLayer implements Serializable {
-  private  String digest;
-  private  Long size;
+class JsonLayer {
+  private String digest;
+  private Long size;
   private String command;
   private Map<String, Object> runningVulns;
   private List<?> baseImages;
