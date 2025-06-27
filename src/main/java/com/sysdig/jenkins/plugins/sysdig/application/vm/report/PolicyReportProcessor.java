@@ -17,7 +17,8 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.*;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Policy;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.util.Collection;

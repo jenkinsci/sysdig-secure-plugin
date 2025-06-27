@@ -15,8 +15,6 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.io.Serializable;
 import java.util.Optional;
 
