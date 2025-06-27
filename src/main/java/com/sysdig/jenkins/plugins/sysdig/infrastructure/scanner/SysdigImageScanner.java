@@ -17,7 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import edu.umd.cs.findbugs.annotations.NonNull;

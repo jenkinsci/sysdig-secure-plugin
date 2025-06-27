@@ -1,4 +1,4 @@
-package com.sysdig.jenkins.plugins.sysdig.domain.vm.report;
+package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 public class PolicyBundleRulePkgVulnFailure implements PolicyBundleRuleFailure {
   private final String remediation;

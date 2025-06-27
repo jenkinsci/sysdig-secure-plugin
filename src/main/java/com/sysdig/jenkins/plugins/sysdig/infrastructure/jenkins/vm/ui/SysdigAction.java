@@ -16,7 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.model.Action;
 import hudson.model.Run;

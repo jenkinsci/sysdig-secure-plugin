@@ -1,6 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResult;
 import org.apache.commons.io.IOUtils;

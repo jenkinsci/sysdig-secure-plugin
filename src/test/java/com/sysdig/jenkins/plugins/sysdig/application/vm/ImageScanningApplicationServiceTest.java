@@ -5,9 +5,9 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Metadata;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Metadata;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import hudson.AbortException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

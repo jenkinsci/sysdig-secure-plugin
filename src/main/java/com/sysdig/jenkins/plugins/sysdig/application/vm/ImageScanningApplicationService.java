@@ -19,7 +19,7 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProce
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 

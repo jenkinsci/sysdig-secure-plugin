@@ -1,8 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.EvaluationResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

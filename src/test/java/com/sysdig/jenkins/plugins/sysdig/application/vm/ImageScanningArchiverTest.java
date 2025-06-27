@@ -2,7 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

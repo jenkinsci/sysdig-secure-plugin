@@ -18,7 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.ImageScanningConfig;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;

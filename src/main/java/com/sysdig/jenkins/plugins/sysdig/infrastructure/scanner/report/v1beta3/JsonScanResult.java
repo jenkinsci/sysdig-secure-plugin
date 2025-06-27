@@ -15,9 +15,9 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.*;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Package;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.Severity;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Severity;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.Serializable;

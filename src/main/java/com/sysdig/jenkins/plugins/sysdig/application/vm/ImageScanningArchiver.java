@@ -16,7 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.report.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.io.IOException;
