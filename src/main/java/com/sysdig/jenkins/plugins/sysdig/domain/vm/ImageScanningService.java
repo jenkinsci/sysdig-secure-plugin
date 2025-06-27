@@ -16,7 +16,8 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
@@ -28,7 +29,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class ImageScanningService {
   private final ImageScanner scanner;
   private final ScanResultArchiver imageScanningArchiverService;
-  protected SysdigLogger logger;
+  protected final SysdigLogger logger;
 
   public ImageScanningService(@NonNull ImageScanner scanner, @NonNull ScanResultArchiver imageScanningArchiverService, @NonNull SysdigLogger logger) {
     this.scanner = scanner;
@@ -36,13 +37,13 @@ public class ImageScanningService {
     this.logger = logger;
   }
 
-  public ImageScanningResult.FinalAction scanAndArchiveResult(String imageName) throws InterruptedException {
+  public EvaluationResult scanAndArchiveResult(String imageName) throws InterruptedException {
     if (imageName.trim().isEmpty()) {
       throw new IllegalArgumentException("the image name to scan must not be empty");
     }
-    ImageScanningResult scanResult = scanner.scanImage(imageName);
+    ScanResult scanResult = scanner.scanImage(imageName);
 
-    ImageScanningResult.FinalAction finalAction = scanResult.getFinalAction();
+    EvaluationResult finalAction = scanResult.evaluationResult();
     logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
 
     try {

@@ -16,7 +16,7 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.model.Action;
 import hudson.model.Run;
@@ -46,12 +46,12 @@ public class SysdigAction implements Action {
   private final String imageDigest;
 
 
-  public SysdigAction(Run<?, ?> run, ImageScanningResult scanResult, String jenkinsOutputDirName, String policyReportFilename, PolicyEvaluationSummary policyEvaluationSummary, String cveListingFileName) {
+  public SysdigAction(Run<?, ?> run, ScanResult scanResult, String jenkinsOutputDirName, String policyReportFilename, PolicyEvaluationSummary policyEvaluationSummary, String cveListingFileName) {
     this.build = run;
-    this.gateStatus = scanResult.getFinalAction().toString();
+    this.gateStatus = scanResult.evaluationResult().toString();
     this.gateSummary = policyEvaluationSummary;
-    this.imageTag = scanResult.getTag();
-    this.imageDigest = scanResult.getImageID().replace(':', '-');
+    this.imageTag = scanResult.metadata().pullString();
+    this.imageDigest = scanResult.metadata().imageID().replace(':', '-');
     this.gateOutputUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, policyReportFilename);
     this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
   }
