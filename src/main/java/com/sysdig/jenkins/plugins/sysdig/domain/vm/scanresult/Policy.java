@@ -8,16 +8,14 @@ import java.util.*;
 public class Policy implements AggregateChild<ScanResult>, Serializable {
   private final String id;
   private final String name;
-  private final PolicyType type;
   private final Date createdAt;
   private final Date updatedAt;
   private final ScanResult root;
   private final Set<PolicyBundle> bundles;
 
-  public Policy(String id, String name, PolicyType type, Date createdAt, Date updatedAt, ScanResult root) {
+  public Policy(String id, String name, Date createdAt, Date updatedAt, ScanResult root) {
     this.id = id;
     this.name = name;
-    this.type = type;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.bundles = new HashSet<>();
@@ -30,10 +28,6 @@ public class Policy implements AggregateChild<ScanResult>, Serializable {
 
   public String name() {
     return name;
-  }
-
-  public PolicyType type() {
-    return type;
   }
 
   public Date createdAt() {

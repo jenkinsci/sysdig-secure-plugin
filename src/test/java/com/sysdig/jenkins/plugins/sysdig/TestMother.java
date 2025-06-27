@@ -2,7 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResult;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResultV1Beta3;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -20,9 +20,9 @@ public class TestMother {
    * @return a test Result object.
    * @throws IOException if an error occurs during object creation.
    */
-  public static JsonScanResult rawScanResult() throws IOException {
+  public static JsonScanResultV1Beta3 rawScanResult() throws IOException {
     var jsonContents = Objects.requireNonNull(TestMother.class.getResourceAsStream("gates1.json"));
-    return GsonBuilder.build().fromJson(IOUtils.toString(jsonContents, StandardCharsets.UTF_8), JsonScanResult.class);
+    return GsonBuilder.build().fromJson(IOUtils.toString(jsonContents, StandardCharsets.UTF_8), JsonScanResultV1Beta3.class);
   }
 
   /**

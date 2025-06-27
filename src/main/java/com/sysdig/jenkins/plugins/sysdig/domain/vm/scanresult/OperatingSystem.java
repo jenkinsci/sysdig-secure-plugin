@@ -1,6 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class OperatingSystem  implements Serializable {
   private final Family family;
@@ -23,5 +24,17 @@ public class OperatingSystem  implements Serializable {
     Darwin,
     Windows,
     Unknown
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    OperatingSystem that = (OperatingSystem) o;
+    return family == that.family && Objects.equals(name, that.name);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(family, name);
   }
 }

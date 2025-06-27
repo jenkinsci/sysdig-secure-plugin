@@ -10,17 +10,13 @@ public class PolicyBundle implements AggregateChild<ScanResult>, Serializable {
   private final String id;
   private final String name;
   private final LinkedHashSet<PolicyBundleRule> rules;
-  private final Date createdAt;
-  private final Date updatedAt;
   private final Set<Policy> foundInPolicies;
 
-  PolicyBundle(String id, String name, Date createdAt, Date updatedAt, ScanResult root) {
+  PolicyBundle(String id, String name, ScanResult root) {
     this.id = id;
     this.name = name;
     this.rules = new LinkedHashSet<>();
     this.root = root;
-    this.createdAt = createdAt;
-    this.updatedAt = updatedAt;
     this.foundInPolicies = new HashSet<>();
   }
 
@@ -51,14 +47,6 @@ public class PolicyBundle implements AggregateChild<ScanResult>, Serializable {
 
   public String name() {
     return name;
-  }
-
-  public Date createdAt() {
-    return createdAt;
-  }
-
-  public Date updatedAt() {
-    return updatedAt;
   }
 
   public Set<PolicyBundleRule> rules() {

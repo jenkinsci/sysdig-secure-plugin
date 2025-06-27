@@ -1,0 +1,4785 @@
+{
+  "info": {
+    "scanTime": "2025-06-27T12:19:09.258419142+02:00",
+    "scanDuration": "32.690802596s",
+    "resultUrl": "https://us2.app.sysdig.com/secure/#/vulnerabilities/results/184cdefffb358231c7f4d79e2058d8f0/overview",
+    "resultId": "184cdefffb358231c7f4d79e2058d8f0"
+  },
+  "scanner": {
+    "name": "sysdig-cli-scanner",
+    "version": "1.22.3"
+  },
+  "result": {
+    "assetType": "containerImage",
+    "baseImages": {},
+    "layers": {
+      "1ddf87137e7f8574": {
+        "command": "/bin/sh -c #(nop) ADD file:82f38ebced7b2756311fb492d3d44cc131b22654e8620baa93883537a3e355aa in / ",
+        "digest": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "index": 4,
+        "size": 80410624
+      },
+      "29d8e97929f2263c": {
+        "command": "/bin/sh -c #(nop)  ARG RELEASE",
+        "digest": "",
+        "index": 0,
+        "size": null
+      },
+      "3e27e80fb3fc6a91": {
+        "command": "/bin/sh -c #(nop)  LABEL org.opencontainers.image.version=22.04",
+        "digest": "",
+        "index": 3,
+        "size": null
+      },
+      "5fc6904a253c1206": {
+        "command": "/bin/sh -c #(nop)  LABEL org.opencontainers.image.ref.name=ubuntu",
+        "digest": "",
+        "index": 2,
+        "size": null
+      },
+      "967b443fe7764259": {
+        "command": "/bin/sh -c #(nop)  CMD [\"/bin/bash\"]",
+        "digest": "",
+        "index": 5,
+        "size": null
+      },
+      "9a33e3fc7967ea38": {
+        "command": "/bin/sh -c #(nop)  ARG LAUNCHPAD_BUILD_ARCH",
+        "digest": "",
+        "index": 1,
+        "size": null
+      }
+    },
+    "metadata": {
+      "architecture": "amd64",
+      "author": "",
+      "baseOs": "ubuntu 22.04",
+      "createdAt": "2025-05-30T22:30:45.500168088Z",
+      "digest": "sha256:01a3ee0b5e413cefaaffc6abe68c9c37879ae3cced56a8e088b1649e5b269eee",
+      "imageId": "sha256:b103ac8bf22ec7fe2abe740f86dccd1e7d086e0ad8d064d07bd9c8a7961a5d7a",
+      "labels": {
+        "org.opencontainers.image.ref.name": "ubuntu",
+        "org.opencontainers.image.version": "22.04"
+      },
+      "os": "linux",
+      "pullString": "ubuntu:22.04",
+      "size": 80410624
+    },
+    "packages": {
+      "04035510-b574-4fc8-b6da-833accf9e0de": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "bash",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "5.1-6ubuntu1.1",
+        "vulnerabilitiesRefs": null
+      },
+      "049bb75c-98d4-421e-a744-37b3325fa2f6": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgnutls30",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.7.3-4ubuntu1.6",
+        "vulnerabilitiesRefs": null
+      },
+      "0557af4a-2347-4726-a592-1fde47b7e205": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpam-runtime",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "1.4.0-11ubuntu2.6",
+        "type": "os",
+        "version": "1.4.0-11ubuntu2.5",
+        "vulnerabilitiesRefs": [
+          "e3ae3ea0-06f2-4c8f-a0a1-827594e24ba0",
+          "f872b2a2-1a33-43aa-942c-d004192440b1"
+        ]
+      },
+      "057de833-594e-46a1-a203-be02b9efe767": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "mawk",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.3.4.20200120-3",
+        "vulnerabilitiesRefs": null
+      },
+      "093f5971-8b92-455d-adff-b29cb62317dc": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "tar",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.34+dfsg-1ubuntu0.1.22.04.2",
+        "vulnerabilitiesRefs": null
+      },
+      "0da69b0e-6ade-4a48-9e48-b2f66e17a576": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libsepol2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.3-1build1",
+        "vulnerabilitiesRefs": null
+      },
+      "0dd019dd-4c24-4270-8cb4-090e0cf408a1": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "procps",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2:3.3.17-6ubuntu2.1",
+        "vulnerabilitiesRefs": null
+      },
+      "0e40bad0-3736-4da6-85a8-11868233d643": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "init-system-helpers",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.62",
+        "vulnerabilitiesRefs": null
+      },
+      "0f97eade-5ce3-49e7-a9bd-d5b9d59edfc8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libudev1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "249.11-0ubuntu3.16",
+        "type": "os",
+        "version": "249.11-0ubuntu3.15",
+        "vulnerabilitiesRefs": [
+          "e597e1f3-c9ac-48b4-9662-8600b4ba81f2",
+          "a396b529-176e-47f4-bd5a-5519825d3d8c"
+        ]
+      },
+      "10dc4450-756e-4ff1-b7c7-26a45a8a92cf": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libmount1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "14d98153-94bd-480d-b296-8e3fd0520d79": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libdb5.3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "5.3.28+dfsg1-0.8ubuntu3",
+        "vulnerabilitiesRefs": null
+      },
+      "18ced1b3-6af3-4651-a1cc-14a737e35c8a": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "gcc-12-base",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "12.3.0-1ubuntu1~22.04",
+        "vulnerabilitiesRefs": [
+          "79448016-ac6d-46ba-b7cc-520bd27d1fcb",
+          "9e6ca922-59a3-485d-90b4-a4591edb8bda"
+        ]
+      },
+      "1b29fb95-1303-4df0-b7d9-1ccac94b75d9": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "sysvinit-utils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.01-1ubuntu1",
+        "vulnerabilitiesRefs": null
+      },
+      "1c36331f-38e4-4331-b79b-d31627eb5e29": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "perl-base",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "5.34.0-3ubuntu1.4",
+        "vulnerabilitiesRefs": null
+      },
+      "1d365b4b-bedb-45da-9034-360e42e9235e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "sed",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "4.8-1ubuntu2",
+        "vulnerabilitiesRefs": null
+      },
+      "2068423f-0f91-472f-add9-81542695594b": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "zlib1g",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:1.2.11.dfsg-2ubuntu9.2",
+        "vulnerabilitiesRefs": null
+      },
+      "229541ae-17f1-44b4-932d-7991ed2ab2d1": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libdebconfclient0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.261ubuntu1",
+        "vulnerabilitiesRefs": null
+      },
+      "24d57b17-e759-4b0a-9853-fbed1ad023ca": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "debconf",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.5.79ubuntu1",
+        "vulnerabilitiesRefs": null
+      },
+      "2c9c5caa-4066-4607-90e1-b8b25423d074": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libtirpc-common",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.3.2-2ubuntu0.1",
+        "vulnerabilitiesRefs": null
+      },
+      "2f608563-5040-4a72-a4c6-f4d9804df538": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libidn2-0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.3.2-2build1",
+        "vulnerabilitiesRefs": null
+      },
+      "31878669-7e2f-48b5-bb42-b3816d751eb0": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libc-bin",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.35-0ubuntu3.10",
+        "vulnerabilitiesRefs": [
+          "878989bc-8e7d-4316-83f8-f768bb83e644"
+        ]
+      },
+      "32221083-1cba-4bd0-a2e5-234e2cfebe3e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "util-linux",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "3318decd-9dae-4539-9058-f73a9caf7b8f": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libsmartcols1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "37069b48-88e7-4c06-92e5-0dca2d45532d": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "dash",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.5.11+git20210903+057cd650a4ed-3build1",
+        "vulnerabilitiesRefs": null
+      },
+      "39063fcf-2ecb-4a78-9344-fcf1891f6cf7": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "ubuntu-keyring",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2021.03.26",
+        "vulnerabilitiesRefs": null
+      },
+      "39a2f1a4-3c73-4b6a-bf7f-b77a2d438dea": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "debianutils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "5.5-1ubuntu2",
+        "vulnerabilitiesRefs": null
+      },
+      "3a2b602f-87ac-4de9-8042-e4216c463010": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "gzip",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.10-4ubuntu4.1",
+        "vulnerabilitiesRefs": null
+      },
+      "3a5be553-3870-4bb8-9aad-999d789aa7e8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libnettle8",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.7.3-1build2",
+        "vulnerabilitiesRefs": null
+      },
+      "3b548620-daf6-4275-8866-5721296897ee": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "liblz4-1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.9.3-2build2",
+        "vulnerabilitiesRefs": null
+      },
+      "3dc49db7-db36-4f0a-be84-9c0e66698ea6": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libsystemd0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "249.11-0ubuntu3.16",
+        "type": "os",
+        "version": "249.11-0ubuntu3.15",
+        "vulnerabilitiesRefs": [
+          "6983b664-d736-4d08-8807-02fab799b7c5",
+          "b746c59a-fc06-4509-b511-eeb0f9d7ae30"
+        ]
+      },
+      "40ce4280-d0c6-479c-a387-9e8d6ebae283": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libacl1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.3.1-1",
+        "vulnerabilitiesRefs": null
+      },
+      "436aac2c-b811-474a-8000-4d8d4c5b4ac5": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgcc-s1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "12.3.0-1ubuntu1~22.04",
+        "vulnerabilitiesRefs": [
+          "b40114d5-dc40-4f34-9180-0ab6e9f9c307",
+          "5518df02-fef2-4581-a072-f3fc511b1892"
+        ]
+      },
+      "4649e100-61ec-4c56-9d6c-e721d3a6bb78": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "mount",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "47c65977-6c8c-41dd-a3ce-087c4957146d": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libsemanage-common",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.3-1build2",
+        "vulnerabilitiesRefs": null
+      },
+      "4a1d1bf4-81a5-435e-b628-3e857971b399": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libunistring2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.0-1",
+        "vulnerabilitiesRefs": null
+      },
+      "4bbd4919-c822-4406-96bf-194ef245ec25": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libselinux1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.3-1build2",
+        "vulnerabilitiesRefs": null
+      },
+      "4c21ec85-e3d4-4218-b36c-7e4075f5363e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "usrmerge",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "25ubuntu2",
+        "vulnerabilitiesRefs": null
+      },
+      "4cad4448-4b4c-45c8-bdb8-b2f77c9aba66": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libapt-pkg6.0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.4.14",
+        "vulnerabilitiesRefs": null
+      },
+      "4f011f84-5aa3-440f-8427-fe0ecb8d2856": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libp11-kit0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.24.0-6build1",
+        "vulnerabilitiesRefs": null
+      },
+      "4f921d51-f6bf-4e08-9234-e62e7b9ef448": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "coreutils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "8.32-4.1ubuntu1.2",
+        "vulnerabilitiesRefs": [
+          "704ca8ee-aebe-4601-a494-be25246e6fb3"
+        ]
+      },
+      "4fa91541-806d-4fe4-9eca-185826d5193c": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "lsb-base",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "11.1.0ubuntu4",
+        "vulnerabilitiesRefs": null
+      },
+      "55224bff-4bd5-4173-9776-9357417b52ff": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libk5crypto3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.19.2-2ubuntu0.7",
+        "vulnerabilitiesRefs": null
+      },
+      "5bd6c480-bbc3-4ef4-a103-34422c82137b": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "bsdutils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "6240d665-a2f8-429a-a8c2-dbddbe99b807": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "grep",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.7-1build1",
+        "vulnerabilitiesRefs": null
+      },
+      "62e0468f-6f20-40b7-a7d3-2d5e429e102d": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "dpkg",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.21.1ubuntu2.3",
+        "vulnerabilitiesRefs": null
+      },
+      "66629040-3a90-4e30-ab23-1d77110b92fc": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libstdc++6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "12.3.0-1ubuntu1~22.04",
+        "vulnerabilitiesRefs": [
+          "0ba5c524-a4cf-4676-88c6-acd89a1eaf07",
+          "6ab4f68b-98cc-40e5-a1ff-4d61a855998d"
+        ]
+      },
+      "6e757d1d-fc1b-4cdf-b5ee-ba683671f5f8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libss2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.46.5-2ubuntu1.2",
+        "vulnerabilitiesRefs": null
+      },
+      "725ac457-275c-420d-a26a-37b1094d6922": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpam0g",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "1.4.0-11ubuntu2.6",
+        "type": "os",
+        "version": "1.4.0-11ubuntu2.5",
+        "vulnerabilitiesRefs": [
+          "c5539af8-359a-469b-9896-b602ddf1ac84",
+          "64945a0a-4880-40b7-8382-031c186511b6"
+        ]
+      },
+      "7793514b-8310-4b80-8956-fdc3fe0b9d86": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libbz2-1.0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.0.8-5build1",
+        "vulnerabilitiesRefs": null
+      },
+      "78ad58ce-d7de-4bcd-aa6e-60ee3953d2cd": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libffi8",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.4.2-4",
+        "vulnerabilitiesRefs": null
+      },
+      "7a73ce80-ab8c-4367-a24b-d005995abe4e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpam-modules",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "1.4.0-11ubuntu2.6",
+        "type": "os",
+        "version": "1.4.0-11ubuntu2.5",
+        "vulnerabilitiesRefs": [
+          "252dd667-9bab-4349-a7e9-cd9ae94c1c8e",
+          "8d0f7ce8-9567-478b-8359-337f137d3901"
+        ]
+      },
+      "7c003c77-184a-4e76-b2fb-3fdbdc92e874": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "sensible-utils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.0.17",
+        "vulnerabilitiesRefs": null
+      },
+      "7d52537a-7e37-4555-b4ca-2a69a7a8d969": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libkeyutils1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.6.1-2ubuntu3",
+        "vulnerabilitiesRefs": null
+      },
+      "8177ead3-55d2-4cb2-ba22-c267c3eae870": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libncurses6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "6.3-2ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "5d3bbba3-ad74-48dd-83da-2e99379ac4d2",
+          "3430df88-ae33-441e-91dd-35589d8a3e00"
+        ]
+      },
+      "8415dcac-f1ab-4674-ad14-0bb9a4208a37": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libcom-err2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.46.5-2ubuntu1.2",
+        "vulnerabilitiesRefs": null
+      },
+      "85eaf0d6-33d5-481d-9521-9edb5ba51aec": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libaudit-common",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:3.0.7-1build1",
+        "vulnerabilitiesRefs": null
+      },
+      "87347b6e-7e14-42b5-a32c-3e3fa9fbb653": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "logsave",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.46.5-2ubuntu1.2",
+        "vulnerabilitiesRefs": null
+      },
+      "875aa659-540b-4523-98f3-4feb54e509e7": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libaudit1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:3.0.7-1build1",
+        "vulnerabilitiesRefs": null
+      },
+      "87af28ce-802f-4aa4-8138-ee5c42077e24": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libattr1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:2.5.1-1build1",
+        "vulnerabilitiesRefs": null
+      },
+      "8bbedbeb-d031-4fe5-b179-929172513e1a": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpcre2-8-0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "10.39-3ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "d23cb1b7-9b25-487d-9596-d67fbc4444dd"
+        ]
+      },
+      "8bdad2c2-8035-4efe-960d-1e6120871ef9": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libblkid1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "8ecfaf23-dbb3-4ae5-a0a9-5492bc3997b3": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libsemanage2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.3-1build2",
+        "vulnerabilitiesRefs": null
+      },
+      "8f006fe7-efa7-4d11-b776-bcaf2ea3f260": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libext2fs2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.46.5-2ubuntu1.2",
+        "vulnerabilitiesRefs": null
+      },
+      "9046b239-9f32-4fee-8cfb-699521687937": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libzstd1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.4.8+dfsg-3build1",
+        "vulnerabilitiesRefs": [
+          "11a8f75f-73c6-4f5d-9e12-075f8c500808"
+        ]
+      },
+      "920d6f3c-2506-4313-a30c-9bbca2d2733c": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libc6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.35-0ubuntu3.10",
+        "vulnerabilitiesRefs": [
+          "62962ae8-a27d-44c1-88fc-3c85557966b1"
+        ]
+      },
+      "9631c27e-df9e-44f3-82ba-db47ec06e650": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libtinfo6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "6.3-2ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "c41cbe59-0240-41b5-8145-fea79334c81d",
+          "ffdb73f1-b0cb-4e17-9553-4b39d4a6f6a8"
+        ]
+      },
+      "9ff55c19-c929-46ce-8374-045feabf44b4": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libhogweed6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.7.3-1build2",
+        "vulnerabilitiesRefs": null
+      },
+      "a24a81d2-9afb-4642-bb76-ff725a5e7e6e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgssapi-krb5-2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.19.2-2ubuntu0.7",
+        "vulnerabilitiesRefs": null
+      },
+      "a7ca7833-83ed-4110-a774-4ff757eb9284": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libuuid1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.37.2-4ubuntu3.4",
+        "vulnerabilitiesRefs": null
+      },
+      "a7ef3461-a3fe-42f7-8004-84276317ffae": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpcre3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2:8.39-13ubuntu0.22.04.1",
+        "vulnerabilitiesRefs": [
+          "d9e9d9ea-df7b-4c7a-b2f5-06089047a698"
+        ]
+      },
+      "a93098d9-d4b8-49a0-a895-ea5aba343366": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "base-files",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "12ubuntu4.7",
+        "vulnerabilitiesRefs": null
+      },
+      "aa37e4d2-c8b9-4d73-bc32-f712c6a9a923": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "apt",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.4.14",
+        "vulnerabilitiesRefs": null
+      },
+      "b451c76d-5740-4478-b11f-1adb676d45b2": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libseccomp2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.5.3-2ubuntu3~22.04.1",
+        "vulnerabilitiesRefs": null
+      },
+      "b66c6abb-70dc-4cef-8b5a-699a729e8f7a": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "liblzma5",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "5.2.5-2ubuntu1",
+        "vulnerabilitiesRefs": null
+      },
+      "ba3e2db1-846d-4ab2-a0c4-da8dd399f9fd": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libnsl2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.3.0-2build2",
+        "vulnerabilitiesRefs": null
+      },
+      "be8b8312-7999-4e50-ba17-bc9cb547ca97": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libtirpc3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.3.2-2ubuntu0.1",
+        "vulnerabilitiesRefs": null
+      },
+      "c2e60494-2140-487a-8618-b4a5b1cffc27": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libpam-modules-bin",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "suggestedFix": "1.4.0-11ubuntu2.6",
+        "type": "os",
+        "version": "1.4.0-11ubuntu2.5",
+        "vulnerabilitiesRefs": [
+          "0e3d195c-64b6-4961-94a6-5e9c4f822028",
+          "4e0b67ac-d6ae-4217-9c5c-0da7c88d4fe4"
+        ]
+      },
+      "c520bd5a-bf94-428a-bb46-101f8dc53e20": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgcrypt20",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.9.4-3ubuntu3",
+        "vulnerabilitiesRefs": [
+          "53612705-c6d9-49c8-bc5c-55539c3a7422"
+        ]
+      },
+      "c693c06f-6417-4048-a02e-bfb697ffd1f0": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "e2fsprogs",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.46.5-2ubuntu1.2",
+        "vulnerabilitiesRefs": null
+      },
+      "c6adddf1-25b4-4eb6-8017-b298fc932673": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libprocps8",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2:3.3.17-6ubuntu2.1",
+        "vulnerabilitiesRefs": null
+      },
+      "c6d7fa9c-c140-42db-8930-3b7453e83bc8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libtasn1-6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "4.18.0-4ubuntu0.1",
+        "vulnerabilitiesRefs": null
+      },
+      "c8ddd85e-d900-4ab8-a251-f7fb5cb3602f": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libcrypt1",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:4.4.27-1",
+        "vulnerabilitiesRefs": null
+      },
+      "cdcf6c26-dc61-4b3c-851a-7fd4447ac6d8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "ncurses-bin",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "6.3-2ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "9af0fac8-8171-4f73-b406-2ceca3470ea2",
+          "a40b52e2-2fab-4566-8b42-1cfa76f542d7"
+        ]
+      },
+      "cfd4fa91-3a2e-4f8d-b814-bdf31664f8e8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libssl3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.0.2-0ubuntu1.19",
+        "vulnerabilitiesRefs": [
+          "38cdbe14-43ed-402c-96d6-de183acaec88"
+        ]
+      },
+      "d36dc276-7a9c-49c7-a329-0d54b0696c25": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgpg-error0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.43-3",
+        "vulnerabilitiesRefs": null
+      },
+      "dacf1068-5eb5-4930-bd9b-24de25efe045": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "adduser",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.118ubuntu5",
+        "vulnerabilitiesRefs": null
+      },
+      "dc96ca35-3e27-4f5c-bfb3-62721f3a03a3": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "gpgv",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2.2.27-3ubuntu2.3",
+        "vulnerabilitiesRefs": [
+          "83ed3505-3d0c-41dc-a091-17a6d693208b"
+        ]
+      },
+      "dec30086-b933-4fc3-b829-3baa87dd7c39": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libxxhash0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.8.1-1",
+        "vulnerabilitiesRefs": null
+      },
+      "e10baa7d-3b29-4b67-9248-3f25b108653e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libkrb5-3",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.19.2-2ubuntu0.7",
+        "vulnerabilitiesRefs": null
+      },
+      "e26a66b0-22bf-465a-84b9-9673d9a3dc8e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "ncurses-base",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "6.3-2ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "56f213e0-dcb3-467d-b94a-736f124154ac",
+          "16c829cc-eda8-4acd-b485-7d9823d44e75"
+        ]
+      },
+      "e2c9b232-4aac-48bb-869f-2631694cf20b": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "diffutils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:3.8-0ubuntu2",
+        "vulnerabilitiesRefs": null
+      },
+      "e491b13c-3d62-4ef6-a710-c1bd1dd2873a": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "findutils",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "4.8.0-1ubuntu3",
+        "vulnerabilitiesRefs": null
+      },
+      "e50463e2-129f-4fba-a3d5-700b1039b09c": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "base-passwd",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.5.52build1",
+        "vulnerabilitiesRefs": null
+      },
+      "edd8f376-e688-4aee-9a71-eb99e67c0df8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libcap2",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:2.44-1ubuntu0.22.04.2",
+        "vulnerabilitiesRefs": null
+      },
+      "ee77a591-9753-4cd0-8175-84052015045d": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libcap-ng0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "0.7.9-2.2build3",
+        "vulnerabilitiesRefs": null
+      },
+      "f625f3da-ed4d-4131-9f99-23080fbe27e8": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libgmp10",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "2:6.2.1+dfsg-3ubuntu1",
+        "vulnerabilitiesRefs": null
+      },
+      "f9c47c06-63bb-43e4-b96b-8ecfcb410a1e": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libkrb5support0",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1.19.2-2ubuntu0.7",
+        "vulnerabilitiesRefs": null
+      },
+      "fb5e9467-67db-47d7-8714-756d63fac2af": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "passwd",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:4.8.1-2ubuntu2.2",
+        "vulnerabilitiesRefs": [
+          "3563e5f6-a9cf-4286-9154-b05d5b2aa599",
+          "870a36fb-7c14-41e6-bfac-4bad79e81a0c"
+        ]
+      },
+      "fcf98450-2e22-4c35-8c82-3e9737addcab": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "hostname",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "3.23ubuntu2",
+        "vulnerabilitiesRefs": null
+      },
+      "fe6df9f2-27c2-4d28-9a29-4cba89eeb545": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "libncursesw6",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "6.3-2ubuntu0.1",
+        "vulnerabilitiesRefs": [
+          "93c7119b-6ec5-413b-be78-650ccae3044e",
+          "26d13e76-eb94-4d6b-b7aa-fb2f6d99006f"
+        ]
+      },
+      "ffcb3d30-4483-4c2e-978f-578a384dd3b0": {
+        "isRemoved": false,
+        "isRunning": false,
+        "layerRef": "sha256:f862e1968e4b4c3c3af141e37d2ec22b19ec0fd50d6a8aaf683de6729e296226",
+        "name": "login",
+        "path": "/var/lib/dpkg/status",
+        "riskAcceptRefs": null,
+        "type": "os",
+        "version": "1:4.8.1-2ubuntu2.2",
+        "vulnerabilitiesRefs": [
+          "0e8a2399-023c-413a-bef8-f36311aef846",
+          "2b0815c9-8eff-4a9a-8a38-66569d91614c"
+        ]
+      }
+    },
+    "policies": {
+      "evaluations": [
+        {
+          "bundles": [
+            {
+              "identifier": "aasim-package-manager-rule",
+              "name": "aasim-package-manager-rule",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionIsPkgManager"
+                    }
+                  ],
+                  "ruleId": "59428",
+                  "ruleType": "imageConfigInstructionIsPkgManager"
+                }
+              ],
+              "type": "custom"
+            },
+            {
+              "identifier": "pci-dss-v4-0",
+              "name": "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "18377",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "accepted",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {},
+                      "remediation": "imageConfigDefaultUserIsRoot",
+                      "riskAcceptRefs": [
+                        "c56f20e5-db30-4b3c-b2eb-ba6c79590abc"
+                      ]
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "ruleId": "18378",
+                  "ruleType": "imageConfigDefaultUser"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "18379",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "predefined"
+            }
+          ],
+          "createdAt": "2025-05-26T08:02:56.936228Z",
+          "description": "",
+          "evaluation": "accepted",
+          "identifier": "aasim-policy",
+          "name": "aasim-policy",
+          "updatedAt": "2025-06-20T09:27:22.202344Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "pci-dss-v4-0",
+              "name": "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "18377",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "accepted",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {},
+                      "remediation": "imageConfigDefaultUserIsRoot",
+                      "riskAcceptRefs": [
+                        "c56f20e5-db30-4b3c-b2eb-ba6c79590abc"
+                      ]
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "ruleId": "18378",
+                  "ruleType": "imageConfigDefaultUser"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "18379",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "predefined"
+            }
+          ],
+          "createdAt": "2025-06-17T03:25:35.626728Z",
+          "description": "決済およびカード情報にリスクをもたらす可能性のある脆弱性を検出するためのスキャン",
+          "evaluation": "accepted",
+          "identifier": "cardholder-policy-pci-dss",
+          "name": "Cardholder Policy - PCI DSS",
+          "updatedAt": "2025-06-17T03:26:38.05213Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "critical-vulnerability-found",
+              "name": "Critical Vulnerability Found",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "critical"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "17701",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "custom"
+            }
+          ],
+          "createdAt": "2023-07-21T05:01:51.544943Z",
+          "description": "",
+          "evaluation": "passed",
+          "identifier": "critical-vulnerability-found",
+          "name": "Critical Vulnerability Found",
+          "updatedAt": "2024-10-08T07:52:30.379503Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "nist-sp-800-190",
+              "name": "NIST SP 800-190 (Application Container Security Guide)",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionIsPkgManager"
+                    }
+                  ],
+                  "ruleId": "16975",
+                  "ruleType": "imageConfigInstructionIsPkgManager"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [
+                    {
+                      "description": "",
+                      "packageRef": "7a73ce80-ab8c-4367-a24b-d005995abe4e",
+                      "vulnerabilityRef": "252dd667-9bab-4349-a7e9-cd9ae94c1c8e"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "7a73ce80-ab8c-4367-a24b-d005995abe4e",
+                      "vulnerabilityRef": "8d0f7ce8-9567-478b-8359-337f137d3901"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "c2e60494-2140-487a-8618-b4a5b1cffc27",
+                      "vulnerabilityRef": "0e3d195c-64b6-4961-94a6-5e9c4f822028"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "c2e60494-2140-487a-8618-b4a5b1cffc27",
+                      "vulnerabilityRef": "4e0b67ac-d6ae-4217-9c5c-0da7c88d4fe4"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "0557af4a-2347-4726-a592-1fde47b7e205",
+                      "vulnerabilityRef": "e3ae3ea0-06f2-4c8f-a0a1-827594e24ba0"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "0557af4a-2347-4726-a592-1fde47b7e205",
+                      "vulnerabilityRef": "f872b2a2-1a33-43aa-942c-d004192440b1"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "725ac457-275c-420d-a26a-37b1094d6922",
+                      "vulnerabilityRef": "c5539af8-359a-469b-9896-b602ddf1ac84"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "725ac457-275c-420d-a26a-37b1094d6922",
+                      "vulnerabilityRef": "64945a0a-4880-40b7-8382-031c186511b6"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "3dc49db7-db36-4f0a-be84-9c0e66698ea6",
+                      "vulnerabilityRef": "6983b664-d736-4d08-8807-02fab799b7c5"
+                    },
+                    {
+                      "description": "",
+                      "packageRef": "0f97eade-5ce3-49e7-a9bd-d5b9d59edfc8",
+                      "vulnerabilityRef": "e597e1f3-c9ac-48b4-9662-8600b4ba81f2"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "medium"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "16976",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {},
+                      "remediation": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "ruleId": "16977",
+                  "ruleType": "imageConfigDefaultUser"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "16978",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                }
+              ],
+              "type": "predefined"
+            },
+            {
+              "identifier": "nist-sp-800-53-rev-5",
+              "name": "NIST SP 800-53 (Security and Privacy Controls for Information Systems and Organizations) Rev 5",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "16970",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "16971",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {},
+                      "remediation": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "ruleId": "16972",
+                  "ruleType": "imageConfigDefaultUser"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {
+                        "instructions": [
+                          "ADD"
+                        ]
+                      },
+                      "remediation": "imageConfigInstructionNotRecommended"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionNotRecommended"
+                    }
+                  ],
+                  "ruleId": "16973",
+                  "ruleType": "imageConfigInstructionNotRecommended"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionIsPkgManager"
+                    }
+                  ],
+                  "ruleId": "16974",
+                  "ruleType": "imageConfigInstructionIsPkgManager"
+                }
+              ],
+              "type": "predefined"
+            },
+            {
+              "identifier": "nist-sp-800-82-rev-2",
+              "name": "NIST SP 800-82 (Guide to Industrial Control Systems ICS Security) Rev 2",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {},
+                      "remediation": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigDefaultUserIsRoot"
+                    }
+                  ],
+                  "ruleId": "16979",
+                  "ruleType": "imageConfigDefaultUser"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "16980",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "failed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [
+                    {
+                      "arguments": {
+                        "instructions": [
+                          "ADD"
+                        ]
+                      },
+                      "remediation": "imageConfigInstructionNotRecommended"
+                    }
+                  ],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionNotRecommended"
+                    }
+                  ],
+                  "ruleId": "16981",
+                  "ruleType": "imageConfigInstructionNotRecommended"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigInstructionIsPkgManager"
+                    }
+                  ],
+                  "ruleId": "16982",
+                  "ruleType": "imageConfigInstructionIsPkgManager"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    }
+                  ],
+                  "ruleId": "16983",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "predefined"
+            }
+          ],
+          "createdAt": "2025-05-21T09:41:52.198796Z",
+          "description": "A Collection of all NIST SP 800-* Rule Bindles",
+          "evaluation": "failed",
+          "identifier": "nist-sp-800-star",
+          "name": "NIST SP 800-Star",
+          "updatedAt": "2025-05-21T09:41:52.198796Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "saleeq-policies",
+              "name": "Saleeq Policies",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "age": 30
+                      },
+                      "type": "imageConfigCreationDateWithAge"
+                    }
+                  ],
+                  "ruleId": "59425",
+                  "ruleType": "imageConfigCreationDate"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "vulnIsFixable"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnIsInUse"
+                    }
+                  ],
+                  "ruleId": "59426",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "custom"
+            }
+          ],
+          "createdAt": "2025-05-26T08:02:47.455308Z",
+          "description": "",
+          "evaluation": "passed",
+          "identifier": "saleeq-policy",
+          "name": "Saleeq policy",
+          "updatedAt": "2025-05-26T08:02:47.455308Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "forbid-secrets",
+              "name": "Forbid Secrets",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "key": "AZURE_CLIENT_SECRET"
+                      },
+                      "type": "imageConfigEnvVariableExists"
+                    }
+                  ],
+                  "ruleId": "17444",
+                  "ruleType": "imageConfigEnvVariable"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "imageConfigFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {},
+                      "type": "imageConfigSensitiveInformationAndSecrets"
+                    }
+                  ],
+                  "ruleId": "17445",
+                  "ruleType": "imageConfigSensitiveInformationAndSecrets"
+                }
+              ],
+              "type": "custom"
+            }
+          ],
+          "createdAt": "2023-07-21T05:02:05.36946Z",
+          "description": "",
+          "evaluation": "passed",
+          "identifier": "sensitive-information-or-secret-found",
+          "name": "Sensitive Information or Secret Found",
+          "updatedAt": "2023-07-21T05:02:05.36946Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "severe_vulnerabilities_with_a_fix",
+              "name": "Severe vulnerabilities with a Fix",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "critical"
+                      },
+                      "type": "vulnSeverityEquals"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnIsFixable"
+                    }
+                  ],
+                  "ruleId": "17446",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverityEquals"
+                    },
+                    {
+                      "extra": {
+                        "age": 30
+                      },
+                      "type": "vulnIsFixableWithAge"
+                    }
+                  ],
+                  "ruleId": "17447",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnExploitableViaNetwork"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnIsFixable"
+                    }
+                  ],
+                  "ruleId": "17448",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "predefined"
+            }
+          ],
+          "createdAt": "2023-03-23T21:41:46.977741Z",
+          "description": "Recommended out of the box image scanning checks.",
+          "evaluation": "passed",
+          "identifier": "sysdig-best-practices",
+          "name": "Sysdig Best Practices",
+          "updatedAt": "2025-02-18T13:51:07.432102Z"
+        },
+        {
+          "bundles": [
+            {
+              "identifier": "severe_vulnerabilities_with_a_fix",
+              "name": "Severe vulnerabilities with a Fix",
+              "rules": [
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "critical"
+                      },
+                      "type": "vulnSeverityEquals"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnIsFixable"
+                    }
+                  ],
+                  "ruleId": "17446",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverityEquals"
+                    },
+                    {
+                      "extra": {
+                        "age": 30
+                      },
+                      "type": "vulnIsFixableWithAge"
+                    }
+                  ],
+                  "ruleId": "17447",
+                  "ruleType": "vulnSeverityAndThreats"
+                },
+                {
+                  "description": "",
+                  "evaluationResult": "passed",
+                  "failureType": "pkgVulnFailure",
+                  "failures": [],
+                  "predicates": [
+                    {
+                      "extra": {
+                        "level": "high"
+                      },
+                      "type": "vulnSeverity"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnExploitableViaNetwork"
+                    },
+                    {
+                      "extra": {},
+                      "type": "vulnIsFixable"
+                    }
+                  ],
+                  "ruleId": "17448",
+                  "ruleType": "vulnSeverityAndThreats"
+                }
+              ],
+              "type": "predefined"
+            }
+          ],
+          "createdAt": "2025-05-26T09:11:11.180694Z",
+          "description": "Sysdig Default",
+          "evaluation": "passed",
+          "identifier": "sysdig-default",
+          "name": "Sysdig Default",
+          "updatedAt": "2025-05-26T09:11:11.180694Z"
+        }
+      ],
+      "globalEvaluation": "failed"
+    },
+    "producer": {
+      "producedAt": "2025-06-27T12:19:09.258419142+02:00"
+    },
+    "riskAccepts": {
+      "a9cc8975-2fa5-475f-8f32-43ba68764f05": {
+        "context": [],
+        "createdAt": "2025-06-20T10:29:36.902552Z",
+        "description": "lol",
+        "entityType": "vulnerability",
+        "entityValue": "CVE-2022-27943",
+        "expirationDate": "2025-07-20",
+        "id": "184ab982dda879c093af026022267412",
+        "reason": "RiskNotRelevant",
+        "status": "active",
+        "updatedAt": "2025-06-20T10:29:36.902552Z"
+      },
+      "c56f20e5-db30-4b3c-b2eb-ba6c79590abc": {
+        "context": [
+          {
+            "type": "imageName",
+            "value": "ubuntu:22.04"
+          }
+        ],
+        "createdAt": "2025-06-24T11:05:27.819759Z",
+        "description": "lkjl",
+        "entityType": "policyRule",
+        "entityValue": "18378",
+        "expirationDate": "2025-07-24",
+        "id": "184bf5c9ef8c6d984676c69dbd29570b",
+        "reason": "RiskTransferred",
+        "status": "active",
+        "updatedAt": "2025-06-24T11:05:27.819759Z"
+      }
+    },
+    "stage": "pipeline",
+    "vulnerabilities": {
+      "0ba5c524-a4cf-4676-88c6-acd89a1eaf07": {
+        "cvssScore": {
+          "score": 5.5,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2022-03-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-27943",
+        "packageRef": "66629040-3a90-4e30-ab23-1d77110b92fc",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-03-20T18:27:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2023-10-31T15:32:32Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00044,
+              "percentile": 0.12826,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5,
+              "exploitability_score": 1.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2022-03-26T13:15:07.9Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "publicationDate": "2022-03-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2022-03-26T13:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2022-03-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": [
+          "a9cc8975-2fa5-475f-8f32-43ba68764f05"
+        ],
+        "severity": "low",
+        "solutionDate": "2022-03-26"
+      },
+      "0e3d195c-64b6-4961-94a6-5e9c4f822028": {
+        "cvssScore": {
+          "score": 7.8,
+          "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-06-17",
+        "exploitable": false,
+        "fixVersion": "1.4.0-11ubuntu2.6",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-6020",
+        "packageRef": "c2e60494-2140-487a-8618-b4a5b1cffc27",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00023,
+              "percentile": 0.04502,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-06-17T13:15:21.66Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-06-17T13:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-06-17"
+      },
+      "0e8a2399-023c-413a-bef8-f36311aef846": {
+        "cvssScore": {
+          "score": 3.3,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-04-14",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-29383",
+        "packageRef": "ffcb3d30-4483-4c2e-978f-578a384dd3b0",
+        "providersMetadata": {
+          "azurelinux": {
+            "severity": "low"
+          },
+          "euleros": {
+            "publicationDate": "2023-07-10T09:31:20Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.0543,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.3,
+              "exploitability_score": 1.8,
+              "impact_score": 1.4
+            },
+            "publicationDate": "2023-04-14T22:15:07.68Z",
+            "severity": "low"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "publicationDate": "2023-04-15T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-04-14T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.3
+            },
+            "publicationDate": "2023-03-30T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-04-14"
+      },
+      "11a8f75f-73c6-4f5d-9e12-075f8c500808": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-03-31",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-4899",
+        "packageRef": "9046b239-9f32-4fee-8cfb-699521687937",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "medium"
+          },
+          "almalinux": {
+            "publicationDate": "2024-02-20T00:00:00Z",
+            "severity": "medium"
+          },
+          "amazon": {
+            "publicationDate": "2023-07-05T20:13:00Z"
+          },
+          "azurelinux": {
+            "severity": "high"
+          },
+          "euleros": {
+            "publicationDate": "2023-10-31T15:32:40Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00205,
+              "percentile": 0.43033,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "github": {
+            "publicationDate": "2023-03-31T21:30:37Z"
+          },
+          "gitlab": {
+            "publicationDate": "2023-03-31T00:00:00Z"
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5,
+              "exploitability_score": 3.9,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-03-31T20:15:07.213Z",
+            "severity": "high"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "score": 4.7
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "severity": "medium"
+          },
+          "pypiadvisory": {
+            "publicationDate": "2023-03-31T20:15:00Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2022-07-17T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-03-31T20:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2022-07-18T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-03-31"
+      },
+      "16c829cc-eda8-4acd-b485-7d9823d44e75": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-12",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-50495",
+        "packageRef": "e26a66b0-22bf-465a-84b9-9673d9a3dc8e",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-01-03T21:04:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.0005,
+              "percentile": 0.15414,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5,
+              "exploitability_score": 2.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-12T15:15:07.867Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5
+            },
+            "publicationDate": "2023-12-12T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-12T15:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2023-04-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-12"
+      },
+      "252dd667-9bab-4349-a7e9-cd9ae94c1c8e": {
+        "cvssScore": {
+          "score": 7.8,
+          "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-06-17",
+        "exploitable": false,
+        "fixVersion": "1.4.0-11ubuntu2.6",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-6020",
+        "packageRef": "7a73ce80-ab8c-4367-a24b-d005995abe4e",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00023,
+              "percentile": 0.04502,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-06-17T13:15:21.66Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-06-17T13:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-06-17"
+      },
+      "26d13e76-eb94-4d6b-b7aa-fb2f6d99006f": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-12",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-50495",
+        "packageRef": "fe6df9f2-27c2-4d28-9a29-4cba89eeb545",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-01-03T21:04:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.0005,
+              "percentile": 0.15414,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5,
+              "exploitability_score": 2.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-12T15:15:07.867Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5
+            },
+            "publicationDate": "2023-12-12T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-12T15:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2023-04-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-12"
+      },
+      "2b0815c9-8eff-4a9a-8a38-66569d91614c": {
+        "cvssScore": {
+          "score": 3.6,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-12-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-56433",
+        "packageRef": "ffcb3d30-4483-4c2e-978f-578a384dd3b0",
+        "providersMetadata": {
+          "azurelinux": {
+            "severity": "low"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.02872,
+              "percentile": 0.85654,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2024-12-26T09:15:07.267Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+              "score": 3.6
+            },
+            "publicationDate": "2024-12-26T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-12-26T09:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+              "score": 3.6
+            },
+            "publicationDate": "2024-12-22T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-12-26"
+      },
+      "3430df88-ae33-441e-91dd-35589d8a3e00": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-12",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-50495",
+        "packageRef": "8177ead3-55d2-4cb2-ba22-c267c3eae870",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-01-03T21:04:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.0005,
+              "percentile": 0.15414,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5,
+              "exploitability_score": 2.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-12T15:15:07.867Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5
+            },
+            "publicationDate": "2023-12-12T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-12T15:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2023-04-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-12"
+      },
+      "3563e5f6-a9cf-4286-9154-b05d5b2aa599": {
+        "cvssScore": {
+          "score": 3.3,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-04-14",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-29383",
+        "packageRef": "fb5e9467-67db-47d7-8714-756d63fac2af",
+        "providersMetadata": {
+          "azurelinux": {
+            "severity": "low"
+          },
+          "euleros": {
+            "publicationDate": "2023-07-10T09:31:20Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.0543,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.3,
+              "exploitability_score": 1.8,
+              "impact_score": 1.4
+            },
+            "publicationDate": "2023-04-14T22:15:07.68Z",
+            "severity": "low"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "publicationDate": "2023-04-15T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-04-14T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.3
+            },
+            "publicationDate": "2023-03-30T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-04-14"
+      },
+      "38cdbe14-43ed-402c-96d6-de183acaec88": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-08-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-41996",
+        "packageRef": "cfd4fa91-3a2e-4f8d-b814-bdf31664f8e8",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-10-10T03:02:00Z"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00166,
+              "percentile": 0.38422,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2024-08-26T06:15:04.603Z"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 5.9
+            },
+            "publicationDate": "2024-08-26T06:15:04.603Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-08-26T06:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2024-08-26T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-08-26"
+      },
+      "4e0b67ac-d6ae-4217-9c5c-0da7c88d4fe4": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-10-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-10041",
+        "packageRef": "c2e60494-2140-487a-8618-b4a5b1cffc27",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "high"
+          },
+          "almalinux": {
+            "publicationDate": "2024-11-26T00:00:00Z",
+            "severity": "high"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2025-05-06T10:55:54Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.05411,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "gentoo": {
+            "publicationDate": "2025-05-12T06:55:41.608795Z",
+            "severity": "high"
+          },
+          "nvd": {
+            "publicationDate": "2024-10-23T14:15:03.97Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-18T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-12-19T04:17:50Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-10-23T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-23T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2024-10-23"
+      },
+      "53612705-c6d9-49c8-bc5c-55539c3a7422": {
+        "cvssScore": {
+          "score": 5.9,
+          "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-03-06",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-2236",
+        "packageRef": "c520bd5a-bf94-428a-bb46-101f8dc53e20",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-10-10T03:02:00Z"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00222,
+              "percentile": 0.44821,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2024-03-06T22:15:57.977Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+              "score": 5.9
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2024-03-06T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-03-06T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2024-03-05T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-03-06"
+      },
+      "5518df02-fef2-4581-a072-f3fc511b1892": {
+        "cvssScore": {
+          "score": 4.8,
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-09-13",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-4039",
+        "packageRef": "436aac2c-b811-474a-8000-4d8d4c5b4ac5",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-09-08T19:46:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-01-04T15:53:09Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00149,
+              "percentile": 0.36417,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8,
+              "exploitability_score": 2.2,
+              "impact_score": 2.5
+            },
+            "publicationDate": "2023-09-13T09:15:15.69Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "low"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-09-12T15:00:00Z",
+            "severity": "negligible"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-09-13T09:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.7
+            },
+            "publicationDate": "2023-09-12T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-09-13"
+      },
+      "56f213e0-dcb3-467d-b94a-736f124154ac": {
+        "cvssScore": {
+          "score": 0,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-02-16",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-45918",
+        "packageRef": "e26a66b0-22bf-465a-84b9-9673d9a3dc8e",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-02-29T10:03:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2024-07-18T17:32:51Z",
+            "severity": "medium"
+          },
+          "nvd": {
+            "publicationDate": "2024-02-16T22:15:07.88Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2024-01-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-02-16T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-06-14T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-02-16"
+      },
+      "5d3bbba3-ad74-48dd-83da-2e99379ac4d2": {
+        "cvssScore": {
+          "score": 0,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-02-16",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-45918",
+        "packageRef": "8177ead3-55d2-4cb2-ba22-c267c3eae870",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-02-29T10:03:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2024-07-18T17:32:51Z",
+            "severity": "medium"
+          },
+          "nvd": {
+            "publicationDate": "2024-02-16T22:15:07.88Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2024-01-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-02-16T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-06-14T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-02-16"
+      },
+      "62962ae8-a27d-44c1-88fc-3c85557966b1": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2022-02-19",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2016-20013",
+        "packageRef": "920d6f3c-2506-4313-a30c-9bbca2d2733c",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00192,
+              "percentile": 0.41532,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5,
+              "exploitability_score": 3.9,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2022-02-19T05:15:09.413Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2022-02-19T05:15:00Z",
+            "severity": "negligible"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2016-08-31T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "negligible",
+        "solutionDate": "2022-02-19"
+      },
+      "64945a0a-4880-40b7-8382-031c186511b6": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-10-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-10041",
+        "packageRef": "725ac457-275c-420d-a26a-37b1094d6922",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "high"
+          },
+          "almalinux": {
+            "publicationDate": "2024-11-26T00:00:00Z",
+            "severity": "high"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2025-05-06T10:55:54Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.05411,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "gentoo": {
+            "publicationDate": "2025-05-12T06:55:41.608795Z",
+            "severity": "high"
+          },
+          "nvd": {
+            "publicationDate": "2024-10-23T14:15:03.97Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-18T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-12-19T04:17:50Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-10-23T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-23T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2024-10-23"
+      },
+      "6983b664-d736-4d08-8807-02fab799b7c5": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-05-30",
+        "exploitable": false,
+        "fixVersion": "249.11-0ubuntu3.16",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-4598",
+        "packageRef": "3dc49db7-db36-4f0a-be84-9c0e66698ea6",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00011,
+              "percentile": 0.00988,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-05-30T14:15:23.557Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2025-05-29T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-05-30T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2025-05-28T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-05-30"
+      },
+      "6ab4f68b-98cc-40e5-a1ff-4d61a855998d": {
+        "cvssScore": {
+          "score": 4.8,
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-09-13",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-4039",
+        "packageRef": "66629040-3a90-4e30-ab23-1d77110b92fc",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-09-08T19:46:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-01-04T15:53:09Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00149,
+              "percentile": 0.36417,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8,
+              "exploitability_score": 2.2,
+              "impact_score": 2.5
+            },
+            "publicationDate": "2023-09-13T09:15:15.69Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "low"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-09-12T15:00:00Z",
+            "severity": "negligible"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-09-13T09:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.7
+            },
+            "publicationDate": "2023-09-12T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-09-13"
+      },
+      "704ca8ee-aebe-4601-a494-be25246e6fb3": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2017-02-07",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2016-2781",
+        "packageRef": "4f921d51-f6bf-4e08-9234-e62e7b9ef448",
+        "providersMetadata": {
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00086,
+              "percentile": 0.25935,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:C/C:N/I:H/A:N",
+              "score": 6.5,
+              "exploitability_score": 2,
+              "impact_score": 4
+            },
+            "publicationDate": "2017-02-07T15:59:00.333Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:H",
+              "score": 8.6
+            },
+            "publicationDate": "2016-02-28T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2017-02-07T15:59:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "2.0",
+              "vector": "AV:L/AC:L/Au:N/C:C/I:C/A:C",
+              "score": 7.2
+            },
+            "publicationDate": "2016-02-28T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2017-02-07"
+      },
+      "79448016-ac6d-46ba-b7cc-520bd27d1fcb": {
+        "cvssScore": {
+          "score": 5.5,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2022-03-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-27943",
+        "packageRef": "18ced1b3-6af3-4651-a1cc-14a737e35c8a",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-03-20T18:27:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2023-10-31T15:32:32Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00044,
+              "percentile": 0.12826,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5,
+              "exploitability_score": 1.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2022-03-26T13:15:07.9Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "publicationDate": "2022-03-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2022-03-26T13:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2022-03-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": [
+          "a9cc8975-2fa5-475f-8f32-43ba68764f05"
+        ],
+        "severity": "low",
+        "solutionDate": "2022-03-26"
+      },
+      "83ed3505-3d0c-41dc-a091-17a6d693208b": {
+        "cvssScore": {
+          "score": 3.3,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-02-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-3219",
+        "packageRef": "dc96ca35-3e27-4f5c-bfb3-62721f3a03a3",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00012,
+              "percentile": 0.01233,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L",
+              "score": 3.3,
+              "exploitability_score": 1.8,
+              "impact_score": 1.4
+            },
+            "publicationDate": "2023-02-23T20:15:12.393Z",
+            "severity": "low"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 6.2
+            },
+            "publicationDate": "2022-09-15T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-02-23T20:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2022-05-22T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-02-23"
+      },
+      "870a36fb-7c14-41e6-bfac-4bad79e81a0c": {
+        "cvssScore": {
+          "score": 3.6,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-12-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-56433",
+        "packageRef": "fb5e9467-67db-47d7-8714-756d63fac2af",
+        "providersMetadata": {
+          "azurelinux": {
+            "severity": "low"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.02872,
+              "percentile": 0.85654,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2024-12-26T09:15:07.267Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+              "score": 3.6
+            },
+            "publicationDate": "2024-12-26T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-12-26T09:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:N",
+              "score": 3.6
+            },
+            "publicationDate": "2024-12-22T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-12-26"
+      },
+      "878989bc-8e7d-4316-83f8-f768bb83e644": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2022-02-19",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2016-20013",
+        "packageRef": "31878669-7e2f-48b5-bb42-b3816d751eb0",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00192,
+              "percentile": 0.41532,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5,
+              "exploitability_score": 3.9,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2022-02-19T05:15:09.413Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2022-02-19T05:15:00Z",
+            "severity": "negligible"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2016-08-31T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "negligible",
+        "solutionDate": "2022-02-19"
+      },
+      "8d0f7ce8-9567-478b-8359-337f137d3901": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-10-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-10041",
+        "packageRef": "7a73ce80-ab8c-4367-a24b-d005995abe4e",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "high"
+          },
+          "almalinux": {
+            "publicationDate": "2024-11-26T00:00:00Z",
+            "severity": "high"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2025-05-06T10:55:54Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.05411,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "gentoo": {
+            "publicationDate": "2025-05-12T06:55:41.608795Z",
+            "severity": "high"
+          },
+          "nvd": {
+            "publicationDate": "2024-10-23T14:15:03.97Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-18T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-12-19T04:17:50Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-10-23T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-23T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2024-10-23"
+      },
+      "93c7119b-6ec5-413b-be78-650ccae3044e": {
+        "cvssScore": {
+          "score": 0,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-02-16",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-45918",
+        "packageRef": "fe6df9f2-27c2-4d28-9a29-4cba89eeb545",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-02-29T10:03:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2024-07-18T17:32:51Z",
+            "severity": "medium"
+          },
+          "nvd": {
+            "publicationDate": "2024-02-16T22:15:07.88Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2024-01-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-02-16T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-06-14T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-02-16"
+      },
+      "9af0fac8-8171-4f73-b406-2ceca3470ea2": {
+        "cvssScore": {
+          "score": 0,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-02-16",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-45918",
+        "packageRef": "cdcf6c26-dc61-4b3c-851a-7fd4447ac6d8",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-02-29T10:03:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2024-07-18T17:32:51Z",
+            "severity": "medium"
+          },
+          "nvd": {
+            "publicationDate": "2024-02-16T22:15:07.88Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2024-01-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-02-16T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-06-14T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-02-16"
+      },
+      "9e6ca922-59a3-485d-90b4-a4591edb8bda": {
+        "cvssScore": {
+          "score": 4.8,
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-09-13",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-4039",
+        "packageRef": "18ced1b3-6af3-4651-a1cc-14a737e35c8a",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-09-08T19:46:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-01-04T15:53:09Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00149,
+              "percentile": 0.36417,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8,
+              "exploitability_score": 2.2,
+              "impact_score": 2.5
+            },
+            "publicationDate": "2023-09-13T09:15:15.69Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:L/A:N",
+              "score": 4.8
+            },
+            "severity": "low"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-09-12T15:00:00Z",
+            "severity": "negligible"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-09-13T09:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:N",
+              "score": 3.7
+            },
+            "publicationDate": "2023-09-12T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-09-13"
+      },
+      "a396b529-176e-47f4-bd5a-5519825d3d8c": {
+        "cvssScore": {
+          "score": 5.9,
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-7008",
+        "packageRef": "0f97eade-5ce3-49e7-a9bd-d5b9d59edfc8",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "medium"
+          },
+          "almalinux": {
+            "publicationDate": "2024-05-22T00:00:00Z",
+            "severity": "medium"
+          },
+          "amazon": {
+            "publicationDate": "2024-02-01T17:56:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "bottlerocket": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00304,
+              "percentile": 0.53101,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9,
+              "exploitability_score": 2.2,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-23T13:15:07.573Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2022-12-08T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-05-10T14:32:36Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-23T13:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2020-03-18T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-23"
+      },
+      "a40b52e2-2fab-4566-8b42-1cfa76f542d7": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-12",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-50495",
+        "packageRef": "cdcf6c26-dc61-4b3c-851a-7fd4447ac6d8",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-01-03T21:04:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.0005,
+              "percentile": 0.15414,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5,
+              "exploitability_score": 2.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-12T15:15:07.867Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5
+            },
+            "publicationDate": "2023-12-12T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-12T15:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2023-04-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-12"
+      },
+      "b40114d5-dc40-4f34-9180-0ab6e9f9c307": {
+        "cvssScore": {
+          "score": 5.5,
+          "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2022-03-26",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-27943",
+        "packageRef": "436aac2c-b811-474a-8000-4d8d4c5b4ac5",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-03-20T18:27:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2023-10-31T15:32:32Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00044,
+              "percentile": 0.12826,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5,
+              "exploitability_score": 1.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2022-03-26T13:15:07.9Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 5.5
+            },
+            "publicationDate": "2022-03-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2022-03-26T13:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2022-03-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": [
+          "a9cc8975-2fa5-475f-8f32-43ba68764f05"
+        ],
+        "severity": "low",
+        "solutionDate": "2022-03-26"
+      },
+      "b746c59a-fc06-4509-b511-eeb0f9d7ae30": {
+        "cvssScore": {
+          "score": 5.9,
+          "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-7008",
+        "packageRef": "3dc49db7-db36-4f0a-be84-9c0e66698ea6",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "medium"
+          },
+          "almalinux": {
+            "publicationDate": "2024-05-22T00:00:00Z",
+            "severity": "medium"
+          },
+          "amazon": {
+            "publicationDate": "2024-02-01T17:56:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "bottlerocket": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00304,
+              "percentile": 0.53101,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9,
+              "exploitability_score": 2.2,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-23T13:15:07.573Z",
+            "severity": "medium"
+          },
+          "opensuse": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "severity": "medium"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2022-12-08T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-05-10T14:32:36Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-23T13:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "score": 5.9
+            },
+            "publicationDate": "2020-03-18T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-23"
+      },
+      "c41cbe59-0240-41b5-8145-fea79334c81d": {
+        "cvssScore": {
+          "score": 0,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-02-16",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-45918",
+        "packageRef": "9631c27e-df9e-44f3-82ba-db47ec06e650",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-02-29T10:03:00Z"
+          },
+          "euleros": {
+            "publicationDate": "2024-07-18T17:32:51Z",
+            "severity": "medium"
+          },
+          "nvd": {
+            "publicationDate": "2024-02-16T22:15:07.88Z"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2024-01-26T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-02-16T22:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:N/UI:R/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2023-06-14T00:00:00Z",
+            "severity": "negligible"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2024-02-16"
+      },
+      "c5539af8-359a-469b-9896-b602ddf1ac84": {
+        "cvssScore": {
+          "score": 7.8,
+          "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-06-17",
+        "exploitable": false,
+        "fixVersion": "1.4.0-11ubuntu2.6",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-6020",
+        "packageRef": "725ac457-275c-420d-a26a-37b1094d6922",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00023,
+              "percentile": 0.04502,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-06-17T13:15:21.66Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-06-17T13:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-06-17"
+      },
+      "d23cb1b7-9b25-487d-9596-d67fbc4444dd": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-07-18",
+        "exploit": {
+          "links": [
+            "https://github.com/PCRE2Project/pcre2/files/9348433/simplied-case.zip"
+          ],
+          "publicationDate": "2022-08-16T00:00:00Z"
+        },
+        "exploitable": true,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2022-41409",
+        "packageRef": "8bbedbeb-d031-4fe5-b179-929172513e1a",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2023-08-03T20:26:00Z"
+          },
+          "azurelinux": {
+            "severity": "high"
+          },
+          "euleros": {
+            "publicationDate": "2023-09-11T18:30:48Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00046,
+              "percentile": 0.13957,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "gitlab": {
+            "publicationDate": "2023-07-18T00:00:00Z"
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5,
+              "exploitability_score": 3.9,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-07-18T14:15:12.197Z",
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+              "score": 5.3
+            },
+            "publicationDate": "2023-07-18T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-07-18T14:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2022-08-16T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-07-18"
+      },
+      "d9e9d9ea-df7b-4c7a-b2f5-06089047a698": {
+        "cvssScore": {
+          "score": 7.5,
+          "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2017-07-11",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2017-11164",
+        "packageRef": "a7ef3461-a3fe-42f7-8004-84276317ffae",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00364,
+              "percentile": 0.57658,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5,
+              "exploitability_score": 3.9,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2017-07-11T03:29:00.277Z",
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "AV:L/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:L",
+              "score": 3.3
+            },
+            "publicationDate": "2017-07-10T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2017-07-11T03:29:00Z",
+            "severity": "negligible"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "2.0",
+              "vector": "AV:N/AC:M/Au:N/C:N/I:N/A:N",
+              "score": 0
+            },
+            "publicationDate": "2017-07-11T00:00:00Z",
+            "severity": "low"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "negligible",
+        "solutionDate": "2017-07-11"
+      },
+      "e3ae3ea0-06f2-4c8f-a0a1-827594e24ba0": {
+        "cvssScore": {
+          "score": 7.8,
+          "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-06-17",
+        "exploitable": false,
+        "fixVersion": "1.4.0-11ubuntu2.6",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-6020",
+        "packageRef": "0557af4a-2347-4726-a592-1fde47b7e205",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00023,
+              "percentile": 0.04502,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-06-17T13:15:21.66Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-06-17T13:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "score": 7.8
+            },
+            "publicationDate": "2025-06-17T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-06-17"
+      },
+      "e597e1f3-c9ac-48b4-9662-8600b4ba81f2": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2025-05-30",
+        "exploitable": false,
+        "fixVersion": "249.11-0ubuntu3.16",
+        "mainProvider": "ubuntu",
+        "name": "CVE-2025-4598",
+        "packageRef": "0f97eade-5ce3-49e7-a9bd-d5b9d59edfc8",
+        "providersMetadata": {
+          "first.org": {
+            "epssScore": {
+              "score": 0.00011,
+              "percentile": 0.00988,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "publicationDate": "2025-05-30T14:15:23.557Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:N",
+              "score": 0
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2025-05-29T00:00:00Z",
+            "severity": "medium"
+          },
+          "ubuntu": {
+            "publicationDate": "2025-05-30T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2025-05-28T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2025-05-30"
+      },
+      "f872b2a2-1a33-43aa-942c-d004192440b1": {
+        "cvssScore": {
+          "score": 4.7,
+          "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+          "version": "3.0"
+        },
+        "disclosureDate": "2024-10-23",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2024-10041",
+        "packageRef": "0557af4a-2347-4726-a592-1fde47b7e205",
+        "providersMetadata": {
+          "alibaba": {
+            "severity": "high"
+          },
+          "almalinux": {
+            "publicationDate": "2024-11-26T00:00:00Z",
+            "severity": "high"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2025-05-06T10:55:54Z",
+            "severity": "high"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.00026,
+              "percentile": 0.05411,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "gentoo": {
+            "publicationDate": "2025-05-12T06:55:41.608795Z",
+            "severity": "high"
+          },
+          "nvd": {
+            "publicationDate": "2024-10-23T14:15:03.97Z"
+          },
+          "oracle": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "severity": "high"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-18T00:00:00Z",
+            "severity": "medium"
+          },
+          "rocky": {
+            "publicationDate": "2024-12-19T04:17:50Z"
+          },
+          "ubuntu": {
+            "publicationDate": "2024-10-23T14:15:00Z",
+            "severity": "medium"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "score": 4.7
+            },
+            "publicationDate": "2024-10-23T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "medium",
+        "solutionDate": "2024-10-23"
+      },
+      "ffdb73f1-b0cb-4e17-9553-4b39d4a6f6a8": {
+        "cvssScore": {
+          "score": 6.5,
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+          "version": "3.1"
+        },
+        "disclosureDate": "2023-12-12",
+        "exploitable": false,
+        "mainProvider": "ubuntu",
+        "name": "CVE-2023-50495",
+        "packageRef": "9631c27e-df9e-44f3-82ba-db47ec06e650",
+        "providersMetadata": {
+          "amazon": {
+            "publicationDate": "2024-01-03T21:04:00Z"
+          },
+          "azurelinux": {
+            "severity": "medium"
+          },
+          "euleros": {
+            "publicationDate": "2024-05-31T16:58:14Z",
+            "severity": "medium"
+          },
+          "first.org": {
+            "epssScore": {
+              "score": 0.0005,
+              "percentile": 0.15414,
+              "timestamp": "2025-06-26T00:00:00Z"
+            }
+          },
+          "nvd": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5,
+              "exploitability_score": 2.8,
+              "impact_score": 3.6
+            },
+            "publicationDate": "2023-12-12T15:15:07.867Z",
+            "severity": "medium"
+          },
+          "rhel": {
+            "cvssScore": {
+              "version": "3.1",
+              "vector": "AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H",
+              "score": 6.5
+            },
+            "publicationDate": "2023-12-12T00:00:00Z",
+            "severity": "low"
+          },
+          "ubuntu": {
+            "publicationDate": "2023-12-12T15:15:00Z",
+            "severity": "low"
+          },
+          "vulndb": {
+            "cvssScore": {
+              "version": "3.0",
+              "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "score": 7.5
+            },
+            "publicationDate": "2023-04-23T00:00:00Z",
+            "severity": "high"
+          }
+        },
+        "riskAcceptRefs": null,
+        "severity": "low",
+        "solutionDate": "2023-12-12"
+      }
+    }
+  }
+}

@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public class Metadata implements AggregateChild<ScanResult>, Serializable {
@@ -84,5 +85,17 @@ public class Metadata implements AggregateChild<ScanResult>, Serializable {
 
   long layersCount() {
     return root().layers().stream().filter(l -> l.size().isPresent()).count();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    Metadata metadata = (Metadata) o;
+    return Objects.equals(pullString, metadata.pullString) && Objects.equals(imageID, metadata.imageID) && Objects.equals(digest, metadata.digest) && Objects.equals(baseOS, metadata.baseOS) && Objects.equals(sizeInBytes, metadata.sizeInBytes) && architecture == metadata.architecture && Objects.equals(labels, metadata.labels) && Objects.equals(createdAt, metadata.createdAt);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt);
   }
 }
