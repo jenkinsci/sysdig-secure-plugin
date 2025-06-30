@@ -37,7 +37,7 @@ class ImageScanningApplicationServiceTest {
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
     when(config.getBailOnFail()).thenReturn(false);
-    ScanResult result = TestMother.imageScanResult();
+    ScanResult result = TestMother.scanResultForUbuntu2204().toDomain().get();
     PolicyEvaluationReport policyEvaluationReport = new PolicyEvaluationReport(false);
     PolicyEvaluationSummary policyEvaluationSummary = new PolicyEvaluationSummary();
 
@@ -57,7 +57,7 @@ class ImageScanningApplicationServiceTest {
   }
 
   @Test
-  void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception{
+  void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception {
     when(config.getImageName()).thenReturn("test-image");
     when(config.getBailOnPluginFail()).thenReturn(false);
     when(config.getBailOnFail()).thenReturn(true);

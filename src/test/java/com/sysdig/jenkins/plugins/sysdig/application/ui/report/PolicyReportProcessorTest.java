@@ -13,12 +13,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PolicyReportProcessorTest {
   private final PolicyReportProcessor policyReport = new PolicyReportProcessor(new NopLogger());
-  private final String imageID = "sha256:39286ab8a5e14aeaf5fdd6e2fac76e0c8d31a0c07224f0ee5e6be502f12e93f3";
+  private final String imageID = "sha256:b103ac8bf22ec7fe2abe740f86dccd1e7d086e0ad8d064d07bd9c8a7961a5d7a";
 
   @Test
   void testPolicyEvaluationReportIsGeneratedCorrectly() throws IOException {
     // Given
-    var result = TestMother.rawScanResult();
+    var result = TestMother.scanResultForUbuntu2204();
     var imageScanningResult = result.toDomain().get();
 
     // When
@@ -31,24 +31,24 @@ class PolicyReportProcessorTest {
     assertTrue(resultsForEachImage.containsKey(imageID));
 
     var policyEvaluationReportLines = resultsForEachImage.get(imageID);
-    assertEquals(45, policyEvaluationReportLines.size());
+    assertEquals(15, policyEvaluationReportLines.size());
     assertTrue(policyEvaluationReportLines.contains(new PolicyEvaluationReportLine(
       imageID,
-      "nginx",
+      "ubuntu:22.04",
       "trigger_id",
-      "PCI DSS (Payment Card Industry Data Security Standard) v4.0",
-      "Severity greater than or equal high",
-      "CVE-2023-31484 found in pkg 'perl-base:5.36.0-7+deb12u1'",
+      "NIST SP 800-190 (Application Container Security Guide)",
+      "", // FIXME(fede): this should be filled, but for v1 result in sysdig-cli-scanner 1.22.3 the rule description is empty
+      "CVE-2025-6020 found in libpam-modules (1.4.0-11ubuntu2.5)",
       "STOP",
       false,
-      "cardholder-policy-david",
-      "Cardholder Policy (David)")));
+      "nist-sp-800-star",
+      "NIST SP 800-Star")));
   }
 
   @Test
   void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
     // Given
-    var result = TestMother.rawScanResult();
+    var result = TestMother.scanResultForUbuntu2204();
     var imageScanningResult = result.toDomain().get();
     var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
 
@@ -59,8 +59,8 @@ class PolicyReportProcessorTest {
     assertEquals(1, policyEvaluationSummary.getLines().size());
 
     var policyEvaluationSummaryLine = policyEvaluationSummary.getLines().get(0);
-    assertEquals("nginx", policyEvaluationSummaryLine.imageTag());
-    assertEquals(45, policyEvaluationSummaryLine.nonWhitelistedStopActions());
+    assertEquals("ubuntu:22.04", policyEvaluationSummaryLine.imageTag());
+    assertEquals(15, policyEvaluationSummaryLine.nonWhitelistedStopActions());
     assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedWarnActions());
     assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedGoActions());
     assertEquals("STOP", policyEvaluationSummaryLine.finalAction());

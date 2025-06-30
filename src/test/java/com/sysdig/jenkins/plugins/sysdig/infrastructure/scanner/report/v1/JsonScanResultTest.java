@@ -1,5 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
+import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,7 @@ class JsonScanResultTest {
 
   @BeforeEach
   void setUp() {
-    JsonScanResultV1 jsonScanResult = jsonScanResultFromImage("ubuntu_22.04");
+    JsonScanResultV1 jsonScanResult = TestMother.scanResultForUbuntu2204();
     scanResult = jsonScanResult.toDomain().get();
   }
 
@@ -109,13 +110,5 @@ class JsonScanResultTest {
     assertTrue(failedPolicy.bundles().contains(failedBundle));
     assertEquals(EvaluationResult.Failed, failedBundle.evaluationResult());
     assertEquals(EvaluationResult.Failed, failedBundle.rules().stream().skip(1).findFirst().get().evaluationResult());
-  }
-
-  private JsonScanResultV1 jsonScanResultFromImage(String image) {
-    String resourcePath = "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/%s.json".formatted(image);
-    InputStream imageStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
-    assertNotNull(imageStream);
-
-    return GsonBuilder.build().fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
   }
 }
