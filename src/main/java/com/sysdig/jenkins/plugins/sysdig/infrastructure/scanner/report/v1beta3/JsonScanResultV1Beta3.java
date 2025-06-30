@@ -30,7 +30,10 @@ import java.util.Date;
 import java.util.Optional;
 
 public class JsonScanResultV1Beta3 {
-  @SuppressFBWarnings(value = "NP_UNWRITTEN_FIELD", justification = "Field set via Gson deserialization")
+  @SuppressFBWarnings(value = {
+    "NP_UNWRITTEN_FIELD",
+    "UWF_UNWRITTEN_FIELD"
+  }, justification = "Field set via Gson deserialization")
   private JsonResult result;
 
   /**

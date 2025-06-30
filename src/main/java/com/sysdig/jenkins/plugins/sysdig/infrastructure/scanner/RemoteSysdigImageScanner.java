@@ -22,6 +22,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1.JsonScanResultV1;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResultV1Beta3;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
@@ -60,9 +61,9 @@ public class RemoteSysdigImageScanner {
     String imageScanningResultJSON = executeScan(scannerBinaryFile);
     logger.logDebug("Raw scan result as JSON: ");
     logger.logDebug(imageScanningResultJSON);
-    JsonScanResultV1Beta3 jsonScanResultV1Beta3 = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResultV1Beta3.class);
+    JsonScanResultV1 jsonScanResult = GsonBuilder.build().fromJson(imageScanningResultJSON, JsonScanResultV1.class);
 
-    return jsonScanResultV1Beta3
+    return jsonScanResult
       .toDomain()
       .orElseThrow(() -> new AbortException(String.format("unable to obtain result from scan: %s", imageScanningResultJSON)));
   }
