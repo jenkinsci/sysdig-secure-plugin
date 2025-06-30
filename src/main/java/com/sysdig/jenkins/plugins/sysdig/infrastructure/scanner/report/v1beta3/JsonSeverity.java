@@ -15,25 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.util.Optional;
-
-class JsonSeverity {
-  private String value;
-  private String sourceName;
-
-  public Optional<String> getValue() {
-    return Optional.ofNullable(value);
-  }
-
-  public void setValue(String value) {
-    this.value = value;
-  }
-
-  public Optional<String> getSourceName() {
-    return Optional.ofNullable(sourceName);
-  }
-
-  public void setSourceName(String sourceName) {
-    this.sourceName = sourceName;
-  }
+record JsonSeverity(
+  String value,
+  String sourceName
+) {
 }

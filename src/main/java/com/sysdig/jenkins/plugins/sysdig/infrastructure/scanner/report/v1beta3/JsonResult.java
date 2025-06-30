@@ -18,77 +18,33 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 import java.util.List;
 import java.util.Optional;
 
-class JsonResult {
-  private String type;
-  private JsonMetadata metadata;
-  private Long exploitsCount;
-  private List<JsonPackage> packages;
-  private List<JsonLayer> layers;
-  private List<JsonPolicyEvaluation> policyEvaluations;
-  private String policyEvaluationsResult;
-  private List<JsonAcceptedRisk> riskAcceptanceDefinitions;
-
-  public Optional<String> getType() {
-    return Optional.ofNullable(type);
+record JsonResult(
+  String type,
+  JsonMetadata metadata,
+  Long exploitsCount,
+  List<JsonPackage> packages,
+  List<JsonLayer> layers,
+  List<JsonPolicyEvaluation> policyEvaluations,
+  String policyEvaluationsResult,
+  List<JsonAcceptedRisk> riskAcceptanceDefinitions
+) {
+  @Override
+  public List<JsonPackage> packages() {
+    return Optional.ofNullable(packages).orElse(List.of());
   }
 
-  public void setType(String type) {
-    this.type = type;
+  @Override
+  public List<JsonLayer> layers() {
+    return Optional.ofNullable(layers).orElse(List.of());
   }
 
-  public Optional<JsonMetadata> getMetadata() {
-    return Optional.ofNullable(metadata);
+  @Override
+  public List<JsonPolicyEvaluation> policyEvaluations() {
+    return Optional.ofNullable(policyEvaluations).orElse(List.of());
   }
 
-  public void setMetadata(JsonMetadata metadata) {
-    this.metadata = metadata;
-  }
-
-  public Optional<Long> getExploitsCount() {
-    return Optional.ofNullable(exploitsCount);
-  }
-
-  public void setExploitsCount(Long exploitsCount) {
-    this.exploitsCount = exploitsCount;
-  }
-
-  public Optional<List<JsonPackage>> getPackages() {
-    return Optional.ofNullable(packages);
-  }
-
-  public void setPackages(List<JsonPackage> packages) {
-    this.packages = packages;
-  }
-
-  public Optional<List<JsonLayer>> getLayers() {
-    return Optional.ofNullable(layers);
-  }
-
-  public void setLayers(List<JsonLayer> layers) {
-    this.layers = layers;
-  }
-
-  public Optional<List<JsonPolicyEvaluation>> getPolicyEvaluations() {
-    return Optional.ofNullable(policyEvaluations);
-  }
-
-  public void setPolicyEvaluations(List<JsonPolicyEvaluation> policyEvaluations) {
-    this.policyEvaluations = policyEvaluations;
-  }
-
-  public Optional<String> getPolicyEvaluationsResult() {
-    return Optional.ofNullable(policyEvaluationsResult);
-  }
-
-  public void setPolicyEvaluationsResult(String policyEvaluationsResult) {
-    this.policyEvaluationsResult = policyEvaluationsResult;
-  }
-
-  public Optional<List<JsonAcceptedRisk>> getRiskAcceptanceDefinitions() {
-    return Optional.ofNullable(riskAcceptanceDefinitions);
-  }
-
-  public void setRiskAcceptanceDefinitions(List<JsonAcceptedRisk> riskAcceptanceDefinitions) {
-    this.riskAcceptanceDefinitions = riskAcceptanceDefinitions;
+  @Override
+  public List<JsonAcceptedRisk> riskAcceptanceDefinitions() {
+    return Optional.ofNullable(riskAcceptanceDefinitions).orElse(List.of());
   }
 }

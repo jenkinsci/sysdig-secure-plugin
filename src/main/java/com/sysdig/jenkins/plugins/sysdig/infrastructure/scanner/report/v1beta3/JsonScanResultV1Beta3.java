@@ -20,14 +20,12 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Collection;
 import java.util.Date;
 import java.util.Optional;
 
@@ -134,55 +132,53 @@ public class JsonScanResultV1Beta3 {
   }
 
   private ScanResult createScanResult() {
-    JsonMetadata metadata = result.getMetadata().orElseThrow(() -> new IllegalStateException("Metadata not present in result"));
-
     return new ScanResult(ScanType.Docker,
-      metadata.getPullString().get(),
-      metadata.getImageId().get(),
-      metadata.getDigest().get(),
+      result.metadata().pullString(),
+      result.metadata().imageId(),
+      result.metadata().digest(),
       new OperatingSystem(
-        osTypeFromString(metadata.getOs().get()),
-        metadata.getBaseOs().get()
+        osTypeFromString(result.metadata().os()),
+        result.metadata().baseOs()
       ),
-      new BigInteger(metadata.getSize().get().toString()),
-      archFromString(metadata.getArchitecture().get()),
-      metadata.labels().get(),
-      dateFromISO8601String(metadata.getCreatedAt().get()));
+      new BigInteger(result.metadata().size().toString()),
+      archFromString(result.metadata().architecture()),
+      result.metadata().labels(),
+      dateFromISO8601String(result.metadata().createdAt()));
   }
 
   private void addLayersWithDigestTo(ScanResult scanResult) {
-    result.getLayers().stream().flatMap(Collection::stream)
-      .filter(l -> l.getDigest().isPresent())
+    result.layers().stream()
+      .filter(l -> l.digest() != null && !l.digest().isBlank())
       .forEach(layer ->
-        scanResult.addLayer(layer.getDigest().get(), BigInteger.valueOf(layer.getSize().get()), layer.getCommand().get())
+        scanResult.addLayer(layer.digest(), BigInteger.valueOf(layer.size()), layer.command())
       );
   }
 
   private void addPackagesTo(ScanResult scanResult) {
-    result.getPackages().stream().flatMap(Collection::stream).forEach(p -> {
-      String layerDigest = p.getLayerDigest().get();
+    result.packages().stream().forEach(p -> {
+      String layerDigest = p.layerDigest();
 
       Package addedPackage = scanResult.addPackage(
-        packageTypeFromString(p.getType().get().toLowerCase()),
-        p.getName().get(),
-        p.getVersion().get(),
-        p.getPath().get(),
+        packageTypeFromString(p.type().toLowerCase()),
+        p.name(),
+        p.version(),
+        p.path(),
         scanResult.findLayerByDigest(layerDigest).get()
       );
 
-      p.getVulns().stream().flatMap(Collection::stream).forEach(vulnerability -> {
+      p.vulns().stream().forEach(vulnerability -> {
         addVulnerabilityTo(scanResult, vulnerability, addedPackage);
       });
     });
   }
 
   private void addPolicyEvaluationsTo(ScanResult scanResult) {
-    result.getPolicyEvaluations().stream().flatMap(Collection::stream).forEach(policyEvaluation -> {
+    result.policyEvaluations().stream().forEach(policyEvaluation -> {
       Policy addedPolicy = scanResult.addPolicy(
-        policyEvaluation.getIdentifier().get(),
-        policyEvaluation.getName().get(),
-        dateFromISO8601String(policyEvaluation.getCreatedAt().get()),
-        dateFromISO8601String(policyEvaluation.getUpdatedAt().get())
+        policyEvaluation.identifier(),
+        policyEvaluation.name(),
+        dateFromISO8601String(policyEvaluation.createdAt()),
+        dateFromISO8601String(policyEvaluation.updatedAt())
       );
 
       addPolicyBundlesTo(scanResult, policyEvaluation, addedPolicy);
@@ -190,25 +186,25 @@ public class JsonScanResultV1Beta3 {
   }
 
   private void addPolicyBundlesTo(ScanResult scanResult, JsonPolicyEvaluation policyEvaluation, Policy addedPolicy) {
-    policyEvaluation.getBundles().stream().flatMap(Collection::stream).forEach(b -> {
+    policyEvaluation.bundles().stream().forEach(b -> {
       PolicyBundle policyBundle = scanResult.addPolicyBundle(
-        b.getIdentifier().get(),
-        b.getName().get(),
+        b.identifier(),
+        b.name(),
         addedPolicy
       );
 
-      b.getRules().stream().flatMap(Collection::stream).forEach(r -> {
+      b.rules().stream().forEach(r -> {
         PolicyBundleRule policyBundleRule = policyBundle.addRule(
-          r.getRuleId().orElse(0L).toString(),
-          r.getDescription().get(),
-          r.getEvaluationResult().orElse("passed").equalsIgnoreCase("failed") ? EvaluationResult.Failed : EvaluationResult.Passed
+          r.ruleId().toString(),
+          r.description(),
+          r.evaluationResult().equalsIgnoreCase("failed") ? EvaluationResult.Failed : EvaluationResult.Passed
         );
 
-        r.getFailures().stream().flatMap(Collection::stream).forEach(f -> {
-          switch (r.getFailureType().get()) {
-            case "imageConfigFailure" -> policyBundleRule.addImageConfigFailure(f.getRemediation().get());
-            case "pkgVulnFailure" -> policyBundleRule.addPkgVulnFailure(f.getDescription().get());
-            default -> throw new IllegalStateException("Unexpected value: " + r.getFailureType().get());
+        r.failures().stream().forEach(f -> {
+          switch (r.failureType()) {
+            case "imageConfigFailure" -> policyBundleRule.addImageConfigFailure(f.remediation());
+            case "pkgVulnFailure" -> policyBundleRule.addPkgVulnFailure(f.description());
+            default -> throw new IllegalStateException("Unexpected value: " + r.failureType());
           }
         });
       });
@@ -217,29 +213,29 @@ public class JsonScanResultV1Beta3 {
 
   private void addVulnerabilityTo(ScanResult scanResult, JsonVuln vulnerability, Package addedPackage) {
     Vulnerability addedVulnerability = scanResult.addVulnerability(
-      vulnerability.getName().get(),
-      severityFromString(vulnerability.getSeverity().flatMap(s -> s.getValue()).get()),
-      dateFromShortString(vulnerability.getDisclosureDate().get()),
-      vulnerability.getSolutionDate().map(JsonScanResultV1Beta3::dateFromShortString).orElse(null),
-      vulnerability.getExploitable().orElse(false),
-      vulnerability.getFixedInVersion().orElse(null)
+      vulnerability.name(),
+      severityFromString(vulnerability.severity().value()),
+      dateFromShortString(vulnerability.disclosureDate()),
+      vulnerability.optSolutionDate().map(JsonScanResultV1Beta3::dateFromShortString).orElse(null),
+      vulnerability.exploitable(),
+      vulnerability.optFixedInVersion().orElse(null)
     );
     addedPackage.addVulnerabilityFound(addedVulnerability);
 
-    vulnerability.getAcceptedRisks().stream().flatMap(Collection::stream).forEach(riskRef -> {
-      JsonAcceptedRisk risk = result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream)
-        .filter(r -> r.getId().isPresent() && r.getId().equals(riskRef.getId()))
+    vulnerability.acceptedRisks().stream().forEach(riskRef -> {
+      JsonAcceptedRisk risk = result.riskAcceptanceDefinitions().stream()
+        .filter(r -> r.optId().isPresent() && r.optId().get().equals(riskRef.id()))
         .findFirst()
         .get();
 
       var addedAcceptedRisk = scanResult.addAcceptedRisk(
-        risk.getId().get(),
-        acceptedRiskReasonFromString(risk.getReason().get()),
-        risk.getDescription().get(),
-        dateFromShortString(risk.getExpirationDate().get()),
-        risk.getStatus().map(s -> s.equals("active")).orElse(false),
-        dateFromISO8601String(risk.getCreatedAt().get()),
-        dateFromISO8601String(risk.getUpdatedAt().get())
+        risk.id(),
+        acceptedRiskReasonFromString(risk.reason()),
+        risk.description(),
+        dateFromShortString(risk.expirationDate()),
+        "active".equalsIgnoreCase(risk.status()),
+        dateFromISO8601String(risk.createdAt()),
+        dateFromISO8601String(risk.updatedAt())
       );
       addedAcceptedRisk.addForVulnerability(addedVulnerability);
       addedAcceptedRisk.addForPackage(addedPackage);
@@ -247,15 +243,15 @@ public class JsonScanResultV1Beta3 {
   }
 
   private void addAcceptedRisksTo(ScanResult scanResult) {
-    result.getRiskAcceptanceDefinitions().stream().flatMap(Collection::stream).forEach(acceptedRisk -> {
+    result.riskAcceptanceDefinitions().stream().forEach(acceptedRisk -> {
       scanResult.addAcceptedRisk(
-        acceptedRisk.getId().get(),
-        acceptedRiskReasonFromString(acceptedRisk.getReason().get()),
-        acceptedRisk.getDescription().get(),
-        dateFromShortString(acceptedRisk.getExpirationDate().get()),
-        acceptedRisk.getStatus().map(s -> s.equals("active")).orElse(false),
-        dateFromISO8601String(acceptedRisk.getCreatedAt().get()),
-        dateFromISO8601String(acceptedRisk.getUpdatedAt().get())
+        acceptedRisk.id(),
+        acceptedRiskReasonFromString(acceptedRisk.reason()),
+        acceptedRisk.description(),
+        dateFromShortString(acceptedRisk.expirationDate()),
+        "active".equalsIgnoreCase(acceptedRisk.status()),
+        dateFromISO8601String(acceptedRisk.createdAt()),
+        dateFromISO8601String(acceptedRisk.updatedAt())
       );
     });
   }

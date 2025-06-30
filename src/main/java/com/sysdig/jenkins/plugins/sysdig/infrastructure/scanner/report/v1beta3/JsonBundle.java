@@ -18,59 +18,16 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 import java.util.List;
 import java.util.Optional;
 
-class JsonBundle {
-  private String name;
-  private String identifier;
-  private String type;
-  private List<JsonRule> rules;
-  private String createdAt;
-  private String updatedAt;
-
-  public Optional<String> getName() {
-    return Optional.ofNullable(name);
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public Optional<String> getIdentifier() {
-    return Optional.ofNullable(identifier);
-  }
-
-  public void setIdentifier(String identifier) {
-    this.identifier = identifier;
-  }
-
-  public Optional<String> getType() {
-    return Optional.ofNullable(type);
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public Optional<List<JsonRule>> getRules() {
-    return Optional.ofNullable(rules);
-  }
-
-  public void setRules(List<JsonRule> rules) {
-    this.rules = rules;
-  }
-
-  public Optional<String> getCreatedAt() {
-    return Optional.ofNullable(createdAt);
-  }
-
-  public void setCreatedAt(String createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public Optional<String> getUpdatedAt() {
-    return Optional.ofNullable(updatedAt);
-  }
-
-  public void setUpdatedAt(String updatedAt) {
-    this.updatedAt = updatedAt;
+record JsonBundle(
+  String name,
+  String identifier,
+  String type,
+  List<JsonRule> rules,
+  String createdAt,
+  String updatedAt
+) {
+  @Override
+  public List<JsonRule> rules() {
+    return Optional.ofNullable(rules).orElse(List.of());
   }
 }

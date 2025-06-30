@@ -19,77 +19,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-class JsonVuln {
-  private String name;
-  private JsonSeverity severity;
-  private String disclosureDate;
-  private String solutionDate;
-  private Boolean exploitable;
-  private List<JsonAcceptedRiskReference> acceptedRisks;
-  private String fixedInVersion;
-  private Map<String, String> annotations;
-
-  public Optional<String> getName() {
-    return Optional.ofNullable(name);
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public Optional<JsonSeverity> getSeverity() {
-    return Optional.ofNullable(severity);
-  }
-
-  public void setSeverity(JsonSeverity severity) {
-    this.severity = severity;
-  }
-
-  public Optional<String> getDisclosureDate() {
-    return Optional.ofNullable(disclosureDate);
-  }
-
-  public void setDisclosureDate(String disclosureDate) {
-    this.disclosureDate = disclosureDate;
-  }
-
-  public Optional<String> getSolutionDate() {
+record JsonVuln(
+  String name,
+  JsonSeverity severity,
+  String disclosureDate,
+  String solutionDate,
+  boolean exploitable,
+  List<JsonAcceptedRiskReference> acceptedRisks,
+  String fixedInVersion,
+  Map<String, String> annotations
+) {
+  public Optional<String> optSolutionDate() {
     return Optional.ofNullable(solutionDate);
   }
 
-  public void setSolutionDate(String solutionDate) {
-    this.solutionDate = solutionDate;
-  }
-
-  public Optional<Boolean> getExploitable() {
-    return Optional.ofNullable(exploitable);
-  }
-
-  public void setExploitable(Boolean exploitable) {
-    this.exploitable = exploitable;
-  }
-
-  public Optional<String> getFixedInVersion() {
+  public Optional<String> optFixedInVersion() {
     return Optional.ofNullable(fixedInVersion);
   }
 
-  public void setFixedInVersion(String fixedInVersion) {
-    this.fixedInVersion = fixedInVersion;
-  }
-
-  public Optional<Map<String, String>> getAnnotations() {
-    return Optional.ofNullable(annotations);
-  }
-
-  public void setAnnotations(Map<String, String> annotations) {
-    this.annotations = annotations;
-  }
-
-  public Optional<List<JsonAcceptedRiskReference>> getAcceptedRisks() {
-    return Optional.ofNullable(acceptedRisks);
-  }
-
-  public void setAcceptedRisks(List<JsonAcceptedRiskReference> acceptedRisks) {
-    this.acceptedRisks = acceptedRisks;
+  @Override
+  public List<JsonAcceptedRiskReference> acceptedRisks() {
+    return Optional.ofNullable(acceptedRisks).orElse(List.of());
   }
 }

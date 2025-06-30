@@ -15,25 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.util.Optional;
-
-class JsonPredicate {
-  private String type;
-  private JsonExtra extra;
-
-  public Optional<String> getType() {
-    return Optional.ofNullable(type);
-  }
-
-  public void setType(String type) {
-    this.type = type;
-  }
-
-  public Optional<JsonExtra> getExtra() {
-    return Optional.ofNullable(extra);
-  }
-
-  public void setExtra(JsonExtra extra) {
-    this.extra = extra;
-  }
+record JsonPredicate(
+  String type,
+  JsonExtra extra
+) {
 }

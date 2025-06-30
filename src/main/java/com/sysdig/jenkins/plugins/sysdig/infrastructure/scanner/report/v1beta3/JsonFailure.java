@@ -15,25 +15,8 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3;
 
-import java.util.Optional;
-
-class JsonFailure {
-  private String remediation;
-  private String description;
-
-  public Optional<String> getRemediation() {
-    return Optional.ofNullable(remediation);
-  }
-
-  public void setRemediation(String remediation) {
-    this.remediation = remediation;
-  }
-
-  public Optional<String> getDescription() {
-    return Optional.ofNullable(description);
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
+record JsonFailure(
+  String remediation,
+  String description
+) {
 }
