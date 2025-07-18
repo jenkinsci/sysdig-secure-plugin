@@ -205,10 +205,25 @@ interface (`Sysdig Secure Report (FAIL)` in the image above)
 
 # Local development and installation
 
-Use docker to build the sysdig-secure.hpi file:
+We now use [**Nix**](https://github.com/DeterminateSystems/nix-installer) to ensure consistent development environments across different developers.
+
+You can run:
 
 ```sh
-docker run -it --rm --name maven-jenkins-builder -v "$(pwd)":/usr/src/app -w /usr/src/app maven:3.6.3-jdk-8 mvn package
+nix develop # opens a new shell with all the dependencies in the path
+mvn package
+````
+
+This provides a preconfigured environment with the required JDK and Maven version.
+
+Alternatively, if you prefer not to use Nix, you can use your own setup, just make sure you have **Java 17 or higher** and **Maven 3.9.9** installed.
+
+### Docker alternative
+
+You can also build the plugin using Docker:
+
+```sh
+docker run -it --rm -v "$(pwd)":/usr/src/app -w /usr/src/app maven:3.9.9-eclipse-temurin-17 mvn package
 ```
 
-You can then install the plugin via the Jenkins UI, or by copying it into $JENKINS_HOME/plugins.
+Once built, install the `sysdig-secure.hpi` plugin via the Jenkins UI or by copying it into `$JENKINS_HOME/plugins`.

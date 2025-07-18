@@ -26,7 +26,7 @@ class JsonScanResultTest {
   void whenConvertingToDomainItHasTheGeneralStatistics() {
     assertEquals(1, scanResult.layers().size());
     assertEquals(101, scanResult.packages().size());
-    assertEquals(8, scanResult.policies().size());
+    assertEquals(6, scanResult.policies().size());
     assertEquals(2, scanResult.acceptedRisks().size());
     assertEquals(EvaluationResult.Failed, scanResult.evaluationResult());
   }
@@ -37,8 +37,8 @@ class JsonScanResultTest {
 
     assertEquals("/bin/sh -c #(nop) ADD file:82f38ebced7b2756311fb492d3d44cc131b22654e8620baa93883537a3e355aa in / ", layer.command());
     assertEquals(101, layer.packages().size());
-    assertEquals(18, layer.vulnerabilities().size()); // unique vulns
-    assertEquals(41, layer.packages().stream().flatMap(p -> p.vulnerabilities().stream()).count()); // vulns per package
+    assertEquals(23, layer.vulnerabilities().size()); // unique vulns
+    assertEquals(46, layer.packages().stream().flatMap(p -> p.vulnerabilities().stream()).count()); // vulns per package
   }
 
   @Test
@@ -62,8 +62,8 @@ class JsonScanResultTest {
   void whenConvertingToDomainItHasFixableVulnsInformation() {
     List<Vulnerability> fixableVulnerabilities = scanResult.vulnerabilities().stream().filter(Vulnerability::fixable).toList();
 
-    assertEquals(2, fixableVulnerabilities.size()); // fixable unique vulns
-    assertEquals(6, fixableVulnerabilities.stream().flatMap(v-> v.foundInPackages().stream()).count()); // fixable vulns per package
+    assertEquals(6, fixableVulnerabilities.size()); // fixable unique vulns
+    assertEquals(10, fixableVulnerabilities.stream().flatMap(v-> v.foundInPackages().stream()).count()); // fixable vulns per package
 
   }
 
@@ -74,18 +74,18 @@ class JsonScanResultTest {
     assertEquals(0, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.Critical).count());
     assertEquals(0, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.High).count());
     assertEquals(28, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.Low).count());
-    assertEquals(10, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.Medium).count());
+    assertEquals(15, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.Medium).count());
     assertEquals(3, vulnerabilitiesPerPackage.stream().filter(v -> v.severity() == Severity.Negligible).count());
 
   }
 
   @Test
   void whenConvertingToDomainItHasPolicyInformation() {
-    Policy policy = scanResult.findPolicyByID("aasim-policy").get();
-    assertEquals(2, policy.bundles().size());
+    Policy policy = scanResult.findPolicyByID("sysdig-best-practices").get();
+    assertEquals(1, policy.bundles().size());
 
-    PolicyBundle policyBundle = scanResult.findPolicyBundleByID("pci-dss-v4-0").get();
-    assertEquals(2, policyBundle.foundInPolicies().size());
+    PolicyBundle policyBundle = scanResult.findPolicyBundleByID("severe_vulnerabilities_with_a_fix").get();
+    assertEquals(1, policyBundle.foundInPolicies().size());
     assertEquals(3, policyBundle.rules().size());
     assertTrue(policy.bundles().contains(policyBundle));
     assertTrue(policyBundle.foundInPolicies().contains(policy));
@@ -95,10 +95,9 @@ class JsonScanResultTest {
 
   @Test
   void whenConvertingToDomainItHasPolicieswithAcceptedRisks() {
-    Policy policyWithAcceptedRisk = scanResult.findPolicyByID("cardholder-policy-pci-dss").get();
+    Policy policyWithAcceptedRisk = scanResult.findPolicyByID("policycardholder").get();
     assertEquals(1, policyWithAcceptedRisk.bundles().size());
     assertEquals(EvaluationResult.Passed, policyWithAcceptedRisk.evaluationResult());
-
   }
 
   @Test

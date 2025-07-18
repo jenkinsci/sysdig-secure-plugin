@@ -31,13 +31,13 @@ class PolicyReportProcessorTest {
     assertTrue(resultsForEachImage.containsKey(imageID));
 
     var policyEvaluationReportLines = resultsForEachImage.get(imageID);
-    assertEquals(15, policyEvaluationReportLines.size());
+    assertEquals(20, policyEvaluationReportLines.size());
     assertTrue(policyEvaluationReportLines.contains(new PolicyEvaluationReportLine(
       imageID,
       "ubuntu:22.04",
       "trigger_id",
       "NIST SP 800-190 (Application Container Security Guide)",
-      "", // FIXME(fede): this should be filled, but for v1 result in sysdig-cli-scanner 1.22.3 the rule description is empty
+      "Severity greater than or equal medium", // FIXME(fede): this should be filled, but for v1 result in sysdig-cli-scanner 1.22.3 the rule description is empty
       "CVE-2025-6020 found in libpam-modules (1.4.0-11ubuntu2.5)",
       "STOP",
       false,
@@ -60,7 +60,7 @@ class PolicyReportProcessorTest {
 
     var policyEvaluationSummaryLine = policyEvaluationSummary.getLines().get(0);
     assertEquals("ubuntu:22.04", policyEvaluationSummaryLine.imageTag());
-    assertEquals(15, policyEvaluationSummaryLine.nonWhitelistedStopActions());
+    assertEquals(20, policyEvaluationSummaryLine.nonWhitelistedStopActions());
     assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedWarnActions());
     assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedGoActions());
     assertEquals("STOP", policyEvaluationSummaryLine.finalAction());

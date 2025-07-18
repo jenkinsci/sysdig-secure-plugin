@@ -1,7 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import java.math.BigInteger;
@@ -16,8 +16,7 @@ import java.util.Optional;
 public record JsonScanResultV1(
         JsonInfo info,
         JsonScanner scanner,
-        JsonResult result
-) {
+        JsonResult result) {
     public Optional<ScanResult> toDomain() {
         if (result() == null) {
             return Optional.empty();
@@ -41,14 +40,12 @@ public record JsonScanResultV1(
                 result().metadata().imageId(),
                 result().metadata().digest(),
                 new OperatingSystem(
-                        osTypeFromString(result().metadata().os()),
-                        result().metadata().baseOs()
-                ),
+                        osFamilyFromString(result().metadata().os()),
+                        result().metadata().baseOs()),
                 BigInteger.valueOf(result().metadata().size()),
                 archFromString(result().metadata().architecture()),
                 result().metadata().labels(),
-                dateFromISO8601String(result().metadata().createdAt())
-        );
+                dateFromISO8601String(result().metadata().createdAt()));
     }
 
     private void addLayersTo(ScanResult scanResult) {
@@ -57,8 +54,7 @@ public record JsonScanResultV1(
                 .forEach(jsonLayer -> scanResult.addLayer(
                         jsonLayer.digest(),
                         BigInteger.valueOf(jsonLayer.size()),
-                        jsonLayer.command()
-                ));
+                        jsonLayer.command()));
     }
 
     private void addRiskAcceptsTo(ScanResult scanResult) {
@@ -70,42 +66,39 @@ public record JsonScanResultV1(
                     dateFromShortString(jsonRisk.expirationDate()),
                     "active".equalsIgnoreCase(jsonRisk.status()),
                     dateFromISO8601String(jsonRisk.createdAt()),
-                    dateFromISO8601String(jsonRisk.updatedAt())
-            );
+                    dateFromISO8601String(jsonRisk.updatedAt()));
         });
     }
 
     private void addVulnerabilitiesTo(ScanResult scanResult) {
         result().vulnerabilities().values()
                 .forEach(jsonVuln -> {
-                            Vulnerability vuln = scanResult.addVulnerability(
-                                    jsonVuln.name(),
-                                    severityFromString(jsonVuln.severity()),
-                                    dateFromShortString(jsonVuln.disclosureDate()),
-                                    jsonVuln.optSolutionDate().map(JsonScanResultV1::dateFromShortString).orElse(null),
-                                    jsonVuln.exploitable(),
-                                    jsonVuln.fixVersion()
-                            );
+                    Vulnerability vuln = scanResult.addVulnerability(
+                            jsonVuln.name(),
+                            severityFromString(jsonVuln.severity()),
+                            dateFromShortString(jsonVuln.disclosureDate()),
+                            jsonVuln.optSolutionDate().map(JsonScanResultV1::dateFromShortString).orElse(null),
+                            jsonVuln.exploitable(),
+                            jsonVuln.fixVersion());
 
-                            jsonVuln.riskAcceptRefs().stream()
-                                    .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
-                                    .map(jsonRisk -> scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
-                                    .forEach(vuln::addAcceptedRisk);
-                        }
-                );
+                    jsonVuln.riskAcceptRefs().stream()
+                            .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
+                            .map(jsonRisk -> scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
+                            .forEach(vuln::addAcceptedRisk);
+                });
     }
 
     private void addPackagesTo(ScanResult scanResult) {
         result().packages().values().stream().forEach(jsonPkg -> {
-            var layerWhereThisPackageIsFound = scanResult.findLayerByDigest(jsonPkg.layerRef()).get();
+            JsonLayer jsonLayer = result().layers().get(jsonPkg.layerRef());
+            var layerWhereThisPackageIsFound = scanResult.findLayerByDigest(jsonLayer.digest()).get();
 
             Package addedPackage = scanResult.addPackage(
                     packageTypeFromString(jsonPkg.type()),
                     jsonPkg.name(),
                     jsonPkg.version(),
                     jsonPkg.path(),
-                    layerWhereThisPackageIsFound
-            );
+                    layerWhereThisPackageIsFound);
 
             jsonPkg.vulnerabilitiesRefs().stream()
                     .map(jsonVulnRef -> this.result().vulnerabilities().get(jsonVulnRef))
@@ -127,29 +120,28 @@ public record JsonScanResultV1(
                     jsonPolicy.identifier(),
                     jsonPolicy.name(),
                     dateFromISO8601String(jsonPolicy.createdAt()),
-                    dateFromISO8601String(jsonPolicy.updatedAt())
-            );
+                    dateFromISO8601String(jsonPolicy.updatedAt()));
 
             jsonPolicy.bundles().stream().forEach(jsonBundle -> {
                 PolicyBundle policyBundle = scanResult.addPolicyBundle(
                         jsonBundle.identifier(),
                         jsonBundle.name(),
-                        policy
-                );
+                        policy);
 
                 jsonBundle.rules().stream().forEach(jsonRule -> {
                     PolicyBundleRule rule = policyBundle.addRule(
                             jsonRule.ruleId(),
                             jsonRule.description(),
-                            jsonRule.evaluationResult().equalsIgnoreCase("failed") ? EvaluationResult.Failed : EvaluationResult.Passed
-                    );
+                            jsonRule.evaluationResult().equalsIgnoreCase("failed") ? EvaluationResult.Failed
+                                    : EvaluationResult.Passed);
 
                     jsonRule.failures().stream().forEach(jsonFailure -> {
                         switch (jsonRule.failureType()) {
                             case "imageConfigFailure" -> rule.addImageConfigFailure(jsonFailure.remediation());
                             case "pkgVulnFailure" ->
-                                    rule.addPkgVulnFailure(failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
-                          default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
+                                rule.addPkgVulnFailure(
+                                        failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
+                            default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
                         }
                     });
                 });
@@ -163,12 +155,12 @@ public record JsonScanResultV1(
         return "%s found in %s (%s)".formatted(
                 jsonVulnerability.name(),
                 jsonPackage.name(),
-                jsonPackage.version()
-        );
+                jsonPackage.version());
     }
 
     /**
-     * Obtains an instance of {@code Date} from a text string such as {@code 2007-12-03}.
+     * Obtains an instance of {@code Date} from a text string such as
+     * {@code 2007-12-03}.
      * <p>
      * The string must represent a valid date and is parsed using
      * {@link DateTimeFormatter#ISO_LOCAL_DATE}.
@@ -242,7 +234,7 @@ public record JsonScanResultV1(
         };
     }
 
-    private static OperatingSystem.Family osTypeFromString(String os) {
+    private static OperatingSystem.Family osFamilyFromString(String os) {
         return switch (os.toLowerCase()) {
             case "linux" -> OperatingSystem.Family.Linux;
             case "darwin" -> OperatingSystem.Family.Darwin;
