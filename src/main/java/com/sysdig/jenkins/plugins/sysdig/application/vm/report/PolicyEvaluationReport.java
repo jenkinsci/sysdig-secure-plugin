@@ -45,4 +45,8 @@ public class PolicyEvaluationReport {
   public boolean isFailed() {
     return failed;
   }
+
+  public boolean isPassed() {
+    return !isFailed();
+  }
 }

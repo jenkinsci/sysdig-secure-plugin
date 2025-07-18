@@ -48,7 +48,7 @@ public class SysdigImageScanningProcessBuilder extends SysdigProcessBuilderBase<
     var arguments = new ArrayList<String>();
     arguments.add(this.sysdigCLIPath);
     if (!Strings.isNullOrEmpty(engineURL)) arguments.add("--apiurl=" + engineURL);
-    if (!Strings.isNullOrEmpty(scanResultOutputPath)) arguments.add("--json-scan-result=" + scanResultOutputPath);
+    if (!Strings.isNullOrEmpty(scanResultOutputPath)) arguments.add("--output=json-file=" + scanResultOutputPath);
     policiesToApply.stream().map(policy -> "--policy=" + policy).forEach(arguments::add);
     if (!Strings.isNullOrEmpty(dbPath)) arguments.add("--dbpath=" + dbPath);
     if (!Strings.isNullOrEmpty(cachePath)) arguments.add("--cachepath=" + cachePath);

@@ -5,10 +5,10 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
 
-public class ScanResult  implements Serializable {
+public class ScanResult implements Serializable {
   private final ScanType type;
   private final Metadata metadata;
-  private final HashMap<String, Layer> layers;
+  private final Map<String, Layer> layers;
   private final Map<Package, Package> packages;
   private final Map<String, Vulnerability> vulnerabilities;
   private final Map<String, Policy> policies;
@@ -65,8 +65,8 @@ public class ScanResult  implements Serializable {
     return Collections.unmodifiableCollection(vulnerabilities.values());
   }
 
-  public Policy addPolicy(String id, String name, PolicyType type, Date createdAt, Date updatedAt) {
-    return policies.computeIfAbsent(id, k -> new Policy(id, name, type, createdAt, updatedAt, this));
+  public Policy addPolicy(String id, String name, Date createdAt, Date updatedAt) {
+    return policies.computeIfAbsent(id, k -> new Policy(id, name, createdAt, updatedAt, this));
   }
 
   public Optional<Policy> findPolicyByID(String id) {
@@ -77,8 +77,8 @@ public class ScanResult  implements Serializable {
     return Collections.unmodifiableCollection(policies.values());
   }
 
-  public PolicyBundle addPolicyBundle(String id, String name, Date createdAt, Date updatedAt, Policy policy) {
-    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, createdAt, updatedAt, this));
+  public PolicyBundle addPolicyBundle(String id, String name, Policy policy) {
+    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, this));
     policyBundle.addPolicy(policy);
     return policyBundle;
   }
@@ -117,5 +117,17 @@ public class ScanResult  implements Serializable {
     boolean allPoliciesPassed = policies().stream().allMatch(p -> p.evaluationResult().isPassed());
 
     return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    ScanResult that = (ScanResult) o;
+    return type == that.type && Objects.equals(metadata, that.metadata) && Objects.equals(layers, that.layers) && Objects.equals(packages, that.packages) && Objects.equals(vulnerabilities, that.vulnerabilities) && Objects.equals(policies, that.policies) && Objects.equals(policyBundles, that.policyBundles) && Objects.equals(acceptedRisks, that.acceptedRisks);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, metadata, layers, packages, vulnerabilities, policies, policyBundles, acceptedRisks);
   }
 }

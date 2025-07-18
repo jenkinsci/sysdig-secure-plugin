@@ -1,13 +1,14 @@
 package com.sysdig.jenkins.plugins.sysdig;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
-import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1beta3.JsonScanResult;
-import org.apache.commons.io.IOUtils;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1.JsonScanResultV1;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Provides pre-configured objects for testing, following the Object Mother pattern.
@@ -18,20 +19,12 @@ public class TestMother {
    * Returns a sample Result object for testing.
    *
    * @return a test Result object.
-   * @throws IOException if an error occurs during object creation.
    */
-  public static JsonScanResult rawScanResult() throws IOException {
-    var jsonContents = Objects.requireNonNull(TestMother.class.getResourceAsStream("gates1.json"));
-    return GsonBuilder.build().fromJson(IOUtils.toString(jsonContents, StandardCharsets.UTF_8), JsonScanResult.class);
-  }
+  public static JsonScanResultV1 scanResultForUbuntu2204() {
+    String resourcePath = "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/ubuntu_22.04.json";
+    InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+    assertNotNull(imageStream);
 
-  /**
-   * Returns a sample ImageScanningResult object for testing.
-   *
-   * @return a test ImageScanningResult object.
-   * @throws IOException if an error occurs during object creation.
-   */
-  public static ScanResult imageScanResult() throws IOException {
-    return rawScanResult().toDomain().get();
+    return GsonBuilder.build().fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
   }
 }
