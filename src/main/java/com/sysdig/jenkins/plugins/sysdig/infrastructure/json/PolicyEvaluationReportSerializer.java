@@ -18,74 +18,80 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 import com.google.gson.*;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReportLine;
-
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Stream;
 
 public class PolicyEvaluationReportSerializer implements JsonSerializer<PolicyEvaluationReport> {
-  @Override
-  public JsonElement serialize(PolicyEvaluationReport policyEvaluationReport, Type type, JsonSerializationContext jsonSerializationContext) {
-    JsonObject jsonObject = new JsonObject();
+    @Override
+    public JsonElement serialize(
+            PolicyEvaluationReport policyEvaluationReport,
+            Type type,
+            JsonSerializationContext jsonSerializationContext) {
+        JsonObject jsonObject = new JsonObject();
 
-    policyEvaluationReport.getResultsForEachImage().forEach((key, value) -> jsonObject.add(key, serializeTopLevelResultsList(policyEvaluationReport, value)));
+        policyEvaluationReport
+                .getResultsForEachImage()
+                .forEach((key, value) ->
+                        jsonObject.add(key, serializeTopLevelResultsList(policyEvaluationReport, value)));
 
-    return jsonObject;
-  }
+        return jsonObject;
+    }
 
-  private JsonElement serializeTopLevelResultsList(PolicyEvaluationReport policyEvaluationReport, List<PolicyEvaluationReportLine> results) {
-    JsonObject resultObject = new JsonObject();
-    resultObject.add("header", header());
-    resultObject.add("final_action", new JsonPrimitive(policyEvaluationReport.isFailed() ? "STOP" : "GO"));
-    resultObject.add("rows", serializeRows(results));
+    private JsonElement serializeTopLevelResultsList(
+            PolicyEvaluationReport policyEvaluationReport, List<PolicyEvaluationReportLine> results) {
+        JsonObject resultObject = new JsonObject();
+        resultObject.add("header", header());
+        resultObject.add("final_action", new JsonPrimitive(policyEvaluationReport.isFailed() ? "STOP" : "GO"));
+        resultObject.add("rows", serializeRows(results));
 
-    JsonObject jsonObject = new JsonObject();
-    jsonObject.add("result", resultObject);
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.add("result", resultObject);
 
-    return jsonObject;
-  }
+        return jsonObject;
+    }
 
-  private JsonArray serializeRows(List<PolicyEvaluationReportLine> results) {
-    JsonArray array = new JsonArray();
+    private JsonArray serializeRows(List<PolicyEvaluationReportLine> results) {
+        JsonArray array = new JsonArray();
 
-    results.stream().map(this::serializeRow).forEach(array::add);
+        results.stream().map(this::serializeRow).forEach(array::add);
 
-    return array;
-  }
+        return array;
+    }
 
-  private JsonArray serializeRow(PolicyEvaluationReportLine result) {
-    JsonArray array = new JsonArray();
+    private JsonArray serializeRow(PolicyEvaluationReportLine result) {
+        JsonArray array = new JsonArray();
 
-    array.add(result.imageID());
-    array.add(result.repoTag());
-    array.add(result.triggerID());
-    array.add(result.gate());
-    array.add(result.trigger());
-    array.add(result.checkOutput());
-    array.add(result.gateAction());
-    array.add(result.whitelisted());
-    array.add(result.policyID());
-    array.add(result.policyName());
+        array.add(result.imageID());
+        array.add(result.repoTag());
+        array.add(result.triggerID());
+        array.add(result.gate());
+        array.add(result.trigger());
+        array.add(result.checkOutput());
+        array.add(result.gateAction());
+        array.add(result.whitelisted());
+        array.add(result.policyID());
+        array.add(result.policyName());
 
-    return array;
-  }
+        return array;
+    }
 
-  private JsonArray header() {
-    JsonArray array = new JsonArray();
+    private JsonArray header() {
+        JsonArray array = new JsonArray();
 
-    Stream.of(
-      "Image_Id",
-      "Repo_Tag",
-      "Trigger_Id",
-      "Gate",
-      "Trigger",
-      "Check_Output",
-      "Gate_Action",
-      "Whitelisted",
-      "Policy_Id",
-      "Policy_Name"
-    ).forEach(array::add);
+        Stream.of(
+                        "Image_Id",
+                        "Repo_Tag",
+                        "Trigger_Id",
+                        "Gate",
+                        "Trigger",
+                        "Check_Output",
+                        "Gate_Action",
+                        "Whitelisted",
+                        "Policy_Id",
+                        "Policy_Name")
+                .forEach(array::add);
 
-    return array;
-  }
+        return array;
+    }
 }

@@ -18,26 +18,27 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.io.IOException;
 
 public class ImageScanningArchiver implements ScanResultArchiver {
-  private final ReportProcessor policyEvaluationReportProcessor;
-  private final ReportStorage reportStorage;
+    private final ReportProcessor policyEvaluationReportProcessor;
+    private final ReportStorage reportStorage;
 
-  public ImageScanningArchiver(@NonNull ReportProcessor policyEvaluationReportProcessor, @NonNull ReportStorage reportStorage) {
-    this.policyEvaluationReportProcessor = policyEvaluationReportProcessor;
-    this.reportStorage = reportStorage;
-  }
+    public ImageScanningArchiver(
+            @NonNull ReportProcessor policyEvaluationReportProcessor, @NonNull ReportStorage reportStorage) {
+        this.policyEvaluationReportProcessor = policyEvaluationReportProcessor;
+        this.reportStorage = reportStorage;
+    }
 
-  @Override
-  public void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException {
-    var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
-    var policyEvaluationSummary = policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
+    @Override
+    public void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException {
+        var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
+        var policyEvaluationSummary =
+                policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
 
-    reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
-    reportStorage.saveVulnerabilityReport(scanResult);
-    reportStorage.saveRawVulnerabilityReport(scanResult);
-    reportStorage.archiveResults(scanResult, policyEvaluationSummary);
-  }
+        reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
+        reportStorage.saveVulnerabilityReport(scanResult);
+        reportStorage.saveRawVulnerabilityReport(scanResult);
+        reportStorage.archiveResults(scanResult, policyEvaluationSummary);
+    }
 }

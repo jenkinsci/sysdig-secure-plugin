@@ -20,9 +20,8 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import hudson.model.Action;
 import hudson.model.Run;
-import jenkins.model.Jenkins;
-
 import java.util.Map;
+import jenkins.model.Jenkins;
 
 /**
  * Sysdig Secure plugin results for a given build are stored and subsequently retrieved from an instance of this class. Rendering/display of
@@ -31,72 +30,78 @@ import java.util.Map;
  */
 public class SysdigAction implements Action {
 
-  private final Run<?, ?> build;
-  private final String gateStatus;
-  private final String gateOutputUrl;
-  private final PolicyEvaluationSummary gateSummary;
-  private final String cveListingUrl;
+    private final Run<?, ?> build;
+    private final String gateStatus;
+    private final String gateOutputUrl;
+    private final PolicyEvaluationSummary gateSummary;
+    private final String cveListingUrl;
 
-  // For backwards compatibility
-  @Deprecated
-  private String gateReportUrl;
-  @Deprecated
-  private Map<String, String> queries;
-  private final String imageTag;
-  private final String imageDigest;
+    // For backwards compatibility
+    @Deprecated
+    private String gateReportUrl;
 
+    @Deprecated
+    private Map<String, String> queries;
 
-  public SysdigAction(Run<?, ?> run, ScanResult scanResult, String jenkinsOutputDirName, String policyReportFilename, PolicyEvaluationSummary policyEvaluationSummary, String cveListingFileName) {
-    this.build = run;
-    this.gateStatus = scanResult.evaluationResult().toString();
-    this.gateSummary = policyEvaluationSummary;
-    this.imageTag = scanResult.metadata().pullString();
-    this.imageDigest = scanResult.metadata().imageID().replace(':', '-');
-    this.gateOutputUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, policyReportFilename);
-    this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
-  }
+    private final String imageTag;
+    private final String imageDigest;
 
-  @Override
-  public String getIconFileName() {
-    return Jenkins.RESOURCE_PATH + "/plugin/sysdig-secure/images/sysdig-shovel.png";
-  }
+    public SysdigAction(
+            Run<?, ?> run,
+            ScanResult scanResult,
+            String jenkinsOutputDirName,
+            String policyReportFilename,
+            PolicyEvaluationSummary policyEvaluationSummary,
+            String cveListingFileName) {
+        this.build = run;
+        this.gateStatus = scanResult.evaluationResult().toString();
+        this.gateSummary = policyEvaluationSummary;
+        this.imageTag = scanResult.metadata().pullString();
+        this.imageDigest = scanResult.metadata().imageID().replace(':', '-');
+        this.gateOutputUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, policyReportFilename);
+        this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
+    }
 
-  @Override
-  public String getDisplayName() {
-    return String.format("Sysdig Secure Report (%s) (%s)",imageTag, gateStatus);
-  }
+    @Override
+    public String getIconFileName() {
+        return Jenkins.RESOURCE_PATH + "/plugin/sysdig-secure/images/sysdig-shovel.png";
+    }
 
-  @Override
-  public String getUrlName() {
-    return String.format("sysdig-secure-results-%s", imageDigest);
-  }
+    @Override
+    public String getDisplayName() {
+        return String.format("Sysdig Secure Report (%s) (%s)", imageTag, gateStatus);
+    }
 
-  public Run<?, ?> getBuild() {
-    return this.build;
-  }
+    @Override
+    public String getUrlName() {
+        return String.format("sysdig-secure-results-%s", imageDigest);
+    }
 
-  public String getGateStatus() {
-    return gateStatus;
-  }
+    public Run<?, ?> getBuild() {
+        return this.build;
+    }
 
-  public String getGateOutputUrl() {
-    return this.gateOutputUrl;
-  }
+    public String getGateStatus() {
+        return gateStatus;
+    }
 
-  public String getGateSummary() {
-    return GsonBuilder.build().toJson(this.gateSummary);
-  }
+    public String getGateOutputUrl() {
+        return this.gateOutputUrl;
+    }
 
-  public String getCveListingUrl() {
-    return cveListingUrl;
-  }
+    public String getGateSummary() {
+        return GsonBuilder.build().toJson(this.gateSummary);
+    }
 
-  public String getGateReportUrl() {
-    return this.gateReportUrl;
-  }
+    public String getCveListingUrl() {
+        return cveListingUrl;
+    }
 
-  public Map<String, String> getQueries() {
-    return this.queries;
-  }
+    public String getGateReportUrl() {
+        return this.gateReportUrl;
+    }
 
+    public Map<String, String> getQueries() {
+        return this.queries;
+    }
 }

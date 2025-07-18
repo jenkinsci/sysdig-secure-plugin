@@ -16,32 +16,31 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class PolicyEvaluationSummary {
-  private final ArrayList<PolicyEvaluationSummaryLine> lines;
+    private final ArrayList<PolicyEvaluationSummaryLine> lines;
 
-  public PolicyEvaluationSummary() {
-    lines = new ArrayList<>();
-  }
+    public PolicyEvaluationSummary() {
+        lines = new ArrayList<>();
+    }
 
-  public void addSummaryLine(@NonNull PolicyEvaluationSummaryLine line) {
-    this.lines.add(line);
-  }
+    public void addSummaryLine(@NonNull PolicyEvaluationSummaryLine line) {
+        this.lines.add(line);
+    }
 
-  public void addSummaryLine(String imageTag, int nonWhitelistedStopActions, int nonWhitelistedWarnActions, int nonWhitelistedGoActions, String finalAction) {
-    addSummaryLine(new PolicyEvaluationSummaryLine(
-      imageTag,
-      nonWhitelistedStopActions,
-      nonWhitelistedWarnActions,
-      nonWhitelistedGoActions,
-      finalAction
-    ));
-  }
+    public void addSummaryLine(
+            String imageTag,
+            int nonWhitelistedStopActions,
+            int nonWhitelistedWarnActions,
+            int nonWhitelistedGoActions,
+            String finalAction) {
+        addSummaryLine(new PolicyEvaluationSummaryLine(
+                imageTag, nonWhitelistedStopActions, nonWhitelistedWarnActions, nonWhitelistedGoActions, finalAction));
+    }
 
-  public List<PolicyEvaluationSummaryLine> getLines() {
-    return lines;
-  }
+    public List<PolicyEvaluationSummaryLine> getLines() {
+        return lines;
+    }
 }

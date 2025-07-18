@@ -16,37 +16,34 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class PolicyEvaluationReport {
-  private final Map<String, List<PolicyEvaluationReportLine>> resultsForEachImage;
-  private final boolean failed;
+    private final Map<String, List<PolicyEvaluationReportLine>> resultsForEachImage;
+    private final boolean failed;
 
-  public PolicyEvaluationReport(boolean failed) {
-    this.failed = failed;
-    resultsForEachImage = new HashMap<>();
-  }
+    public PolicyEvaluationReport(boolean failed) {
+        this.failed = failed;
+        resultsForEachImage = new HashMap<>();
+    }
 
-  public Map<String, List<PolicyEvaluationReportLine>> getResultsForEachImage() {
-    return resultsForEachImage;
-  }
+    public Map<String, List<PolicyEvaluationReportLine>> getResultsForEachImage() {
+        return resultsForEachImage;
+    }
 
-  public void addResult(@NonNull PolicyEvaluationReportLine result) {
-    resultsForEachImage.putIfAbsent(result.imageID(), new ArrayList<>());
-    resultsForEachImage
-      .get(result.imageID())
-      .add(result);
-  }
+    public void addResult(@NonNull PolicyEvaluationReportLine result) {
+        resultsForEachImage.putIfAbsent(result.imageID(), new ArrayList<>());
+        resultsForEachImage.get(result.imageID()).add(result);
+    }
 
-  public boolean isFailed() {
-    return failed;
-  }
+    public boolean isFailed() {
+        return failed;
+    }
 
-  public boolean isPassed() {
-    return !isFailed();
-  }
+    public boolean isPassed() {
+        return !isFailed();
+    }
 }

@@ -15,7 +15,14 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
-public record PolicyEvaluationReportLine(String imageID, String repoTag, String triggerID, String gate, String trigger,
-                                         String checkOutput, String gateAction, Boolean whitelisted, String policyID,
-                                         String policyName) {
-}
+public record PolicyEvaluationReportLine(
+        String imageID,
+        String repoTag,
+        String triggerID,
+        String gate,
+        String trigger,
+        String checkOutput,
+        String gateAction,
+        Boolean whitelisted,
+        String policyID,
+        String policyName) {}
