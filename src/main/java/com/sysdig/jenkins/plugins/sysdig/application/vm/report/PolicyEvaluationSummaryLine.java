@@ -15,6 +15,9 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm.report;
 
-public record PolicyEvaluationSummaryLine(String imageTag, int nonWhitelistedStopActions, int nonWhitelistedWarnActions,
-                                          int nonWhitelistedGoActions, String finalAction) {
-}
+public record PolicyEvaluationSummaryLine(
+        String imageTag,
+        int nonWhitelistedStopActions,
+        int nonWhitelistedWarnActions,
+        int nonWhitelistedGoActions,
+        String finalAction) {}

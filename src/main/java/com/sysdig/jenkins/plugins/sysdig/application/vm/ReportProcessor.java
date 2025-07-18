@@ -21,7 +21,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public interface ReportProcessor {
-  PolicyEvaluationReport processPolicyEvaluation(ScanResult result);
+    PolicyEvaluationReport processPolicyEvaluation(ScanResult result);
 
-  PolicyEvaluationSummary generateGatesSummary(@NonNull PolicyEvaluationReport gatesJson, @NonNull ScanResult result);
+    PolicyEvaluationSummary generateGatesSummary(@NonNull PolicyEvaluationReport gatesJson, @NonNull ScanResult result);
 }

@@ -18,29 +18,29 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 
 public interface ImageScanningConfig {
-  String getImageName();
+    String getImageName();
 
-  boolean getBailOnFail();
+    boolean getBailOnFail();
 
-  boolean getBailOnPluginFail();
+    boolean getBailOnPluginFail();
 
-  String getEngineurl();
+    String getEngineurl();
 
-  String getSysdigToken();
+    String getSysdigToken();
 
-  boolean getEngineverify();
+    boolean getEngineverify();
 
-  String getInlineScanExtraParams();
+    String getInlineScanExtraParams();
 
-  String getPoliciesToApply();
+    String getPoliciesToApply();
 
-  String getCliVersionToApply();
+    String getCliVersionToApply();
 
-  String getCustomCliVersion();
+    String getCustomCliVersion();
 
-  String getScannerBinaryPath();
+    String getScannerBinaryPath();
 
-  void printWith(SysdigLogger logger);
+    void printWith(SysdigLogger logger);
 
-  boolean getDebug();
+    boolean getDebug();
 }

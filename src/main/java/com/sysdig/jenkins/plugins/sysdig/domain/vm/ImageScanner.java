@@ -18,5 +18,5 @@ package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 
 public interface ImageScanner {
-  ScanResult scanImage(String imageTag) throws InterruptedException;
+    ScanResult scanImage(String imageTag) throws InterruptedException;
 }

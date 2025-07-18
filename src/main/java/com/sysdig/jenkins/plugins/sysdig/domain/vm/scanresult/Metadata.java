@@ -1,7 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
-
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
@@ -10,92 +9,98 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class Metadata implements AggregateChild<ScanResult>, Serializable {
-  private final String pullString;
-  private final String imageID;
-  private final String digest;
-  private final OperatingSystem baseOS;
-  private final BigInteger sizeInBytes;
-  private final Architecture architecture;
-  private final Map<String, String> labels;
-  private final Date createdAt;
-  private final ScanResult root;
+    private final String pullString;
+    private final String imageID;
+    private final String digest;
+    private final OperatingSystem baseOS;
+    private final BigInteger sizeInBytes;
+    private final Architecture architecture;
+    private final Map<String, String> labels;
+    private final Date createdAt;
+    private final ScanResult root;
 
-  Metadata(
-    String pullString,
-    String imageID,
-    String digest,
-    OperatingSystem baseOS,
-    BigInteger sizeInBytes,
-    Architecture architecture,
-    Map<String, String> labels,
-    Date createdAt,
-    ScanResult root
-  ) {
-    this.pullString = pullString;
-    this.imageID = imageID;
-    this.digest = digest;
-    this.baseOS = baseOS;
-    this.sizeInBytes = sizeInBytes;
-    this.architecture = architecture;
-    this.labels = labels;
-    this.createdAt = createdAt;
-    this.root = root;
-  }
-
-  public String pullString() {
-    return pullString;
-  }
-
-  public String imageID() {
-    return imageID;
-  }
-
-  public Optional<String> digest() {
-    if (digest == null || digest.isBlank()) {
-      return Optional.empty();
+    Metadata(
+            String pullString,
+            String imageID,
+            String digest,
+            OperatingSystem baseOS,
+            BigInteger sizeInBytes,
+            Architecture architecture,
+            Map<String, String> labels,
+            Date createdAt,
+            ScanResult root) {
+        this.pullString = pullString;
+        this.imageID = imageID;
+        this.digest = digest;
+        this.baseOS = baseOS;
+        this.sizeInBytes = sizeInBytes;
+        this.architecture = architecture;
+        this.labels = labels;
+        this.createdAt = createdAt;
+        this.root = root;
     }
 
-    return Optional.of(digest);
-  }
+    public String pullString() {
+        return pullString;
+    }
 
-  public OperatingSystem baseOS() {
-    return baseOS;
-  }
+    public String imageID() {
+        return imageID;
+    }
 
-  public BigInteger sizeInBytes() {
-    return sizeInBytes;
-  }
+    public Optional<String> digest() {
+        if (digest == null || digest.isBlank()) {
+            return Optional.empty();
+        }
 
-  public Architecture architecture() {
-    return architecture;
-  }
+        return Optional.of(digest);
+    }
 
-  public Map<String, String> labels() {
-    return labels;
-  }
+    public OperatingSystem baseOS() {
+        return baseOS;
+    }
 
-  public Date createdAt() {
-    return createdAt;
-  }
+    public BigInteger sizeInBytes() {
+        return sizeInBytes;
+    }
 
-  @Override
-  public ScanResult root() {
-    return root;
-  }
+    public Architecture architecture() {
+        return architecture;
+    }
 
-  long layersCount() {
-    return root().layers().stream().filter(l -> l.size().isPresent()).count();
-  }
+    public Map<String, String> labels() {
+        return labels;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    Metadata metadata = (Metadata) o;
-    return Objects.equals(pullString, metadata.pullString) && Objects.equals(imageID, metadata.imageID) && Objects.equals(digest, metadata.digest) && Objects.equals(baseOS, metadata.baseOS) && Objects.equals(sizeInBytes, metadata.sizeInBytes) && architecture == metadata.architecture && Objects.equals(labels, metadata.labels) && Objects.equals(createdAt, metadata.createdAt);
-  }
+    public Date createdAt() {
+        return createdAt;
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt);
-  }
+    @Override
+    public ScanResult root() {
+        return root;
+    }
+
+    long layersCount() {
+        return root().layers().stream().filter(l -> l.size().isPresent()).count();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Metadata metadata = (Metadata) o;
+        return Objects.equals(pullString, metadata.pullString)
+                && Objects.equals(imageID, metadata.imageID)
+                && Objects.equals(digest, metadata.digest)
+                && Objects.equals(baseOS, metadata.baseOS)
+                && Objects.equals(sizeInBytes, metadata.sizeInBytes)
+                && architecture == metadata.architecture
+                && Objects.equals(labels, metadata.labels)
+                && Objects.equals(createdAt, metadata.createdAt);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt);
+    }
 }

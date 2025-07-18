@@ -27,32 +27,34 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * job.
  */
 public class ImageScanningService {
-  private final ImageScanner scanner;
-  private final ScanResultArchiver imageScanningArchiverService;
-  protected final SysdigLogger logger;
+    private final ImageScanner scanner;
+    private final ScanResultArchiver imageScanningArchiverService;
+    protected final SysdigLogger logger;
 
-  public ImageScanningService(@NonNull ImageScanner scanner, @NonNull ScanResultArchiver imageScanningArchiverService, @NonNull SysdigLogger logger) {
-    this.scanner = scanner;
-    this.imageScanningArchiverService = imageScanningArchiverService;
-    this.logger = logger;
-  }
-
-  public EvaluationResult scanAndArchiveResult(String imageName) throws InterruptedException {
-    if (imageName.trim().isEmpty()) {
-      throw new IllegalArgumentException("the image name to scan must not be empty");
-    }
-    ScanResult scanResult = scanner.scanImage(imageName);
-
-    EvaluationResult finalAction = scanResult.evaluationResult();
-    logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
-
-    try {
-      imageScanningArchiverService.archiveScanResult(scanResult);
-    } catch (Exception e) {
-      logger.logError("Recording failure to build reports and moving on with plugin operation", e);
+    public ImageScanningService(
+            @NonNull ImageScanner scanner,
+            @NonNull ScanResultArchiver imageScanningArchiverService,
+            @NonNull SysdigLogger logger) {
+        this.scanner = scanner;
+        this.imageScanningArchiverService = imageScanningArchiverService;
+        this.logger = logger;
     }
 
-    return finalAction;
-  }
+    public EvaluationResult scanAndArchiveResult(String imageName) throws InterruptedException {
+        if (imageName.trim().isEmpty()) {
+            throw new IllegalArgumentException("the image name to scan must not be empty");
+        }
+        ScanResult scanResult = scanner.scanImage(imageName);
 
+        EvaluationResult finalAction = scanResult.evaluationResult();
+        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
+
+        try {
+            imageScanningArchiverService.archiveScanResult(scanResult);
+        } catch (Exception e) {
+            logger.logError("Recording failure to build reports and moving on with plugin operation", e);
+        }
+
+        return finalAction;
+    }
 }

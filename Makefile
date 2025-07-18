@@ -8,7 +8,10 @@ update-dependencies:
 	mvn versions:use-latest-versions
 
 verify:
-	mvn clean verify javadoc:jar
+	mvn clean spotless:check verify javadoc:jar
+
+format:
+	mvn spotless:apply
 
 update-flake:
 	-nix flake update

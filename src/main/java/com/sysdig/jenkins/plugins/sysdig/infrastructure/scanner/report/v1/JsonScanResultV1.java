@@ -1,9 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -13,10 +12,7 @@ import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.Optional;
 
-public record JsonScanResultV1(
-        JsonInfo info,
-        JsonScanner scanner,
-        JsonResult result) {
+public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult result) {
     public Optional<ScanResult> toDomain() {
         if (result() == null) {
             return Optional.empty();
@@ -52,9 +48,7 @@ public record JsonScanResultV1(
         result().layers().values().stream()
                 .filter(jsonLayer -> !jsonLayer.digest().isBlank())
                 .forEach(jsonLayer -> scanResult.addLayer(
-                        jsonLayer.digest(),
-                        BigInteger.valueOf(jsonLayer.size()),
-                        jsonLayer.command()));
+                        jsonLayer.digest(), BigInteger.valueOf(jsonLayer.size()), jsonLayer.command()));
     }
 
     private void addRiskAcceptsTo(ScanResult scanResult) {
@@ -71,27 +65,30 @@ public record JsonScanResultV1(
     }
 
     private void addVulnerabilitiesTo(ScanResult scanResult) {
-        result().vulnerabilities().values()
-                .forEach(jsonVuln -> {
-                    Vulnerability vuln = scanResult.addVulnerability(
-                            jsonVuln.name(),
-                            severityFromString(jsonVuln.severity()),
-                            dateFromShortString(jsonVuln.disclosureDate()),
-                            jsonVuln.optSolutionDate().map(JsonScanResultV1::dateFromShortString).orElse(null),
-                            jsonVuln.exploitable(),
-                            jsonVuln.fixVersion());
+        result().vulnerabilities().values().forEach(jsonVuln -> {
+            Vulnerability vuln = scanResult.addVulnerability(
+                    jsonVuln.name(),
+                    severityFromString(jsonVuln.severity()),
+                    dateFromShortString(jsonVuln.disclosureDate()),
+                    jsonVuln.optSolutionDate()
+                            .map(JsonScanResultV1::dateFromShortString)
+                            .orElse(null),
+                    jsonVuln.exploitable(),
+                    jsonVuln.fixVersion());
 
-                    jsonVuln.riskAcceptRefs().stream()
-                            .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
-                            .map(jsonRisk -> scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
-                            .forEach(vuln::addAcceptedRisk);
-                });
+            jsonVuln.riskAcceptRefs().stream()
+                    .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
+                    .map(jsonRisk ->
+                            scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
+                    .forEach(vuln::addAcceptedRisk);
+        });
     }
 
     private void addPackagesTo(ScanResult scanResult) {
         result().packages().values().stream().forEach(jsonPkg -> {
             JsonLayer jsonLayer = result().layers().get(jsonPkg.layerRef());
-            var layerWhereThisPackageIsFound = scanResult.findLayerByDigest(jsonLayer.digest()).get();
+            var layerWhereThisPackageIsFound =
+                    scanResult.findLayerByDigest(jsonLayer.digest()).get();
 
             Package addedPackage = scanResult.addPackage(
                     packageTypeFromString(jsonPkg.type()),
@@ -102,14 +99,16 @@ public record JsonScanResultV1(
 
             jsonPkg.vulnerabilitiesRefs().stream()
                     .map(jsonVulnRef -> this.result().vulnerabilities().get(jsonVulnRef))
-                    .map(jsonVuln -> scanResult.findVulnerabilityByCVE(jsonVuln.name()).get())
+                    .map(jsonVuln ->
+                            scanResult.findVulnerabilityByCVE(jsonVuln.name()).get())
                     .forEach(addedPackage::addVulnerabilityFound);
 
             jsonPkg.vulnerabilitiesRefs().stream()
                     .map(jsonVulnRef -> this.result().vulnerabilities().get(jsonVulnRef))
                     .flatMap(jsonVuln -> jsonVuln.riskAcceptRefs().stream())
                     .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
-                    .map(jsonRisk -> scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
+                    .map(jsonRisk ->
+                            scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
                     .forEach(addedPackage::addAcceptedRisk);
         });
     }
@@ -123,24 +122,22 @@ public record JsonScanResultV1(
                     dateFromISO8601String(jsonPolicy.updatedAt()));
 
             jsonPolicy.bundles().stream().forEach(jsonBundle -> {
-                PolicyBundle policyBundle = scanResult.addPolicyBundle(
-                        jsonBundle.identifier(),
-                        jsonBundle.name(),
-                        policy);
+                PolicyBundle policyBundle =
+                        scanResult.addPolicyBundle(jsonBundle.identifier(), jsonBundle.name(), policy);
 
                 jsonBundle.rules().stream().forEach(jsonRule -> {
                     PolicyBundleRule rule = policyBundle.addRule(
                             jsonRule.ruleId(),
                             jsonRule.description(),
-                            jsonRule.evaluationResult().equalsIgnoreCase("failed") ? EvaluationResult.Failed
+                            jsonRule.evaluationResult().equalsIgnoreCase("failed")
+                                    ? EvaluationResult.Failed
                                     : EvaluationResult.Passed);
 
                     jsonRule.failures().stream().forEach(jsonFailure -> {
                         switch (jsonRule.failureType()) {
                             case "imageConfigFailure" -> rule.addImageConfigFailure(jsonFailure.remediation());
-                            case "pkgVulnFailure" ->
-                                rule.addPkgVulnFailure(
-                                        failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
+                            case "pkgVulnFailure" -> rule.addPkgVulnFailure(
+                                    failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
                             default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
                         }
                     });
@@ -152,10 +149,7 @@ public record JsonScanResultV1(
     private String failureMessageFor(String jsonPackageRef, String jsonVulnerabilityRef) {
         JsonPackage jsonPackage = result().packages().get(jsonPackageRef);
         JsonVulnerability jsonVulnerability = result().vulnerabilities().get(jsonVulnerabilityRef);
-        return "%s found in %s (%s)".formatted(
-                jsonVulnerability.name(),
-                jsonPackage.name(),
-                jsonPackage.version());
+        return "%s found in %s (%s)".formatted(jsonVulnerability.name(), jsonPackage.name(), jsonPackage.version());
     }
 
     /**
@@ -170,7 +164,8 @@ public record JsonScanResultV1(
      * @throws DateTimeParseException if the text cannot be parsed
      */
     private static Date dateFromShortString(@NonNull String str) {
-        return Date.from(LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant());
+        return Date.from(
+                LocalDate.parse(str).atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     /**

@@ -20,10 +20,10 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 
 public class GsonBuilder {
-  public static Gson build() {
-    return new com.google.gson.GsonBuilder()
-      .registerTypeAdapter(PolicyEvaluationReport.class, new PolicyEvaluationReportSerializer())
-      .registerTypeAdapter(PolicyEvaluationSummary.class, new PolicyEvaluationSummarySerializer())
-      .create();
-  }
+    public static Gson build() {
+        return new com.google.gson.GsonBuilder()
+                .registerTypeAdapter(PolicyEvaluationReport.class, new PolicyEvaluationReportSerializer())
+                .registerTypeAdapter(PolicyEvaluationSummary.class, new PolicyEvaluationSummarySerializer())
+                .create();
+    }
 }

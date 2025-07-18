@@ -23,23 +23,24 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class SysdigImageScanner implements ImageScanner {
-  protected final ImageScanningConfig config;
-  private final RunContext runContext;
+    protected final ImageScanningConfig config;
+    private final RunContext runContext;
 
-  public SysdigImageScanner(@NonNull RunContext runContext, @NonNull ImageScanningConfig config) {
-    this.runContext = runContext;
-    this.config = config;
-  }
-
-  @Override
-  public ScanResult scanImage(String imageTag) throws InterruptedException {
-    try {
-      RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(this.runContext);
-      RemoteSysdigImageScanner task = new RemoteSysdigImageScanner(runContext, downloader, imageTag, config);
-      return task.performScan();
-    } catch (Exception e) {
-      runContext.getLogger().logError("Failed to perform inline-scan due to an unexpected error", e);
-      throw new InterruptedException("Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
+    public SysdigImageScanner(@NonNull RunContext runContext, @NonNull ImageScanningConfig config) {
+        this.runContext = runContext;
+        this.config = config;
     }
-  }
+
+    @Override
+    public ScanResult scanImage(String imageTag) throws InterruptedException {
+        try {
+            RetriableRemoteDownloader downloader = new RetriableRemoteDownloader(this.runContext);
+            RemoteSysdigImageScanner task = new RemoteSysdigImageScanner(runContext, downloader, imageTag, config);
+            return task.performScan();
+        } catch (Exception e) {
+            runContext.getLogger().logError("Failed to perform inline-scan due to an unexpected error", e);
+            throw new InterruptedException(
+                    "Failed to perform inline-scan due to an unexpected error. Please refer to above logs for more information");
+        }
+    }
 }

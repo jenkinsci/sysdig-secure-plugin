@@ -1,71 +1,69 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
-
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class Layer implements AggregateChild<ScanResult>, Serializable {
-  private final String digest;
-  private final BigInteger size;
-  private final String command;
-  private final Set<Package> packages;
-  private final ScanResult root;
+    private final String digest;
+    private final BigInteger size;
+    private final String command;
+    private final Set<Package> packages;
+    private final ScanResult root;
 
-  Layer(String digest, BigInteger size, String command, ScanResult root) {
-    this.digest = digest;
-    this.size = size;
-    this.command = command;
-    this.packages = new HashSet<>();
-    this.root = root;
-  }
-
-  public Optional<String> digest() {
-    if (digest == null || digest.isBlank()) {
-      return Optional.empty();
+    Layer(String digest, BigInteger size, String command, ScanResult root) {
+        this.digest = digest;
+        this.size = size;
+        this.command = command;
+        this.packages = new HashSet<>();
+        this.root = root;
     }
-    return Optional.of(digest);
-  }
 
-  public Optional<BigInteger> size() {
-    return Optional.ofNullable(size);
-  }
+    public Optional<String> digest() {
+        if (digest == null || digest.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(digest);
+    }
 
-  public String command() {
-    return command;
-  }
+    public Optional<BigInteger> size() {
+        return Optional.ofNullable(size);
+    }
 
-  @Override
-  public ScanResult root() {
-    return root;
-  }
+    public String command() {
+        return command;
+    }
 
-  void addPackage(Package aPackage) {
-    this.packages.add(aPackage);
-  }
+    @Override
+    public ScanResult root() {
+        return root;
+    }
 
-  public Collection<Package> packages() {
-    return Collections.unmodifiableCollection(this.packages);
-  }
+    void addPackage(Package aPackage) {
+        this.packages.add(aPackage);
+    }
 
-  public Collection<Vulnerability> vulnerabilities() {
-    return this.packages()
-      .stream()
-      .flatMap(p -> p.vulnerabilities().stream())
-      .collect(Collectors.toUnmodifiableSet());
-  }
+    public Collection<Package> packages() {
+        return Collections.unmodifiableCollection(this.packages);
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    Layer layer = (Layer) o;
-    return Objects.equals(digest, layer.digest);
-  }
+    public Collection<Vulnerability> vulnerabilities() {
+        return this.packages().stream()
+                .flatMap(p -> p.vulnerabilities().stream())
+                .collect(Collectors.toUnmodifiableSet());
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(digest);
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Layer layer = (Layer) o;
+        return Objects.equals(digest, layer.digest);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(digest);
+    }
 }

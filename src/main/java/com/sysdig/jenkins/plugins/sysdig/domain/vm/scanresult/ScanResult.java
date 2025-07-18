@@ -1,133 +1,167 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
+import javax.annotation.Nullable;
 
 public class ScanResult implements Serializable {
-  private final ScanType type;
-  private final Metadata metadata;
-  private final Map<String, Layer> layers;
-  private final Map<Package, Package> packages;
-  private final Map<String, Vulnerability> vulnerabilities;
-  private final Map<String, Policy> policies;
-  private final Map<String, PolicyBundle> policyBundles;
-  private final Map<String, AcceptedRisk> acceptedRisks;
+    private final ScanType type;
+    private final Metadata metadata;
+    private final Map<String, Layer> layers;
+    private final Map<Package, Package> packages;
+    private final Map<String, Vulnerability> vulnerabilities;
+    private final Map<String, Policy> policies;
+    private final Map<String, PolicyBundle> policyBundles;
+    private final Map<String, AcceptedRisk> acceptedRisks;
 
-  public ScanResult(ScanType type, String pullString, String imageID, String digest, OperatingSystem baseOS, BigInteger sizeInBytes, Architecture architecture, Map<String, String> labels, Date createdAt) {
-    this.type = type;
-    this.metadata = new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this);
-    this.layers = new HashMap<>();
-    this.packages = new HashMap<>();
-    this.vulnerabilities = new HashMap<>();
-    this.policies = new HashMap<>();
-    this.policyBundles = new HashMap<>();
-    this.acceptedRisks = new HashMap<>();
-  }
+    public ScanResult(
+            ScanType type,
+            String pullString,
+            String imageID,
+            String digest,
+            OperatingSystem baseOS,
+            BigInteger sizeInBytes,
+            Architecture architecture,
+            Map<String, String> labels,
+            Date createdAt) {
+        this.type = type;
+        this.metadata =
+                new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this);
+        this.layers = new HashMap<>();
+        this.packages = new HashMap<>();
+        this.vulnerabilities = new HashMap<>();
+        this.policies = new HashMap<>();
+        this.policyBundles = new HashMap<>();
+        this.acceptedRisks = new HashMap<>();
+    }
 
-  public Layer addLayer(String digest, BigInteger size, String command) {
-    Layer layer = new Layer(digest, size, command, this);
-    this.layers.put(digest, layer);
-    return layer;
-  }
+    public Layer addLayer(String digest, BigInteger size, String command) {
+        Layer layer = new Layer(digest, size, command, this);
+        this.layers.put(digest, layer);
+        return layer;
+    }
 
-  public Optional<Layer> findLayerByDigest(String digest) {
-    return Optional.ofNullable(this.layers.get(digest));
-  }
+    public Optional<Layer> findLayerByDigest(String digest) {
+        return Optional.ofNullable(this.layers.get(digest));
+    }
 
-  public Collection<Layer> layers() {
-    return Collections.unmodifiableCollection(this.layers.values());
-  }
+    public Collection<Layer> layers() {
+        return Collections.unmodifiableCollection(this.layers.values());
+    }
 
-  public Package addPackage(PackageType type, String name, String version, String path, Layer layer) {
-    Package aPackage = new Package(type, name, version, path, layer, this);
-    Package addedPackage = Optional.ofNullable(packages.putIfAbsent(aPackage, aPackage)).orElse(aPackage);
+    public Package addPackage(PackageType type, String name, String version, String path, Layer layer) {
+        Package aPackage = new Package(type, name, version, path, layer, this);
+        Package addedPackage =
+                Optional.ofNullable(packages.putIfAbsent(aPackage, aPackage)).orElse(aPackage);
 
-    layer.addPackage(addedPackage);
-    return addedPackage;
-  }
+        layer.addPackage(addedPackage);
+        return addedPackage;
+    }
 
-  public Collection<Package> packages() {
-    return Collections.unmodifiableCollection(packages.values());
-  }
+    public Collection<Package> packages() {
+        return Collections.unmodifiableCollection(packages.values());
+    }
 
-  public Vulnerability addVulnerability(String cve, Severity severity, Date disclosureDate, @Nullable Date solutionDate, boolean exploitable,
-                                        @Nullable String fixVersion) {
-    return vulnerabilities.computeIfAbsent(cve, k -> new Vulnerability(cve, severity, disclosureDate, solutionDate, exploitable, fixVersion, this));
-  }
+    public Vulnerability addVulnerability(
+            String cve,
+            Severity severity,
+            Date disclosureDate,
+            @Nullable Date solutionDate,
+            boolean exploitable,
+            @Nullable String fixVersion) {
+        return vulnerabilities.computeIfAbsent(
+                cve,
+                k -> new Vulnerability(cve, severity, disclosureDate, solutionDate, exploitable, fixVersion, this));
+    }
 
-  public Optional<Vulnerability> findVulnerabilityByCVE(String cve) {
-    return Optional.ofNullable(vulnerabilities.get(cve));
-  }
+    public Optional<Vulnerability> findVulnerabilityByCVE(String cve) {
+        return Optional.ofNullable(vulnerabilities.get(cve));
+    }
 
-  public Collection<Vulnerability> vulnerabilities() {
-    return Collections.unmodifiableCollection(vulnerabilities.values());
-  }
+    public Collection<Vulnerability> vulnerabilities() {
+        return Collections.unmodifiableCollection(vulnerabilities.values());
+    }
 
-  public Policy addPolicy(String id, String name, Date createdAt, Date updatedAt) {
-    return policies.computeIfAbsent(id, k -> new Policy(id, name, createdAt, updatedAt, this));
-  }
+    public Policy addPolicy(String id, String name, Date createdAt, Date updatedAt) {
+        return policies.computeIfAbsent(id, k -> new Policy(id, name, createdAt, updatedAt, this));
+    }
 
-  public Optional<Policy> findPolicyByID(String id) {
-    return Optional.ofNullable(policies.get(id));
-  }
+    public Optional<Policy> findPolicyByID(String id) {
+        return Optional.ofNullable(policies.get(id));
+    }
 
-  public Collection<Policy> policies() {
-    return Collections.unmodifiableCollection(policies.values());
-  }
+    public Collection<Policy> policies() {
+        return Collections.unmodifiableCollection(policies.values());
+    }
 
-  public PolicyBundle addPolicyBundle(String id, String name, Policy policy) {
-    PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, this));
-    policyBundle.addPolicy(policy);
-    return policyBundle;
-  }
+    public PolicyBundle addPolicyBundle(String id, String name, Policy policy) {
+        PolicyBundle policyBundle = policyBundles.computeIfAbsent(id, k -> new PolicyBundle(id, name, this));
+        policyBundle.addPolicy(policy);
+        return policyBundle;
+    }
 
-  public Optional<PolicyBundle> findPolicyBundleByID(String id) {
-    return Optional.ofNullable(policyBundles.get(id));
-  }
+    public Optional<PolicyBundle> findPolicyBundleByID(String id) {
+        return Optional.ofNullable(policyBundles.get(id));
+    }
 
-  public Collection<PolicyBundle> policyBundles() {
-    return Collections.unmodifiableCollection(policyBundles.values());
-  }
+    public Collection<PolicyBundle> policyBundles() {
+        return Collections.unmodifiableCollection(policyBundles.values());
+    }
 
-  public AcceptedRisk addAcceptedRisk(String id, AcceptedRiskReason reason, String description, Date expirationDate, boolean isActive, Date createdAt, Date updatedAt) {
-    AcceptedRisk acceptedRisk = new AcceptedRisk(id, reason, description, expirationDate, isActive, createdAt, updatedAt, this);
-    this.acceptedRisks.put(id, acceptedRisk);
-    return acceptedRisk;
-  }
+    public AcceptedRisk addAcceptedRisk(
+            String id,
+            AcceptedRiskReason reason,
+            String description,
+            Date expirationDate,
+            boolean isActive,
+            Date createdAt,
+            Date updatedAt) {
+        AcceptedRisk acceptedRisk =
+                new AcceptedRisk(id, reason, description, expirationDate, isActive, createdAt, updatedAt, this);
+        this.acceptedRisks.put(id, acceptedRisk);
+        return acceptedRisk;
+    }
 
-  public Optional<AcceptedRisk> findAcceptedRiskByID(String id) {
-    return Optional.ofNullable(this.acceptedRisks.get(id));
-  }
+    public Optional<AcceptedRisk> findAcceptedRiskByID(String id) {
+        return Optional.ofNullable(this.acceptedRisks.get(id));
+    }
 
-  public Collection<AcceptedRisk> acceptedRisks() {
-    return Collections.unmodifiableCollection(acceptedRisks.values());
-  }
+    public Collection<AcceptedRisk> acceptedRisks() {
+        return Collections.unmodifiableCollection(acceptedRisks.values());
+    }
 
-  public ScanType type() {
-    return type;
-  }
+    public ScanType type() {
+        return type;
+    }
 
-  public Metadata metadata() {
-    return metadata;
-  }
+    public Metadata metadata() {
+        return metadata;
+    }
 
-  public EvaluationResult evaluationResult() {
-    boolean allPoliciesPassed = policies().stream().allMatch(p -> p.evaluationResult().isPassed());
+    public EvaluationResult evaluationResult() {
+        boolean allPoliciesPassed =
+                policies().stream().allMatch(p -> p.evaluationResult().isPassed());
 
-    return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
-  }
+        return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
-    ScanResult that = (ScanResult) o;
-    return type == that.type && Objects.equals(metadata, that.metadata) && Objects.equals(layers, that.layers) && Objects.equals(packages, that.packages) && Objects.equals(vulnerabilities, that.vulnerabilities) && Objects.equals(policies, that.policies) && Objects.equals(policyBundles, that.policyBundles) && Objects.equals(acceptedRisks, that.acceptedRisks);
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ScanResult that = (ScanResult) o;
+        return type == that.type
+                && Objects.equals(metadata, that.metadata)
+                && Objects.equals(layers, that.layers)
+                && Objects.equals(packages, that.packages)
+                && Objects.equals(vulnerabilities, that.vulnerabilities)
+                && Objects.equals(policies, that.policies)
+                && Objects.equals(policyBundles, that.policyBundles)
+                && Objects.equals(acceptedRisks, that.acceptedRisks);
+    }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(type, metadata, layers, packages, vulnerabilities, policies, policyBundles, acceptedRisks);
-  }
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, metadata, layers, packages, vulnerabilities, policies, policyBundles, acceptedRisks);
+    }
 }

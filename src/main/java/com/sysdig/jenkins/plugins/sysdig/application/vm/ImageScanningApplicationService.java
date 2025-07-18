@@ -22,56 +22,61 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
-
 import java.util.Optional;
 
 public class ImageScanningApplicationService {
-  private final ReportStorage reportStorage;
-  private final ImageScanner scanner;
-  private final SysdigLogger logger;
+    private final ReportStorage reportStorage;
+    private final ImageScanner scanner;
+    private final SysdigLogger logger;
 
-  public ImageScanningApplicationService(ReportStorage reportStorage, ImageScanner scanner, SysdigLogger logger) {
-    this.reportStorage = reportStorage;
-    this.scanner = scanner;
-    this.logger = logger;
-  }
-
-  public void runScan(@NonNull ImageScanningConfig config) throws AbortException {
-    config.printWith(logger);
-
-    Optional<EvaluationResult> finalAction = getFinalAction(config);
-
-    /* Evaluate result of step based on gate action */
-    if (finalAction.isEmpty()) {
-      logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
-    } else if (config.getBailOnFail() && EvaluationResult.Failed.equals(finalAction.get())) {
-      logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
-      throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result " + finalAction.get());
-    } else {
-      logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result " + finalAction.get());
-    }
-  }
-
-  private Optional<EvaluationResult> getFinalAction(@NonNull ImageScanningConfig config) throws AbortException {
-    PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
-    ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
-
-    ImageScanningService imageScanningService = new ImageScanningService(scanner, imageScanningArchiver, logger);
-    Optional<EvaluationResult> finalAction = Optional.empty();
-
-    try {
-      finalAction = Optional.ofNullable(imageScanningService.scanAndArchiveResult(config.getImageName()));
-    } catch (Exception e) {
-      if (config.getBailOnPluginFail()) {
-        logger.logError("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution", e);
-        throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
-      } else {
-        logger.logWarn("Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
-      }
+    public ImageScanningApplicationService(ReportStorage reportStorage, ImageScanner scanner, SysdigLogger logger) {
+        this.reportStorage = reportStorage;
+        this.scanner = scanner;
+        this.logger = logger;
     }
 
-    logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
-    return finalAction;
-  }
+    public void runScan(@NonNull ImageScanningConfig config) throws AbortException {
+        config.printWith(logger);
 
+        Optional<EvaluationResult> finalAction = getFinalAction(config);
+
+        /* Evaluate result of step based on gate action */
+        if (finalAction.isEmpty()) {
+            logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, no final result");
+        } else if (config.getBailOnFail() && EvaluationResult.Failed.equals(finalAction.get())) {
+            logger.logWarn("Failing Sysdig Secure Container Image Scanner Plugin step due to final result "
+                    + finalAction.get());
+            throw new AbortException("Failing Sysdig Secure Container Image Scanner Plugin step due to final result "
+                    + finalAction.get());
+        } else {
+            logger.logInfo("Marking Sysdig Secure Container Image Scanner step as successful, final result "
+                    + finalAction.get());
+        }
+    }
+
+    private Optional<EvaluationResult> getFinalAction(@NonNull ImageScanningConfig config) throws AbortException {
+        PolicyReportProcessor reportProcessor = new PolicyReportProcessor(logger);
+        ImageScanningArchiver imageScanningArchiver = new ImageScanningArchiver(reportProcessor, reportStorage);
+
+        ImageScanningService imageScanningService = new ImageScanningService(scanner, imageScanningArchiver, logger);
+        Optional<EvaluationResult> finalAction = Optional.empty();
+
+        try {
+            finalAction = Optional.ofNullable(imageScanningService.scanAndArchiveResult(config.getImageName()));
+        } catch (Exception e) {
+            if (config.getBailOnPluginFail()) {
+                logger.logError(
+                        "Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution",
+                        e);
+                throw new AbortException(
+                        "Failing Sysdig Secure Container Image Scanner Plugin step due to errors in plugin execution");
+            } else {
+                logger.logWarn(
+                        "Marking Sysdig Secure Container Image Scanner step as successful despite errors in plugin execution");
+            }
+        }
+
+        logger.logInfo("Completed Sysdig Secure Container Image Scanner step");
+        return finalAction;
+    }
 }
