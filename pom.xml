@@ -45,10 +45,6 @@
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/mark-a-plugin-incompatible/ -->
     <hpi.compatibleSinceVersion>3.0</hpi.compatibleSinceVersion>
-
-    <!-- Enable Spotless to check formatting -->
-    <spotless.check.skip>false</spotless.check.skip>
-    <spotless.apply.skip>false</spotless.apply.skip>
   </properties>
 
   <dependencyManagement>
