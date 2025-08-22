@@ -49,8 +49,8 @@ public class AcceptedRisk implements AggregateChild<ScanResult>, Serializable {
         return description;
     }
 
-    public Date expirationDate() {
-        return expirationDate;
+    public Optional<Date> expirationDate() {
+        return Optional.ofNullable(expirationDate);
     }
 
     public boolean isActive() {
