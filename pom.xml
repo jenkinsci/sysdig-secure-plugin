@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>sysdig-secure</artifactId>
-  <version>3.1.2-SNAPSHOT</version>
+  <version>3.1.2</version>
   <packaging>hpi</packaging>
   <name>Sysdig Secure Container Image Scanner Plugin</name>
   <description>Integrates Jenkins with the Sysdig Secure Image Scanner to scan OCI images</description>
@@ -34,7 +34,7 @@
   <scm>
     <connection>scm:git:https://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-    <tag>${project.artifactId}-${project.version}</tag>
+    <tag>sysdig-secure-3.1.2</tag>
     <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
   </scm>
 
@@ -47,7 +47,7 @@
     <!-- https://www.jenkins.io/doc/developer/plugin-development/mark-a-plugin-incompatible/ -->
     <hpi.compatibleSinceVersion>3.0</hpi.compatibleSinceVersion>
     <!-- Allow reproducible builds -->
-    <project.build.outputTimestamp>1980-01-01T00:00:02Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2025-08-22T14:09:06Z</project.build.outputTimestamp>
   </properties>
 
   <dependencyManagement>
