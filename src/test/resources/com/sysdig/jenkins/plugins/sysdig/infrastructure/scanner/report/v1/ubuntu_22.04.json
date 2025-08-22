@@ -2001,7 +2001,7 @@
         "description": "lkjl",
         "entityType": "policyRule",
         "entityValue": "18378",
-        "expirationDate": "2025-07-24",
+        "expirationDate": null,
         "id": "184bf5c9ef8c6d984676c69dbd29570b",
         "reason": "RiskTransferred",
         "status": "active",

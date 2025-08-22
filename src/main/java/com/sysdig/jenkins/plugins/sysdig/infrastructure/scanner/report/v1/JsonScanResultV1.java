@@ -57,7 +57,9 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                     jsonRisk.id(),
                     acceptedRiskReasonFromString(jsonRisk.reason()),
                     jsonRisk.description(),
-                    dateFromShortString(jsonRisk.expirationDate()),
+                    jsonRisk.expirationDateOpt()
+                            .map(JsonScanResultV1::dateFromShortString)
+                            .orElse(null),
                     "active".equalsIgnoreCase(jsonRisk.status()),
                     dateFromISO8601String(jsonRisk.createdAt()),
                     dateFromISO8601String(jsonRisk.updatedAt()));
