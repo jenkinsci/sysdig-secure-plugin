@@ -71,7 +71,7 @@ public class ImageScanningApplicationService {
             if (!Strings.isNullOrEmpty(config.getImageToCompare())) {
                 ScanResult scanResultToCompare = imageScanningService.scan(config.getImageToCompare());
 
-                ScanResultDiff diff = new ScanResultDiff(scanResultToCompare, scanResult);
+                ScanResultDiff diff = scanResult.diffWithPrevious(scanResultToCompare);
 
                 this.reportStorage.saveImageDiff(diff);
             }

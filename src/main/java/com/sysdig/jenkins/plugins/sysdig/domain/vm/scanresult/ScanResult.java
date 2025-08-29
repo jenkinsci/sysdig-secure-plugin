@@ -1,5 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
+
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
@@ -144,6 +146,10 @@ public class ScanResult implements Serializable {
                 policies().stream().allMatch(p -> p.evaluationResult().isPassed());
 
         return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+    }
+
+    public ScanResultDiff diffWithPrevious(ScanResult previous) {
+        return ScanResultDiff.betweenPreviousAndNew(previous, this);
     }
 
     @Override

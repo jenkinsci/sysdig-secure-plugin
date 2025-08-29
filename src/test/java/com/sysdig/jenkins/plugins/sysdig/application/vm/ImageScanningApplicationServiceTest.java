@@ -63,7 +63,7 @@ class ImageScanningApplicationServiceTest {
         ScanResult result = TestMother.scanResultForUbuntu2404().toDomain().get();
         ScanResult previousImageResult = TestMother.scanResultForUbuntu2204().toDomain().get();
 
-        ScanResultDiff diff = new ScanResultDiff(previousImageResult, result);
+        ScanResultDiff diff = result.diffWithPrevious(previousImageResult);
 
         when(scanner.scanImage(matches("test-image"))).thenReturn(result);
         when(scanner.scanImage(matches("previous-image"))).thenReturn(previousImageResult);
