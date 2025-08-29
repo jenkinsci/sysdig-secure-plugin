@@ -36,12 +36,12 @@ class ImageScanningServiceTest {
         when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
 
         // When
-        EvaluationResult finalAction = service.scanAndArchiveResult(imageName);
+        ScanResult scanResult = service.scanAndArchiveResult(imageName);
 
         // Then
         verify(mockScanner).scanImage(imageName);
         verify(mockArchiver).archiveScanResult(mockResult);
-        assertEquals(EvaluationResult.Passed, finalAction);
+        assertEquals(mockResult, scanResult);
     }
 
     @Test

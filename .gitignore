@@ -33,3 +33,5 @@ work/
 
 # Nix Derivation result
 result
+/scan-logs
+/.secrets

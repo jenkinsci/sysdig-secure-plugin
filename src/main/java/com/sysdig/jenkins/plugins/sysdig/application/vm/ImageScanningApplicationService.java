@@ -15,11 +15,14 @@ limitations under the License.
 */
 package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
+import com.google.common.base.Strings;
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanningService;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.AbortException;
 import java.util.Optional;
@@ -62,7 +65,16 @@ public class ImageScanningApplicationService {
         Optional<EvaluationResult> finalAction = Optional.empty();
 
         try {
-            finalAction = Optional.ofNullable(imageScanningService.scanAndArchiveResult(config.getImageName()));
+            ScanResult scanResult = imageScanningService.scanAndArchiveResult(config.getImageName());
+            finalAction = Optional.ofNullable(scanResult.evaluationResult());
+
+            if (!Strings.isNullOrEmpty(config.getImageToCompare())) {
+                ScanResult scanResultToCompare = imageScanningService.scan(config.getImageToCompare());
+
+                ScanResultDiff diff = new ScanResultDiff(scanResultToCompare, scanResult);
+
+                this.reportStorage.saveImageDiff(diff);
+            }
         } catch (Exception e) {
             if (config.getBailOnPluginFail()) {
                 logger.logError(
