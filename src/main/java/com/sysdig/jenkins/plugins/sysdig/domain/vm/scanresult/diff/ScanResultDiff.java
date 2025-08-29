@@ -11,7 +11,7 @@ public class ScanResultDiff {
   private final List<Vulnerability> vulnerabilitiesAdded;
   private final List<Vulnerability> vulnerabilitiesFixed;
 
-  public ScanResultDiff(ScanResult oldScanResult, ScanResult newScanResult) {
+  private ScanResultDiff(ScanResult oldScanResult, ScanResult newScanResult) {
     this.vulnerabilitiesAdded = newScanResult.vulnerabilities().stream()
       .filter(vuln -> !oldScanResult.vulnerabilities().contains(vuln))
       .collect(Collectors.toList());
@@ -19,6 +19,10 @@ public class ScanResultDiff {
     this.vulnerabilitiesFixed = oldScanResult.vulnerabilities().stream()
       .filter(vuln -> !newScanResult.vulnerabilities().contains(vuln))
       .collect(Collectors.toList());
+  }
+
+  public static ScanResultDiff betweenPreviousAndNew(ScanResult oldScanResult, ScanResult newScanResult) {
+      return new ScanResultDiff(oldScanResult, newScanResult);
   }
 
   public List<Vulnerability> getVulnerabilitiesAdded() {

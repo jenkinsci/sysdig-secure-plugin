@@ -25,7 +25,7 @@ class ScanResultDiffTest {
         Vulnerability vuln4 = newScanResult.addVulnerability("CVE-2021-0003", Severity.Low, new Date(), null, false, null);
 
         // When
-        ScanResultDiff diff = new ScanResultDiff(oldScanResult, newScanResult);
+        ScanResultDiff diff = newScanResult.diffWithPrevious(oldScanResult);
 
         // Then
         assertEquals(1, diff.getVulnerabilitiesAdded().size());
