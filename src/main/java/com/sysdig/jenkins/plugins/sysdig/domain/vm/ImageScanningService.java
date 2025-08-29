@@ -40,14 +40,13 @@ public class ImageScanningService {
         this.logger = logger;
     }
 
-    public EvaluationResult scanAndArchiveResult(String imageName) throws InterruptedException {
+    public ScanResult scanAndArchiveResult(String imageName) throws InterruptedException {
         if (imageName.trim().isEmpty()) {
             throw new IllegalArgumentException("the image name to scan must not be empty");
         }
         ScanResult scanResult = scanner.scanImage(imageName);
 
-        EvaluationResult finalAction = scanResult.evaluationResult();
-        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
+        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + scanResult.evaluationResult());
 
         try {
             imageScanningArchiverService.archiveScanResult(scanResult);
@@ -55,6 +54,13 @@ public class ImageScanningService {
             logger.logError("Recording failure to build reports and moving on with plugin operation", e);
         }
 
-        return finalAction;
+        return scanResult;
+    }
+
+    public ScanResult scan(String imageName) throws InterruptedException {
+        if (imageName.trim().isEmpty()) {
+            throw new IllegalArgumentException("the image name to scan must not be empty");
+        }
+        return scanner.scanImage(imageName);
     }
 }

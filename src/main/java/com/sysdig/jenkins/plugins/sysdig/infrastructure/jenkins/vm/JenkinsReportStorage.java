@@ -22,6 +22,7 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationR
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.VulnerabilityReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
@@ -115,6 +116,12 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
             throw new AbortException(
                     "Failed to setup build results due to an unexpected error. Please refer to above logs for more information");
         }
+    }
+
+    @Override
+    public void saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException {
+        logger.logDebug("Saving image diff");
+        // TODO: implement
     }
 
     @Override

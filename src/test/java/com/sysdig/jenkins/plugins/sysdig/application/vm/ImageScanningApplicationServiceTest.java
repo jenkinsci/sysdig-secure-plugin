@@ -10,6 +10,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Metadata;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import hudson.AbortException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +52,35 @@ class ImageScanningApplicationServiceTest {
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).archiveResults(eq(result));
     }
+
+    @Test
+    void whenRunScanIsExecutedItHandlesAllScenariosAndComparesWithPreviousImage() throws Exception {
+        // Given
+        when(config.getImageName()).thenReturn("test-image");
+        when(config.getImageToCompare()).thenReturn("previous-image");
+        when(config.getBailOnPluginFail()).thenReturn(false);
+        when(config.getBailOnFail()).thenReturn(false);
+        ScanResult result = TestMother.scanResultForUbuntu2404().toDomain().get();
+        ScanResult previousImageResult = TestMother.scanResultForUbuntu2204().toDomain().get();
+
+        ScanResultDiff diff = new ScanResultDiff(previousImageResult, result);
+
+        when(scanner.scanImage(matches("test-image"))).thenReturn(result);
+        when(scanner.scanImage(matches("previous-image"))).thenReturn(previousImageResult);
+
+        // When
+        service.runScan(config);
+
+        // Then
+        verify(config).printWith(logger);
+        verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - Failed"));
+        verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
+        verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), any(PolicyEvaluationSummary.class));
+        verify(reportStorage, times(1)).saveImageDiff(eq(diff));
+    }
+
 
     @Test
     void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception {
