@@ -55,6 +55,7 @@ class ImageScanningE2EFreestyleTests {
                     b.setInlineScanExtraParams("--severity high");
                     b.setCustomCliVersion("2.0.0");
                     b.setCliVersionToApply("custom");
+                    b.setImageToCompare("alpine");
                     b.setPoliciesToApply("custom-policy-name");
                     b.setBailOnFail(false);
                     b.setBailOnPluginFail(false);
@@ -68,6 +69,7 @@ class ImageScanningE2EFreestyleTests {
         jenkins.assertLogContains("Image Name: nginx", build);
         jenkins.assertLogContains("EngineURL: https://custom-engine-url.com", build);
         jenkins.assertLogContains("EngineVerify: false", build);
+        jenkins.assertLogContains("Comparing with previous image: alpine", build);
         jenkins.assertLogContains("Policies: custom-policy-name", build);
         jenkins.assertLogContains("InlineScanExtraParams: --severity high", build);
         jenkins.assertLogContains("BailOnFail: false", build);

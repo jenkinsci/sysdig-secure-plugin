@@ -56,6 +56,7 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
     private String engineCredentialsId = "";
     private boolean engineVerify = GlobalConfiguration.DEFAULT_ENGINE_VERIFY;
     private String inlineScanExtraParams = "";
+    private String imageToCompare = "";
     private String policiesToApply = "";
     private String cliVersionToApply = "";
     private String customCliVersion = "";
@@ -91,6 +92,15 @@ public class ImageScanningBuilder extends Builder implements SimpleBuildStep {
 
     public String getPoliciesToApply() {
         return policiesToApply;
+    }
+
+    @DataBoundSetter
+    public void setImageToCompare(String imageToCompare) {
+        this.imageToCompare = imageToCompare;
+    }
+
+    public String getImageToCompare() {
+        return imageToCompare;
     }
 
     @DataBoundSetter

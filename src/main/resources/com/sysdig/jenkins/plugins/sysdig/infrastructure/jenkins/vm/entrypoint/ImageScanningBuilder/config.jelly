@@ -55,6 +55,10 @@
 
 
     <f:advanced title="Advanced Image Scanning Options">
+        <f:entry title="Previous image to compare with" field="imageToCompare">
+            <f:textbox/>
+        </f:entry>
+
         <f:entry title="Identifiers of policies to apply" field="policiesToApply">
             <f:textbox/>
         </f:entry>
@@ -69,5 +73,6 @@
                 <f:textbox name="customCliVersion" field="customCliVersion"/>
             </f:radio>
         </f:entry>
+
     </f:advanced>
 </j:jelly>
