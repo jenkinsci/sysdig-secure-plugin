@@ -32,6 +32,8 @@ public interface ImageScanningConfig {
 
     String getInlineScanExtraParams();
 
+    String getImageToCompare();
+
     String getPoliciesToApply();
 
     String getCliVersionToApply();
