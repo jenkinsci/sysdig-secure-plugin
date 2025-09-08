@@ -33,7 +33,12 @@
             jdt-language-server
             maven
             jdk
+            pre-commit
           ];
+
+          shellHook = ''
+            pre-commit install
+          '';
         };
         formatter = pkgs.nixfmt-rfc-style;
       }
