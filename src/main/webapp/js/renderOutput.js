@@ -87,9 +87,8 @@ function fixAvailableRender(source) {
   return source;
 }
 
-const newEngineColumnsToUse = ["Repo_Tag", "Stop_Actions"];
+const newEngineColumnsToUse = ["Stop_Actions"];
 const newEngineColumnsName = {
-  Repo_Tag: "Image name",
   Stop_Actions: "Rules failed",
 };
 
@@ -111,7 +110,7 @@ const getNewEnginePolicyEvalSummaryConf = (tableObj) => ({
     .map((item) => ({ ...item, title: newEngineColumnsName[item.data] })),
   columnDefs: [
     {
-      targets: 1,
+      targets: 0,
       render: (source) => `<span class="label label-danger">${source}</span>`,
     },
   ],
@@ -131,7 +130,6 @@ function buildPolicyEvalTable(tableId, outputFile) {
       );
 
       var headers = [
-        { title: "Image Name" },
         ...(hasAnyPolicyName ? [{ title: "Policy Name" }] : []),
         { title: "Rule Bundle" },
         { title: "Rule" },
@@ -140,17 +138,15 @@ function buildPolicyEvalTable(tableId, outputFile) {
       ];
 
       var rows = [];
-      const newTableLastColumn = hasAnyPolicyName ? 5 : 4;
+      const newTableLastColumn = hasAnyPolicyName ? 4 : 3;
       var lastColumn = newTableLastColumn;
 
-      jQuery.each(data, function (imageId, imageIdObj) {
+      jQuery.each(data, function (_imageId, imageIdObj) {
         imageIdObj.result.rows.forEach(function (row) {
-          const repoName = row[imageIdObj.result.header.indexOf("Repo_Tag")];
           const policyName =
             row[imageIdObj.result.header.indexOf("Policy_Name")];
           const hasPolicyName = imageIdObj.result.header.includes("Policy_Name");
           rows.push([
-            `<div>${repoName}</div>`,
             ...(hasPolicyName ? [policyName] : []),
             row[imageIdObj.result.header.indexOf("Gate")],
             row[imageIdObj.result.header.indexOf("Trigger")],
@@ -175,7 +171,7 @@ function buildPolicyEvalTable(tableId, outputFile) {
         });
       });
     })
-    .fail(function (jqXHR, textStatus, errorThrown) {
+    .fail(function () {
       var alert = jQuery(
         '<div class="alert alert-warning" role="alert"> Failed to generate view: cannot load JSON report artifact. </div>'
       );
@@ -199,7 +195,6 @@ function buildSecurityTable(tableId, outputFile) {
         jQuery("#severity_select_criteria").change(drawSecurityTable);
 
         var headersSecurityTable = [
-          { title: "Image name" },
           { title: "Vuln ID" },
           { title: "Severity" },
           { title: "Package" },
@@ -215,24 +210,24 @@ function buildSecurityTable(tableId, outputFile) {
           columns: headersSecurityTable,
           data: [],
           order: [
-            [2, "asc"],
-            [0, "asc"],
+            [1, "asc"], // Severity
+            [0, "asc"], // Vuln ID
           ],
           columnDefs: [
             {
-              targets: 2,
+              targets: 1, // Severity
               render: severity,
             },
             {
-              targets: 6,
+              targets: 5, // Publish Date
               render: dateToRelative,
             },
             {
-              targets: 7,
+              targets: 6, // Fix
               render: fixAvailableRender,
             },
             {
-              targets: 8,
+              targets: 7, // Fix Date
               render: dateToRelative,
             },
           ],
@@ -240,7 +235,7 @@ function buildSecurityTable(tableId, outputFile) {
         drawSecurityTable();
       });
     })
-    .fail(function (jqXHR, textStatus, errorThrown) {
+    .fail(function () {
       var alert = jQuery(
         '<div class="alert alert-warning" role="alert"> Failed to generate view: cannot load JSON report artifact. </div>'
       );
@@ -324,11 +319,10 @@ function drawSecurityTable() {
   var rows = [];
   var tableData = getFilteredData(vulnerabilitiesData);
   tableData.data.forEach(function (row) {
-    var vulnColumn = "";
+    let vulnColumn = "";
     const cveID = row[tableColFor("CVE ID", tableData)];
     const url = row[tableColFor("URL", tableData)];
     if (row[tableColFor("URL", tableData)].startsWith("<")) {
-      // Old versions write the report adding the <a href=...
       vulnColumn = `
         <div style="white-space: nowrap;">
           ${cveID}
@@ -346,7 +340,6 @@ function drawSecurityTable() {
     }
 
     rows.push([
-      row[tableColFor("Tag", tableData)],
       vulnColumn,
       row[tableColFor("Severity", tableData)],
       row[tableColFor("Vulnerability Package", tableData)],
@@ -358,8 +351,8 @@ function drawSecurityTable() {
     ]);
   });
   securityTable.clear().draw();
-  securityTable.rows.add(rows); // Add new data
-  securityTable.columns.adjust().draw(); // Redraw the DataTable
+  securityTable.rows.add(rows);
+  securityTable.columns.adjust().draw();
 }
 
 function download_csv() {
