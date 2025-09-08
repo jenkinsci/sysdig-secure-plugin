@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const dataSecurityTable = dataHolderDiv.getAttribute('data-security-table');
 
     if (dataGatesSummaryTable != '') {
-      buildPolicyEvalSummaryTable("#gates_summary_table", dataGatesSummaryTable);
+      buildPolicyEvalSummaryTable("#gates_summary_table", JSON.parse(dataGatesSummaryTable));
     }
 
     if (dataGatesTable != '') {

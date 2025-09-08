@@ -10,7 +10,7 @@
                     <st:include page="scripts.jelly" it="${it}"/>
                     <div class="secure-report">
                         <ul class="nav nav-pills" role="tablist" style="height: 50px;">
-                            <li role="presentation" class="active">
+                            <li role="presentation" class="active show">
                                 <a href="#gates" aria-controls="gates" role="tab" data-toggle="tab">Policy</a>
                             </li>
                             <j:set var="counter" value="0"/>
@@ -24,7 +24,7 @@
 
                         <!-- Tab panes -->
                         <div class="tab-content">
-                            <div role="tabpanel" class="tab-pane active fade in" id="gates">
+                            <div role="tabpanel" class="tab-pane active fade in show" id="gates">
                                 <j:if test="${!empty(it.gateSummary)}">
                                     <h3 class="title">Sysdig Secure Policy Evaluation Summary</h3>
                                     <div class="d-flex flex-column">

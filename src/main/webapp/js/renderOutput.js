@@ -1,5 +1,3 @@
-const isOldTable = window.legacyEngine ?? true;
-
 const actionLookup = {
   stop: 0,
   warn: 1,
@@ -18,17 +16,14 @@ const severityLookup = {
 const isSourceNoneString = (source) => {
   const isString = typeof source === "string";
   const isNone = isString && source.trim().toLowerCase() === "none";
-  return isNone
-}
+  return isNone;
+};
 
 function gateAction(source) {
   var el = `<span>${source}</span>`;
   if (
     typeof source === "string" &&
-    source
-      .trim()
-      .toLowerCase()
-      .match(/(stop|go|warn)/g)
+    source.trim().toLowerCase().match(/(stop|go|warn)/g)
   ) {
     const levelClassMap = {
       stop: "danger",
@@ -36,10 +31,10 @@ function gateAction(source) {
       warn: "warning",
     };
     const labelMap = {
-      stop: isOldTable ? source.toUpperCase() : 'Failed',
-      go: isOldTable ? source.toUpperCase() : 'Passed',
+      stop: "Failed",
+      go: "Passed",
       warn: "warning",
-    }
+    };
     const policyResult = source.trim().toLowerCase();
     el = `
       <span style="display:none;">
@@ -54,13 +49,10 @@ function gateAction(source) {
 }
 
 function severity(source) {
-  var el = `<span>${source}</span>"`;
+  var el = `<span>${source}</span>`;
   if (
     typeof source === "string" &&
-    source
-      .trim()
-      .toLowerCase()
-      .match(/(critical|high|medium|low|negligible|unknown)/g)
+    source.trim().toLowerCase().match(/(critical|high|medium|low|negligible|unknown)/g)
   ) {
     const severityClassMap = {
       critical: "danger",
@@ -70,12 +62,12 @@ function severity(source) {
       negligible: "default",
       unknown: "default",
     };
-    const severity = source.trim().toLowerCase();
+    const sev = source.trim().toLowerCase();
     el = `
       <span style="display:none;">
         ${severityLookup[source.toLowerCase()]}
       </span>
-      <span class="vuln label label-${severityClassMap[severity]}">
+      <span class="vuln label label-${severityClassMap[sev]}">
         ${source}
       </span>
     `;
@@ -86,7 +78,7 @@ function severity(source) {
 function dateToRelative(source) {
   const isNone = isSourceNoneString(source);
   if (isNone) return "";
-  return `<span style = "display:none;">${source}</span><span >${timeDifference(Date.now(),Date.parse(source))}</span>`;
+  return `<span style="display:none;">${source}</span><span>${timeDifference(Date.now(), Date.parse(source))}</span>`;
 }
 
 function fixAvailableRender(source) {
@@ -125,68 +117,43 @@ const getNewEnginePolicyEvalSummaryConf = (tableObj) => ({
   ],
 });
 
-const getOldPolicyEvalSummaryConf = (tableObj) => ({
-  retrieve: true,
-  data: tableObj.rows,
-  columns: tableObj.header,
-  order: [[4, "asc"]],
-  columnDefs: [
-    {
-      targets: 1,
-      render: (source) => `<span class="label label-danger">${source}</span>`,
-    },
-    {
-      targets: 2,
-      render: (source) => `<span class="label label-warning">${source}</span>`,
-    },
-    {
-      targets: 3,
-      render: (source) => `<span class="label label-success">${source}</span>`,
-    },
-    {
-      targets: 4,
-      render: gateAction,
-    },
-  ],
-});
-
 function buildPolicyEvalSummaryTable(tableId, tableObj) {
   jQuery(document).ready(function () {
-    const getConf = isOldTable ? getOldPolicyEvalSummaryConf : getNewEnginePolicyEvalSummaryConf;
-    jQuery(tableId).DataTable(getConf(tableObj));
+    jQuery(tableId).DataTable(getNewEnginePolicyEvalSummaryConf(tableObj));
   });
 }
 
 function buildPolicyEvalTable(tableId, outputFile) {
   jQuery
     .getJSON(outputFile, function (data) {
-      const hasAnyPolicyName = Object.values(data).some((obj) => obj.result.header.includes("Policy_Name"));
+      const hasAnyPolicyName = Object.values(data).some((obj) =>
+        obj.result.header.includes("Policy_Name")
+      );
+
       var headers = [
-        { title: isOldTable ? "Image" : "Image Name" },
+        { title: "Image Name" },
         ...(hasAnyPolicyName ? [{ title: "Policy Name" }] : []),
-        { title: isOldTable ? "Gate:Trigger" : "Rule Bundle" },
-        ...(!isOldTable ? [{ title: "Rule" }] : []),
+        { title: "Rule Bundle" },
+        { title: "Rule" },
         { title: "Output" },
-        { title: isOldTable ? "Action" : "Status" },
+        { title: "Status" },
       ];
+
       var rows = [];
-      const oldTableLastColumn = hasAnyPolicyName ? 4 : 3;
       const newTableLastColumn = hasAnyPolicyName ? 5 : 4;
-      var lastColumn = isOldTable ? oldTableLastColumn : newTableLastColumn;
+      var lastColumn = newTableLastColumn;
 
       jQuery.each(data, function (imageId, imageIdObj) {
         imageIdObj.result.rows.forEach(function (row) {
           const repoName = row[imageIdObj.result.header.indexOf("Repo_Tag")];
-          const headerImageId = row[imageIdObj.result.header.indexOf("Image_Id")];
-          const policyName = row[imageIdObj.result.header.indexOf("Policy_Name")];
+          const policyName =
+            row[imageIdObj.result.header.indexOf("Policy_Name")];
           const hasPolicyName = imageIdObj.result.header.includes("Policy_Name");
           rows.push([
-            `<div>${repoName}</div>${isOldTable ? `<div class="image-id">${headerImageId}</div>` : ""}`,
+            `<div>${repoName}</div>`,
             ...(hasPolicyName ? [policyName] : []),
-            ...(isOldTable
-              ? [`${row[imageIdObj.result.header.indexOf("Gate")]}: ${row[imageIdObj.result.header.indexOf("Trigger")]}`]
-              : [row[imageIdObj.result.header.indexOf("Gate")]]),
-            ...(!isOldTable ? [row[imageIdObj.result.header.indexOf("Trigger")]] : []),
+            row[imageIdObj.result.header.indexOf("Gate")],
+            row[imageIdObj.result.header.indexOf("Trigger")],
             row[imageIdObj.result.header.indexOf("Check_Output")],
             row[imageIdObj.result.header.indexOf("Gate_Action")],
           ]);
@@ -232,7 +199,7 @@ function buildSecurityTable(tableId, outputFile) {
         jQuery("#severity_select_criteria").change(drawSecurityTable);
 
         var headersSecurityTable = [
-          { title: isOldTable ? "Image" : "Image name" },
+          { title: "Image name" },
           { title: "Vuln ID" },
           { title: "Severity" },
           { title: "Package" },
@@ -368,7 +335,7 @@ function drawSecurityTable() {
         </div>
         <div>
          ${url}
-        </dib>
+        </div>
       `;
     } else {
       vulnColumn = `
@@ -449,36 +416,4 @@ function timeDifference(current, previous) {
   } else {
     return Math.round(elapsed / msPerYear) + " years ago";
   }
-}
-
-const getFailedPolicies = (policies) => {
-  return Object.values(policies).map((item) => {
-    return item.result.rows.reduce((failedList, curr) => {
-      const policyName = curr[curr.length -1];
-      if (!failedList.include(policyName)) {
-        failedList.push(policyName);
-      }
-      return failedList;
-    }, [])
-  }).flat();
-};
-
-function getSummaryRecap(id, vulnReportPath, policyReportPath) {
-  Promise.all([jQuery.getJSON(vulnReportPath.replace("../", "")), jQuery.getJSON(policyReportPath.replace("../", ""))])
-    .then(([vulns, policies]) => {
-      jQuery(document).ready(() => {
-        const failedPolicies = getFailedPolicies(policies);
-        const failedPoliciesLength = failedPolicies.length;
-        const vulnLength = vulns.data.length;
-        jQuery(id).html(`
-        <ul>
-          <li>${JSON.stringify(failedPoliciesLength)} ${failedPoliciesLength > 1 ? "policies" : "policy"} failed</li>
-          <li>${JSON.stringify(vulnLength)} ${vulnLength > 1 ? "vulnerabilities" : "vulnerability"} found</li>
-        </ul>
-      `);
-      });
-    })
-    .catch((errors) => {
-      jQuery(id).html('<div class="alert alert-warning" role="alert"> Failed to generate recap </div>');
-    });
 }
