@@ -25,11 +25,11 @@ public final class PolicyEvaluationSummaryLine {
     private final String finalAction;
 
     public PolicyEvaluationSummaryLine(
-        String imageTag,
-        int nonWhitelistedStopActions,
-        int nonWhitelistedWarnActions,
-        int nonWhitelistedGoActions,
-        String finalAction) {
+            String imageTag,
+            int nonWhitelistedStopActions,
+            int nonWhitelistedWarnActions,
+            int nonWhitelistedGoActions,
+            String finalAction) {
         this.imageTag = imageTag;
         this.nonWhitelistedStopActions = nonWhitelistedStopActions;
         this.nonWhitelistedWarnActions = nonWhitelistedWarnActions;
@@ -62,25 +62,26 @@ public final class PolicyEvaluationSummaryLine {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var that = (PolicyEvaluationSummaryLine) obj;
-        return Objects.equals(this.imageTag, that.imageTag) &&
-            this.nonWhitelistedStopActions == that.nonWhitelistedStopActions &&
-            this.nonWhitelistedWarnActions == that.nonWhitelistedWarnActions &&
-            this.nonWhitelistedGoActions == that.nonWhitelistedGoActions &&
-            Objects.equals(this.finalAction, that.finalAction);
+        return Objects.equals(this.imageTag, that.imageTag)
+                && this.nonWhitelistedStopActions == that.nonWhitelistedStopActions
+                && this.nonWhitelistedWarnActions == that.nonWhitelistedWarnActions
+                && this.nonWhitelistedGoActions == that.nonWhitelistedGoActions
+                && Objects.equals(this.finalAction, that.finalAction);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(imageTag, nonWhitelistedStopActions, nonWhitelistedWarnActions, nonWhitelistedGoActions, finalAction);
+        return Objects.hash(
+                imageTag, nonWhitelistedStopActions, nonWhitelistedWarnActions, nonWhitelistedGoActions, finalAction);
     }
 
     @Override
     public String toString() {
-        return "PolicyEvaluationSummaryLine[" +
-            "imageTag=" + imageTag + ", " +
-            "nonWhitelistedStopActions=" + nonWhitelistedStopActions + ", " +
-            "nonWhitelistedWarnActions=" + nonWhitelistedWarnActions + ", " +
-            "nonWhitelistedGoActions=" + nonWhitelistedGoActions + ", " +
-            "finalAction=" + finalAction + ']';
+        return "PolicyEvaluationSummaryLine[" + "imageTag="
+                + imageTag + ", " + "nonWhitelistedStopActions="
+                + nonWhitelistedStopActions + ", " + "nonWhitelistedWarnActions="
+                + nonWhitelistedWarnActions + ", " + "nonWhitelistedGoActions="
+                + nonWhitelistedGoActions + ", " + "finalAction="
+                + finalAction + ']';
     }
 }

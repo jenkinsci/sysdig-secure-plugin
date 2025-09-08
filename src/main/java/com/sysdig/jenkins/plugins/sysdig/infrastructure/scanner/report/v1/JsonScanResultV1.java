@@ -138,8 +138,9 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                     jsonRule.failures().stream().forEach(jsonFailure -> {
                         switch (jsonRule.failureType()) {
                             case "imageConfigFailure" -> rule.addImageConfigFailure(jsonFailure.remediation());
-                            case "pkgVulnFailure" -> rule.addPkgVulnFailure(
-                                    failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
+                            case "pkgVulnFailure" ->
+                                rule.addPkgVulnFailure(
+                                        failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
                             default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
                         }
                     });
