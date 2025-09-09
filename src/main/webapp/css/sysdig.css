@@ -14,6 +14,7 @@ div.image-id {
   display: flex;
   align-items: center;
   margin-bottom: 24px;
+  justify-content: space-between;
 }
 
 .flex-container {
@@ -41,24 +42,47 @@ div.image-id {
 .download-csv {
   display: flex;
   justify-content: flex-end;
+  align-self: center;
 }
 
-.vuln.label-danger {
-  background-color: #AE44C5
-}
-
-.vuln.label-warning {
-  background-color: #EE635E
-}
-
-.vuln.label-info {
-  background-color: #FA8C16
-}
-
-.vuln.label-success {
-  background-color: #F6CA09
-}
-
+.vuln.label-danger,
+.vuln.label-warning,
+.vuln.label-info,
+.vuln.label-success,
 .vuln.label-default {
-  background-color: #91A7B3
+  display: inline-block;
+  padding: .25em .6em;
+  font-size: 85%;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25rem;
+}
+
+/* Critical */
+.vuln.label-danger {
+  background-color: #bf6cd0;
+}
+
+/* High */
+.vuln.label-warning {
+  background-color: #ee635e;
+}
+
+/* Medium */
+.vuln.label-info {
+  background-color: #ffa940;
+}
+
+/* Low */
+.vuln.label-success {
+  background-color: #f6ca09;
+}
+
+/* Negligible */
+.vuln.label-default {
+  background-color: #91a7b3;
 }

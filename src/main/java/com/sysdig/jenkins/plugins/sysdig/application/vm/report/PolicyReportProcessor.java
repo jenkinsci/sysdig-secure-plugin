@@ -19,7 +19,6 @@ import com.sysdig.jenkins.plugins.sysdig.application.vm.ReportProcessor;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Policy;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -64,55 +63,5 @@ public class PolicyReportProcessor implements ReportProcessor {
         rows.forEach(result::addResult);
 
         return result;
-    }
-
-    @Override
-    public PolicyEvaluationSummary generateGatesSummary(
-            @NonNull PolicyEvaluationReport gatesJson, @NonNull ScanResult imageScanningResult) {
-        logger.logDebug("Summarizing policy evaluation results");
-        PolicyEvaluationSummary gateSummary = new PolicyEvaluationSummary();
-
-        for (var imageKey : gatesJson.getResultsForEachImage().entrySet()) {
-            int stop = 0, warn = 0, go = 0, stop_wl = 0, warn_wl = 0, go_wl = 0;
-            for (PolicyEvaluationReportLine line : imageKey.getValue()) {
-                switch (line.gateAction().toLowerCase()) {
-                    case "stop":
-                        stop++;
-                        stop_wl += line.whitelisted() ? 1 : 0;
-                        break;
-                    case "warn":
-                        warn++;
-                        warn_wl += line.whitelisted() ? 1 : 0;
-                        break;
-                    case "go":
-                        go++;
-                        go_wl += line.whitelisted() ? 1 : 0;
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            var finalAction = gatesJson.isFailed() ? "STOP" : "GO";
-            logger.logInfo(String.format(
-                    "Policy evaluation summary for %s - stop: %d (+%d whitelisted), warn: %d (+%d whitelisted), go: %d (+%d whitelisted), final: %s",
-                    imageScanningResult.metadata().pullString(),
-                    stop - stop_wl,
-                    stop_wl,
-                    warn - warn_wl,
-                    warn_wl,
-                    go - go_wl,
-                    go_wl,
-                    finalAction));
-
-            gateSummary.addSummaryLine(
-                    imageScanningResult.metadata().pullString(),
-                    (stop - stop_wl),
-                    (warn - warn_wl),
-                    (go - go_wl),
-                    finalAction);
-        }
-
-        return gateSummary;
     }
 }

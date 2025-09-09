@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
-import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationSummary;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import java.io.IOException;
 import org.junit.jupiter.api.AfterEach;
@@ -28,7 +27,6 @@ class ImageScanningArchiverTest {
 
     private ScanResult mockScanResult;
     private PolicyEvaluationReport mockPolicyResult;
-    private PolicyEvaluationSummary mockPolicySummary;
     private AutoCloseable mocks;
 
     @BeforeEach
@@ -36,11 +34,8 @@ class ImageScanningArchiverTest {
         mocks = MockitoAnnotations.openMocks(this);
         mockScanResult = mock(ScanResult.class);
         mockPolicyResult = mock(PolicyEvaluationReport.class);
-        mockPolicySummary = mock(PolicyEvaluationSummary.class);
 
         when(reportProcessor.processPolicyEvaluation(mockScanResult)).thenReturn(mockPolicyResult);
-        when(reportProcessor.generateGatesSummary(mockPolicyResult, mockScanResult))
-                .thenReturn(mockPolicySummary);
     }
 
     @AfterEach
@@ -55,7 +50,7 @@ class ImageScanningArchiverTest {
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage).saveVulnerabilityReport(mockScanResult);
         verify(reportStorage).saveRawVulnerabilityReport(mockScanResult);
-        verify(reportStorage).archiveResults(mockScanResult, mockPolicySummary);
+        verify(reportStorage).archiveResults(mockScanResult);
     }
 
     @Test
@@ -70,7 +65,7 @@ class ImageScanningArchiverTest {
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage, never()).saveVulnerabilityReport(any());
         verify(reportStorage, never()).saveRawVulnerabilityReport(any());
-        verify(reportStorage, never()).archiveResults(any(), any());
+        verify(reportStorage, never()).archiveResults(any());
     }
 
     @Test
@@ -86,7 +81,7 @@ class ImageScanningArchiverTest {
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage).saveVulnerabilityReport(mockScanResult);
         verify(reportStorage, never()).saveRawVulnerabilityReport(any());
-        verify(reportStorage, never()).archiveResults(any(), any());
+        verify(reportStorage, never()).archiveResults(any());
     }
 
     @Test
@@ -94,12 +89,9 @@ class ImageScanningArchiverTest {
         imageScanningArchiver.archiveScanResult(mockScanResult);
 
         ArgumentCaptor<PolicyEvaluationReport> reportCaptor = ArgumentCaptor.forClass(PolicyEvaluationReport.class);
-        ArgumentCaptor<PolicyEvaluationSummary> summaryCaptor = ArgumentCaptor.forClass(PolicyEvaluationSummary.class);
 
         verify(reportStorage).savePolicyReport(eq(mockScanResult), reportCaptor.capture());
         assertSame(mockPolicyResult, reportCaptor.getValue());
-
-        verify(reportStorage).archiveResults(eq(mockScanResult), summaryCaptor.capture());
-        assertSame(mockPolicySummary, summaryCaptor.getValue());
+        verify(reportStorage).archiveResults(eq(mockScanResult));
     }
 }

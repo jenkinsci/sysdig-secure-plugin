@@ -33,12 +33,10 @@ public class ImageScanningArchiver implements ScanResultArchiver {
     @Override
     public void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException {
         var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
-        var policyEvaluationSummary =
-                policyEvaluationReportProcessor.generateGatesSummary(policyEvaluationReport, scanResult);
 
         reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
         reportStorage.saveVulnerabilityReport(scanResult);
         reportStorage.saveRawVulnerabilityReport(scanResult);
-        reportStorage.archiveResults(scanResult, policyEvaluationSummary);
+        reportStorage.archiveResults(scanResult);
     }
 }

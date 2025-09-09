@@ -44,25 +44,4 @@ class PolicyReportProcessorTest {
                 "nist-sp-800-star",
                 "NIST SP 800-Star")));
     }
-
-    @Test
-    void testPolicyEvaluationSummaryIsGeneratedCorrectly() throws IOException {
-        // Given
-        var result = TestMother.scanResultForUbuntu2204();
-        var imageScanningResult = result.toDomain().get();
-        var policyEvaluationReport = policyReport.processPolicyEvaluation(imageScanningResult);
-
-        // When
-        var policyEvaluationSummary = policyReport.generateGatesSummary(policyEvaluationReport, imageScanningResult);
-
-        // Then
-        assertEquals(1, policyEvaluationSummary.getLines().size());
-
-        var policyEvaluationSummaryLine = policyEvaluationSummary.getLines().get(0);
-        assertEquals("ubuntu:22.04", policyEvaluationSummaryLine.imageTag());
-        assertEquals(20, policyEvaluationSummaryLine.nonWhitelistedStopActions());
-        assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedWarnActions());
-        assertEquals(0, policyEvaluationSummaryLine.nonWhitelistedGoActions());
-        assertEquals("STOP", policyEvaluationSummaryLine.finalAction());
-    }
 }

@@ -1,5 +1,3 @@
-const isOldTable = window.legacyEngine ?? true;
-
 const actionLookup = {
   stop: 0,
   warn: 1,
@@ -18,17 +16,14 @@ const severityLookup = {
 const isSourceNoneString = (source) => {
   const isString = typeof source === "string";
   const isNone = isString && source.trim().toLowerCase() === "none";
-  return isNone
-}
+  return isNone;
+};
 
 function gateAction(source) {
   var el = `<span>${source}</span>`;
   if (
     typeof source === "string" &&
-    source
-      .trim()
-      .toLowerCase()
-      .match(/(stop|go|warn)/g)
+    source.trim().toLowerCase().match(/(stop|go|warn)/g)
   ) {
     const levelClassMap = {
       stop: "danger",
@@ -36,10 +31,10 @@ function gateAction(source) {
       warn: "warning",
     };
     const labelMap = {
-      stop: isOldTable ? source.toUpperCase() : 'Failed',
-      go: isOldTable ? source.toUpperCase() : 'Passed',
+      stop: "Failed",
+      go: "Passed",
       warn: "warning",
-    }
+    };
     const policyResult = source.trim().toLowerCase();
     el = `
       <span style="display:none;">
@@ -54,13 +49,10 @@ function gateAction(source) {
 }
 
 function severity(source) {
-  var el = `<span>${source}</span>"`;
+  var el = `<span>${source}</span>`;
   if (
     typeof source === "string" &&
-    source
-      .trim()
-      .toLowerCase()
-      .match(/(critical|high|medium|low|negligible|unknown)/g)
+    source.trim().toLowerCase().match(/(critical|high|medium|low|negligible|unknown)/g)
   ) {
     const severityClassMap = {
       critical: "danger",
@@ -70,12 +62,12 @@ function severity(source) {
       negligible: "default",
       unknown: "default",
     };
-    const severity = source.trim().toLowerCase();
+    const sev = source.trim().toLowerCase();
     el = `
       <span style="display:none;">
         ${severityLookup[source.toLowerCase()]}
       </span>
-      <span class="vuln label label-${severityClassMap[severity]}">
+      <span class="vuln label label-${severityClassMap[sev]}">
         ${source}
       </span>
     `;
@@ -86,7 +78,7 @@ function severity(source) {
 function dateToRelative(source) {
   const isNone = isSourceNoneString(source);
   if (isNone) return "";
-  return `<span style = "display:none;">${source}</span><span >${timeDifference(Date.now(),Date.parse(source))}</span>`;
+  return `<span style="display:none;">${source}</span><span>${timeDifference(Date.now(), Date.parse(source))}</span>`;
 }
 
 function fixAvailableRender(source) {
@@ -95,9 +87,8 @@ function fixAvailableRender(source) {
   return source;
 }
 
-const newEngineColumnsToUse = ["Repo_Tag", "Stop_Actions"];
+const newEngineColumnsToUse = ["Stop_Actions"];
 const newEngineColumnsName = {
-  Repo_Tag: "Image name",
   Stop_Actions: "Rules failed",
 };
 
@@ -119,74 +110,46 @@ const getNewEnginePolicyEvalSummaryConf = (tableObj) => ({
     .map((item) => ({ ...item, title: newEngineColumnsName[item.data] })),
   columnDefs: [
     {
-      targets: 1,
+      targets: 0,
       render: (source) => `<span class="label label-danger">${source}</span>`,
-    },
-  ],
-});
-
-const getOldPolicyEvalSummaryConf = (tableObj) => ({
-  retrieve: true,
-  data: tableObj.rows,
-  columns: tableObj.header,
-  order: [[4, "asc"]],
-  columnDefs: [
-    {
-      targets: 1,
-      render: (source) => `<span class="label label-danger">${source}</span>`,
-    },
-    {
-      targets: 2,
-      render: (source) => `<span class="label label-warning">${source}</span>`,
-    },
-    {
-      targets: 3,
-      render: (source) => `<span class="label label-success">${source}</span>`,
-    },
-    {
-      targets: 4,
-      render: gateAction,
     },
   ],
 });
 
 function buildPolicyEvalSummaryTable(tableId, tableObj) {
   jQuery(document).ready(function () {
-    const getConf = isOldTable ? getOldPolicyEvalSummaryConf : getNewEnginePolicyEvalSummaryConf;
-    jQuery(tableId).DataTable(getConf(tableObj));
+    jQuery(tableId).DataTable(getNewEnginePolicyEvalSummaryConf(tableObj));
   });
 }
 
 function buildPolicyEvalTable(tableId, outputFile) {
   jQuery
     .getJSON(outputFile, function (data) {
-      const hasAnyPolicyName = Object.values(data).some((obj) => obj.result.header.includes("Policy_Name"));
-      var headers = [
-        { title: isOldTable ? "Image" : "Image Name" },
-        ...(hasAnyPolicyName ? [{ title: "Policy Name" }] : []),
-        { title: isOldTable ? "Gate:Trigger" : "Rule Bundle" },
-        ...(!isOldTable ? [{ title: "Rule" }] : []),
-        { title: "Output" },
-        { title: isOldTable ? "Action" : "Status" },
-      ];
-      var rows = [];
-      const oldTableLastColumn = hasAnyPolicyName ? 4 : 3;
-      const newTableLastColumn = hasAnyPolicyName ? 5 : 4;
-      var lastColumn = isOldTable ? oldTableLastColumn : newTableLastColumn;
+      const hasAnyPolicyName = Object.values(data).some((obj) =>
+        obj.result.header.includes("Policy_Name")
+      );
 
-      jQuery.each(data, function (imageId, imageIdObj) {
+      var headers = [
+        ...(hasAnyPolicyName ? [{ title: "Policy Name" }] : []),
+        { title: "Rule Bundle" },
+        { title: "Rule" },
+        { title: "Output" },
+        { title: "Status" },
+      ];
+
+      var rows = [];
+      const newTableLastColumn = hasAnyPolicyName ? 4 : 3;
+      var lastColumn = newTableLastColumn;
+
+      jQuery.each(data, function (_imageId, imageIdObj) {
         imageIdObj.result.rows.forEach(function (row) {
-          const repoName = row[imageIdObj.result.header.indexOf("Repo_Tag")];
-          const headerImageId = row[imageIdObj.result.header.indexOf("Image_Id")];
-          const policyName = row[imageIdObj.result.header.indexOf("Policy_Name")];
+          const policyName =
+            row[imageIdObj.result.header.indexOf("Policy_Name")];
           const hasPolicyName = imageIdObj.result.header.includes("Policy_Name");
           rows.push([
-            `<div>${repoName}</div>${isOldTable ? `<div class="image-id">${headerImageId}</div>` : ""}`,
             ...(hasPolicyName ? [policyName] : []),
-            ...(isOldTable
-              ? [`${row[imageIdObj.result.header.indexOf("Gate")]}: ${row[imageIdObj.result.header.indexOf("Trigger")]}`]
-              : [row[imageIdObj.result.header.indexOf("Gate")]]),
-            ...(!isOldTable ? [row[imageIdObj.result.header.indexOf("Trigger")]] : []),
+            row[imageIdObj.result.header.indexOf("Gate")],
+            row[imageIdObj.result.header.indexOf("Trigger")],
             row[imageIdObj.result.header.indexOf("Check_Output")],
             row[imageIdObj.result.header.indexOf("Gate_Action")],
           ]);
@@ -208,7 +171,7 @@ function buildPolicyEvalTable(tableId, outputFile) {
         });
       });
     })
-    .fail(function (jqXHR, textStatus, errorThrown) {
+    .fail(function () {
       var alert = jQuery(
         '<div class="alert alert-warning" role="alert"> Failed to generate view: cannot load JSON report artifact. </div>'
       );
@@ -227,12 +190,25 @@ function buildSecurityTable(tableId, outputFile) {
     })
     .done(function () {
       jQuery(document).ready(function () {
-        jQuery("#fix_select").change(drawSecurityTable);
+        jQuery("#fix_button").click(function() {
+            var button = jQuery(this);
+            var isChecked = button.attr('data-checked') === 'true';
+            var newState = !isChecked;
+            button.attr('data-checked', newState);
+            button.toggleClass('btn-primary', newState);
+            if (newState) {
+                button.css('background-color', '#337ab7');
+                button.find('svg').css('color', '#fff');
+            } else {
+                button.css('background-color', '#fff');
+                button.find('svg').css('color', '#666');
+            }
+            drawSecurityTable();
+        });
         jQuery("#severity_select").change(drawSecurityTable);
         jQuery("#severity_select_criteria").change(drawSecurityTable);
 
         var headersSecurityTable = [
-          { title: isOldTable ? "Image" : "Image name" },
           { title: "Vuln ID" },
           { title: "Severity" },
           { title: "Package" },
@@ -248,24 +224,24 @@ function buildSecurityTable(tableId, outputFile) {
           columns: headersSecurityTable,
           data: [],
           order: [
-            [2, "asc"],
-            [0, "asc"],
+            [1, "asc"], // Severity
+            [0, "asc"], // Vuln ID
           ],
           columnDefs: [
             {
-              targets: 2,
+              targets: 1, // Severity
               render: severity,
             },
             {
-              targets: 6,
+              targets: 5, // Publish Date
               render: dateToRelative,
             },
             {
-              targets: 7,
+              targets: 6, // Fix
               render: fixAvailableRender,
             },
             {
-              targets: 8,
+              targets: 7, // Fix Date
               render: dateToRelative,
             },
           ],
@@ -273,7 +249,7 @@ function buildSecurityTable(tableId, outputFile) {
         drawSecurityTable();
       });
     })
-    .fail(function (jqXHR, textStatus, errorThrown) {
+    .fail(function () {
       var alert = jQuery(
         '<div class="alert alert-warning" role="alert"> Failed to generate view: cannot load JSON report artifact. </div>'
       );
@@ -290,26 +266,17 @@ function tableColFor(title, tableId) {
 function getFilteredData(totalData) {
   var filteredData = { columns: [], data: [] };
   totalData.data.forEach(function (row) {
-    var selectFix = jQuery("#fix_select");
+    var fixButton = jQuery("#fix_button");
     var select = jQuery("#severity_select");
     var selectCriteria = jQuery("#severity_select_criteria");
     var addRow = true;
 
-    if (selectFix) {
-      switch (selectFix.val()) {
-        case "Available": {
-          if (row[tableColFor("Fix Available", totalData)] == "None") {
+    var hasFixFilter = fixButton.attr('data-checked') === 'true';
+
+    if (hasFixFilter) {
+        if (row[tableColFor("Fix Available", totalData)] == "None") {
             addRow = false;
-          }
-          break;
         }
-        case "None": {
-          if (row[tableColFor("Fix Available", totalData)] != "None") {
-            addRow = false;
-          }
-          break;
-        }
-      }
     }
 
     if (select.val()) {
@@ -357,29 +324,37 @@ function drawSecurityTable() {
   var rows = [];
   var tableData = getFilteredData(vulnerabilitiesData);
   tableData.data.forEach(function (row) {
-    var vulnColumn = "";
     const cveID = row[tableColFor("CVE ID", tableData)];
     const url = row[tableColFor("URL", tableData)];
-    if (row[tableColFor("URL", tableData)].startsWith("<")) {
-      // Old versions write the report adding the <a href=...
+    let vulnColumn;
+
+    if (url && url.startsWith("<")) {
       vulnColumn = `
         <div style="white-space: nowrap;">
           ${cveID}
         </div>
         <div>
          ${url}
-        </dib>
+        </div>
       `;
     } else {
-      vulnColumn = `
-        <a style="white-space: nowrap;" href="${url}">
-          ${cveID}
-        </a>
-      `;
+      let linkUrl = url;
+      if (cveID && cveID.startsWith("CVE-")) {
+        linkUrl = `https://nvd.nist.gov/vuln/detail/${cveID}`;
+      }
+
+      if (linkUrl) {
+        vulnColumn = `
+          <a style="white-space: nowrap;" href="${linkUrl}" target="_blank" rel="noopener noreferrer">
+            ${cveID}
+          </a>
+        `;
+      } else {
+        vulnColumn = cveID || "";
+      }
     }
 
     rows.push([
-      row[tableColFor("Tag", tableData)],
       vulnColumn,
       row[tableColFor("Severity", tableData)],
       row[tableColFor("Vulnerability Package", tableData)],
@@ -391,8 +366,8 @@ function drawSecurityTable() {
     ]);
   });
   securityTable.clear().draw();
-  securityTable.rows.add(rows); // Add new data
-  securityTable.columns.adjust().draw(); // Redraw the DataTable
+  securityTable.rows.add(rows);
+  securityTable.columns.adjust().draw();
 }
 
 function download_csv() {
@@ -449,36 +424,4 @@ function timeDifference(current, previous) {
   } else {
     return Math.round(elapsed / msPerYear) + " years ago";
   }
-}
-
-const getFailedPolicies = (policies) => {
-  return Object.values(policies).map((item) => {
-    return item.result.rows.reduce((failedList, curr) => {
-      const policyName = curr[curr.length -1];
-      if (!failedList.include(policyName)) {
-        failedList.push(policyName);
-      }
-      return failedList;
-    }, [])
-  }).flat();
-};
-
-function getSummaryRecap(id, vulnReportPath, policyReportPath) {
-  Promise.all([jQuery.getJSON(vulnReportPath.replace("../", "")), jQuery.getJSON(policyReportPath.replace("../", ""))])
-    .then(([vulns, policies]) => {
-      jQuery(document).ready(() => {
-        const failedPolicies = getFailedPolicies(policies);
-        const failedPoliciesLength = failedPolicies.length;
-        const vulnLength = vulns.data.length;
-        jQuery(id).html(`
-        <ul>
-          <li>${JSON.stringify(failedPoliciesLength)} ${failedPoliciesLength > 1 ? "policies" : "policy"} failed</li>
-          <li>${JSON.stringify(vulnLength)} ${vulnLength > 1 ? "vulnerabilities" : "vulnerability"} found</li>
-        </ul>
-      `);
-      });
-    })
-    .catch((errors) => {
-      jQuery(id).html('<div class="alert alert-warning" role="alert"> Failed to generate recap </div>');
-    });
 }

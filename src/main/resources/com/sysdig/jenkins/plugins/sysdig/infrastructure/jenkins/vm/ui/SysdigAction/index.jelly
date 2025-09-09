@@ -1,6 +1,6 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
-         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout"
+>
     <l:layout norefresh="true">
         <st:include it="${it.build}" page="sidepanel.jelly"/>
 
@@ -9,31 +9,20 @@
                 <j:when test="${!empty(it.gateOutputUrl)}">
                     <st:include page="scripts.jelly" it="${it}"/>
                     <div class="secure-report">
-                        <ul class="nav nav-pills" role="tablist" style="height: 50px;">
-                            <li role="presentation" class="active">
-                                <a href="#gates" aria-controls="gates" role="tab" data-toggle="tab">Policy</a>
-                            </li>
-                            <j:set var="counter" value="0"/>
+                        <div class="tabBar">
+                            <div class="tab active">
+                                <a href="#gates">Policy</a>
+                            </div>
                             <j:if test="${!empty(it.cveListingUrl)}">
-                                <li role="presentation">
-                                    <a href="#security" aria-controls="security" role="tab" data-toggle="tab">Security
-                                    </a>
-                                </li>
+                                <div class="tab">
+                                    <a href="#security">Security</a>
+                                </div>
                             </j:if>
-                        </ul>
+                        </div>
 
                         <!-- Tab panes -->
                         <div class="tab-content">
-                            <div role="tabpanel" class="tab-pane active fade in" id="gates">
-                                <j:if test="${!empty(it.gateSummary)}">
-                                    <h3 class="title">Sysdig Secure Policy Evaluation Summary</h3>
-                                    <div class="d-flex flex-column">
-                                        <table id="gates_summary_table"
-                                               class="table table-striped table-bordered dataTable no-footer"
-                                               style="width: 100%;"></table>
-                                    </div>
-                                </j:if>
-
+                            <div role="tabpanel" class="tab-pane active fade in show" id="gates">
                                 <h3 class="title">Sysdig Secure Policy Evaluation Report</h3>
                                 <table id="gates_table" class="table table-striped table-bordered dataTable no-footer"
                                        style="width: 100%;"></table>
@@ -45,49 +34,54 @@
                                     <div class="d-flex flex-column">
                                         <div class="row">
                                             <div class="col-sm-11 filter-bar dataTables_wrapper">
-                                                <div class="flex-container dataTables_length">
-                                                    <label for="fix_select">Fix</label>
-                                                    <select
-                                                        name="fix_select"
-                                                        class="form-control input-sm select-field"
-                                                        id="fix_select"
-                                                        style="width: auto;"
-                                                    >
-                                                        >
-                                                        <option></option>
-                                                        <option value="Available">Available</option>
-                                                        <option value="None">Not Available</option>
-                                                    </select>
-                                                </div>
-                                                <div class="flex-container dataTables_length">
-                                                    <label for="severity_select">Severity
-                                                    </label
-                                                    >
-                                                    <select
-                                                        name="severity_select_criteria"
-                                                        id="severity_select_criteria"
-                                                        class="form-control input-sm select-field"
-                                                        style="width: auto;"
-                                                    >
-                                                        <option value="geq">&gt;=</option>
-                                                        <option value="eq">=</option>
-                                                        <option value="leq">&lt;=</option>
-                                                    </select>
-                                                    <select
-                                                        name="severity_select"
-                                                        id="severity_select"
-                                                        class="form-control input-sm"
-                                                        style="width: auto;"
-                                                    >
-                                                        <option></option>
-                                                        <option value="Critical">Critical</option>
-                                                        <option value="High">High</option>
-                                                        <option value="Medium">Medium</option>
-                                                        <option value="Low">Low</option>
-                                                        <option value="Negligible">Negligible</option>
-                                                        <option value="Unknown">Unknown</option>
-                                                    </select>
-                                                </div>
+                                                <fieldset class="filter-group">
+                                                    <legend>Filters</legend>
+                                                    <div class="d-flex">
+                                                        <div class="flex-container dataTables_length">
+                                                            <button type="button" id="fix_button"
+                                                                    data-test="filter-button-hasFix" class="btn btn-default"
+                                                                    data-checked="false"
+                                                                    title="Click to show only vulnerabilities with an available fix"
+                                                                    style="border-color: #ccc; background-color: #fff;">
+                                                                <svg width="1em" height="1em" viewBox="0 0 16 16"
+                                                                     data-test="wrench-tool-adjust-fix-fixable-icon"
+                                                                     aria-hidden="true" focusable="false"
+                                                                     style="color: #666">
+                                                                    <path fill-rule="evenodd"
+                                                                          d="M9.088 1.385a4.259 4.259 0 012.356-.165 1.308 1.308 0 01.827.74.572.572 0 01-.122.628L10.21 4.526a.399.399 0 00-.009.547l.72.644.031.03a.398.398 0 00.574 0l.008-.008 1.94-1.94a.571.571 0 01.703-.084 1.31 1.31 0 01.602.876 4.268 4.268 0 01-5.457 4.882l-5.01 4.957a1.543 1.543 0 01-2.154.015l-.543-.522a1.543 1.543 0 01-.022-2.201l4.94-4.941a4.258 4.258 0 012.554-5.396zm1.753.895a3.116 3.116 0 00-3.118 4.4.57.57 0 01-.115.642L2.403 12.53a.4.4 0 00.005.57m0 0l.543.521a.4.4 0 00.558-.004l5.267-5.21a.571.571 0 01.62-.122 3.125 3.125 0 004.311-3.102l-1.36 1.36a1.541 1.541 0 01-2.2.013l-.724-.647a1.542 1.542 0 01-.027-2.184L9.4 3.72l1.441-1.441"
+                                                                          clip-rule="evenodd" fill="currentColor"></path>
+                                                                </svg>
+                                                                <span>Has Fix</span>
+                                                            </button>
+                                                        </div>
+                                                        <div class="flex-container dataTables_length">
+                                                            <label for="severity_select">Severity</label>
+                                                            <select
+                                                                name="severity_select_criteria"
+                                                                id="severity_select_criteria"
+                                                                class="form-control input-sm select-field"
+                                                                style="width: auto;">
+                                                                <option value="geq">&gt;=</option>
+                                                                <option value="eq">=</option>
+                                                                <option value="leq">&lt;=</option>
+                                                            </select>
+                                                            <select
+                                                                name="severity_select"
+                                                                id="severity_select"
+                                                                class="form-control input-sm"
+                                                                style="width: auto;"
+                                                            >
+                                                                <option></option>
+                                                                <option value="Critical">Critical</option>
+                                                                <option value="High">High</option>
+                                                                <option value="Medium">Medium</option>
+                                                                <option value="Low">Low</option>
+                                                                <option value="Negligible">Negligible</option>
+                                                                <option value="Unknown">Unknown</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </fieldset>
                                             </div>
                                             <div class="col-sm-1 download-csv">
                                                 <button class="btn btn-primary" onclick="download_csv()">
@@ -107,11 +101,11 @@
                                     that will retrieve the contents of the div, and execute the script on DOMContentLoaded
                                  -->
                                 <div id="index-data-holder"
-                                     data-gates-summary-table="${it.gateSummary}"
                                      data-gates-table="${it.gateOutputUrl}"
                                      data-security-table="${it.cveListingUrl}"
                                 />
-                                <st:adjunct includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction.index-script" />
+                                <st:adjunct
+                                    includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction.index-script"/>
                             </j:if>
                         </div>
                     </div>
