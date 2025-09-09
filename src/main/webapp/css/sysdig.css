@@ -14,6 +14,7 @@ div.image-id {
   display: flex;
   align-items: center;
   margin-bottom: 24px;
+  justify-content: space-between;
 }
 
 .flex-container {
@@ -41,6 +42,7 @@ div.image-id {
 .download-csv {
   display: flex;
   justify-content: flex-end;
+  align-self: center;
 }
 
 .vuln.label-danger,
