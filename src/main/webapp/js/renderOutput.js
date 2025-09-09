@@ -319,10 +319,11 @@ function drawSecurityTable() {
   var rows = [];
   var tableData = getFilteredData(vulnerabilitiesData);
   tableData.data.forEach(function (row) {
-    let vulnColumn = "";
     const cveID = row[tableColFor("CVE ID", tableData)];
     const url = row[tableColFor("URL", tableData)];
-    if (row[tableColFor("URL", tableData)].startsWith("<")) {
+    let vulnColumn;
+
+    if (url && url.startsWith("<")) {
       vulnColumn = `
         <div style="white-space: nowrap;">
           ${cveID}
@@ -332,11 +333,20 @@ function drawSecurityTable() {
         </div>
       `;
     } else {
-      vulnColumn = `
-        <a style="white-space: nowrap;" href="${url}">
-          ${cveID}
-        </a>
-      `;
+      let linkUrl = url;
+      if (cveID && cveID.startsWith("CVE-")) {
+        linkUrl = `https://nvd.nist.gov/vuln/detail/${cveID}`;
+      }
+
+      if (linkUrl) {
+        vulnColumn = `
+          <a style="white-space: nowrap;" href="${linkUrl}" target="_blank" rel="noopener noreferrer">
+            ${cveID}
+          </a>
+        `;
+      } else {
+        vulnColumn = cveID || "";
+      }
     }
 
     rows.push([
