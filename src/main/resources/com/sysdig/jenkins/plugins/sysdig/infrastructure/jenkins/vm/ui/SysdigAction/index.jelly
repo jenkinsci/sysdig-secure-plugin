@@ -23,15 +23,6 @@
                         <!-- Tab panes -->
                         <div class="tab-content">
                             <div role="tabpanel" class="tab-pane active fade in show" id="gates">
-                                <j:if test="${!empty(it.gateSummary)}">
-                                    <h3 class="title">Sysdig Secure Policy Evaluation Summary</h3>
-                                    <div class="d-flex flex-column">
-                                        <table id="gates_summary_table"
-                                               class="table table-striped table-bordered dataTable no-footer"
-                                               style="width: 100%;"></table>
-                                    </div>
-                                </j:if>
-
                                 <h3 class="title">Sysdig Secure Policy Evaluation Report</h3>
                                 <table id="gates_table" class="table table-striped table-bordered dataTable no-footer"
                                        style="width: 100%;"></table>
@@ -110,7 +101,6 @@
                                     that will retrieve the contents of the div, and execute the script on DOMContentLoaded
                                  -->
                                 <div id="index-data-holder"
-                                     data-gates-summary-table="${it.gateSummary}"
                                      data-gates-table="${it.gateOutputUrl}"
                                      data-security-table="${it.cveListingUrl}"
                                 />
