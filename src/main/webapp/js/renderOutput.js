@@ -190,7 +190,21 @@ function buildSecurityTable(tableId, outputFile) {
     })
     .done(function () {
       jQuery(document).ready(function () {
-        jQuery("#fix_select").change(drawSecurityTable);
+        jQuery("#fix_button").click(function() {
+            var button = jQuery(this);
+            var isChecked = button.attr('data-checked') === 'true';
+            var newState = !isChecked;
+            button.attr('data-checked', newState);
+            button.toggleClass('btn-primary', newState);
+            if (newState) {
+                button.css('background-color', '#337ab7');
+                button.find('svg').css('color', '#fff');
+            } else {
+                button.css('background-color', '#fff');
+                button.find('svg').css('color', '#666');
+            }
+            drawSecurityTable();
+        });
         jQuery("#severity_select").change(drawSecurityTable);
         jQuery("#severity_select_criteria").change(drawSecurityTable);
 
@@ -252,26 +266,17 @@ function tableColFor(title, tableId) {
 function getFilteredData(totalData) {
   var filteredData = { columns: [], data: [] };
   totalData.data.forEach(function (row) {
-    var selectFix = jQuery("#fix_select");
+    var fixButton = jQuery("#fix_button");
     var select = jQuery("#severity_select");
     var selectCriteria = jQuery("#severity_select_criteria");
     var addRow = true;
 
-    if (selectFix) {
-      switch (selectFix.val()) {
-        case "Available": {
-          if (row[tableColFor("Fix Available", totalData)] == "None") {
+    var hasFixFilter = fixButton.attr('data-checked') === 'true';
+
+    if (hasFixFilter) {
+        if (row[tableColFor("Fix Available", totalData)] == "None") {
             addRow = false;
-          }
-          break;
         }
-        case "None": {
-          if (row[tableColFor("Fix Available", totalData)] != "None") {
-            addRow = false;
-          }
-          break;
-        }
-      }
     }
 
     if (select.val()) {
