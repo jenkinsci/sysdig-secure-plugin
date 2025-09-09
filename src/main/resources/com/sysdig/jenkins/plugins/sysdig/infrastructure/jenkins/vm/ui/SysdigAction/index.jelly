@@ -9,18 +9,16 @@
                 <j:when test="${!empty(it.gateOutputUrl)}">
                     <st:include page="scripts.jelly" it="${it}"/>
                     <div class="secure-report">
-                        <ul class="nav nav-pills" role="tablist" style="height: 50px;">
-                            <li role="presentation" class="active show">
-                                <a href="#gates" aria-controls="gates" role="tab" data-toggle="tab">Policy</a>
-                            </li>
-                            <j:set var="counter" value="0"/>
+                        <div class="tabBar">
+                            <div class="tab active">
+                                <a href="#gates">Policy</a>
+                            </div>
                             <j:if test="${!empty(it.cveListingUrl)}">
-                                <li role="presentation">
-                                    <a href="#security" aria-controls="security" role="tab" data-toggle="tab">Security
-                                    </a>
-                                </li>
+                                <div class="tab">
+                                    <a href="#security">Security</a>
+                                </div>
                             </j:if>
-                        </ul>
+                        </div>
 
                         <!-- Tab panes -->
                         <div class="tab-content">

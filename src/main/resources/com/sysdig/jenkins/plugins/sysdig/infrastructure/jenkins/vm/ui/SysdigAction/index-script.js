@@ -1,4 +1,31 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // Tab switching logic
+    const tabs = document.querySelectorAll('.tabBar .tab a');
+    const tabPanes = document.querySelectorAll('.tab-content .tab-pane');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Deactivate all tabs and panes
+            tabs.forEach(t => t.parentElement.classList.remove('active'));
+            tabPanes.forEach(p => {
+                p.classList.remove('active');
+                p.classList.remove('show');
+            });
+
+            // Activate clicked tab and corresponding pane
+            const tabPaneId = this.getAttribute('href');
+            const activePane = document.querySelector(tabPaneId);
+            this.parentElement.classList.add('active');
+            if (activePane) {
+                activePane.classList.add('active');
+                activePane.classList.add('show');
+            }
+        });
+    });
+
+
     const dataHolderDiv = document.getElementById('index-data-holder');
     if (!dataHolderDiv) {
       return;
