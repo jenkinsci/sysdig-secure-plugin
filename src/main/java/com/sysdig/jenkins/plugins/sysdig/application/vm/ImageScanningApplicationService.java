@@ -65,7 +65,7 @@ public class ImageScanningApplicationService {
         Optional<EvaluationResult> finalAction = Optional.empty();
 
         try {
-            ScanResult scanResult = imageScanningService.scanAndArchiveResult(config.getImageName());
+            ScanResult scanResult = imageScanningService.scan(config.getImageName());
             finalAction = Optional.ofNullable(scanResult.evaluationResult());
 
             if (!Strings.isNullOrEmpty(config.getImageToCompare())) {
@@ -74,6 +74,9 @@ public class ImageScanningApplicationService {
                 ScanResultDiff diff = scanResult.diffWithPrevious(scanResultToCompare);
 
                 this.reportStorage.saveImageDiff(diff);
+                imageScanningArchiver.archiveScanResult(scanResult, diff);
+            } else {
+                imageScanningArchiver.archiveScanResult(scanResult, null);
             }
         } catch (Exception e) {
             if (config.getBailOnPluginFail()) {

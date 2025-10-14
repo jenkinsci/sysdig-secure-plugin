@@ -1,7 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
-
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;

@@ -46,11 +46,13 @@ class ImageScanningApplicationServiceTest {
 
         // Then
         verify(config).printWith(logger);
-        verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - Failed"));
+        verify(logger)
+                .logInfo(contains(
+                        "Marking Sysdig Secure Container Image Scanner step as successful, final result Failed"));
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), isNull());
     }
 
     @Test
@@ -61,7 +63,8 @@ class ImageScanningApplicationServiceTest {
         when(config.getBailOnPluginFail()).thenReturn(false);
         when(config.getBailOnFail()).thenReturn(false);
         ScanResult result = TestMother.scanResultForUbuntu2404().toDomain().get();
-        ScanResult previousImageResult = TestMother.scanResultForUbuntu2204().toDomain().get();
+        ScanResult previousImageResult =
+                TestMother.scanResultForUbuntu2204().toDomain().get();
 
         ScanResultDiff diff = result.diffWithPrevious(previousImageResult);
 
@@ -73,14 +76,15 @@ class ImageScanningApplicationServiceTest {
 
         // Then
         verify(config).printWith(logger);
-        verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - Failed"));
+        verify(logger)
+                .logInfo(contains(
+                        "Marking Sysdig Secure Container Image Scanner step as successful, final result Failed"));
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result), any(PolicyEvaluationSummary.class));
+        verify(reportStorage, times(1)).archiveResults(eq(result), eq(diff));
         verify(reportStorage, times(1)).saveImageDiff(eq(diff));
     }
-
 
     @Test
     void whenFinalActionIsFailAndBailOnFailIsTrueItThrowsAbortExceptionAndHandlesArchiving() throws Exception {
@@ -97,7 +101,7 @@ class ImageScanningApplicationServiceTest {
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), any());
     }
 
     @Test

@@ -425,3 +425,94 @@ function timeDifference(current, previous) {
     return Math.round(elapsed / msPerYear) + " years ago";
   }
 }
+
+function buildDiffTable(addedTableId, fixedTableId, outputFile) {
+  jQuery
+    .getJSON(outputFile, function (data) {
+      var headers = [
+        { title: "CVE" },
+        { title: "Severity" },
+        { title: "Package Name" },
+        { title: "Package Version" },
+        { title: "Package Type" },
+        { title: "Fix Version" },
+        { title: "Exploitable" },
+      ];
+
+      // Build Added Vulnerabilities Table
+      var addedRows = [];
+      if (data.vulnerabilitiesAdded) {
+        data.vulnerabilitiesAdded.forEach(function (vuln) {
+          var cveLink = vuln.cve.startsWith("CVE-")
+            ? `<a href="https://nvd.nist.gov/vuln/detail/${vuln.cve}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
+            : vuln.cve;
+          addedRows.push([
+            cveLink,
+            vuln.severity || "",
+            vuln.packageName || "N/A",
+            vuln.packageVersion || "N/A",
+            vuln.packageType || "N/A",
+            vuln.fixVersion || "N/A",
+            vuln.exploitable ? "Yes" : "No",
+          ]);
+        });
+      }
+
+      // Build Fixed Vulnerabilities Table
+      var fixedRows = [];
+      if (data.vulnerabilitiesFixed) {
+        data.vulnerabilitiesFixed.forEach(function (vuln) {
+          var cveLink = vuln.cve.startsWith("CVE-")
+            ? `<a href="https://nvd.nist.gov/vuln/detail/${vuln.cve}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
+            : vuln.cve;
+          fixedRows.push([
+            cveLink,
+            vuln.severity || "",
+            vuln.packageName || "N/A",
+            vuln.packageVersion || "N/A",
+            vuln.packageType || "N/A",
+            vuln.fixVersion || "N/A",
+            vuln.exploitable ? "Yes" : "No",
+          ]);
+        });
+      }
+
+      jQuery(document).ready(function () {
+        // Initialize Added Vulnerabilities Table
+        jQuery(addedTableId).DataTable({
+          retrieve: true,
+          data: addedRows,
+          columns: headers,
+          order: [[1, "asc"]], // Sort by severity
+          columnDefs: [
+            {
+              targets: 1, // Severity column
+              render: severity,
+            },
+          ],
+        });
+
+        // Initialize Fixed Vulnerabilities Table
+        jQuery(fixedTableId).DataTable({
+          retrieve: true,
+          data: fixedRows,
+          columns: headers,
+          order: [[1, "asc"]], // Sort by severity
+          columnDefs: [
+            {
+              targets: 1, // Severity column
+              render: severity,
+            },
+          ],
+        });
+      });
+    })
+    .fail(function () {
+      var alert = jQuery(
+        '<div class="alert alert-warning" role="alert"> Failed to generate view: cannot load diff JSON report artifact. </div>'
+      );
+      jQuery(addedTableId).parent().append(alert);
+      jQuery(addedTableId).remove();
+      jQuery(fixedTableId).remove();
+    });
+}

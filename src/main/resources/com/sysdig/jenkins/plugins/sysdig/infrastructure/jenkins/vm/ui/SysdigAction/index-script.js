@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const dataGatesSummaryTable = dataHolderDiv.getAttribute('data-gates-summary-table');
     const dataGatesTable = dataHolderDiv.getAttribute('data-gates-table');
     const dataSecurityTable = dataHolderDiv.getAttribute('data-security-table');
+    const dataDiffTable = dataHolderDiv.getAttribute('data-diff-table');
 
     if (dataGatesSummaryTable != '') {
       buildPolicyEvalSummaryTable("#gates_summary_table", JSON.parse(dataGatesSummaryTable));
@@ -45,5 +46,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (dataSecurityTable != '') {
       buildSecurityTable("#security_table", dataSecurityTable);
+    }
+
+    if (dataDiffTable != '' && dataDiffTable != 'null') {
+      buildDiffTable("#diff_added_table", "#diff_fixed_table", dataDiffTable);
     }
 });

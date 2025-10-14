@@ -17,6 +17,7 @@ public class SysdigAction implements Action {
     private final String gateStatus;
     private final String gateOutputUrl;
     private final String cveListingUrl;
+    private final String scanResultDiffUrl;
 
     // For backwards compatibility
     @Deprecated
@@ -33,13 +34,19 @@ public class SysdigAction implements Action {
             ScanResult scanResult,
             String jenkinsOutputDirName,
             String policyReportFilename,
-            String cveListingFileName) {
+            String cveListingFileName,
+            String scanResultDiffFileName) {
         this.build = run;
         this.gateStatus = scanResult.evaluationResult().toString();
         this.imageTag = scanResult.metadata().pullString();
         this.imageDigest = scanResult.metadata().imageID().replace(':', '-');
         this.gateOutputUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, policyReportFilename);
         this.cveListingUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, cveListingFileName);
+        if (scanResultDiffFileName != null) {
+            this.scanResultDiffUrl = String.format("../artifact/%s/%s", jenkinsOutputDirName, scanResultDiffFileName);
+        } else {
+            this.scanResultDiffUrl = null;
+        }
     }
 
     @Override
@@ -75,6 +82,10 @@ public class SysdigAction implements Action {
 
     public String getGateReportUrl() {
         return this.gateReportUrl;
+    }
+
+    public String getScanResultDiffUrl() {
+        return scanResultDiffUrl;
     }
 
     public Map<String, String> getQueries() {

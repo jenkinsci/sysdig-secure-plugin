@@ -40,7 +40,7 @@ class ImageScanningServiceTest {
 
         // Then
         verify(mockScanner).scanImage(imageName);
-        verify(mockArchiver).archiveScanResult(mockResult);
+        verify(mockArchiver).archiveScanResult(mockResult, null);
         assertEquals(mockResult, scanResult);
     }
 
@@ -64,7 +64,7 @@ class ImageScanningServiceTest {
         ScanResult mockResult = mock(ScanResult.class);
         when(mockScanner.scanImage(imageName)).thenReturn(mockResult);
         when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
-        doThrow(new IOException()).when(mockArchiver).archiveScanResult(mockResult);
+        doThrow(new IOException()).when(mockArchiver).archiveScanResult(mockResult, null);
 
         // When
         service.scanAndArchiveResult(imageName);

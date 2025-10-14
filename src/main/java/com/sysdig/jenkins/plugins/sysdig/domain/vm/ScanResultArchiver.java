@@ -16,8 +16,10 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import java.io.IOException;
 
 public interface ScanResultArchiver {
-    void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException;
+    void archiveScanResult(ScanResult scanResult, ScanResultDiff scanResultDiff)
+            throws IOException, InterruptedException;
 }

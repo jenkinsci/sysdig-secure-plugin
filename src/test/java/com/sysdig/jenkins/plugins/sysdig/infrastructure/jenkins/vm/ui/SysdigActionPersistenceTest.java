@@ -37,7 +37,8 @@ public class SysdigActionPersistenceTest {
                 TestMother.scanResultForUbuntu2204().toDomain().get(),
                 "SysdigSecureReport_11",
                 "policy.json",
-                "cve.json"));
+                "cve.json",
+                "diff.json"));
         build.save();
 
         rule.jenkins.reload();

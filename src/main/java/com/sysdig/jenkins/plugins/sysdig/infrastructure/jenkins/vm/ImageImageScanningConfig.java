@@ -130,7 +130,9 @@ public class ImageImageScanningConfig
     }
 
     @Override
-    public String getImageToCompare(){return imageToCompare;}
+    public String getImageToCompare() {
+        return imageToCompare;
+    }
 
     @Override
     public String getPoliciesToApply() {

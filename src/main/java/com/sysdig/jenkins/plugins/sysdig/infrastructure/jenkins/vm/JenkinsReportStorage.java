@@ -37,6 +37,7 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     private static final String CVE_LISTING_FILENAME_FORMAT = "sysdig_secure_security-%s.json";
     private static final String POLICY_REPORT_FILENAME_FORMAT = "sysdig_secure_gates-%s.json";
     private static final String RAW_VULN_REPORT_FILENAME_FORMAT = "sysdig_secure_raw_vulns_report-%s.json";
+    private static final String DIFF_REPORT_FILENAME_FORMAT = "sysdig_secure_diff-%s.json";
 
     private final RunContext runContext;
     private final SysdigLogger logger;
@@ -93,7 +94,7 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     }
 
     @Override
-    public void archiveResults(ScanResult scanResult) throws IOException {
+    public void archiveResults(ScanResult scanResult, ScanResultDiff scanResultDiff) throws IOException {
         try {
             logger.logDebug("Archiving results");
             runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
@@ -103,6 +104,11 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
                     POLICY_REPORT_FILENAME_FORMAT, scanResult.metadata().imageID());
             String cveListingFileName = String.format(
                     CVE_LISTING_FILENAME_FORMAT, scanResult.metadata().imageID());
+            String scanResultDiffFileName = null;
+            if (scanResultDiff != null) {
+                scanResultDiffFileName = String.format(DIFF_REPORT_FILENAME_FORMAT, scanResultDiff.hashCode());
+            }
+
             runContext
                     .getRun()
                     .addAction(new SysdigAction(
@@ -110,7 +116,8 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
                             scanResult,
                             jenkinsOutputDirName,
                             policyReportFilename,
-                            cveListingFileName));
+                            cveListingFileName,
+                            scanResultDiffFileName));
         } catch (Exception e) {
             logger.logError("Failed to setup build results due to an unexpected error", e);
             throw new AbortException(
@@ -121,7 +128,11 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     @Override
     public void saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException {
         logger.logDebug("Saving image diff");
-        // TODO: implement
+        String filename = String.format(DIFF_REPORT_FILENAME_FORMAT, diff.hashCode());
+        FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, filename);
+        logger.logInfo(String.format("Writing image diff to %s", outPath.getRemote()));
+        logger.logDebug(String.format("Writing diff report to %s", outPath.getRemote()));
+        outPath.write(GsonBuilder.build().toJson(diff), String.valueOf(StandardCharsets.UTF_8));
     }
 
     @Override
