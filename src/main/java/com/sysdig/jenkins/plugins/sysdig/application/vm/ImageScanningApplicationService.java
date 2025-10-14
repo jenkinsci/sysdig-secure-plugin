@@ -68,16 +68,22 @@ public class ImageScanningApplicationService {
             ScanResult scanResult = imageScanningService.scan(config.getImageName());
             finalAction = Optional.ofNullable(scanResult.evaluationResult());
 
+            ScanResultDiff diff = null;
             if (!Strings.isNullOrEmpty(config.getImageToCompare())) {
-                ScanResult scanResultToCompare = imageScanningService.scan(config.getImageToCompare());
-
-                ScanResultDiff diff = scanResult.diffWithPrevious(scanResultToCompare);
-
-                this.reportStorage.saveImageDiff(diff);
-                imageScanningArchiver.archiveScanResult(scanResult, diff);
-            } else {
-                imageScanningArchiver.archiveScanResult(scanResult, null);
+                try {
+                    ScanResult scanResultToCompare = imageScanningService.scan(config.getImageToCompare());
+                    diff = scanResult.diffWithPrevious(scanResultToCompare);
+                    this.reportStorage.saveImageDiff(diff);
+                } catch (Exception e) {
+                    logger.logWarn(
+                            "Failed to scan comparison image '"
+                                    + config.getImageToCompare()
+                                    + "'. Continuing with first scan result only.",
+                            e);
+                }
             }
+
+            imageScanningArchiver.archiveScanResult(scanResult, diff);
         } catch (Exception e) {
             if (config.getBailOnPluginFail()) {
                 logger.logError(

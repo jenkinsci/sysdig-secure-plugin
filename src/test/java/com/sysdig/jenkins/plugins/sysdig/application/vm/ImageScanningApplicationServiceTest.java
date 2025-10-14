@@ -128,4 +128,32 @@ class ImageScanningApplicationServiceTest {
         when(scanner.scanImage(anyString())).thenThrow(new RuntimeException("Scanning failed"));
         assertThrows(AbortException.class, () -> service.runScan(config));
     }
+
+    @Test
+    void whenComparisonScanFailsItLogsWarningAndContinuesWithFirstScanResult() throws Exception {
+        // Given
+        when(config.getImageName()).thenReturn("test-image");
+        when(config.getImageToCompare()).thenReturn("comparison-image");
+        when(config.getBailOnPluginFail()).thenReturn(false);
+        when(config.getBailOnFail()).thenReturn(false);
+        ScanResult result = TestMother.scanResultForUbuntu2204().toDomain().get();
+
+        when(scanner.scanImage(matches("test-image"))).thenReturn(result);
+        when(scanner.scanImage(matches("comparison-image"))).thenThrow(new RuntimeException("Comparison scan failed"));
+
+        // When
+        service.runScan(config);
+
+        // Then
+        verify(logger)
+                .logWarn(
+                        contains(
+                                "Failed to scan comparison image 'comparison-image'. Continuing with first scan result only."),
+                        any());
+        verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
+        verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), isNull());
+        verify(reportStorage, never()).saveImageDiff(any());
+    }
 }
