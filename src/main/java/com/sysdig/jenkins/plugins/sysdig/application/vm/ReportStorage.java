@@ -28,7 +28,7 @@ public interface ReportStorage {
 
     void saveRawVulnerabilityReport(ScanResult scanResult) throws IOException, InterruptedException;
 
-    void archiveResults(ScanResult scanResult, ScanResultDiff scanResultDiff) throws IOException;
+    void archiveResults(ScanResult scanResult, String scanResultDiffFileName) throws IOException;
 
-    void saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException;
+    String saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException;
 }

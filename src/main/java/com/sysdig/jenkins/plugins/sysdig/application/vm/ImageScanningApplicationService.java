@@ -68,12 +68,12 @@ public class ImageScanningApplicationService {
             ScanResult scanResult = imageScanningService.scan(config.getImageName());
             finalAction = Optional.ofNullable(scanResult.evaluationResult());
 
-            ScanResultDiff diff = null;
+            String diffFileName = null;
             if (!Strings.isNullOrEmpty(config.getImageToCompare())) {
                 try {
                     ScanResult scanResultToCompare = imageScanningService.scan(config.getImageToCompare());
-                    diff = scanResult.diffWithPrevious(scanResultToCompare);
-                    this.reportStorage.saveImageDiff(diff);
+                    ScanResultDiff diff = scanResult.diffWithPrevious(scanResultToCompare);
+                    diffFileName = this.reportStorage.saveImageDiff(diff);
                 } catch (Exception e) {
                     logger.logWarn(
                             "Failed to scan comparison image '"
@@ -83,7 +83,7 @@ public class ImageScanningApplicationService {
                 }
             }
 
-            imageScanningArchiver.archiveScanResult(scanResult, diff);
+            imageScanningArchiver.archiveScanResult(scanResult, diffFileName);
         } catch (Exception e) {
             if (config.getBailOnPluginFail()) {
                 logger.logError(

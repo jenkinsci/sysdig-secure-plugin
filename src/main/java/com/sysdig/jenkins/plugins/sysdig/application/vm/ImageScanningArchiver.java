@@ -17,7 +17,6 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.ScanResultArchiver;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.IOException;
 
@@ -32,13 +31,13 @@ public class ImageScanningArchiver implements ScanResultArchiver {
     }
 
     @Override
-    public void archiveScanResult(ScanResult scanResult, ScanResultDiff scanResultDiff)
+    public void archiveScanResult(ScanResult scanResult, String scanResultDiffFileName)
             throws IOException, InterruptedException {
         var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
 
         reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
         reportStorage.saveVulnerabilityReport(scanResult);
         reportStorage.saveRawVulnerabilityReport(scanResult);
-        reportStorage.archiveResults(scanResult, scanResultDiff);
+        reportStorage.archiveResults(scanResult, scanResultDiffFileName);
     }
 }

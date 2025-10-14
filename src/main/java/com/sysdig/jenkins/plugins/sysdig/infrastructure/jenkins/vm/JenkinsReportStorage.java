@@ -94,7 +94,7 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     }
 
     @Override
-    public void archiveResults(ScanResult scanResult, ScanResultDiff scanResultDiff) throws IOException {
+    public void archiveResults(ScanResult scanResult, String scanResultDiffFileName) throws IOException {
         try {
             logger.logDebug("Archiving results");
             runContext.perform(new ArtifactArchiver(jenkinsOutputDirName + "/"));
@@ -104,10 +104,6 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
                     POLICY_REPORT_FILENAME_FORMAT, scanResult.metadata().imageID());
             String cveListingFileName = String.format(
                     CVE_LISTING_FILENAME_FORMAT, scanResult.metadata().imageID());
-            String scanResultDiffFileName = null;
-            if (scanResultDiff != null) {
-                scanResultDiffFileName = String.format(DIFF_REPORT_FILENAME_FORMAT, scanResultDiff.hashCode());
-            }
 
             runContext
                     .getRun()
@@ -126,13 +122,14 @@ public class JenkinsReportStorage implements ReportStorage, AutoCloseable {
     }
 
     @Override
-    public void saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException {
+    public String saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException {
         logger.logDebug("Saving image diff");
         String filename = String.format(DIFF_REPORT_FILENAME_FORMAT, diff.hashCode());
         FilePath outPath = runContext.getPathFromWorkspace(jenkinsOutputDirName, filename);
         logger.logInfo(String.format("Writing image diff to %s", outPath.getRemote()));
         logger.logDebug(String.format("Writing diff report to %s", outPath.getRemote()));
         outPath.write(GsonBuilder.build().toJson(diff), String.valueOf(StandardCharsets.UTF_8));
+        return filename;
     }
 
     @Override

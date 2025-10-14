@@ -67,9 +67,11 @@ class ImageScanningApplicationServiceTest {
                 TestMother.scanResultForUbuntu2204().toDomain().get();
 
         ScanResultDiff diff = result.diffWithPrevious(previousImageResult);
+        String diffFileName = String.format("sysdig_secure_diff-%s.json", diff.hashCode());
 
         when(scanner.scanImage(matches("test-image"))).thenReturn(result);
         when(scanner.scanImage(matches("previous-image"))).thenReturn(previousImageResult);
+        when(reportStorage.saveImageDiff(eq(diff))).thenReturn(diffFileName);
 
         // When
         service.runScan(config);
@@ -82,7 +84,7 @@ class ImageScanningApplicationServiceTest {
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result), eq(diff));
+        verify(reportStorage, times(1)).archiveResults(eq(result), eq(diffFileName));
         verify(reportStorage, times(1)).saveImageDiff(eq(diff));
     }
 
