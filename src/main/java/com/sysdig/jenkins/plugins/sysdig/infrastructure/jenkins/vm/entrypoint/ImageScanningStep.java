@@ -66,6 +66,15 @@ public class ImageScanningStep extends Step implements BuildStep {
         builder.setBailOnPluginFail(bailOnPluginFail);
     }
 
+    public String getImageToCompare() {
+        return builder.getImageToCompare();
+    }
+
+    @DataBoundSetter
+    public void setImageToCompare(String imageToCompare) {
+        builder.setImageToCompare(imageToCompare);
+    }
+
     public String getPoliciesToApply() {
         return builder.getPoliciesToApply();
     }
