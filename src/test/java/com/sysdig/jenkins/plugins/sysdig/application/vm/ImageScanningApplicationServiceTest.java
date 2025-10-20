@@ -10,6 +10,7 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.ImageScanner;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Metadata;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import hudson.AbortException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,11 +46,46 @@ class ImageScanningApplicationServiceTest {
 
         // Then
         verify(config).printWith(logger);
-        verify(logger).logInfo(contains("Sysdig Secure Container Image Scanner Plugin step result - Failed"));
+        verify(logger)
+                .logInfo(contains(
+                        "Marking Sysdig Secure Container Image Scanner step as successful, final result Failed"));
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), isNull());
+    }
+
+    @Test
+    void whenRunScanIsExecutedItHandlesAllScenariosAndComparesWithPreviousImage() throws Exception {
+        // Given
+        when(config.getImageName()).thenReturn("test-image");
+        when(config.getImageToCompare()).thenReturn("previous-image");
+        when(config.getBailOnPluginFail()).thenReturn(false);
+        when(config.getBailOnFail()).thenReturn(false);
+        ScanResult result = TestMother.scanResultForUbuntu2404().toDomain().get();
+        ScanResult previousImageResult =
+                TestMother.scanResultForUbuntu2204().toDomain().get();
+
+        ScanResultDiff diff = result.diffWithPrevious(previousImageResult);
+        String diffFileName = String.format("sysdig_secure_diff-%s.json", diff.hashCode());
+
+        when(scanner.scanImage(matches("test-image"))).thenReturn(result);
+        when(scanner.scanImage(matches("previous-image"))).thenReturn(previousImageResult);
+        when(reportStorage.saveImageDiff(eq(diff))).thenReturn(diffFileName);
+
+        // When
+        service.runScan(config);
+
+        // Then
+        verify(config).printWith(logger);
+        verify(logger)
+                .logInfo(contains(
+                        "Marking Sysdig Secure Container Image Scanner step as successful, final result Failed"));
+        verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
+        verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), eq(diffFileName));
+        verify(reportStorage, times(1)).saveImageDiff(eq(diff));
     }
 
     @Test
@@ -67,7 +103,7 @@ class ImageScanningApplicationServiceTest {
         verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
         verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
         verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
-        verify(reportStorage, times(1)).archiveResults(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), any());
     }
 
     @Test
@@ -93,5 +129,33 @@ class ImageScanningApplicationServiceTest {
         when(config.getBailOnPluginFail()).thenReturn(true);
         when(scanner.scanImage(anyString())).thenThrow(new RuntimeException("Scanning failed"));
         assertThrows(AbortException.class, () -> service.runScan(config));
+    }
+
+    @Test
+    void whenComparisonScanFailsItLogsWarningAndContinuesWithFirstScanResult() throws Exception {
+        // Given
+        when(config.getImageName()).thenReturn("test-image");
+        when(config.getImageToCompare()).thenReturn("comparison-image");
+        when(config.getBailOnPluginFail()).thenReturn(false);
+        when(config.getBailOnFail()).thenReturn(false);
+        ScanResult result = TestMother.scanResultForUbuntu2204().toDomain().get();
+
+        when(scanner.scanImage(matches("test-image"))).thenReturn(result);
+        when(scanner.scanImage(matches("comparison-image"))).thenThrow(new RuntimeException("Comparison scan failed"));
+
+        // When
+        service.runScan(config);
+
+        // Then
+        verify(logger)
+                .logWarn(
+                        contains(
+                                "Failed to scan comparison image 'comparison-image'. Continuing with first scan result only."),
+                        any());
+        verify(reportStorage, times(1)).savePolicyReport(eq(result), any(PolicyEvaluationReport.class));
+        verify(reportStorage, times(1)).saveVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).saveRawVulnerabilityReport(eq(result));
+        verify(reportStorage, times(1)).archiveResults(eq(result), isNull());
+        verify(reportStorage, never()).saveImageDiff(any());
     }
 }

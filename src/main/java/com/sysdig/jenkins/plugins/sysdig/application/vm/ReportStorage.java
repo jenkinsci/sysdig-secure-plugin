@@ -17,6 +17,7 @@ package com.sysdig.jenkins.plugins.sysdig.application.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.application.vm.report.PolicyEvaluationReport;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import java.io.IOException;
 
 public interface ReportStorage {
@@ -27,5 +28,7 @@ public interface ReportStorage {
 
     void saveRawVulnerabilityReport(ScanResult scanResult) throws IOException, InterruptedException;
 
-    void archiveResults(ScanResult scanResult) throws IOException;
+    void archiveResults(ScanResult scanResult, String scanResultDiffFileName) throws IOException;
+
+    String saveImageDiff(ScanResultDiff diff) throws IOException, InterruptedException;
 }

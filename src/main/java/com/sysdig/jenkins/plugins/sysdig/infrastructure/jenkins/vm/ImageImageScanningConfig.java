@@ -35,6 +35,7 @@ public class ImageImageScanningConfig
     private final boolean engineverify;
     private final String inlineScanExtraParams;
     private final String sysdigToken;
+    private final String imageToCompare;
     private final String policiesToApply;
     private final String scannerBinaryPath;
     private final String cliVersionToApply;
@@ -60,6 +61,9 @@ public class ImageImageScanningConfig
 
         this.inlineScanExtraParams =
                 firstNonEmpty(engineBuilder.getInlineScanExtraParams(), globalConfig.getInlineScanExtraParams());
+
+        this.imageToCompare = engineBuilder.getImageToCompare();
+
         this.policiesToApply = firstNonEmpty(engineBuilder.getPoliciesToApply(), globalConfig.getPoliciesToApply());
 
         if (!Strings.isNullOrEmpty(engineBuilder.getCliVersionToApply())) {
@@ -126,6 +130,11 @@ public class ImageImageScanningConfig
     }
 
     @Override
+    public String getImageToCompare() {
+        return imageToCompare;
+    }
+
+    @Override
     public String getPoliciesToApply() {
         return policiesToApply;
     }
@@ -166,6 +175,7 @@ public class ImageImageScanningConfig
         logger.logInfo(String.format("Debug: %s", this.getDebug()));
         logger.logInfo(String.format("EngineURL: %s", this.getEngineurl()));
         logger.logInfo(String.format("EngineVerify: %s", this.getEngineverify()));
+        logger.logInfo(String.format("Comparing with previous image: %s", this.getImageToCompare()));
         logger.logInfo(String.format("Policies: %s", this.getPoliciesToApply()));
         logger.logInfo(String.format("CliVersion: %s", this.getCliVersionToApply()));
         logger.logInfo(String.format("CustomCliVersion: %s", this.getCustomCliVersion()));

@@ -16,7 +16,6 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
@@ -40,21 +39,10 @@ public class ImageScanningService {
         this.logger = logger;
     }
 
-    public EvaluationResult scanAndArchiveResult(String imageName) throws InterruptedException {
+    public ScanResult scan(String imageName) throws InterruptedException {
         if (imageName.trim().isEmpty()) {
             throw new IllegalArgumentException("the image name to scan must not be empty");
         }
-        ScanResult scanResult = scanner.scanImage(imageName);
-
-        EvaluationResult finalAction = scanResult.evaluationResult();
-        logger.logInfo("Sysdig Secure Container Image Scanner Plugin step result - " + finalAction);
-
-        try {
-            imageScanningArchiverService.archiveScanResult(scanResult);
-        } catch (Exception e) {
-            logger.logError("Recording failure to build reports and moving on with plugin operation", e);
-        }
-
-        return finalAction;
+        return scanner.scanImage(imageName);
     }
 }

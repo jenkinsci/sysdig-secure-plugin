@@ -18,6 +18,11 @@
                                     <a href="#security">Security</a>
                                 </div>
                             </j:if>
+                            <j:if test="${!empty(it.scanResultDiffUrl)}">
+                                <div class="tab">
+                                    <a href="#diff">Diff</a>
+                                </div>
+                            </j:if>
                         </div>
 
                         <!-- Tab panes -->
@@ -96,6 +101,19 @@
                                     </div>
                                 </div>
 
+                                <j:if test="${!empty(it.scanResultDiffUrl)}">
+                                    <div role="tabpanel" class="tab-pane fade" id="diff">
+                                        <h3 class="title">Image Comparison Diff</h3>
+                                        <p>Comparing vulnerabilities between images</p>
+                                        <h4>Vulnerabilities Added</h4>
+                                        <table id="diff_added_table" class="table table-striped table-bordered dataTable"
+                                               style="width: 100%;"></table>
+                                        <h4>Vulnerabilities Fixed</h4>
+                                        <table id="diff_fixed_table" class="table table-striped table-bordered dataTable"
+                                               style="width: 100%;"></table>
+                                    </div>
+                                </j:if>
+
                                 <!--
                                     In order to prevent XSS, we need to hold the data in an HTML element called 'data-holder' and adjunct the script,
                                     that will retrieve the contents of the div, and execute the script on DOMContentLoaded
@@ -103,6 +121,7 @@
                                 <div id="index-data-holder"
                                      data-gates-table="${it.gateOutputUrl}"
                                      data-security-table="${it.cveListingUrl}"
+                                     data-diff-table="${it.scanResultDiffUrl}"
                                 />
                                 <st:adjunct
                                     includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.vm.ui.SysdigAction.index-script"/>

@@ -1,13 +1,9 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.EvaluationResult;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
-import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,23 +24,6 @@ class ImageScanningServiceTest {
     }
 
     @Test
-    void whenTheScannerReturnsSuccessItReturnsTheSuccessBack() throws InterruptedException, IOException {
-        // Given
-        String imageName = "my-image";
-        ScanResult mockResult = mock(ScanResult.class);
-        when(mockScanner.scanImage(imageName)).thenReturn(mockResult);
-        when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
-
-        // When
-        EvaluationResult finalAction = service.scanAndArchiveResult(imageName);
-
-        // Then
-        verify(mockScanner).scanImage(imageName);
-        verify(mockArchiver).archiveScanResult(mockResult);
-        assertEquals(EvaluationResult.Passed, finalAction);
-    }
-
-    @Test
     void whenTheScannerFailsItThrowsInterruptedException() throws Exception {
         String imageName = "my-image";
         when(mockScanner.scanImage(imageName)).thenThrow(new InterruptedException());
@@ -52,28 +31,9 @@ class ImageScanningServiceTest {
                 InterruptedException.class,
                 () ->
                         // When
-                        service.scanAndArchiveResult(imageName));
+                        service.scan(imageName));
 
         // Then (the expected exception is declared in the annotation)
-    }
-
-    @Test
-    void whenArchivingFailsItLogsAnError() throws InterruptedException, IOException {
-        // Given
-        String imageName = "my-image";
-        ScanResult mockResult = mock(ScanResult.class);
-        when(mockScanner.scanImage(imageName)).thenReturn(mockResult);
-        when(mockResult.evaluationResult()).thenReturn(EvaluationResult.Passed);
-        doThrow(new IOException()).when(mockArchiver).archiveScanResult(mockResult);
-
-        // When
-        service.scanAndArchiveResult(imageName);
-
-        // Then
-        verify(mockLogger)
-                .logError(
-                        eq("Recording failure to build reports and moving on with plugin operation"),
-                        any()); // Verify that an error was logged
     }
 
     @Test
@@ -82,7 +42,7 @@ class ImageScanningServiceTest {
                 NullPointerException.class,
                 () ->
                         // When
-                        service.scanAndArchiveResult(null)); // Passing null image name
+                        service.scan(null)); // Passing null image name
 
         // Then (the expected exception is declared in the annotation)
     }
@@ -93,7 +53,7 @@ class ImageScanningServiceTest {
                 IllegalArgumentException.class,
                 () ->
                         // When
-                        service.scanAndArchiveResult("")); // Passing empty image name
+                        service.scan("")); // Passing empty image name
 
         // Then (the expected exception is declared in the annotation)
     }

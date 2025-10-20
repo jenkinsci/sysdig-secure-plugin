@@ -19,5 +19,6 @@ import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.ScanResult;
 import java.io.IOException;
 
 public interface ScanResultArchiver {
-    void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException;
+    void archiveScanResult(ScanResult scanResult, String scanResultDiffFileName)
+            throws IOException, InterruptedException;
 }

@@ -31,12 +31,13 @@ public class ImageScanningArchiver implements ScanResultArchiver {
     }
 
     @Override
-    public void archiveScanResult(ScanResult scanResult) throws IOException, InterruptedException {
+    public void archiveScanResult(ScanResult scanResult, String scanResultDiffFileName)
+            throws IOException, InterruptedException {
         var policyEvaluationReport = policyEvaluationReportProcessor.processPolicyEvaluation(scanResult);
 
         reportStorage.savePolicyReport(scanResult, policyEvaluationReport);
         reportStorage.saveVulnerabilityReport(scanResult);
         reportStorage.saveRawVulnerabilityReport(scanResult);
-        reportStorage.archiveResults(scanResult);
+        reportStorage.archiveResults(scanResult, scanResultDiffFileName);
     }
 }

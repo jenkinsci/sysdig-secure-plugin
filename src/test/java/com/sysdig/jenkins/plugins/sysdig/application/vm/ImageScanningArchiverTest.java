@@ -45,12 +45,12 @@ class ImageScanningArchiverTest {
 
     @Test
     void whenArchiveScanResultIsCalledShouldSaveAllReports() throws IOException, InterruptedException {
-        imageScanningArchiver.archiveScanResult(mockScanResult);
+        imageScanningArchiver.archiveScanResult(mockScanResult, null);
 
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage).saveVulnerabilityReport(mockScanResult);
         verify(reportStorage).saveRawVulnerabilityReport(mockScanResult);
-        verify(reportStorage).archiveResults(mockScanResult);
+        verify(reportStorage).archiveResults(mockScanResult, null);
     }
 
     @Test
@@ -58,14 +58,14 @@ class ImageScanningArchiverTest {
         doThrow(new IOException("IO Error")).when(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
 
         IOException exception =
-                assertThrows(IOException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult));
+                assertThrows(IOException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult, null));
 
         assertEquals("IO Error", exception.getMessage());
 
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage, never()).saveVulnerabilityReport(any());
         verify(reportStorage, never()).saveRawVulnerabilityReport(any());
-        verify(reportStorage, never()).archiveResults(any());
+        verify(reportStorage, never()).archiveResults(any(), any());
     }
 
     @Test
@@ -73,25 +73,25 @@ class ImageScanningArchiverTest {
             throws IOException, InterruptedException {
         doThrow(new InterruptedException("Interrupted")).when(reportStorage).saveVulnerabilityReport(mockScanResult);
 
-        InterruptedException exception =
-                assertThrows(InterruptedException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult));
+        InterruptedException exception = assertThrows(
+                InterruptedException.class, () -> imageScanningArchiver.archiveScanResult(mockScanResult, null));
 
         assertEquals("Interrupted", exception.getMessage());
 
         verify(reportStorage).savePolicyReport(mockScanResult, mockPolicyResult);
         verify(reportStorage).saveVulnerabilityReport(mockScanResult);
         verify(reportStorage, never()).saveRawVulnerabilityReport(any());
-        verify(reportStorage, never()).archiveResults(any());
+        verify(reportStorage, never()).archiveResults(any(), any());
     }
 
     @Test
     void whenArchiveScanResultIsCalledShouldUseCorrectReportData() throws IOException, InterruptedException {
-        imageScanningArchiver.archiveScanResult(mockScanResult);
+        imageScanningArchiver.archiveScanResult(mockScanResult, null);
 
         ArgumentCaptor<PolicyEvaluationReport> reportCaptor = ArgumentCaptor.forClass(PolicyEvaluationReport.class);
 
         verify(reportStorage).savePolicyReport(eq(mockScanResult), reportCaptor.capture());
         assertSame(mockPolicyResult, reportCaptor.getValue());
-        verify(reportStorage).archiveResults(eq(mockScanResult));
+        verify(reportStorage).archiveResults(eq(mockScanResult), any());
     }
 }

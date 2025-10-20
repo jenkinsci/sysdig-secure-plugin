@@ -25,7 +25,7 @@ The Sysdig Secure plugin is published as a Jenkins plugin and is available for i
 the *Plugin Manager* in the web UI through the *Manage Jenkins > Manage Plugins* view, available to administrators of a
 Jenkins environment.
 
-See https://www.jenkins.io/doc/book/managing/plugins/
+See <https://www.jenkins.io/doc/book/managing/plugins/>
 
 ## Global configuration
 
@@ -112,12 +112,12 @@ stages {
 
 The table below describes the available configuration options.
 
-
 | Option                                 | Parameter        | Description                                                                                                                                                                                                                                                  | Default |
 |----------------------------------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| ------ |
 | Image name                             | imageName        | The name of the image to scan. This parameter is now mandatory, and there is no default value (null).                                                                                                                                                        | `null` |
 | Fail build on policy check STOP result | bailOnFail       | If the Sysdig Secure policy evaluate returns a fail (STOP), then the Jenkins job should be failed. If this is not selected then a failed policy evaluation will allow the build to continue.                                                                 | `true` |
 | Fail build on critical plugin error    | bailOnPluginFail | If selected, and the Sysdig Secure Plugin experiences a critical error, the build will be failed. This is typically used to ensure that a fault with Sysdig Secure (eg. service not available) does not permit a failing image to be promoted to production. | `true` |
+| Previous image to compare with         | imageToCompare   | Optional name of a previous image to compare against. When set, the plugin will scan both images and generate a diff report showing added and fixed vulnerabilities.                                                                                          | |
 | Identifiers of policies to apply       | policiesToApply  | List of policies to apply to the image in addition to those marked as always apply in the sysdig ui                                                                                                                                                          | |
 | Sysdig Secure URL                      | engineURL        | Override the Sysdig Secure URL from the global options                                                                                                                                                                                                       | |
 | Sysdig Secure API Credentials          | engineCredentialsId | Override the Sysdig Secure API Credentials from the global options                                                                                                                                                                                        | |
@@ -127,13 +127,11 @@ The table below describes the available configuration options.
 
 ### Examples
 
-
 The following is simple example of executing the Sysdig Secure plugin as a Jenkinsfile step:
 
 ```
 sysdigImageScan imageName: 'ruby'
 ```
-
 
 You can override any of the default parameters:
 
@@ -149,9 +147,56 @@ You can use the `inlineScanExtraParams` option to enable the debug logging when 
 sysdigImageScan imageName: ' ruby:latest', inlineScanExtraParams: '--console-log --loglevel=debug'
 ```
 
+## Image Comparison (Diff)
+
+The plugin supports comparing two images to identify security changes between them. This is useful for tracking vulnerability improvements or regressions when updating base images or dependencies.
+
+### How it works
+
+When you provide the `imageToCompare` parameter, the plugin will:
+
+1. Scan the primary image (specified in `imageName`)
+2. Scan the comparison image (specified in `imageToCompare`)
+3. Generate a diff report showing:
+   * **Vulnerabilities Added**: New vulnerabilities present in the primary image but not in the comparison image
+   * **Vulnerabilities Fixed**: Vulnerabilities that were in the comparison image but are resolved in the primary image
+
+**Important**: If the comparison image scan fails, the build will continue with just the primary image scan. A warning will be logged, but the build won't be aborted due to comparison failures.
+
+### Configuration
+
+#### Freestyle Project
+
+In the "Advanced Image Scanning Options" section of the Sysdig Image Scanning build step:
+
+![Freestyle Image Comparison](docs/images/FreestyleImageDiffConfiguration.png)
+
+Enter the image name to compare against in the "Previous image to compare with" field.
+
+#### Pipeline
+
+Add the `imageToCompare` parameter to your `sysdigImageScan` step:
+
+```groovy
+sysdigImageScan imageName: 'myapp:v2.0', imageToCompare: 'myapp:v1.9'
+```
+
+### Use case
+
+**Comparing base image updates**:
+
+```groovy
+stage('Test New Base Image') {
+    steps {
+        sh "docker build -f Dockerfile.new -t myapp:alpine-3.19 ."
+        sysdigImageScan imageName: 'myapp:alpine-3.19', imageToCompare: 'myapp:alpine-3.18'
+    }
+}
+```
+
 ## Providing registry credentials
 
-The CLI scanner will try to use locally available credentials, i.e. from the docker daemon configuration, when available. Additionally, it supports registry user and password credentials via `REGISTRY_USER` and `REGISTRY_PASSWORD` environmental variables as described in https://docs.sysdig.com/en/sysdig-secure/cli-scanner-vm-mode/#registry-credentials
+The CLI scanner will try to use locally available credentials, i.e. from the docker daemon configuration, when available. Additionally, it supports registry user and password credentials via `REGISTRY_USER` and `REGISTRY_PASSWORD` environmental variables as described in <https://docs.sysdig.com/en/sysdig-secure/cli-scanner-vm-mode/#registry-credentials>
 
 You can use the [Credentials Binding Plugin](https://www.jenkins.io/doc/pipeline/steps/credentials-binding/) to map Jenkins credentials to the corresponding variables, for example:
 
@@ -197,6 +242,29 @@ Sysdig [policy evaluation](https://docs.sysdig.com/en/manage-scanning-policies.h
 `sysdig_secure_security.json` Detected vulnerability data
 
 `sysdig_secure_raw-vulns_report-.json` Raw vulnerability data
+
+## Image Diff Output
+
+When using the image comparison feature (by specifying `imageToCompare`), an additional artifact is generated:
+
+`sysdig_secure_diff-<hash>.json` Image comparison results showing vulnerabilities added and fixed between the two images
+
+![Image Diff Artifact](docs/images/AfterExecutionImageDiff.png)
+
+The diff report is accessible through the Sysdig Secure Report action and displays:
+
+* **Vulnerabilities Added**: Security issues newly introduced in the scanned image
+* **Vulnerabilities Fixed**: Security issues that were resolved compared to the previous image
+
+![Image Diff Result](docs/images/ImageDiffResult.png)
+
+This allows teams to:
+
+* Track security improvements when updating dependencies or base images
+* Identify new vulnerabilities introduced by code changes
+* Make informed decisions about deploying new image versions
+
+## Standard Scan Output
 
 Additionally, the plugin offers you an HTML formatted table output that you can directly display from the
 interface (`Sysdig Secure Report (FAIL)` in the image above)

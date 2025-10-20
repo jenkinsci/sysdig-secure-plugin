@@ -102,4 +102,33 @@ class ImageScanningE2EPipelineTests {
         jenkins.assertLogContains("BailOnPluginFail: true", build);
         jenkins.assertLogContains("Downloading inlinescan v2.0.0", build);
     }
+
+    @Test
+    void testPipelineWithImageToCompareConfig() throws Exception {
+        var job = helpers.createPipelineJobWithScript(
+                        """
+        sysdigImageScan engineCredentialsId: 'sysdig-secure',
+                          engineURL: 'https://custom-engine-url.com',
+                          engineVerify: false,
+                          imageName: 'nginx',
+                          imageToCompare: 'alpine',
+                          customCliVersion: '2.0.0',
+                          cliVersionToApply: 'custom',
+                          bailOnFail: false,
+                          bailOnPluginFail: false""")
+                .buildWithRemoteExecution();
+
+        var build = jenkins.buildAndAssertSuccess(job);
+
+        jenkins.assertLogContains(
+                "Starting Sysdig Secure Container Image Scanner step, project: test-pipeline, job: 1", build);
+        jenkins.assertLogContains("Using new-scanning engine", build);
+        jenkins.assertLogContains("Image Name: nginx", build);
+        jenkins.assertLogContains("Comparing with previous image: alpine", build);
+        jenkins.assertLogContains("EngineURL: https://custom-engine-url.com", build);
+        jenkins.assertLogContains("EngineVerify: false", build);
+        jenkins.assertLogContains("BailOnFail: false", build);
+        jenkins.assertLogContains("BailOnPluginFail: false", build);
+        jenkins.assertLogContains("Downloading inlinescan v2.0.0", build);
+    }
 }
