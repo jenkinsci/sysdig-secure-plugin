@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.Optional;
 
@@ -87,12 +88,16 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
     }
 
     private void addPackagesTo(ScanResult scanResult) {
-        result().packages().values().stream().forEach(jsonPkg -> {
+        result().packages().entrySet().stream().forEach(entry -> {
+            String pkgId = entry.getKey();
+            JsonPackage jsonPkg = entry.getValue();
+
             JsonLayer jsonLayer = result().layers().get(jsonPkg.layerRef());
             var layerWhereThisPackageIsFound =
                     scanResult.findLayerByDigest(jsonLayer.digest()).get();
 
             Package addedPackage = scanResult.addPackage(
+                    pkgId,
                     packageTypeFromString(jsonPkg.type()),
                     jsonPkg.name(),
                     jsonPkg.version(),
@@ -128,31 +133,41 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                         scanResult.addPolicyBundle(jsonBundle.identifier(), jsonBundle.name(), policy);
 
                 jsonBundle.rules().stream().forEach(jsonRule -> {
-                    PolicyBundleRule rule = policyBundle.addRule(
-                            jsonRule.ruleId(),
-                            jsonRule.description(),
+                    EvaluationResult evaluationResult =
                             jsonRule.evaluationResult().equalsIgnoreCase("failed")
                                     ? EvaluationResult.Failed
-                                    : EvaluationResult.Passed);
+                                    : EvaluationResult.Passed;
 
-                    jsonRule.failures().stream().forEach(jsonFailure -> {
-                        switch (jsonRule.failureType()) {
-                            case "imageConfigFailure" -> rule.addImageConfigFailure(jsonFailure.remediation());
-                            case "pkgVulnFailure" ->
-                                rule.addPkgVulnFailure(
-                                        failureMessageFor(jsonFailure.packageRef(), jsonFailure.vulnerabilityRef()));
-                            default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
+                    switch (jsonRule.failureType()) {
+                        case "imageConfigFailure" -> {
+                            PolicyBundleRuleImageConfig rule = policyBundle.addImageConfigRule(
+                                    jsonRule.ruleId(), jsonRule.description(), evaluationResult);
+                            jsonRule.failures().stream()
+                                    .forEach(jsonFailure -> rule.addFailure(jsonFailure.remediation()));
                         }
-                    });
+                        case "pkgVulnFailure" -> {
+                            PolicyBundleRulePkgVuln rule = policyBundle.addPkgVulnRule(
+                                    jsonRule.ruleId(), jsonRule.description(), evaluationResult);
+                            jsonRule.failures().stream().forEach(jsonFailure -> {
+                                var pkgAndVuln = getPkgAndVulnFrom(
+                                        scanResult, jsonFailure.packageRef(), jsonFailure.vulnerabilityRef());
+                                rule.addFailure(jsonFailure.remediation(), pkgAndVuln.getKey(), pkgAndVuln.getValue());
+                            });
+                        }
+                        default -> throw new IllegalStateException("Unexpected value: " + jsonRule.failureType());
+                    }
                 });
             });
         });
     }
 
-    private String failureMessageFor(String jsonPackageRef, String jsonVulnerabilityRef) {
-        JsonPackage jsonPackage = result().packages().get(jsonPackageRef);
+    private AbstractMap.SimpleEntry<Package, Vulnerability> getPkgAndVulnFrom(
+            ScanResult scanResult, String jsonPackageRef, String jsonVulnerabilityRef) {
         JsonVulnerability jsonVulnerability = result().vulnerabilities().get(jsonVulnerabilityRef);
-        return "%s found in %s (%s)".formatted(jsonVulnerability.name(), jsonPackage.name(), jsonPackage.version());
+
+        var pkg = scanResult.findPackageById(jsonPackageRef).get();
+        var vuln = scanResult.findVulnerabilityByCVE(jsonVulnerability.name()).get();
+        return new AbstractMap.SimpleEntry<>(pkg, vuln);
     }
 
     /**

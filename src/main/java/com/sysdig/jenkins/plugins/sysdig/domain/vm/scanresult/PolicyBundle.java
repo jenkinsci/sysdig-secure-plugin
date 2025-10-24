@@ -25,8 +25,15 @@ public class PolicyBundle implements AggregateChild<ScanResult>, Serializable {
         }
     }
 
-    public PolicyBundleRule addRule(String id, String description, EvaluationResult evaluationResult) {
-        PolicyBundleRule rule = new PolicyBundleRule(id, description, evaluationResult, this);
+    public PolicyBundleRulePkgVuln addPkgVulnRule(String id, String description, EvaluationResult evaluationResult) {
+        PolicyBundleRulePkgVuln rule = new PolicyBundleRulePkgVuln(id, description, evaluationResult, this);
+        this.rules.add(rule);
+        return rule;
+    }
+
+    public PolicyBundleRuleImageConfig addImageConfigRule(
+            String id, String description, EvaluationResult evaluationResult) {
+        PolicyBundleRuleImageConfig rule = new PolicyBundleRuleImageConfig(id, description, evaluationResult, this);
         this.rules.add(rule);
         return rule;
     }
