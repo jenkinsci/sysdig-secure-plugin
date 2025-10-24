@@ -31,12 +31,13 @@ class ScanResultDiffSerializerTest {
     @Test
     void testSerializeDiffWithResults() {
         // Given
+        int pkgId = 0;
         ScanResult oldScan = new ScanResult(null, null, null, null, null, null, null, null, null);
         Layer layer = oldScan.addLayer("digest", null, "command");
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package pkg1 =
-                oldScan.addPackage(PackageType.OS, "pkg-1", "1.0", "/path", layer);
+                oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-1", "1.0", "/path", layer);
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package pkg2 =
-                oldScan.addPackage(PackageType.OS, "pkg-2", "2.0", "/path", layer);
+                oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-2", "2.0", "/path", layer);
         Vulnerability vuln1 = oldScan.addVulnerability("CVE-2023-0001", Severity.High, new Date(), null, true, "1.1");
         vuln1.addFoundInPackage(pkg1);
         Vulnerability vuln2 = oldScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null);
@@ -45,9 +46,9 @@ class ScanResultDiffSerializerTest {
         ScanResult newScan = new ScanResult(null, null, null, null, null, null, null, null, null);
         Layer newLayer = newScan.addLayer("digest", null, "command");
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package newPkg2 =
-                newScan.addPackage(PackageType.OS, "pkg-2", "2.0", "/path", newLayer);
+                newScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-2", "2.0", "/path", newLayer);
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package newPkg3 =
-                newScan.addPackage(PackageType.OS, "pkg-3", "3.0", "/path", newLayer);
+                newScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-3", "3.0", "/path", newLayer);
         Vulnerability newVuln2 =
                 newScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null);
         newVuln2.addFoundInPackage(newPkg2);

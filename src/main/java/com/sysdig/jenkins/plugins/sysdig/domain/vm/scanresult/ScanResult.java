@@ -10,7 +10,7 @@ public class ScanResult implements Serializable {
     private final ScanType type;
     private final Metadata metadata;
     private final Map<String, Layer> layers;
-    private final Map<Package, Package> packages;
+    private final Map<String, Package> packages;
     private final Map<String, Vulnerability> vulnerabilities;
     private final Map<String, Policy> policies;
     private final Map<String, PolicyBundle> policyBundles;
@@ -51,13 +51,15 @@ public class ScanResult implements Serializable {
         return Collections.unmodifiableCollection(this.layers.values());
     }
 
-    public Package addPackage(PackageType type, String name, String version, String path, Layer layer) {
-        Package aPackage = new Package(type, name, version, path, layer, this);
-        Package addedPackage =
-                Optional.ofNullable(packages.putIfAbsent(aPackage, aPackage)).orElse(aPackage);
+    public Package addPackage(String id, PackageType type, String name, String version, String path, Layer layer) {
+        Package aPackage = new Package(id, type, name, version, path, layer, this);
+        this.packages.put(id, aPackage);
+        layer.addPackage(aPackage);
+        return aPackage;
+    }
 
-        layer.addPackage(addedPackage);
-        return addedPackage;
+    public Optional<Package> findPackageById(String id) {
+        return Optional.ofNullable(this.packages.get(id));
     }
 
     public Collection<Package> packages() {

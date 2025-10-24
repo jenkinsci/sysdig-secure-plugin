@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Package implements AggregateChild<ScanResult>, Serializable {
+    private final String id;
     private final PackageType type;
     private final String name;
     private final String version;
@@ -17,7 +18,15 @@ public class Package implements AggregateChild<ScanResult>, Serializable {
     private final Set<AcceptedRisk> acceptedRisks;
     private final ScanResult root;
 
-    Package(PackageType type, String name, String version, String path, Layer foundInLayer, ScanResult root) {
+    Package(
+            String id,
+            PackageType type,
+            String name,
+            String version,
+            String path,
+            Layer foundInLayer,
+            ScanResult root) {
+        this.id = id;
         this.type = type;
         this.name = name;
         this.version = version;
@@ -26,6 +35,10 @@ public class Package implements AggregateChild<ScanResult>, Serializable {
         this.root = root;
         this.vulnerabilities = new HashSet<>();
         this.acceptedRisks = new HashSet<>();
+    }
+
+    public String id() {
+        return id;
     }
 
     public PackageType type() {
@@ -75,16 +88,14 @@ public class Package implements AggregateChild<ScanResult>, Serializable {
 
     @Override
     public boolean equals(Object o) {
+        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Package aPackage = (Package) o;
-        return type == aPackage.type
-                && Objects.equals(name, aPackage.name)
-                && Objects.equals(version, aPackage.version)
-                && Objects.equals(path, aPackage.path);
+        return Objects.equals(id, aPackage.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, name, version, path);
+        return Objects.hash(id);
     }
 }
