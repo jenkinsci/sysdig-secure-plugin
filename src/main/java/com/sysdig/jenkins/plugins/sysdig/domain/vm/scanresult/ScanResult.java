@@ -7,6 +7,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 
 public class ScanResult implements Serializable {
+    private final EvaluationResult globalEvaluationResult;
     private final ScanType type;
     private final Metadata metadata;
     private final Map<String, Layer> layers;
@@ -17,6 +18,7 @@ public class ScanResult implements Serializable {
     private final Map<String, AcceptedRisk> acceptedRisks;
 
     public ScanResult(
+            EvaluationResult globalEvaluationResult,
             ScanType type,
             String pullString,
             String imageID,
@@ -26,6 +28,7 @@ public class ScanResult implements Serializable {
             Architecture architecture,
             Map<String, String> labels,
             Date createdAt) {
+        this.globalEvaluationResult = globalEvaluationResult;
         this.type = type;
         this.metadata =
                 new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this);
@@ -143,10 +146,7 @@ public class ScanResult implements Serializable {
     }
 
     public EvaluationResult evaluationResult() {
-        boolean allPoliciesPassed =
-                policies().stream().allMatch(p -> p.evaluationResult().isPassed());
-
-        return allPoliciesPassed ? EvaluationResult.Passed : EvaluationResult.Failed;
+        return globalEvaluationResult;
     }
 
     public ScanResultDiff diffWithPrevious(ScanResult previous) {

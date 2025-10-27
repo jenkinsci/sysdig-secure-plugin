@@ -13,6 +13,7 @@ public class PolicyBundleTest {
     @BeforeEach
     public void setUp() {
         scanResult = new ScanResult(
+                EvaluationResult.Passed,
                 ScanType.Docker,
                 "test-pull-string",
                 "test-image-id",

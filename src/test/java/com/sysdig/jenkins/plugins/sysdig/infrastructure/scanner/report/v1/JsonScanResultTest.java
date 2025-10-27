@@ -142,4 +142,14 @@ class JsonScanResultTest {
                 EvaluationResult.Failed,
                 failedBundle.rules().stream().skip(1).findFirst().get().evaluationResult());
     }
+
+    @Test
+    void whenGlobalEvaluationIsPassedTheResultIsPassed() {
+        JsonScanResultV1 jsonScanResult = TestMother.scanResultWithWholeImageAcceptedRisk();
+        scanResult = jsonScanResult.toDomain().get();
+
+        assertEquals(EvaluationResult.Passed, scanResult.evaluationResult());
+        assertTrue(scanResult.policies().stream()
+                .anyMatch(p -> p.evaluationResult().isFailed()));
+    }
 }
