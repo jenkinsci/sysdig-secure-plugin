@@ -40,4 +40,19 @@ public class TestMother {
         return GsonBuilder.build()
                 .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
     }
+
+    /**
+     * Returns a sample Result object for testing.
+     *
+     * @return a test Result object.
+     */
+    public static JsonScanResultV1 scanResultWithWholeImageAcceptedRisk() {
+        String resourcePath =
+                "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/dummy-vuln-app_latest_accepted_risk_in_image.json";
+        InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+        assertNotNull(imageStream);
+
+        return GsonBuilder.build()
+                .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
+    }
 }

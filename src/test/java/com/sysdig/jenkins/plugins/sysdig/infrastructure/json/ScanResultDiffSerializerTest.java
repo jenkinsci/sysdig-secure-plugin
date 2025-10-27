@@ -32,7 +32,8 @@ class ScanResultDiffSerializerTest {
     void testSerializeDiffWithResults() {
         // Given
         int pkgId = 0;
-        ScanResult oldScan = new ScanResult(null, null, null, null, null, null, null, null, null);
+        ScanResult oldScan =
+                new ScanResult(EvaluationResult.Passed, null, null, null, null, null, null, null, null, null);
         Layer layer = oldScan.addLayer("digest", null, "command");
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package pkg1 =
                 oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-1", "1.0", "/path", layer);
@@ -43,7 +44,8 @@ class ScanResultDiffSerializerTest {
         Vulnerability vuln2 = oldScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null);
         vuln2.addFoundInPackage(pkg2);
 
-        ScanResult newScan = new ScanResult(null, null, null, null, null, null, null, null, null);
+        ScanResult newScan =
+                new ScanResult(EvaluationResult.Passed, null, null, null, null, null, null, null, null, null);
         Layer newLayer = newScan.addLayer("digest", null, "command");
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package newPkg2 =
                 newScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-2", "2.0", "/path", newLayer);

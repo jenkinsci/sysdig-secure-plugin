@@ -32,6 +32,7 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
 
     private ScanResult createScanResult() {
         return new ScanResult(
+                evaluationResultFromString(result().policies().globalEvaluation()),
                 ScanType.Docker,
                 result().metadata().pullString(),
                 result().metadata().imageId(),
@@ -199,6 +200,10 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
      */
     private static Date dateFromISO8601String(@NonNull String str) {
         return Date.from(Instant.parse(str));
+    }
+
+    private static EvaluationResult evaluationResultFromString(String evaluationResult) {
+        return "failed".equalsIgnoreCase(evaluationResult) ? EvaluationResult.Failed : EvaluationResult.Passed;
     }
 
     private static Severity severityFromString(String severityString) {
