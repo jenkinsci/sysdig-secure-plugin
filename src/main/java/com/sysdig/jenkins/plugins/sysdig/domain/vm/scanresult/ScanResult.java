@@ -1,10 +1,10 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.*;
-import javax.annotation.Nullable;
 
 public class ScanResult implements Serializable {
     private final EvaluationResult globalEvaluationResult;
