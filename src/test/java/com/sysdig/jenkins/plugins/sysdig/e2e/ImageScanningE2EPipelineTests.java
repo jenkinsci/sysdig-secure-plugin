@@ -45,8 +45,7 @@ class ImageScanningE2EPipelineTests {
 
     @Test
     void testPipelineWithAllConfigs() throws Exception {
-        var job = helpers.createPipelineJobWithScript(
-                        """
+        var job = helpers.createPipelineJobWithScript("""
         sysdigImageScan engineCredentialsId: 'sysdig-secure',
                           engineURL: 'https://custom-engine-url.com',
                           engineVerify: false,
@@ -56,8 +55,7 @@ class ImageScanningE2EPipelineTests {
                           cliVersionToApply: 'custom',
                           policiesToApply: 'custom-policy-name',
                           bailOnFail: false,
-                          bailOnPluginFail: false""")
-                .buildWithRemoteExecution();
+                          bailOnPluginFail: false""").buildWithRemoteExecution();
 
         var build = jenkins.buildAndAssertSuccess(job);
 
@@ -105,8 +103,7 @@ class ImageScanningE2EPipelineTests {
 
     @Test
     void testPipelineWithImageToCompareConfig() throws Exception {
-        var job = helpers.createPipelineJobWithScript(
-                        """
+        var job = helpers.createPipelineJobWithScript("""
         sysdigImageScan engineCredentialsId: 'sysdig-secure',
                           engineURL: 'https://custom-engine-url.com',
                           engineVerify: false,
@@ -115,8 +112,7 @@ class ImageScanningE2EPipelineTests {
                           customCliVersion: '2.0.0',
                           cliVersionToApply: 'custom',
                           bailOnFail: false,
-                          bailOnPluginFail: false""")
-                .buildWithRemoteExecution();
+                          bailOnPluginFail: false""").buildWithRemoteExecution();
 
         var build = jenkins.buildAndAssertSuccess(job);
 
