@@ -23,8 +23,8 @@ This project uses **Maven** for build management and optionally **Nix** for a co
 - **Build Plugin**: `mvn clean package` (generates `target/sysdig-secure.hpi`).
 - **Run Tests**: `mvn clean verify` (runs unit and integration tests).
 - **Run Locally**: `mvn hpi:run` (starts a local Jenkins instance with the plugin installed).
-- **Format Code**: `make format` (applies Spotless formatting).
-- **Verify All**: `make verify` (runs formatting check + tests).
+- **Format Code**: `just format` (applies Spotless formatting).
+- **Verify All**: `just verify` (runs formatting check + tests).
 - **Dev Shell**: `nix develop` (enters a shell with Java/Maven pre-configured).
 
 ## Coding Style & Naming
@@ -33,7 +33,7 @@ This project uses **Maven** for build management and optionally **Nix** for a co
 - **Formatting**:
   - **Java**: 4 spaces indentation.
   - **XML/JS**: 2 spaces indentation.
-  - Enforced via **Spotless**. Always run `make format` before committing.
+  - Enforced via **Spotless**. Always run `just format` before committing.
 - **Naming**: Use descriptive, standard Java naming conventions (CamelCase for classes, camelCase for methods/variables).
 
 ## Testing Guidelines
@@ -60,7 +60,7 @@ Follow **Conventional Commits**:
 - Link relevant issues (e.g., "Fixes #149").
 - Include a summary of changes.
 - For UI changes, attach screenshots.
-- Ensure `make verify` passes locally.
+- Ensure `just verify` passes locally.
 
 ## Documentation Updates
 
@@ -70,36 +70,36 @@ The agent must keep this file (`AGENTS.md`) and `README.md` updated as the proje
 
 ## Maintenance Guidelines
 
-This project includes a `Makefile` to simplify common maintenance tasks. **It is highly recommended to run `make update`** to perform a complete project update, as it orchestrates all maintenance tasks (Jenkins version, Parent POM, dependencies, etc.) in the correct order.
+This project includes a `justfile` to simplify common maintenance tasks. **It is highly recommended to run `just update`** to perform a complete project update, as it orchestrates all maintenance tasks (Jenkins version, Parent POM, dependencies, etc.) in the correct order.
 
 ### Updating Dependencies & Parent POM
 Regularly update the parent POM and project dependencies to ensure security and compatibility.
 
 1.  **Update Parent POM**:
-    Run `make update-parent-pom` (executes `mvn versions:update-parent`).
+    Run `just update-parent-pom` (executes `mvn versions:update-parent`).
     *Reference: [Update parent POM](https://www.jenkins.io/doc/developer/tutorial-improve/update-parent-pom/)*
 
 2.  **Update Dependencies**:
-    Run `make update-dependencies` (executes `mvn versions:use-latest-versions`).
+    Run `just update-dependencies` (executes `mvn versions:use-latest-versions`).
 
 3.  **Update All (Recommended)**:
-    Run `make update` to update the parent POM, dependencies, flake, and the Sysdig CLI version in one go.
+    Run `just update` to update the parent POM, dependencies, flake, and the Sysdig CLI version in one go.
 
 ### Updating Base Jenkins Version
 **Important:** Update the base Jenkins version **before** updating the parent POM or other dependencies.
 
 1.  **Run Automation**:
-    Run `make update-jenkins-version`. This command:
+    Run `just update-jenkins-version`. This command:
     - Fetches the latest **unmaintained LTS version** from [endoflife.date](https://endoflife.date/jenkins).
     - Calculates the corresponding baseline (e.g., `2.516`).
     - Fetches the latest available **Bill of Materials (BOM)** version for that baseline.
     - Updates `jenkins.baseline`, `jenkins.version`, and the BOM dependency in `pom.xml` automatically using `sed`.
 
 2.  **Verify**:
-    Run `make verify` to ensure the plugin builds and tests pass with the new version.
+    Run `just verify` to ensure the plugin builds and tests pass with the new version.
 
 ### Updating Sysdig CLI Version
 To update the embedded Sysdig CLI version used by the scanner:
 
-1.  Run `make update-sysdig-cli-version`.
+1.  Run `just update-sysdig-cli-version`.
     This fetches the latest version from Sysdig and updates `RemoteSysdigImageScanner.java`.

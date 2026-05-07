@@ -53,17 +53,17 @@ This project uses **Maven** for build and dependency management. **Nix is recomm
    mvn hpi:run
    ```
 
-### Using the Makefile
+### Using the justfile
 
-The project includes a `Makefile` with useful commands:
+The project includes a `justfile` with useful commands:
 
 - **Update dependencies and parent POM:**
   ```sh
-  make update
+  just update
   ```
 - **Run verification tests:**
   ```sh
-  make verify
+  just verify
   ```
 
 ## Making Changes
