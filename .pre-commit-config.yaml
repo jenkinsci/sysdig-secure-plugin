@@ -10,8 +10,8 @@ repos:
     -   id: check-added-large-files
 - repo: local
   hooks:
-      - id: make-format
+      - id: just-format
         name: format all files
-        entry: make format
+        entry: just format
         language: system
         pass_filenames: false

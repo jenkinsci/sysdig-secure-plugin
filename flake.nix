@@ -34,6 +34,7 @@
             maven
             jdk
             pre-commit
+            just
           ];
 
           shellHook = ''

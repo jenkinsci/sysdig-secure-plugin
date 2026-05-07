@@ -32,7 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class RemoteSysdigImageScanner {
-    private static final String FIXED_SCANNED_VERSION = "1.24.2";
+    private static final String FIXED_SCANNED_VERSION = "1.26.0";
     private final ScannerPaths scannerPaths;
     private final String imageName;
     private final RetriableRemoteDownloader retriableRemoteDownloader;
