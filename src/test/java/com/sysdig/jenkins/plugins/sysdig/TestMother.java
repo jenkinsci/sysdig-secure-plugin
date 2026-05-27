@@ -55,4 +55,14 @@ public class TestMother {
         return GsonBuilder.build()
                 .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
     }
+
+    public static JsonScanResultV1 scanResultWithPackageWithoutLayer() {
+        String resourcePath =
+                "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/scanner_1.26.0_package_with_null_layer.json";
+        InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+        assertNotNull(imageStream);
+
+        return GsonBuilder.build()
+                .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
+    }
 }

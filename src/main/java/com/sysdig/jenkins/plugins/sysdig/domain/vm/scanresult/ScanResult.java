@@ -54,10 +54,13 @@ public class ScanResult implements Serializable {
         return Collections.unmodifiableCollection(this.layers.values());
     }
 
-    public Package addPackage(String id, PackageType type, String name, String version, String path, Layer layer) {
+    public Package addPackage(
+            String id, PackageType type, String name, String version, String path, @Nullable Layer layer) {
         Package aPackage = new Package(id, type, name, version, path, layer, this);
         this.packages.put(id, aPackage);
-        layer.addPackage(aPackage);
+        if (layer != null) {
+            layer.addPackage(aPackage);
+        }
         return aPackage;
     }
 

@@ -93,9 +93,13 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
             String pkgId = entry.getKey();
             JsonPackage jsonPkg = entry.getValue();
 
+            // sysdig-cli-scanner >= 1.25.0 emits meta-packages (base OS distro, container image)
+            // without a layerRef. Keep them with a null layer so their vulnerabilities and policy
+            // failures are still reported.
             JsonLayer jsonLayer = result().layers().get(jsonPkg.layerRef());
-            var layerWhereThisPackageIsFound =
-                    scanResult.findLayerByDigest(jsonLayer.digest()).get();
+            Layer layerWhereThisPackageIsFound = jsonLayer == null
+                    ? null
+                    : scanResult.findLayerByDigest(jsonLayer.digest()).orElse(null);
 
             Package addedPackage = scanResult.addPackage(
                     pkgId,

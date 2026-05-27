@@ -1,10 +1,12 @@
 package com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.AggregateChild;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 public class Package implements AggregateChild<ScanResult>, Serializable {
@@ -24,7 +26,7 @@ public class Package implements AggregateChild<ScanResult>, Serializable {
             String name,
             String version,
             String path,
-            Layer foundInLayer,
+            @Nullable Layer foundInLayer,
             ScanResult root) {
         this.id = id;
         this.type = type;
@@ -57,8 +59,8 @@ public class Package implements AggregateChild<ScanResult>, Serializable {
         return path;
     }
 
-    public Layer foundInLayer() {
-        return foundInLayer;
+    public Optional<Layer> foundInLayer() {
+        return Optional.ofNullable(foundInLayer);
     }
 
     public void addVulnerabilityFound(Vulnerability vulnerability) {
