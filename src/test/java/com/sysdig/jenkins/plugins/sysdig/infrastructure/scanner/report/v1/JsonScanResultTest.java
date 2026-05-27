@@ -152,4 +152,18 @@ class JsonScanResultTest {
         assertTrue(scanResult.policies().stream()
                 .anyMatch(p -> p.evaluationResult().isFailed()));
     }
+
+    @Test
+    void whenAPackageHasNoLayerRefItShouldNotThrowNPE() {
+        // cli-scanner >= 1.25.0 emits meta-packages (base OS distro, container image)
+        // without a layerRef, so result().layers().get(layerRef) returns null and
+        // jsonLayer.digest() NPEs.
+        JsonScanResultV1 jsonScanResult = TestMother.scanResultWithPackageWithoutLayer();
+
+        ScanResult result = assertDoesNotThrow(() -> jsonScanResult.toDomain().get());
+
+        assertEquals(2, result.packages().size());
+        assertTrue(result.packages().stream().anyMatch(p -> p.name().equals("ubuntu")));
+        assertTrue(result.packages().stream().anyMatch(p -> p.name().equals("libcurl")));
+    }
 }
