@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class RemoteDownloader {
+public class RemoteDownloader implements ExecutableDownloader {
     private final RunContext runContext;
     protected final SysdigLogger logger;
     private final EnvVars envVars;
@@ -22,6 +22,7 @@ public class RemoteDownloader {
         this.envVars = runContext.getEnvVars();
     }
 
+    @Override
     public FilePath downloadExecutable(URL url, String fileName) throws IOException, InterruptedException {
         FilePath executableFile = downloadFile(url, fileName);
 
