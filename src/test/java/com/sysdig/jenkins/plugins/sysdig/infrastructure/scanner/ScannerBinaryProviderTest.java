@@ -19,7 +19,7 @@ import java.net.URL;
 import org.junit.jupiter.api.Test;
 
 class ScannerBinaryProviderTest {
-    private static final String BASE = "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.27.1/";
+    private static final String BASE = "https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.27.2/";
 
     private final ImageScanningConfig config = mock(ImageScanningConfig.class);
     private final ExecutableDownloader downloader = mock(ExecutableDownloader.class);
@@ -44,15 +44,15 @@ class ScannerBinaryProviderTest {
     @Test
     void whenNoScannerBinaryPathIsConfiguredItDownloadsThePinnedVersion() throws Exception {
         FilePath downloaded = mock(FilePath.class);
-        when(downloaded.getRemote()).thenReturn("/ws/bin/inlinescan-1.27.1.bin");
+        when(downloaded.getRemote()).thenReturn("/ws/bin/inlinescan-1.27.2.bin");
         when(config.getScannerBinaryPath()).thenReturn("");
-        when(downloader.downloadExecutable(any(URL.class), eq("inlinescan-1.27.1.bin")))
+        when(downloader.downloadExecutable(any(URL.class), eq("inlinescan-1.27.2.bin")))
                 .thenReturn(downloaded);
 
         assertSame(downloaded, provider().retrieve());
         // The exact URL depends on the host OS/arch; assert the resolved version flows into it and the filename.
         verify(downloader)
-                .downloadExecutable(ScannerBinaryProvider.downloadURLForVersion("1.27.1"), "inlinescan-1.27.1.bin");
+                .downloadExecutable(ScannerBinaryProvider.downloadURLForVersion("1.27.2"), "inlinescan-1.27.2.bin");
     }
 
     @Test
@@ -74,7 +74,7 @@ class ScannerBinaryProviderTest {
     void linuxAmd64() throws MalformedURLException {
         assertEquals(
                 BASE + "linux/amd64/sysdig-cli-scanner",
-                ScannerBinaryProvider.downloadURLForVersion("1.27.1", "Linux", "amd64")
+                ScannerBinaryProvider.downloadURLForVersion("1.27.2", "Linux", "amd64")
                         .toString());
     }
 
@@ -82,7 +82,7 @@ class ScannerBinaryProviderTest {
     void linuxArm64() throws MalformedURLException {
         assertEquals(
                 BASE + "linux/arm64/sysdig-cli-scanner",
-                ScannerBinaryProvider.downloadURLForVersion("1.27.1", "Linux", "aarch64")
+                ScannerBinaryProvider.downloadURLForVersion("1.27.2", "Linux", "aarch64")
                         .toString());
     }
 
@@ -90,7 +90,7 @@ class ScannerBinaryProviderTest {
     void macAmd64() throws MalformedURLException {
         assertEquals(
                 BASE + "darwin/amd64/sysdig-cli-scanner",
-                ScannerBinaryProvider.downloadURLForVersion("1.27.1", "Mac OS X", "x86_64")
+                ScannerBinaryProvider.downloadURLForVersion("1.27.2", "Mac OS X", "x86_64")
                         .toString());
     }
 
@@ -98,7 +98,7 @@ class ScannerBinaryProviderTest {
     void macArm64() throws MalformedURLException {
         assertEquals(
                 BASE + "darwin/arm64/sysdig-cli-scanner",
-                ScannerBinaryProvider.downloadURLForVersion("1.27.1", "Mac OS X", "aarch64")
+                ScannerBinaryProvider.downloadURLForVersion("1.27.2", "Mac OS X", "aarch64")
                         .toString());
     }
 
@@ -106,7 +106,7 @@ class ScannerBinaryProviderTest {
     void unknownOsDefaultsToLinuxAndUnknownArchDefaultsToAmd64() throws MalformedURLException {
         assertEquals(
                 BASE + "linux/amd64/sysdig-cli-scanner",
-                ScannerBinaryProvider.downloadURLForVersion("1.27.1", "Windows 11", "ppc64")
+                ScannerBinaryProvider.downloadURLForVersion("1.27.2", "Windows 11", "ppc64")
                         .toString());
     }
 }
