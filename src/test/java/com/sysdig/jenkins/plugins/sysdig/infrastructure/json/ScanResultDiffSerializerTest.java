@@ -39,9 +39,11 @@ class ScanResultDiffSerializerTest {
                 oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-1", "1.0", "/path", layer);
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package pkg2 =
                 oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-2", "2.0", "/path", layer);
-        Vulnerability vuln1 = oldScan.addVulnerability("CVE-2023-0001", Severity.High, new Date(), null, true, "1.1");
+        Vulnerability vuln1 =
+                oldScan.addVulnerability("CVE-2023-0001", Severity.High, new Date(), null, true, "1.1", true, 6.5f);
         vuln1.addFoundInPackage(pkg1);
-        Vulnerability vuln2 = oldScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null);
+        Vulnerability vuln2 =
+                oldScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null, false, null);
         vuln2.addFoundInPackage(pkg2);
 
         ScanResult newScan =
@@ -52,10 +54,10 @@ class ScanResultDiffSerializerTest {
         com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package newPkg3 =
                 newScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-3", "3.0", "/path", newLayer);
         Vulnerability newVuln2 =
-                newScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null);
+                newScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null, false, null);
         newVuln2.addFoundInPackage(newPkg2);
         Vulnerability newVuln3 =
-                newScan.addVulnerability("CVE-2023-0003", Severity.Low, new Date(), null, false, "3.1");
+                newScan.addVulnerability("CVE-2023-0003", Severity.Low, new Date(), null, false, "3.1", false, 5.25f);
         newVuln3.addFoundInPackage(newPkg3);
 
         ScanResultDiff diff = ScanResultDiff.betweenPreviousAndNew(oldScan, newScan);
@@ -66,10 +68,10 @@ class ScanResultDiffSerializerTest {
         // Then
         JsonElement expectedJson = JsonParser.parseString("{"
                 + "\"vulnerabilitiesAdded\":["
-                + "{\"cve\":\"CVE-2023-0003\",\"severity\":\"Low\",\"fixVersion\":\"3.1\",\"packageName\":\"pkg-3\",\"packageVersion\":\"3.0\",\"packageType\":\"OS\",\"exploitable\":false}"
+                + "{\"cve\":\"CVE-2023-0003\",\"severity\":\"Low\",\"fixVersion\":\"3.1\",\"packageName\":\"pkg-3\",\"packageVersion\":\"3.0\",\"packageType\":\"OS\",\"exploitable\":false,\"fpkev\":false,\"cvssTemporalScore\":5.25}"
                 + "],"
                 + "\"vulnerabilitiesFixed\":["
-                + "{\"cve\":\"CVE-2023-0001\",\"severity\":\"High\",\"fixVersion\":\"1.1\",\"packageName\":\"pkg-1\",\"packageVersion\":\"1.0\",\"packageType\":\"OS\",\"exploitable\":true}"
+                + "{\"cve\":\"CVE-2023-0001\",\"severity\":\"High\",\"fixVersion\":\"1.1\",\"packageName\":\"pkg-1\",\"packageVersion\":\"1.0\",\"packageType\":\"OS\",\"exploitable\":true,\"fpkev\":true,\"cvssTemporalScore\":6.5}"
                 + "]"
                 + "}");
 

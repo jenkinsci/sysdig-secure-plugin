@@ -61,6 +61,28 @@ class JsonScanResultTest {
     }
 
     @Test
+    void whenConvertingToDomainItHasFpkevInformation() {
+        Vulnerability fpkevVuln =
+                scanResult.findVulnerabilityByCVE("CVE-2016-2781").get();
+        assertTrue(fpkevVuln.fpkev());
+
+        Vulnerability regularVuln =
+                scanResult.findVulnerabilityByCVE("CVE-2022-27943").get();
+        assertFalse(regularVuln.fpkev());
+    }
+
+    @Test
+    void whenConvertingToDomainItHasVulndbCvssTemporalScoreInformation() {
+        Vulnerability vulnWithTemporalScore =
+                scanResult.findVulnerabilityByCVE("CVE-2016-2781").get();
+        assertEquals(6.2f, vulnWithTemporalScore.cvssTemporalScore().get());
+
+        Vulnerability vulnWithoutTemporalScore =
+                scanResult.findVulnerabilityByCVE("CVE-2016-20013").get();
+        assertTrue(vulnWithoutTemporalScore.cvssTemporalScore().isEmpty());
+    }
+
+    @Test
     void whenConvertingToDomainItHasFixableVulnsInformation() {
         List<Vulnerability> fixableVulnerabilities = scanResult.vulnerabilities().stream()
                 .filter(Vulnerability::fixable)
@@ -151,6 +173,29 @@ class JsonScanResultTest {
         assertEquals(EvaluationResult.Passed, scanResult.evaluationResult());
         assertTrue(scanResult.policies().stream()
                 .anyMatch(p -> p.evaluationResult().isFailed()));
+    }
+
+    @Test
+    void whenParsingRealScanner1_27_2OutputItHasFpkevAndTemporalScore() {
+        // real (untouched) output from sysdig-cli-scanner 1.27.2, the first version
+        // emitting fpkev and providersMetadata.vulndb.cvssScore.temporal_score
+        ScanResult result = TestMother.scanResultFromScanner1_27_2().toDomain().get();
+
+        assertEquals(200, result.vulnerabilities().size());
+
+        List<Vulnerability> fpkevVulnerabilities =
+                result.vulnerabilities().stream().filter(Vulnerability::fpkev).toList();
+        assertEquals(4, fpkevVulnerabilities.size());
+
+        Vulnerability looneyTunables =
+                result.findVulnerabilityByCVE("CVE-2023-4911").get();
+        assertTrue(looneyTunables.fpkev());
+        assertEquals(7.2f, looneyTunables.cvssTemporalScore().get());
+
+        Vulnerability vulnWithoutNewFields =
+                result.findVulnerabilityByCVE("CVE-2022-3219").get();
+        assertFalse(vulnWithoutNewFields.fpkev());
+        assertTrue(vulnWithoutNewFields.cvssTemporalScore().isEmpty());
     }
 
     @Test

@@ -3180,7 +3180,8 @@
             "cvssScore": {
               "version": "3.0",
               "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "score": 7.5
+              "score": 7.5,
+              "temporal_score": 5.9
             },
             "publicationDate": "2022-03-23T00:00:00Z",
             "severity": "high"
@@ -3252,6 +3253,7 @@
         },
         "disclosureDate": "2017-02-07",
         "exploitable": false,
+        "fpkev": true,
         "mainProvider": "ubuntu",
         "name": "CVE-2016-2781",
         "packageRef": "52d0f6dc-578a-4ed1-bc92-2939508a15bb",
@@ -3294,7 +3296,8 @@
             "cvssScore": {
               "version": "2.0",
               "vector": "AV:L/AC:L/Au:N/C:C/I:C/A:C",
-              "score": 7.2
+              "score": 7.2,
+              "temporal_score": 6.2
             },
             "publicationDate": "2016-02-28T00:00:00Z",
             "severity": "high"
@@ -3365,7 +3368,8 @@
             "cvssScore": {
               "version": "3.0",
               "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "score": 7.5
+              "score": 7.5,
+              "temporal_score": 5.9
             },
             "publicationDate": "2022-03-23T00:00:00Z",
             "severity": "high"
@@ -4233,7 +4237,8 @@
             "cvssScore": {
               "version": "3.0",
               "vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "score": 7.5
+              "score": 7.5,
+              "temporal_score": 5.9
             },
             "publicationDate": "2022-03-23T00:00:00Z",
             "severity": "high"

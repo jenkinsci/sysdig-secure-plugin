@@ -4,9 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1.JsonScanResultV1;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Provides pre-configured objects for testing, following the Object Mother pattern.
@@ -54,6 +57,29 @@ public class TestMother {
 
         return GsonBuilder.build()
                 .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
+    }
+
+    /**
+     * Returns a scan result produced by sysdig-cli-scanner 1.27.2, the first version
+     * emitting the fpkev and providersMetadata.vulndb.cvssScore.temporal_score fields.
+     * The fixture is the raw scanner output, gzipped to keep the repository small.
+     *
+     * @return a test Result object.
+     */
+    public static JsonScanResultV1 scanResultFromScanner1_27_2() {
+        String resourcePath =
+                "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/scanner_1.27.2_debian_11.4-slim.json.gz";
+        InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+        assertNotNull(imageStream);
+
+        try {
+            return GsonBuilder.build()
+                    .fromJson(
+                            new InputStreamReader(new GZIPInputStream(imageStream), StandardCharsets.UTF_8),
+                            JsonScanResultV1.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static JsonScanResultV1 scanResultWithPackageWithoutLayer() {
