@@ -35,6 +35,8 @@ public class ScanResultDiffSerializer implements JsonSerializer<ScanResultDiff> 
         vulnObject.addProperty("packageVersion", getPackageVersion(vuln));
         vulnObject.addProperty("packageType", getPackageType(vuln));
         vulnObject.addProperty("exploitable", vuln.exploitable());
+        vulnObject.addProperty("fpkev", vuln.fpkev());
+        vuln.cvssTemporalScore().ifPresent(score -> vulnObject.addProperty("cvssTemporalScore", score));
         return vulnObject;
     }
 

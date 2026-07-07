@@ -78,7 +78,9 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                             .map(JsonScanResultV1::dateFromShortString)
                             .orElse(null),
                     jsonVuln.exploitable(),
-                    jsonVuln.fixVersion());
+                    jsonVuln.fixVersion(),
+                    jsonVuln.isFpkev(),
+                    jsonVuln.vulndbCvssTemporalScore().orElse(null));
 
             jsonVuln.riskAcceptRefs().stream()
                     .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))

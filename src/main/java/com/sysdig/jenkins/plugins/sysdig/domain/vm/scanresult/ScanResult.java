@@ -78,10 +78,21 @@ public class ScanResult implements Serializable {
             Date disclosureDate,
             @Nullable Date solutionDate,
             boolean exploitable,
-            @Nullable String fixVersion) {
+            @Nullable String fixVersion,
+            boolean fpkev,
+            @Nullable Float cvssTemporalScore) {
         return vulnerabilities.computeIfAbsent(
                 cve,
-                k -> new Vulnerability(cve, severity, disclosureDate, solutionDate, exploitable, fixVersion, this));
+                k -> new Vulnerability(
+                        cve,
+                        severity,
+                        disclosureDate,
+                        solutionDate,
+                        exploitable,
+                        fixVersion,
+                        fpkev,
+                        cvssTemporalScore,
+                        this));
     }
 
     public Optional<Vulnerability> findVulnerabilityByCVE(String cve) {

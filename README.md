@@ -271,6 +271,12 @@ interface (`Sysdig Secure Report (FAIL)` in the image above)
 
 <img src="docs/images/new/ScanCompleteResults.png" height="600px" />
 
+> **Note**: The `Flashpoint KEV` and `CVSS Temporal Score` columns are populated from fields
+> (`fpkev` and `providersMetadata.vulndb.cvssScore.temporal_score`) emitted by
+> `sysdig-cli-scanner` 1.27.0 and later. When scanning with an older CLI scanner version
+> (for example, when pinning a custom version below 1.27.0), these columns will show
+> `No` and `None` respectively.
+
 # Local development and installation
 
 We now use [**Nix**](https://github.com/DeterminateSystems/nix-installer) to ensure consistent development environments across different developers.

@@ -217,6 +217,8 @@ function buildSecurityTable(tableId, outputFile) {
           { title: "Publish Date" },
           { title: "Fix" },
           { title: "Fix Date" },
+          { title: "Flashpoint KEV" },
+          { title: "CVSS Temporal Score" },
         ];
 
         securityTable = jQuery(tableId).DataTable({
@@ -363,6 +365,8 @@ function drawSecurityTable() {
       row[tableColFor("Disclosure Date", tableData)] || "",
       row[tableColFor("Fix Available", tableData)],
       row[tableColFor("Solution Date", tableData)] || "",
+      row[tableColFor("Flashpoint KEV", tableData)] || "",
+      row[tableColFor("CVSS Temporal Score", tableData)] || "",
     ]);
   });
   securityTable.clear().draw();
@@ -384,6 +388,8 @@ function download_csv() {
     "Package Path",
     "Publish Date",
     "Fix Date",
+    "Flashpoint KEV",
+    "CVSS Temporal Score",
   ];
   csv += headerArray.join(";");
   csv += "\n";
@@ -437,6 +443,8 @@ function buildDiffTable(addedTableId, fixedTableId, outputFile) {
         { title: "Package Type" },
         { title: "Fix Version" },
         { title: "Exploitable" },
+        { title: "Flashpoint KEV" },
+        { title: "CVSS Temporal Score" },
       ];
 
       // Build Added Vulnerabilities Table
@@ -454,6 +462,8 @@ function buildDiffTable(addedTableId, fixedTableId, outputFile) {
             vuln.packageType || "N/A",
             vuln.fixVersion || "N/A",
             vuln.exploitable ? "Yes" : "No",
+            vuln.fpkev ? "Yes" : "No",
+            vuln.cvssTemporalScore != null ? vuln.cvssTemporalScore : "N/A",
           ]);
         });
       }
@@ -473,6 +483,8 @@ function buildDiffTable(addedTableId, fixedTableId, outputFile) {
             vuln.packageType || "N/A",
             vuln.fixVersion || "N/A",
             vuln.exploitable ? "Yes" : "No",
+            vuln.fpkev ? "Yes" : "No",
+            vuln.cvssTemporalScore != null ? vuln.cvssTemporalScore : "N/A",
           ]);
         });
       }
