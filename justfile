@@ -3,28 +3,46 @@ default:
     @just --list
 
 # Run all checks
+[group('build')]
 check: format-check verify
 
 # Verify project (clean build, tests, spotless check, javadoc)
+[group('build')]
 verify:
     mvn clean spotless:check verify javadoc:jar
 
+# Run tests
+[group('build')]
+test:
+    mvn test
+
 # Format code
+[group('format')]
 format:
     mvn spotless:apply
 
 # Check formatting without modifying
+[group('format')]
 format-check:
     mvn spotless:check
 
-# Run tests
-test:
-    mvn test
+# Run Jenkins locally with the plugin installed (http://localhost:8080/jenkins)
+[group('dev')]
+dev-run:
+    mvn clean hpi:run
+
+# Prepare and perform Maven release
+[group('dev')]
+[confirm('This will prepare and perform a Maven release. Continue?')]
+release: format-check
+    mvn release:prepare release:perform
 
 # Update everything: jenkins, parent pom, deps, flake, sysdig cli
+[group('update')]
 update: update-jenkins-version update-parent-pom update-dependencies update-flake update-sysdig-cli-version
 
 # Update to latest unmaintained LTS Jenkins version
+[group('update')]
 update-jenkins-version:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -41,18 +59,22 @@ update-jenkins-version:
     echo "Updated pom.xml to Jenkins $version, Baseline $baseline, BOM $bom_version"
 
 # Update parent POM to latest version
+[group('update')]
 update-parent-pom:
     mvn versions:update-parent -DgenerateBackupPoms=false
 
 # Update dependencies to latest versions
+[group('update')]
 update-dependencies:
     mvn versions:use-latest-versions
 
 # Update nix flake
+[group('update')]
 update-flake:
     -nix flake update
 
 # Update sysdig CLI scanner version
+[group('update')]
 update-sysdig-cli-version:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -61,11 +83,3 @@ update-sysdig-cli-version:
     echo "Latest: $latest"
     sed -i -E 's/(private static final String FIXED_SCANNED_VERSION = ")([^"]+)(")/\1'"$latest"'\3/' src/main/java/com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/ScannerVersionResolver.java
     echo "Version updated"
-
-# Run Jenkins locally with the plugin installed (http://localhost:8080/jenkins)
-dev-run:
-    mvn clean hpi:run
-
-# Prepare and perform Maven release
-release:
-    mvn release:prepare release:perform
