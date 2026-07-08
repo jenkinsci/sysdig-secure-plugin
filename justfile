@@ -1,4 +1,5 @@
 # Help commands
+[private]
 default:
     @just --list
 
