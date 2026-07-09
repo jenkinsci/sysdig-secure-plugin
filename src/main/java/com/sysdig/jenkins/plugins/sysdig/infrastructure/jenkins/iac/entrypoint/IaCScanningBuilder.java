@@ -46,7 +46,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
-    private static final String FIXED_SCANNED_VERSION = "1.16.1";
+    private static final String FIXED_SCANNED_VERSION = "1.27.2"; // newest-version-marker
 
     private String engineCredentialsId;
     private boolean listUnsupported = false;

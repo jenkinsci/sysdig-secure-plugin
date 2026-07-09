@@ -16,6 +16,22 @@ import java.util.zip.GZIPInputStream;
  */
 public class TestMother {
 
+    private static final String FIXTURE_DIR = "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/";
+
+    /**
+     * Versions of the sysdig-cli-scanner whose recorded output is checked into the repository as a
+     * fixture. These track the "testing window" managed from the justfile: the newest published
+     * version and the oldest version still within the support window. When they are bumped
+     * (via {@code just update-cli-scanner} / {@code just update-oldest-cli-scanner}), regenerate the
+     * matching fixtures with {@code just generate-scanner-fixtures}.
+     */
+    public static final String NEWEST_FIXTURE_VERSION = "1.27.2"; // newest-version-marker
+
+    public static final String OLDEST_FIXTURE_VERSION = "1.22.5"; // oldest-version-marker
+
+    private static final String NEWEST_FIXTURE = FIXTURE_DIR + "scanner_newest_scan_result.json.gz";
+    private static final String OLDEST_FIXTURE = FIXTURE_DIR + "scanner_oldest_scan_result.json.gz";
+
     /**
      * Returns a sample Result object for testing.
      *
@@ -90,5 +106,47 @@ public class TestMother {
 
         return GsonBuilder.build()
                 .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
+    }
+
+    /**
+     * Returns the raw output recorded from the newest supported sysdig-cli-scanner
+     * ({@link #NEWEST_FIXTURE_VERSION}). Regenerate with {@code just generate-scanner-fixtures}.
+     *
+     * @return a test Result object.
+     */
+    public static JsonScanResultV1 scanResultFromNewestScanner() {
+        return loadGzippedScanResult(NEWEST_FIXTURE);
+    }
+
+    /**
+     * Returns the raw output recorded from the oldest still-maintained sysdig-cli-scanner
+     * ({@link #OLDEST_FIXTURE_VERSION}). Regenerate with {@code just generate-scanner-fixtures}.
+     *
+     * @return a test Result object.
+     */
+    public static JsonScanResultV1 scanResultFromOldestScanner() {
+        return loadGzippedScanResult(OLDEST_FIXTURE);
+    }
+
+    /**
+     * @return whether the oldest-version fixture has been generated and checked in. Tests use this
+     *     to skip (rather than fail) until a developer runs {@code just generate-scanner-fixtures}.
+     */
+    public static boolean oldestScannerFixtureAvailable() {
+        return TestMother.class.getClassLoader().getResource(OLDEST_FIXTURE) != null;
+    }
+
+    private static JsonScanResultV1 loadGzippedScanResult(String resourcePath) {
+        InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+        assertNotNull(imageStream, "Missing fixture: " + resourcePath + " (run `just generate-scanner-fixtures`)");
+
+        try {
+            return GsonBuilder.build()
+                    .fromJson(
+                            new InputStreamReader(new GZIPInputStream(imageStream), StandardCharsets.UTF_8),
+                            JsonScanResultV1.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

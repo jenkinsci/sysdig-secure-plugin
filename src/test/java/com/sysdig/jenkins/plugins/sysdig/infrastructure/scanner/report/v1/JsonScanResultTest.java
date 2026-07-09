@@ -1,6 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
@@ -196,6 +197,85 @@ class JsonScanResultTest {
                 result.findVulnerabilityByCVE("CVE-2022-3219").get();
         assertFalse(vulnWithoutNewFields.fpkev());
         assertTrue(vulnWithoutNewFields.cvssTemporalScore().isEmpty());
+    }
+
+    @Test
+    void whenParsingNewestScannerOutputThePluginProducesAValidPopulatedResult() {
+        // Recorded raw output from the newest supported CLI scanner (TestMother.NEWEST_FIXTURE_VERSION).
+        // Proves the plugin still parses the latest output format into a usable domain result.
+        ScanResult result = TestMother.scanResultFromNewestScanner().toDomain().orElseThrow();
+
+        assertPopulatedScanResult(result);
+        // The newest format carries fpkev and CVSS temporal score; at least one vuln should expose them.
+        assertTrue(result.vulnerabilities().stream().anyMatch(Vulnerability::fpkev));
+        assertTrue(result.vulnerabilities().stream()
+                .anyMatch(v -> v.cvssTemporalScore().isPresent()));
+    }
+
+    @Test
+    void whenParsingOldestMaintainedScannerOutputThePluginProducesAValidPopulatedResult() {
+        assumeTrue(
+                TestMother.oldestScannerFixtureAvailable(),
+                "oldest-version fixture not generated yet; run `just generate-scanner-fixtures`");
+
+        // Recorded raw output from the oldest still-maintained CLI scanner (TestMother.OLDEST_FIXTURE_VERSION).
+        // Proves the plugin keeps working against an older output format.
+        ScanResult result = TestMother.scanResultFromOldestScanner().toDomain().orElseThrow();
+
+        assertPopulatedScanResult(result);
+        // Fields introduced in newer scanners may be absent; they must default gracefully, not throw.
+        assertDoesNotThrow(() -> result.vulnerabilities().forEach(v -> {
+            v.fpkev();
+            v.cvssTemporalScore();
+        }));
+    }
+
+    private static void assertPopulatedScanResult(ScanResult result) {
+        assertNotNull(result.type());
+        assertNotNull(result.evaluationResult());
+
+        // A real scan always carries image metadata.
+        Metadata metadata = result.metadata();
+        assertNotNull(metadata);
+        assertFalse(metadata.pullString().isBlank());
+        assertFalse(metadata.imageID().isBlank());
+        assertNotNull(metadata.architecture());
+        assertNotNull(metadata.baseOS());
+        assertTrue(metadata.sizeInBytes().signum() > 0);
+
+        // Core aggregates are non-empty.
+        assertFalse(result.layers().isEmpty());
+        assertFalse(result.packages().isEmpty());
+        assertFalse(result.vulnerabilities().isEmpty());
+        assertFalse(result.policies().isEmpty());
+
+        // Every package parsed with its identifying fields.
+        result.packages().forEach(pkg -> {
+            assertNotNull(pkg.type());
+            assertFalse(pkg.name().isBlank());
+            assertFalse(pkg.version().isBlank());
+        });
+
+        // Every vulnerability parsed with severity/CVE/disclosure date; fixable ones expose a fix version.
+        result.vulnerabilities().forEach(vuln -> {
+            assertFalse(vuln.cve().isBlank());
+            assertNotNull(vuln.severity());
+            assertNotNull(vuln.disclosureDate());
+            if (vuln.fixable()) {
+                assertTrue(vuln.fixVersion().isPresent(), () -> vuln.cve() + " is fixable but has no fix version");
+            }
+        });
+
+        // Referential integrity: vulnerabilities are linked back to the packages they were found in.
+        assertTrue(result.vulnerabilities().stream()
+                .anyMatch(vuln -> !vuln.foundInPackages().isEmpty()));
+
+        // Every policy parsed with a computable evaluation result.
+        result.policies().forEach(policy -> {
+            assertFalse(policy.id().isBlank());
+            assertFalse(policy.name().isBlank());
+            assertNotNull(policy.evaluationResult());
+        });
     }
 
     @Test
