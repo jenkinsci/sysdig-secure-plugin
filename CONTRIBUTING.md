@@ -66,6 +66,14 @@ The project includes a `justfile` with useful commands:
   just verify
   ```
 
+> **Note:** The `scanner` recipes (`just --list`) rely on GNU `sed`/`date`/`grep`, `curl`,
+> `jq` and `gzip`, all provided by the Nix devshell — run them from `nix develop`. Bumping the
+> scanner testing window with `just update-cli-scanner` / `just update-oldest-cli-scanner` only
+> rewrites the version markers; regenerating the checked-in fixtures with
+> `just generate-scanner-fixtures` (also pulled in by `just update`) runs a real scan, so it
+> requires network access and a valid `SECURE_API_TOKEN` (optionally `SECURE_API_URL`). A plain
+> `mvn`/`just` build and the test suite run against the committed fixtures and need neither.
+
 ## Making Changes
 
 - The project follows the **Ports and Adapters (Hexagonal) Architecture**. Please ensure that your contributions respect this design pattern to maintain modularity and separation of concerns.

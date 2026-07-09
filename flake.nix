@@ -35,6 +35,13 @@
             jdk
             prek
             just
+            # Tooling the justfile `scanner` recipes rely on (GNU sed/date/grep, curl, jq, gzip).
+            coreutils
+            gnused
+            gnugrep
+            curl
+            jq
+            gzip
           ];
 
           shellHook = ''
