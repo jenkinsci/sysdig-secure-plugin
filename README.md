@@ -125,6 +125,16 @@ The table below describes the available configuration options.
 | CLI Scanner extra parameters           | inlineScanExtraParams  | Override the additional parameters for the Sysdig CLI Scanner execution from the global options                                                                                                                                                        | |
 | Scanner Binary Path                    | scannerBinaryPath | Override the default path for the CLI scanner binary from the global options                                                                                                                                                                                | |
 
+### Supported scanner versions
+
+The plugin pins a default `sysdig-cli-scanner` version and is tested end-to-end against both the
+default and the oldest still-maintained version:
+
+- Default pinned version: <!-- newest-version-marker -->1.27.2<!-- /newest-version-marker -->
+- Oldest maintained version tested: <!-- oldest-version-marker -->1.22.5<!-- /oldest-version-marker -->
+
+Both values are kept in sync by `just update-cli-scanner` and `just update-oldest-cli-scanner`.
+
 ### Examples
 
 The following is simple example of executing the Sysdig Secure plugin as a Jenkinsfile step:
