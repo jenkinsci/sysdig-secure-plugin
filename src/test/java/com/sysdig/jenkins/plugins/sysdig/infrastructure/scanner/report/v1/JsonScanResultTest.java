@@ -1,7 +1,6 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
@@ -214,10 +213,6 @@ class JsonScanResultTest {
 
     @Test
     void whenParsingOldestMaintainedScannerOutputThePluginProducesAValidPopulatedResult() {
-        assumeTrue(
-                TestMother.oldestScannerFixtureAvailable(),
-                "oldest-version fixture not generated yet; run `just generate-scanner-fixtures`");
-
         // Recorded raw output from the oldest still-maintained CLI scanner (TestMother.OLDEST_FIXTURE_VERSION).
         // Proves the plugin keeps working against an older output format.
         ScanResult result = TestMother.scanResultFromOldestScanner().toDomain().orElseThrow();

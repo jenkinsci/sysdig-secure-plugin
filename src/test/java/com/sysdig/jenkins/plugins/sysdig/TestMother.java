@@ -128,14 +128,6 @@ public class TestMother {
         return loadGzippedScanResult(OLDEST_FIXTURE);
     }
 
-    /**
-     * @return whether the oldest-version fixture has been generated and checked in. Tests use this
-     *     to skip (rather than fail) until a developer runs {@code just generate-scanner-fixtures}.
-     */
-    public static boolean oldestScannerFixtureAvailable() {
-        return TestMother.class.getClassLoader().getResource(OLDEST_FIXTURE) != null;
-    }
-
     private static JsonScanResultV1 loadGzippedScanResult(String resourcePath) {
         InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
         assertNotNull(imageStream, "Missing fixture: " + resourcePath + " (run `just generate-scanner-fixtures`)");
