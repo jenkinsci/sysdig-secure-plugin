@@ -287,6 +287,35 @@ interface (`Sysdig Secure Report (FAIL)` in the image above)
 > (for example, when pinning a custom version below 1.27.0), these columns will show
 > `No` and `None` respectively.
 
+# Infrastructure as Code (IaC) Scanning
+
+In addition to image scanning, the plugin can scan Infrastructure as Code manifests (Kubernetes, Terraform,
+CloudFormation, Helm, etc.) using the `sysdig-cli-scanner` in IaC mode. This is exposed as the
+**Sysdig Secure Code Scan** build step.
+
+> **Note**: IaC scanning is currently only supported in Freestyle projects. Pipeline usage is not
+> supported yet.
+
+## Integrate IaC scanning with a Freestyle Project
+
+1. Open the `Add build step` drop-down menu, and select `Sysdig Secure Code Scan`.
+2. Configure the available options, and click `Save`.
+
+## IaC configuration options
+
+| Option                        | Description                                                                                      | Default         |
+|-------------------------------|--------------------------------------------------------------------------------------------------|-----------------|
+| Sysdig Secure API Credentials | Jenkins credential holding the Sysdig Secure API token. **Mandatory.**                           | |
+| Path to scan                  | Directory or file containing the IaC manifests to scan.                                          | `.` (workspace) |
+| Recursive                     | Scan the given path recursively.                                                                 | `true`          |
+| List unsupported resources    | Include unsupported resources in the scan output.                                                | `false`         |
+| Severity threshold            | Minimum severity that fails the build (`high`, `medium`, `low`, `never`).                        | `high`          |
+| Sysdig Secure URL             | Sysdig Secure API endpoint. When empty, the CLI default is used.                                 | |
+| CLI scanner version           | `sysdig-cli-scanner` version to download and run. `latest` resolves to the pinned default.       | pinned default  |
+
+The build result reflects the scan outcome: exit code `0` succeeds, while a policy failure, bad parameters,
+or an invalid token fail the build.
+
 # Local development and installation
 
 We now use [**Nix**](https://github.com/DeterminateSystems/nix-installer) to ensure consistent development environments across different developers.
