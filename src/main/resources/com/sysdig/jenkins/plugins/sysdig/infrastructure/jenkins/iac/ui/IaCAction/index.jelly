@@ -1,0 +1,172 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+    <l:layout norefresh="true">
+        <st:include it="${it.build}" page="sidepanel.jelly"/>
+
+        <l:main-panel>
+            <st:include page="scripts.jelly" it="${it}"/>
+
+            <style>
+                .sysdig-iac h2 { margin-top: 1.2em; }
+                .sysdig-iac .meta { color: #6b7683; margin-bottom: 1em; }
+                .sysdig-iac .meta span { margin-right: 1.5em; }
+                .sysdig-iac .tiles { display: flex; flex-wrap: wrap; gap: 12px; margin: 1em 0 1.5em; }
+                .sysdig-iac .tile {
+                    min-width: 120px; padding: 12px 16px; border-radius: 8px;
+                    background: #f4f6f8; border: 1px solid #e0e4e8;
+                }
+                .sysdig-iac .tile .num { font-size: 1.8em; font-weight: 700; line-height: 1; }
+                .sysdig-iac .tile .lbl { font-size: 0.85em; color: #6b7683; margin-top: 4px; }
+                .sysdig-iac .tile.critical { background: #f7ecfa; border-color: #bf6cd0; }
+                .sysdig-iac .tile.high { background: #fdecec; border-color: #ee635e; }
+                .sysdig-iac .tile.medium { background: #fff4e6; border-color: #ffa940; }
+                .sysdig-iac .tile.low { background: #fdf7d9; border-color: #f6ca09; }
+                .sysdig-iac .tile.negligible, .sysdig-iac .tile.unknown { background: #eef1f3; border-color: #91a7b3; }
+                .sysdig-iac .sev {
+                    display: inline-block; padding: 2px 10px; border-radius: 3px;
+                    color: #fff; font-weight: 600; font-size: 0.85em; white-space: nowrap;
+                }
+                .sysdig-iac .sev-Critical { background: #bf6cd0; }
+                .sysdig-iac .sev-High { background: #ee635e; }
+                .sysdig-iac .sev-Medium { background: #ffa940; }
+                .sysdig-iac .sev-Low { background: #f6ca09; color: #333; }
+                .sysdig-iac .sev-Negligible, .sysdig-iac .sev-Unknown { background: #91a7b3; }
+                .sysdig-iac .filters { margin: 0.5em 0 1em; }
+                .sysdig-iac .filters .lbl { color: #6b7683; margin-right: 8px; }
+                .sysdig-iac .filters select {
+                    border: 1px solid #d4d4d4; background: #fff; border-radius: 4px;
+                    padding: 4px 10px; cursor: pointer;
+                }
+                .sysdig-iac table.dataTable td { vertical-align: top; }
+            </style>
+
+            <div class="sysdig-iac">
+                <h1>Sysdig Secure IaC Report</h1>
+
+                <p class="meta">
+                    <span>Resources scanned: <b>${it.metadata.totalResources()}</b></span>
+                    <span>Modules: <b>${it.metadata.totalModules()}</b></span>
+                    <span>Folders: <b>${it.metadata.totalFolders()}</b></span>
+                </p>
+
+                <div class="tiles">
+                    <div class="tile">
+                        <div class="num">${it.totalFindings}</div>
+                        <div class="lbl">Failed controls</div>
+                    </div>
+                    <j:forEach var="sc" items="${it.severityBreakdown}">
+                        <div class="tile ${sc.cssClass}">
+                            <div class="num">${sc.count}</div>
+                            <div class="lbl">${sc.name}</div>
+                        </div>
+                    </j:forEach>
+                    <div class="tile">
+                        <div class="num">${it.affectedResources}</div>
+                        <div class="lbl">Affected resources</div>
+                    </div>
+                </div>
+
+                <h2>Findings</h2>
+                <j:choose>
+                    <j:when test="${it.hasFindings}">
+                        <div class="filters">
+                            <label class="lbl" for="severity-filter">Filter by severity:</label>
+                            <select id="severity-filter">
+                                <option value="">All</option>
+                                <j:forEach var="sc" items="${it.severityBreakdown}">
+                                    <option value="${sc.name}">${sc.name}</option>
+                                </j:forEach>
+                            </select>
+                        </div>
+                        <table id="findings_table" class="table table-striped table-bordered" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Control ID</th>
+                                    <th>Control</th>
+                                    <th>Resource</th>
+                                    <th>Type</th>
+                                    <th>Location</th>
+                                    <th>Policies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <j:forEach var="f" items="${it.findings}">
+                                    <j:forEach var="r" items="${f.resources()}">
+                                        <tr>
+                                            <td data-order="${f.severity().rank()}">
+                                                <span class="sev sev-${f.severity()}">${f.severity()}</span>
+                                            </td>
+                                            <td>${f.controlId()}</td>
+                                            <td>${f.name()}</td>
+                                            <td>${r.name()}</td>
+                                            <td>${r.type()}</td>
+                                            <td>${r.location()}</td>
+                                            <td>
+                                                <j:forEach var="p" items="${f.policies()}" varStatus="s"><j:if
+                                                        test="${!s.first}">, </j:if>${p}</j:forEach>
+                                            </td>
+                                        </tr>
+                                    </j:forEach>
+                                </j:forEach>
+                            </tbody>
+                        </table>
+                    </j:when>
+                    <j:otherwise>
+                        <p>No findings.</p>
+                    </j:otherwise>
+                </j:choose>
+
+                <j:if test="${!empty(it.unsupportedResources)}">
+                    <h2>Unsupported resources</h2>
+                    <table id="unsupported_table" class="table table-striped table-bordered" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Unsupported resource kinds</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <j:forEach var="u" items="${it.unsupportedResources}">
+                                <tr>
+                                    <td>${u.source()}</td>
+                                    <td>
+                                        <j:forEach var="d" items="${u.details()}" varStatus="s"><j:if
+                                                test="${!s.first}">, </j:if>${d}</j:forEach>
+                                    </td>
+                                </tr>
+                            </j:forEach>
+                        </tbody>
+                    </table>
+                </j:if>
+
+                <j:if test="${!empty(it.errors)}">
+                    <h2>Parse errors</h2>
+                    <table id="errors_table" class="table table-striped table-bordered" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <j:forEach var="e" items="${it.errors}">
+                                <tr>
+                                    <td>${e.source()}</td>
+                                    <td>
+                                        <j:forEach var="d" items="${e.details()}" varStatus="s"><j:if
+                                                test="${!s.first}">
+                                            <br/>
+                                        </j:if>${d}</j:forEach>
+                                    </td>
+                                </tr>
+                            </j:forEach>
+                        </tbody>
+                    </table>
+                </j:if>
+
+                <st:adjunct includes="com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.ui.IaCAction.index-script"/>
+            </div>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

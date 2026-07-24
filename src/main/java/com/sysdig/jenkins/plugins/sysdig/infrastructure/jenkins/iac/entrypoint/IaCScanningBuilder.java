@@ -21,9 +21,14 @@ import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
+import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.IaCScanResult;
+import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Severity;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.http.RetriableRemoteDownloader;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.RunContext;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.ui.IaCAction;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.SysdigIaCScanningProcessBuilder;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.iac.v1.JsonIaCScanResultV1;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.*;
 import hudson.model.AbstractProject;
@@ -38,6 +43,7 @@ import hudson.util.ListBoxModel;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Vector;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -106,6 +112,10 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         this.sysdigEnv = env;
     }
 
+    public String getSeverityThreshold() {
+        return severityThreshold;
+    }
+
     @DataBoundSetter
     public void setSeverityThreshold(String severityThreshold) {
         this.severityThreshold = severityThreshold;
@@ -120,12 +130,14 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         this.engineCredentialsId = engineCredentialsId;
     }
 
-    private SysdigIaCScanningProcessBuilder buildCommand(RunContext runContext, String exec) throws AbortException {
+    private SysdigIaCScanningProcessBuilder buildCommand(
+            RunContext runContext, String exec, FilePath scanResultOutputFile) throws AbortException {
         SysdigIaCScanningProcessBuilder processBuilder = new SysdigIaCScanningProcessBuilder(
                         exec, runContext.getSysdigTokenFromCredentials(engineCredentialsId))
                 .withRecursive(getIsRecursive())
                 .withUnsupportedResources(isListUnsupported())
                 .withSeverity(SysdigIaCScanningProcessBuilder.Severity.fromString(severityThreshold))
+                .withScanResultOutputPath(scanResultOutputFile.getRemote())
                 .withPathsToScan(path)
                 .withStdoutRedirectedTo(runContext.getLogger())
                 .withStderrRedirectedTo(runContext.getLogger());
@@ -165,11 +177,14 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         logger.logInfo("Starting scan");
         try {
             String exec = filePath.getRemote();
-            SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec);
+            FilePath scanResultOutputFile = runContext.getPathFromWorkspace("sysdig-iac-scan-result.json");
+            SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec, scanResultOutputFile);
             logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
             int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
             logger.logInfo(String.format("Process finished with status %d", exitCode));
+
+            reportAndAttachScanResult(run, logger, scanResultOutputFile);
 
             switch (exitCode) {
                 case 0:
@@ -197,6 +212,52 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             run.setResult(Result.FAILURE);
         }
         logger.logInfo("Process completed");
+    }
+
+    /**
+     * Best-effort parsing of the scanner's JSON report into the domain model, to log a human-readable
+     * summary. Never alters the build result: the exit code remains the source of truth for pass/fail.
+     */
+    /**
+     * Best-effort: parse the scanner's JSON report to log a summary and attach the {@link IaCAction}
+     * that renders the result tables on the build page. Never alters the build result: the exit code
+     * remains the source of truth for pass/fail.
+     */
+    private void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
+        try {
+            if (!scanResultOutputFile.exists()) return;
+
+            String json = scanResultOutputFile.readToString();
+            logger.logDebug("Raw IaC scan result as JSON:\n" + json);
+
+            JsonIaCScanResultV1 jsonResult = GsonBuilder.build().fromJson(json, JsonIaCScanResultV1.class);
+            Optional<IaCScanResult> scanResult = jsonResult == null ? Optional.empty() : jsonResult.toDomain();
+            if (scanResult.isEmpty()) return;
+
+            logScanResultSummary(logger, scanResult.get());
+            run.addAction(new IaCAction(run, json));
+        } catch (Exception e) {
+            logger.logWarn("Could not parse IaC scan result report: " + e.getMessage());
+        }
+    }
+
+    private static void logScanResultSummary(SysdigLogger logger, IaCScanResult scanResult) {
+        logger.logInfo("IaC scan summary:");
+        logger.logInfo(String.format(
+                "  Scanned %d resources across %d module(s) in %d folder(s)",
+                scanResult.metadata().totalResources(),
+                scanResult.metadata().totalModules(),
+                scanResult.metadata().totalFolders()));
+        logger.logInfo(String.format(
+                "  Findings by severity: high=%d, medium=%d, low=%d",
+                scanResult.reportedFindingsCount(Severity.High),
+                scanResult.reportedFindingsCount(Severity.Medium),
+                scanResult.reportedFindingsCount(Severity.Low)));
+        logger.logInfo(String.format(
+                "  %d failed control(s), %d unsupported resource file(s), %d parse error(s)",
+                scanResult.findings().size(),
+                scanResult.unsupportedResources().size(),
+                scanResult.errors().size()));
     }
 
     // FIXME(fede): Remove this duplicate method

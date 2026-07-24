@@ -1,0 +1,421 @@
+{
+  "info": {
+    "scanTime": "2026-07-23T12:32:48.338396+02:00",
+    "scanMillis": 0
+  },
+  "scanner": {
+    "name": "",
+    "version": ""
+  },
+  "result": {
+    "type": "IaCGitScan",
+    "metadata": {
+      "sources": [
+        "/infra"
+      ],
+      "totalModules": 1,
+      "totalResource": 20,
+      "totalFolders": 1
+    },
+    "findingsSummaryBySeverity": {
+      "high": 3,
+      "medium": 16,
+      "low": 3
+    },
+    "unsupportedResources": [
+      {
+        "source": "/infra/infra",
+        "details": "aws_bedrockagentcore_token_vault_cmk. aws_kms_alias. aws_ses_email_identity. aws_scheduler_schedule. aws_cognito_user_pool_domain. aws_cognito_resource_server. aws_bedrockagentcore_api_key_credential_provider. aws_bedrockagentcore_memory_strategy. aws_bedrockagentcore_agent_runtime_endpoint. aws_bedrockagentcore_workload_identity. aws_cognito_user_pool_client. aws_cognito_user_pool. aws_bedrockagentcore_agent_runtime. aws_bedrockagentcore_memory.",
+        "details_list": [
+          "aws_bedrockagentcore_token_vault_cmk",
+          "aws_kms_alias",
+          "aws_ses_email_identity",
+          "aws_scheduler_schedule",
+          "aws_cognito_user_pool_domain",
+          "aws_cognito_resource_server",
+          "aws_bedrockagentcore_api_key_credential_provider",
+          "aws_bedrockagentcore_memory_strategy",
+          "aws_bedrockagentcore_agent_runtime_endpoint",
+          "aws_bedrockagentcore_workload_identity",
+          "aws_cognito_user_pool_client",
+          "aws_cognito_user_pool",
+          "aws_bedrockagentcore_agent_runtime",
+          "aws_bedrockagentcore_memory"
+        ]
+      }
+    ],
+    "errors": [
+      {
+        "source": "/.venv/lib/python3.13/site-packages/markdown_it/port.yaml",
+        "details": "couldn't get version/kind; json parse error.",
+        "details_list": [
+          "couldn't get version/kind; json parse error"
+        ]
+      },
+      {
+        "source": "/vendor/pagerduty-mcp/.github/workflows/create-jira-ticket.yml",
+        "details": "Object 'Kind' is missing in '{\"jobs\":{\"create-jira-ticket\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"env\":{\"JIRA_API_TOKEN\":\"${{ secrets.JIRA_API_TOKEN }}\",\"JIRA_ASSIGNEE_EMAIL\":\"${{ secrets.JIRA_ASSIGNEE_EMAIL }}\",\"JIRA_BASE_URL\":\"${{ secrets.JIRA_BASE_URL }}\",\"JIRA_EMAIL\":\"${{ secrets.JIRA_EMAIL }}\",\"JIRA_LABEL_PROJECT\":\"${{ secrets.JIRA_LABEL_PROJECT }}\",\"JIRA_PARENT_KEY\":\"${{ secrets.JIRA_PARENT_KEY }}\",\"JIRA_PROJECT_KEY\":\"${{ secrets.JIRA_PROJECT_KEY }}\"},\"name\":\"Create Jira Ticket\",\"uses\":\"actions/github-script@v7\",\"with\":{\"script\":\"const issueData = context.payload.issue;\\nconst issueLabels = issueData.labels.map(label =\\u003e label.name);\\nconsole.log(`Processing GitHub issue #${issueData.number}: ${issueData.title}`);\\nconsole.log(`Labels: ${issueLabels.join(', ')}`);\\n// Determine issue type and priority based on GitHub labels\\nlet jiraIssueType = \\\"13880\\\"; // Default to Task\\nlet priority = \\\"Medium\\\";\\nlet issueTypeForLog = \\\"Task\\\";\\nif (issueLabels.includes('bug')) {\\n  jiraIssueType = \\\"11\\\"; // Bug\\n  priority = \\\"High\\\";\\n  issueTypeForLog = \\\"Bug\\\";\\n} else if (issueLabels.includes('enhancement')) {\\n  jiraIssueType = \\\"13880\\\"; // Task\\n  priority = \\\"Medium\\\";\\n  issueTypeForLog = \\\"Task\\\";\\n}\\nconsole.log(`Mapping to Jira: Type=${issueTypeForLog} (ID: ${jiraIssueType}), ` + `Priority=${priority}`);\\n// Format labels for Jira description\\nconst labelsText = issueLabels.length \\u003e 0 ? issueLabels.join(', ') : 'None';\\n// Create description with GitHub information\\nconst description = \\\"*GitHub Issue:* \\\" + issueData.html_url + \\\"\\\\n\\\\n\\\" +\\n  \\\"*Reporter:* \\\" + issueData.user.login + \\\"\\\\n\\\" +\\n  \\\"*Labels:* \\\" + labelsText + \\\"\\\\n\\\" +\\n  \\\"*Created:* \\\" + new Date(issueData.created_at).toLocaleString() + \\\"\\\\n\\\\n\\\" +\\n  \\\"----\\\\n\\\\n\\\" +\\n  \\\"h3. Description\\\\n\\\\n\\\" +\\n  (issueData.body || 'No description provided') + \\\"\\\\n\\\\n\\\" +\\n  \\\"----\\\\n\\\\n\\\" +\\n  \\\"_This ticket was automatically created from a GitHub issue in the PagerDuty MCP Server repository._\\\";\\n// Create Jira ticket payload\\nconst jiraPayload = {\\n  fields: {\\n    project: {\\n      key: process.env.JIRA_PROJECT_KEY\\n    },\\n    parent: {\\n      key: process.env.JIRA_PARENT_KEY\\n    },\\n    summary: \\\"[GitHub MCP] \\\" + issueData.title,\\n    description: description,\\n    issuetype: {\\n      id: jiraIssueType\\n    },\\n    priority: {\\n      name: priority\\n    },\\n    assignee: {\\n      emailAddress: process.env.JIRA_ASSIGNEE_EMAIL\\n    },\\n    labels: [\\n      \\\"github-mcp\\\",\\n      \\\"auto-created\\\",\\n      process.env.JIRA_LABEL_PROJECT\\n    ].concat(issueLabels.map(label =\\u003e label.replace(/[^a-zA-Z0-9]/g, '-')))\\n  }\\n};\\nconsole.log('Jira payload prepared');\\n// Create Jira ticket\\nconst jiraAuth = Buffer.from(`${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`).toString('base64');\\ntry {\\n  console.log('Sending request to Jira API...');\\n  const response = await fetch(`${process.env.JIRA_BASE_URL}/rest/api/2/issue`, {\\n    method: 'POST',\\n    headers: {\\n      'Authorization': `Basic ${jiraAuth}`,\\n      'Accept': 'application/json',\\n      'Content-Type': 'application/json'\\n    },\\n    body: JSON.stringify(jiraPayload)\\n  });\\n  if (!response.ok) {\\n    const errorData = await response.text();\\n    console.error(`Jira API Error: ${response.status} - ${errorData}`);\\n    throw new Error(`Jira API error.",
+        "details_list": [
+          "Object 'Kind' is missing in '{\"jobs\":{\"create-jira-ticket\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"env\":{\"JIRA_API_TOKEN\":\"${{ secrets.JIRA_API_TOKEN }}\",\"JIRA_ASSIGNEE_EMAIL\":\"${{ secrets.JIRA_ASSIGNEE_EMAIL }}\",\"JIRA_BASE_URL\":\"${{ secrets.JIRA_BASE_URL }}\",\"JIRA_EMAIL\":\"${{ secrets.JIRA_EMAIL }}\",\"JIRA_LABEL_PROJECT\":\"${{ secrets.JIRA_LABEL_PROJECT }}\",\"JIRA_PARENT_KEY\":\"${{ secrets.JIRA_PARENT_KEY }}\",\"JIRA_PROJECT_KEY\":\"${{ secrets.JIRA_PROJECT_KEY }}\"},\"name\":\"Create Jira Ticket\",\"uses\":\"actions/github-script@v7\",\"with\":{\"script\":\"const issueData = context.payload.issue;\\nconst issueLabels = issueData.labels.map(label =\\u003e label.name);\\nconsole.log(`Processing GitHub issue #${issueData.number}: ${issueData.title}`);\\nconsole.log(`Labels: ${issueLabels.join(', ')}`);\\n// Determine issue type and priority based on GitHub labels\\nlet jiraIssueType = \\\"13880\\\"; // Default to Task\\nlet priority = \\\"Medium\\\";\\nlet issueTypeForLog = \\\"Task\\\";\\nif (issueLabels.includes('bug')) {\\n  jiraIssueType = \\\"11\\\"; // Bug\\n  priority = \\\"High\\\";\\n  issueTypeForLog = \\\"Bug\\\";\\n} else if (issueLabels.includes('enhancement')) {\\n  jiraIssueType = \\\"13880\\\"; // Task\\n  priority = \\\"Medium\\\";\\n  issueTypeForLog = \\\"Task\\\";\\n}\\nconsole.log(`Mapping to Jira: Type=${issueTypeForLog} (ID: ${jiraIssueType}), ` + `Priority=${priority}`);\\n// Format labels for Jira description\\nconst labelsText = issueLabels.length \\u003e 0 ? issueLabels.join(', ') : 'None';\\n// Create description with GitHub information\\nconst description = \\\"*GitHub Issue:* \\\" + issueData.html_url + \\\"\\\\n\\\\n\\\" +\\n  \\\"*Reporter:* \\\" + issueData.user.login + \\\"\\\\n\\\" +\\n  \\\"*Labels:* \\\" + labelsText + \\\"\\\\n\\\" +\\n  \\\"*Created:* \\\" + new Date(issueData.created_at).toLocaleString() + \\\"\\\\n\\\\n\\\" +\\n  \\\"----\\\\n\\\\n\\\" +\\n  \\\"h3. Description\\\\n\\\\n\\\" +\\n  (issueData.body || 'No description provided') + \\\"\\\\n\\\\n\\\" +\\n  \\\"----\\\\n\\\\n\\\" +\\n  \\\"_This ticket was automatically created from a GitHub issue in the PagerDuty MCP Server repository._\\\";\\n// Create Jira ticket payload\\nconst jiraPayload = {\\n  fields: {\\n    project: {\\n      key: process.env.JIRA_PROJECT_KEY\\n    },\\n    parent: {\\n      key: process.env.JIRA_PARENT_KEY\\n    },\\n    summary: \\\"[GitHub MCP] \\\" + issueData.title,\\n    description: description,\\n    issuetype: {\\n      id: jiraIssueType\\n    },\\n    priority: {\\n      name: priority\\n    },\\n    assignee: {\\n      emailAddress: process.env.JIRA_ASSIGNEE_EMAIL\\n    },\\n    labels: [\\n      \\\"github-mcp\\\",\\n      \\\"auto-created\\\",\\n      process.env.JIRA_LABEL_PROJECT\\n    ].concat(issueLabels.map(label =\\u003e label.replace(/[^a-zA-Z0-9]/g, '-')))\\n  }\\n};\\nconsole.log('Jira payload prepared');\\n// Create Jira ticket\\nconst jiraAuth = Buffer.from(`${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`).toString('base64');\\ntry {\\n  console.log('Sending request to Jira API...');\\n  const response = await fetch(`${process.env.JIRA_BASE_URL}/rest/api/2/issue`, {\\n    method: 'POST',\\n    headers: {\\n      'Authorization': `Basic ${jiraAuth}`,\\n      'Accept': 'application/json',\\n      'Content-Type': 'application/json'\\n    },\\n    body: JSON.stringify(jiraPayload)\\n  });\\n  if (!response.ok) {\\n    const errorData = await response.text();\\n    console.error(`Jira API Error: ${response.status} - ${errorData}`);\\n    throw new Error(`Jira API error"
+        ]
+      },
+      {
+        "source": "/vendor/pagerduty-mcp/.github/workflows/publish-mcp-registry.yml",
+        "details": "Object 'Kind' is missing in '{\"jobs\":{\"validate-and-publish\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"Checkout repository\",\"uses\":\"actions/checkout@v4\"},{\"name\":\"Set up Python\",\"uses\":\"actions/setup-python@v5\",\"with\":{\"python-version\":\"3.12\"}},{\"name\":\"Install dependencies\",\"run\":\"pip install jsonschema\\n\"},{\"name\":\"Sync version from pyproject.toml to server.json\",\"run\":\"python -c \\\"\\nimport json\\nimport tomllib as tomli\\n\\n# Read version from pyproject.toml\\nwith open('pyproject.toml', 'rb') as f:\\n    pyproject = tomli.load(f)\\n    version = pyproject['project']['version']\\n\\n# Update server.json with the version\\nwith open('server.json', 'r') as f:\\n    server_config = json.load(f)\\n\\nserver_config['version'] = version\\n# Also update package version if it exists\\nif 'packages' in server_config:\\n    for package in server_config['packages']:\\n        package['version'] = version\\n\\nwith open('server.json', 'w') as f:\\n    json.dump(server_config, f, indent=2)\\n\\nprint(f'Updated server.json to version {version}')\\n\\\"\\n\"},{\"name\":\"Validate server.json\",\"run\":\"python scripts/validate_server_json.py\\n\"},{\"name\":\"Install MCP Publisher\",\"run\":\"curl -L \\\"https://github.com/modelcontextprotocol/registry/releases/download/v1.2.3/mcp-publisher_1.2.3_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz\\\" | tar xz mcp-publisher\\n\"},{\"name\":\"Authenticate with MCP Registry\",\"run\":\"./mcp-publisher login github-oidc\\n\"},{\"name\":\"Publish to MCP Registry\",\"run\":\"./mcp-publisher publish\\n\"}]}},\"name\":\"Publish to MCP Registry\",\"permissions\":{\"contents\":\"read\",\"id-token\":\"write\"},\"true\":{\"workflow_dispatch\":null}}'.",
+        "details_list": [
+          "Object 'Kind' is missing in '{\"jobs\":{\"validate-and-publish\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"Checkout repository\",\"uses\":\"actions/checkout@v4\"},{\"name\":\"Set up Python\",\"uses\":\"actions/setup-python@v5\",\"with\":{\"python-version\":\"3.12\"}},{\"name\":\"Install dependencies\",\"run\":\"pip install jsonschema\\n\"},{\"name\":\"Sync version from pyproject.toml to server.json\",\"run\":\"python -c \\\"\\nimport json\\nimport tomllib as tomli\\n\\n# Read version from pyproject.toml\\nwith open('pyproject.toml', 'rb') as f:\\n    pyproject = tomli.load(f)\\n    version = pyproject['project']['version']\\n\\n# Update server.json with the version\\nwith open('server.json', 'r') as f:\\n    server_config = json.load(f)\\n\\nserver_config['version'] = version\\n# Also update package version if it exists\\nif 'packages' in server_config:\\n    for package in server_config['packages']:\\n        package['version'] = version\\n\\nwith open('server.json', 'w') as f:\\n    json.dump(server_config, f, indent=2)\\n\\nprint(f'Updated server.json to version {version}')\\n\\\"\\n\"},{\"name\":\"Validate server.json\",\"run\":\"python scripts/validate_server_json.py\\n\"},{\"name\":\"Install MCP Publisher\",\"run\":\"curl -L \\\"https://github.com/modelcontextprotocol/registry/releases/download/v1.2.3/mcp-publisher_1.2.3_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz\\\" | tar xz mcp-publisher\\n\"},{\"name\":\"Authenticate with MCP Registry\",\"run\":\"./mcp-publisher login github-oidc\\n\"},{\"name\":\"Publish to MCP Registry\",\"run\":\"./mcp-publisher publish\\n\"}]}},\"name\":\"Publish to MCP Registry\",\"permissions\":{\"contents\":\"read\",\"id-token\":\"write\"},\"true\":{\"workflow_dispatch\":null}}'"
+        ]
+      },
+      {
+        "source": "/vendor/pagerduty-mcp/.github/workflows/deploy-docs.yml",
+        "details": "Object 'Kind' is missing in '{\"concurrency\":{\"cancel-in-progress\":false,\"group\":\"pages\"},\"jobs\":{\"build\":{\"name\":\"Build\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"uses\":\"actions/checkout@v4\"},{\"uses\":\"actions/setup-node@v4\",\"with\":{\"cache\":\"npm\",\"cache-dependency-path\":\"website/package-lock.json\",\"node-version\":20}},{\"name\":\"Install dependencies\",\"run\":\"npm ci\",\"working-directory\":\"website\"},{\"name\":\"Build site\",\"run\":\"npm run build\",\"working-directory\":\"website\"},{\"name\":\"Upload build artifact\",\"uses\":\"actions/upload-pages-artifact@v3\",\"with\":{\"path\":\"website/build\"}}]},\"deploy\":{\"environment\":{\"name\":\"github-pages\",\"url\":\"${{ steps.deployment.outputs.page_url }}\"},\"name\":\"Deploy\",\"needs\":\"build\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"id\":\"deployment\",\"name\":\"Deploy to GitHub Pages\",\"uses\":\"actions/deploy-pages@v4\"}]}},\"name\":\"Deploy Docs to GitHub Pages\",\"permissions\":{\"contents\":\"read\",\"id-token\":\"write\",\"pages\":\"write\"},\"true\":{\"push\":{\"branches\":[\"main\"],\"paths\":[\"website/**\"]},\"workflow_dispatch\":null}}'.",
+        "details_list": [
+          "Object 'Kind' is missing in '{\"concurrency\":{\"cancel-in-progress\":false,\"group\":\"pages\"},\"jobs\":{\"build\":{\"name\":\"Build\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"uses\":\"actions/checkout@v4\"},{\"uses\":\"actions/setup-node@v4\",\"with\":{\"cache\":\"npm\",\"cache-dependency-path\":\"website/package-lock.json\",\"node-version\":20}},{\"name\":\"Install dependencies\",\"run\":\"npm ci\",\"working-directory\":\"website\"},{\"name\":\"Build site\",\"run\":\"npm run build\",\"working-directory\":\"website\"},{\"name\":\"Upload build artifact\",\"uses\":\"actions/upload-pages-artifact@v3\",\"with\":{\"path\":\"website/build\"}}]},\"deploy\":{\"environment\":{\"name\":\"github-pages\",\"url\":\"${{ steps.deployment.outputs.page_url }}\"},\"name\":\"Deploy\",\"needs\":\"build\",\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"id\":\"deployment\",\"name\":\"Deploy to GitHub Pages\",\"uses\":\"actions/deploy-pages@v4\"}]}},\"name\":\"Deploy Docs to GitHub Pages\",\"permissions\":{\"contents\":\"read\",\"id-token\":\"write\",\"pages\":\"write\"},\"true\":{\"push\":{\"branches\":[\"main\"],\"paths\":[\"website/**\"]},\"workflow_dispatch\":null}}'"
+        ]
+      },
+      {
+        "source": "/vendor/pagerduty-mcp/.github/workflows/python-publish.yml",
+        "details": "Object 'Kind' is missing in '{\"jobs\":{\"pypi-publish-production\":{\"environment\":{\"name\":\"pypi\"},\"if\":\"${{ inputs.environment == 'Production' }}\",\"needs\":[\"release-build\"],\"permissions\":{\"id-token\":\"write\"},\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Retrieve release distributions\",\"uses\":\"actions/download-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}},{\"name\":\"Publish release distributions to PyPi\",\"run\":\"uv publish --publish-url https://upload.pypi.org/legacy/ --token ${{ secrets.PYPI_TOKEN_PROD }}\"}]},\"pypi-publish-testing\":{\"environment\":{\"name\":\"test-pypi\"},\"if\":\"${{ inputs.environment == 'Testing' }}\",\"needs\":[\"release-build\"],\"permissions\":{\"id-token\":\"write\"},\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Retrieve release distributions\",\"uses\":\"actions/download-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}},{\"name\":\"Publish release distributions to PyPi\",\"run\":\"uv publish --publish-url https://test.pypi.org/legacy/ --token ${{ secrets.PYPI_TOKEN_TESTING }}\"}]},\"release-build\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"uses\":\"actions/checkout@v4\"},{\"uses\":\"actions/setup-python@v5\",\"with\":{\"python-version\":\"3.x\"}},{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Build release distributions\",\"run\":\"# NOTE: put your own distribution build steps here.\\nuv build\\n\"},{\"name\":\"Upload distributions\",\"uses\":\"actions/upload-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}}]}},\"name\":\"Upload Python Package\",\"permissions\":{\"contents\":\"read\"},\"true\":{\"workflow_dispatch\":{\"inputs\":{\"environment\":{\"description\":\"PyPi Environment\",\"options\":[\"Testing\",\"Production\"],\"required\":true,\"type\":\"choice\"}}}}}'.",
+        "details_list": [
+          "Object 'Kind' is missing in '{\"jobs\":{\"pypi-publish-production\":{\"environment\":{\"name\":\"pypi\"},\"if\":\"${{ inputs.environment == 'Production' }}\",\"needs\":[\"release-build\"],\"permissions\":{\"id-token\":\"write\"},\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Retrieve release distributions\",\"uses\":\"actions/download-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}},{\"name\":\"Publish release distributions to PyPi\",\"run\":\"uv publish --publish-url https://upload.pypi.org/legacy/ --token ${{ secrets.PYPI_TOKEN_PROD }}\"}]},\"pypi-publish-testing\":{\"environment\":{\"name\":\"test-pypi\"},\"if\":\"${{ inputs.environment == 'Testing' }}\",\"needs\":[\"release-build\"],\"permissions\":{\"id-token\":\"write\"},\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Retrieve release distributions\",\"uses\":\"actions/download-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}},{\"name\":\"Publish release distributions to PyPi\",\"run\":\"uv publish --publish-url https://test.pypi.org/legacy/ --token ${{ secrets.PYPI_TOKEN_TESTING }}\"}]},\"release-build\":{\"runs-on\":\"ubuntu-latest\",\"steps\":[{\"uses\":\"actions/checkout@v4\"},{\"uses\":\"actions/setup-python@v5\",\"with\":{\"python-version\":\"3.x\"}},{\"name\":\"astral-sh/setup-uv\",\"uses\":\"astral-sh/setup-uv@v6.1.0\",\"with\":{\"cache-dependency-glob\":\"uv.lock\",\"enable-cache\":true,\"python-version-file\":\"pyproject.toml\"}},{\"name\":\"Build release distributions\",\"run\":\"# NOTE: put your own distribution build steps here.\\nuv build\\n\"},{\"name\":\"Upload distributions\",\"uses\":\"actions/upload-artifact@v4\",\"with\":{\"name\":\"release-dists\",\"path\":\"dist/\"}}]}},\"name\":\"Upload Python Package\",\"permissions\":{\"contents\":\"read\"},\"true\":{\"workflow_dispatch\":{\"inputs\":{\"environment\":{\"description\":\"PyPi Environment\",\"options\":[\"Testing\",\"Production\"],\"required\":true,\"type\":\"choice\"}}}}}'"
+        ]
+      },
+      {
+        "source": "/vendor/pagerduty-mcp/docker-compose.yml",
+        "details": "Object 'Kind' is missing in '{\"services\":{\"pagerduty-mcp-readonly\":{\"build\":{\"context\":\".\",\"dockerfile\":\"Dockerfile\"},\"container_name\":\"pagerduty-mcp-readonly\",\"environment\":[\"PAGERDUTY_USER_API_KEY=${PAGERDUTY_USER_API_KEY:?PAGERDUTY_USER_API_KEY environment variable is required}\",\"PAGERDUTY_API_HOST=${PAGERDUTY_API_HOST:-https://api.pagerduty.com}\"],\"image\":\"pagerduty-mcp:latest\",\"profiles\":[\"readonly\"],\"stdin_open\":true,\"tty\":true},\"pagerduty-mcp-write\":{\"build\":{\"context\":\".\",\"dockerfile\":\"Dockerfile\"},\"command\":[\"--enable-write-tools\"],\"container_name\":\"pagerduty-mcp-write\",\"environment\":[\"PAGERDUTY_USER_API_KEY=${PAGERDUTY_USER_API_KEY:?PAGERDUTY_USER_API_KEY environment variable is required}\",\"PAGERDUTY_API_HOST=${PAGERDUTY_API_HOST:-https://api.pagerduty.com}\"],\"image\":\"pagerduty-mcp:latest\",\"profiles\":[\"write\"],\"stdin_open\":true,\"tty\":true}},\"version\":\"3.8\"}'.",
+        "details_list": [
+          "Object 'Kind' is missing in '{\"services\":{\"pagerduty-mcp-readonly\":{\"build\":{\"context\":\".\",\"dockerfile\":\"Dockerfile\"},\"container_name\":\"pagerduty-mcp-readonly\",\"environment\":[\"PAGERDUTY_USER_API_KEY=${PAGERDUTY_USER_API_KEY:?PAGERDUTY_USER_API_KEY environment variable is required}\",\"PAGERDUTY_API_HOST=${PAGERDUTY_API_HOST:-https://api.pagerduty.com}\"],\"image\":\"pagerduty-mcp:latest\",\"profiles\":[\"readonly\"],\"stdin_open\":true,\"tty\":true},\"pagerduty-mcp-write\":{\"build\":{\"context\":\".\",\"dockerfile\":\"Dockerfile\"},\"command\":[\"--enable-write-tools\"],\"container_name\":\"pagerduty-mcp-write\",\"environment\":[\"PAGERDUTY_USER_API_KEY=${PAGERDUTY_USER_API_KEY:?PAGERDUTY_USER_API_KEY environment variable is required}\",\"PAGERDUTY_API_HOST=${PAGERDUTY_API_HOST:-https://api.pagerduty.com}\"],\"image\":\"pagerduty-mcp:latest\",\"profiles\":[\"write\"],\"stdin_open\":true,\"tty\":true}},\"version\":\"3.8\"}'"
+        ]
+      }
+    ],
+    "findings": [
+      {
+        "controlId": 7046,
+        "name": "ECR - Enabled Vulnerability Scanning",
+        "severity": "High",
+        "resources": [
+          {
+            "name": "aws_ecr_repository.soc_agent",
+            "type": "AWS_ECR_REPOSITORY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21344,
+        "name": "Lambda - Enable Encryption at Rest for Environment Variables using Customer Master Keys",
+        "severity": "High",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21070,
+        "name": "KMS - IAM customer managed policies do not allow decryption",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_iam_role_policy.lambda_soc_agent",
+            "type": "AWS_POLICY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21131,
+        "name": "Lambda - Function Uses Supported Runtime",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21260,
+        "name": "ECR - Private repositories have tag immutability configured",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_ecr_repository.soc_agent",
+            "type": "AWS_ECR_REPOSITORY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21261,
+        "name": "ECR - Repositories have at least one lifecycle policy configured",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_ecr_repository.soc_agent",
+            "type": "AWS_ECR_REPOSITORY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21345,
+        "name": "Lambda - Enable Enhanced Monitoring for Lambda Functions",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21347,
+        "name": "Lambda - Enable Provisioned Concurrency",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21350,
+        "name": "Lambda - Cross Account Access",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21355,
+        "name": "Lambda - Check for Missing Execution Role",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21365,
+        "name": "Lambda - Check Lambda Function URL Not in Use",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21366,
+        "name": "Lambda - Enable Code Signing",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21452,
+        "name": "KMS - Cross Account Access",
+        "severity": "Medium",
+        "resources": [
+          {
+            "name": "aws_kms_key.agent_secrets",
+            "type": "AWS_KEY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21068,
+        "name": "IAM - IAM customer managed policies do not use wildcards (Action)",
+        "severity": "Low",
+        "resources": [
+          {
+            "name": "aws_iam_role_policy.lambda_soc_agent",
+            "type": "AWS_POLICY",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      },
+      {
+        "controlId": 21343,
+        "name": "Lambda - Enable Dead Letter Queue for Lambda Functions",
+        "severity": "Low",
+        "resources": [
+          {
+            "name": "aws_lambda_function.slack_webhook",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          },
+          {
+            "name": "aws_lambda_function.soc_agent",
+            "type": "AWS_LAMBDA_FUNCTION",
+            "location": "source file: /infra",
+            "source": "/infra"
+          }
+        ],
+        "policies": [
+          "All Posture Findings"
+        ],
+        "requirements": [
+          "AWS Controls"
+        ]
+      }
+    ]
+  }
+}
