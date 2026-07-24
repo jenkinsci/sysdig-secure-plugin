@@ -293,28 +293,69 @@ In addition to image scanning, the plugin can scan Infrastructure as Code manife
 CloudFormation, Helm, etc.) using the `sysdig-cli-scanner` in IaC mode. This is exposed as the
 **Sysdig Secure Code Scan** build step.
 
-> **Note**: IaC scanning is currently only supported in Freestyle projects. Pipeline usage is not
-> supported yet.
+IaC scanning is available both as a Freestyle build step and as a first-class Pipeline step
+(`sysdigIaCScan`), usable from declarative and scripted pipelines.
 
 ## Integrate IaC scanning with a Freestyle Project
 
 1. Open the `Add build step` drop-down menu, and select `Sysdig Secure Code Scan`.
 2. Configure the available options, and click `Save`.
 
+<img src="docs/images/IaCFreestyleConfigStep.png" height="360px" />
+
+## Integrate IaC scanning with a Pipeline
+
+Use the `sysdigIaCScan` step. The only mandatory parameter is `engineCredentialsId`:
+
+```groovy
+pipeline {
+    agent any
+    stages {
+        stage('Sysdig IaC Scan') {
+            steps {
+                sysdigIaCScan engineCredentialsId: 'sysdig-secure-api-credentials'
+            }
+        }
+    }
+}
+```
+
+All configuration options are exposed as named parameters:
+
+```groovy
+sysdigIaCScan engineCredentialsId: 'sysdig-secure-api-credentials',
+              path: 'infrastructure/',
+              isRecursive: true,
+              listUnsupported: false,
+              severityThreshold: 'high',
+              sysdigEnv: 'https://secure.sysdig.com',
+              version: 'latest'
+```
+
+The parameter names and semantics are kept backwards compatible, matching the `sysdigImageScan` step.
+
 ## IaC configuration options
 
-| Option                        | Description                                                                                      | Default         |
-|-------------------------------|--------------------------------------------------------------------------------------------------|-----------------|
-| Sysdig Secure API Credentials | Jenkins credential holding the Sysdig Secure API token. **Mandatory.**                           | |
-| Path to scan                  | Directory or file containing the IaC manifests to scan.                                          | `.` (workspace) |
-| Recursive                     | Scan the given path recursively.                                                                 | `true`          |
-| List unsupported resources    | Include unsupported resources in the scan output.                                                | `false`         |
-| Severity threshold            | Minimum severity that fails the build (`high`, `medium`, `low`, `never`).                        | `high`          |
-| Sysdig Secure URL             | Sysdig Secure API endpoint. When empty, the CLI default is used.                                 | |
-| CLI scanner version           | `sysdig-cli-scanner` version to download and run. `latest` resolves to the pinned default.       | pinned default  |
+| Option                        | Pipeline parameter    | Description                                                                                 | Default         |
+|-------------------------------|-----------------------|---------------------------------------------------------------------------------------------|-----------------|
+| Sysdig Secure API Credentials | `engineCredentialsId` | Jenkins credential holding the Sysdig Secure API token. **Mandatory.**                      | |
+| Path to scan                  | `path`                | Directory or file containing the IaC manifests to scan.                                     | `.` (workspace) |
+| Recursive                     | `isRecursive`         | Scan the given path recursively.                                                            | `true`          |
+| List unsupported resources    | `listUnsupported`     | Include unsupported resources in the scan output.                                           | `false`         |
+| Severity threshold            | `severityThreshold`   | Minimum severity that fails the build (`high`, `medium`, `low`, `never`).                    | `high`          |
+| Sysdig Secure URL             | `sysdigEnv`           | Sysdig Secure API endpoint. When empty, the CLI default is used.                            | |
+| CLI scanner version           | `version`             | `sysdig-cli-scanner` version to download and run. `latest` resolves to the pinned default.  | pinned default  |
 
 The build result reflects the scan outcome: exit code `0` succeeds, while a policy failure, bad parameters,
 or an invalid token fail the build.
+
+## IaC scan results
+
+Each build with an IaC scan gets a **Sysdig Secure IaC Report** page with a per-severity summary, the failed
+controls (filterable and sortable by severity), and the unsupported resources and parse errors reported by the
+scanner.
+
+<img src="docs/images/IaCScanResults.png" height="500px" />
 
 # Local development and installation
 

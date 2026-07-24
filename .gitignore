@@ -35,3 +35,6 @@ work/
 result
 /scan-logs
 /.secrets
+
+# Playwright CLI session artifacts
+.playwright-cli/

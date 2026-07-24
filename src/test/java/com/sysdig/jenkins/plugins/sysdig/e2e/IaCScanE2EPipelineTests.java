@@ -7,7 +7,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 @WithJenkins
-class IaCScanE2EFreestyleTests {
+class IaCScanE2EPipelineTests {
     private JenkinsRule jenkins;
     private JenkinsTestHelpers helpers;
 
@@ -19,10 +19,10 @@ class IaCScanE2EFreestyleTests {
     }
 
     @Test
-    void testFreestyleWithDefaultConfig() throws Exception {
-        var project = helpers.createFreestyleProjectWithIaCScanBuilder().build();
+    void testPipelineWithDefaultConfig() throws Exception {
+        var job = helpers.createPipelineJobWithScript("sysdigIaCScan()").buildWithRemoteExecution();
 
-        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains("Starting scan", build);
@@ -31,12 +31,11 @@ class IaCScanE2EFreestyleTests {
     }
 
     @Test
-    void testFreestyleWithNonExistingToken() throws Exception {
-        var project = helpers.createFreestyleProjectWithIaCScanBuilder()
-                .withConfig(c -> c.setEngineCredentialsId("non-existing-token"))
-                .build();
+    void testPipelineWithNonExistingToken() throws Exception {
+        var job = helpers.createPipelineJobWithScript("sysdigIaCScan engineCredentialsId: 'non-existing-token'")
+                .buildWithRemoteExecution();
 
-        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains("Starting scan", build);
@@ -46,12 +45,11 @@ class IaCScanE2EFreestyleTests {
     }
 
     @Test
-    void testFreestyleWithCredentialsAndAssertLogOutput() throws Exception {
-        var project = helpers.createFreestyleProjectWithIaCScanBuilder()
-                .withConfig(b -> b.setEngineCredentialsId("sysdig-secure"))
-                .build();
+    void testPipelineWithCredentialsAndAssertLogOutput() throws Exception {
+        var job = helpers.createPipelineJobWithScript("sysdigIaCScan engineCredentialsId: 'sysdig-secure'")
+                .buildWithRemoteExecution();
 
-        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
@@ -66,20 +64,18 @@ class IaCScanE2EFreestyleTests {
     }
 
     @Test
-    void testFreestyleWithAllConfigs() throws Exception {
-        var project = helpers.createFreestyleProjectWithIaCScanBuilder()
-                .withConfig(b -> {
-                    b.setEngineCredentialsId("sysdig-secure");
-                    b.setPath("custom/path/to/scan");
-                    b.setListUnsupported(true);
-                    b.setIsRecursive(false);
-                    b.setSeverityThreshold("m");
-                    b.setSysdigEnv("https://us2.app.sysdig.com");
-                    b.setVersion("1.22.5"); // oldest-version-marker
-                })
-                .build();
+    void testPipelineWithAllConfigs() throws Exception {
+        var job = helpers.createPipelineJobWithScript("""
+                        sysdigIaCScan engineCredentialsId: 'sysdig-secure',
+                                      path: 'custom/path/to/scan',
+                                      listUnsupported: true,
+                                      isRecursive: false,
+                                      severityThreshold: 'm',
+                                      sysdigEnv: 'https://us2.app.sysdig.com',
+                                      version: '1.22.5'""") // oldest-version-marker
+                .buildWithRemoteExecution();
 
-        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(

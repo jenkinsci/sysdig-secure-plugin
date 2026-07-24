@@ -3,6 +3,7 @@ package com.sysdig.jenkins.plugins.sysdig;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.json.GsonBuilder;
+import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.iac.v1.JsonIaCScanResultV1;
 import com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1.JsonScanResultV1;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +32,8 @@ public class TestMother {
 
     private static final String NEWEST_FIXTURE = FIXTURE_DIR + "scanner_newest_scan_result.json.gz";
     private static final String OLDEST_FIXTURE = FIXTURE_DIR + "scanner_oldest_scan_result.json.gz";
+    private static final String IAC_FIXTURE =
+            "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/iac/v1/iac_scan_result.json";
 
     /**
      * Returns a sample Result object for testing.
@@ -137,6 +140,32 @@ public class TestMother {
                     .fromJson(
                             new InputStreamReader(new GZIPInputStream(imageStream), StandardCharsets.UTF_8),
                             JsonScanResultV1.class);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Returns a sample IaC scan result, recorded from {@code sysdig-cli-scanner --iac --output-json}
+     * against a Terraform project.
+     *
+     * @return a test IaC Result object.
+     */
+    public static JsonIaCScanResultV1 iacScanResult() {
+        InputStream stream = TestMother.class.getClassLoader().getResourceAsStream(IAC_FIXTURE);
+        assertNotNull(stream);
+
+        return GsonBuilder.build()
+                .fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonIaCScanResultV1.class);
+    }
+
+    /**
+     * Returns the raw JSON of the sample IaC scan result, as persisted by the build action.
+     */
+    public static String iacScanResultJson() {
+        try (InputStream stream = TestMother.class.getClassLoader().getResourceAsStream(IAC_FIXTURE)) {
+            assertNotNull(stream);
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

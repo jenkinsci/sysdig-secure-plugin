@@ -1,0 +1,9 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/bootstrap-4.5.2.css"/>
+    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/dataTables.bootstrap4-2.1.7.css"/>
+    <link rel="stylesheet" type="text/css" href="${resURL}/plugin/sysdig-secure/css/sysdig.css"/>
+    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/jquery-3.7.1.min.js"></script>
+    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/dataTables-2.1.7.js"></script>
+    <script type="text/javascript" src="${resURL}/plugin/sysdig-secure/js/dataTables.bootstrap4-2.1.7.js"></script>
+</j:jelly>
