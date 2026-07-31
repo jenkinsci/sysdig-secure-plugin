@@ -18,6 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.ui;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Finding;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.IaCScanResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Metadata;
+import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Resource;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.ScanError;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Severity;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.UnsupportedResource;
@@ -38,18 +39,48 @@ import java.util.List;
  */
 public class IaCAction implements Action {
 
+    private static final String BASE_URL_NAME = "sysdig-secure-iac-results";
+    private static final String BASE_DISPLAY_NAME = "Sysdig Secure IaC Report";
+    /** The scanner reports a resource's module as {@code "source file: <path>"}. */
+    private static final String SCANNER_LOCATION_PREFIX = "source file:";
+
     private final Run<?, ?> build;
     private final String rawScanResultJson;
+    /** Path the step was configured to scan, to tell several reports in one build apart. */
+    private final String scannedPath;
+    /**
+     * Position of this action among the build's IaC actions, starting at 1. Keeps the url name unique
+     * even when two steps scan the same path. Zero for actions persisted before this field existed.
+     */
+    private final int ordinal;
 
     private transient IaCScanResult cachedScanResult;
 
-    public IaCAction(Run<?, ?> build, String rawScanResultJson) {
+    public IaCAction(Run<?, ?> build, String rawScanResultJson, String scannedPath, int ordinal) {
         this.build = build;
         this.rawScanResultJson = rawScanResultJson;
+        this.scannedPath = scannedPath;
+        this.ordinal = ordinal;
+    }
+
+    /**
+     * Builds an action whose url name does not clash with the IaC reports already attached to the
+     * build, so every step of a multi-scan build stays reachable from the build page.
+     */
+    public static IaCAction createFor(Run<?, ?> build, String rawScanResultJson, String scannedPath) {
+        return new IaCAction(
+                build,
+                rawScanResultJson,
+                scannedPath,
+                build.getActions(IaCAction.class).size() + 1);
     }
 
     public Run<?, ?> getBuild() {
         return build;
+    }
+
+    public String getScannedPath() {
+        return scannedPath;
     }
 
     public IaCScanResult getScanResult() {
@@ -147,23 +178,40 @@ public class IaCAction implements Action {
         }
     }
 
-    // Affected resources across all findings (a control can affect several resources).
-    public int getAffectedResources() {
+    /**
+     * Number of control/resource pairs, i.e. one per row of the findings table. A failed control can
+     * hit several resources, and the same resource can fail several controls, so this is a count of
+     * violations and not of distinct resources.
+     */
+    public int getResourceViolations() {
         int total = 0;
-        for (Severity severity : Severity.values()) {
-            total += reportedCount(severity);
+        for (Finding finding : getFindings()) {
+            total += finding.resources().size();
         }
         return total;
+    }
+
+    /**
+     * Module or folder the resource was declared in, as the scanner reports it: the raw value carries a
+     * {@code "source file: "} prefix and degrades to {@code "/"} when the scan root itself is scanned,
+     * which reads like a missing value.
+     */
+    public String locationOf(Resource resource) {
+        String raw =
+                resource.location() == null || resource.location().isBlank() ? resource.source() : resource.location();
+        if (raw == null) {
+            return "scan root";
+        }
+        String path = raw.trim();
+        if (path.startsWith(SCANNER_LOCATION_PREFIX)) {
+            path = path.substring(SCANNER_LOCATION_PREFIX.length()).trim();
+        }
+        return path.isEmpty() || path.equals("/") ? "scan root" : path;
     }
 
     private int findingsCount(Severity severity) {
         IaCScanResult result = getScanResult();
         return result == null ? 0 : result.findingsCountBySeverity(severity);
-    }
-
-    private int reportedCount(Severity severity) {
-        IaCScanResult result = getScanResult();
-        return result == null ? 0 : result.reportedFindingsCount(severity);
     }
 
     @Override
@@ -173,11 +221,18 @@ public class IaCAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Sysdig Secure IaC Report";
+        StringBuilder name = new StringBuilder(BASE_DISPLAY_NAME);
+        if (scannedPath != null && !scannedPath.isBlank() && !scannedPath.trim().equals(".")) {
+            name.append(" (").append(scannedPath.trim()).append(")");
+        }
+        if (ordinal > 1) {
+            name.append(" #").append(ordinal);
+        }
+        return name.toString();
     }
 
     @Override
     public String getUrlName() {
-        return "sysdig-secure-iac-results";
+        return ordinal > 1 ? BASE_URL_NAME + "-" + ordinal : BASE_URL_NAME;
     }
 }

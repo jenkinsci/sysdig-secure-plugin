@@ -40,6 +40,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -177,14 +178,19 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         logger.logInfo("Starting scan");
         try {
             String exec = filePath.getRemote();
-            FilePath scanResultOutputFile = runContext.getPathFromWorkspace("sysdig-iac-scan-result.json");
+            FilePath scanResultOutputFile = createScanResultOutputFile(workspace);
             SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec, scanResultOutputFile);
             logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
-            int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
-            logger.logInfo(String.format("Process finished with status %d", exitCode));
+            int exitCode;
+            try {
+                exitCode = processBuilder.launchAndWait(runContext.getLauncher());
+                logger.logInfo(String.format("Process finished with status %d", exitCode));
 
-            reportAndAttachScanResult(run, logger, scanResultOutputFile);
+                reportAndAttachScanResult(run, logger, scanResultOutputFile);
+            } finally {
+                scanResultOutputFile.delete();
+            }
 
             switch (exitCode) {
                 case 0:
@@ -215,15 +221,20 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
     }
 
     /**
-     * Best-effort parsing of the scanner's JSON report into the domain model, to log a human-readable
-     * summary. Never alters the build result: the exit code remains the source of truth for pass/fail.
+     * Report file of a single scan. Every step gets its own file: the workspace is shared by all the
+     * steps of a build, so a fixed name would let a scan that produced no report of its own read (and
+     * attach) the report left behind by a previous scan, and would make parallel steps race for it.
      */
+    static FilePath createScanResultOutputFile(FilePath workspace) throws IOException, InterruptedException {
+        return workspace.createTempFile("sysdig-iac-scan-result", ".json");
+    }
+
     /**
      * Best-effort: parse the scanner's JSON report to log a summary and attach the {@link IaCAction}
      * that renders the result tables on the build page. Never alters the build result: the exit code
      * remains the source of truth for pass/fail.
      */
-    private void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
+    void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
         try {
             if (!scanResultOutputFile.exists()) return;
 
@@ -235,7 +246,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             if (scanResult.isEmpty()) return;
 
             logScanResultSummary(logger, scanResult.get());
-            run.addAction(new IaCAction(run, json));
+            run.addAction(IaCAction.createFor(run, json, path));
         } catch (Exception e) {
             logger.logWarn("Could not parse IaC scan result report: " + e.getMessage());
         }
@@ -249,7 +260,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
                 scanResult.metadata().totalModules(),
                 scanResult.metadata().totalFolders()));
         logger.logInfo(String.format(
-                "  Findings by severity: high=%d, medium=%d, low=%d",
+                "  Resource violations by severity: high=%d, medium=%d, low=%d",
                 scanResult.reportedFindingsCount(Severity.High),
                 scanResult.reportedFindingsCount(Severity.Medium),
                 scanResult.reportedFindingsCount(Severity.Low)));

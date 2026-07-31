@@ -6,7 +6,7 @@
             <j:when test="${it.hasFindings}">
                 &#160;&#8212;&#160;${it.totalFindings} failed control(s)
                 (high=${it.highFindings}, medium=${it.mediumFindings}, low=${it.lowFindings})
-                across ${it.affectedResources} resource(s)
+                across ${it.resourceViolations} resource violation(s)
             </j:when>
             <j:otherwise>
                 &#160;&#8212;&#160;no findings

@@ -61,8 +61,8 @@
                         </div>
                     </j:forEach>
                     <div class="tile">
-                        <div class="num">${it.affectedResources}</div>
-                        <div class="lbl">Affected resources</div>
+                        <div class="num">${it.resourceViolations}</div>
+                        <div class="lbl">Resource violations</div>
                     </div>
                 </div>
 
@@ -86,7 +86,7 @@
                                     <th>Control</th>
                                     <th>Resource</th>
                                     <th>Type</th>
-                                    <th>Location</th>
+                                    <th>Module path</th>
                                     <th>Policies</th>
                                 </tr>
                             </thead>
@@ -101,7 +101,7 @@
                                             <td>${f.name()}</td>
                                             <td>${r.name()}</td>
                                             <td>${r.type()}</td>
-                                            <td>${r.location()}</td>
+                                            <td>${it.locationOf(r)}</td>
                                             <td>
                                                 <j:forEach var="p" items="${f.policies()}" varStatus="s"><j:if
                                                         test="${!s.first}">, </j:if>${p}</j:forEach>
