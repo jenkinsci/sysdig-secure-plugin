@@ -57,7 +57,7 @@
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
         <!-- You can find your version for the selected baseline in: https://repo.jenkins-ci.org/public/io/jenkins/tools/bom/ -->
-        <version>6667.v64d86185fd17</version>
+        <version>6751.v745d6a_31066a_</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
