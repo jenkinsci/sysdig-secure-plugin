@@ -43,6 +43,8 @@ public class IaCAction implements Action {
     private static final String BASE_DISPLAY_NAME = "Sysdig Secure IaC Report";
     /** The scanner reports a resource's module as {@code "source file: <path>"}. */
     private static final String SCANNER_LOCATION_PREFIX = "source file:";
+    /** Guards the ordinal-then-attach sequence in {@link #attachTo}. */
+    private static final Object ATTACH_LOCK = new Object();
 
     private final Run<?, ?> build;
     private final String rawScanResultJson;
@@ -64,15 +66,24 @@ public class IaCAction implements Action {
     }
 
     /**
-     * Builds an action whose url name does not clash with the IaC reports already attached to the
-     * build, so every step of a multi-scan build stays reachable from the build page.
+     * Attaches a report whose url name does not clash with the IaC reports already on the build, so
+     * every step of a multi-scan build stays reachable from the build page.
+     *
+     * <p>{@link hudson.model.Actionable} does not synchronize its action list, so picking the ordinal
+     * and adding the action have to happen as one atomic step: parallel branches of a pipeline run
+     * their steps on different threads and would otherwise both read the same list size and publish
+     * the same url name.
      */
-    public static IaCAction createFor(Run<?, ?> build, String rawScanResultJson, String scannedPath) {
-        return new IaCAction(
-                build,
-                rawScanResultJson,
-                scannedPath,
-                build.getActions(IaCAction.class).size() + 1);
+    public static IaCAction attachTo(Run<?, ?> build, String rawScanResultJson, String scannedPath) {
+        synchronized (ATTACH_LOCK) {
+            int ordinal = 1;
+            for (IaCAction attached : build.getActions(IaCAction.class)) {
+                ordinal = Math.max(ordinal, attached.ordinal + 1);
+            }
+            IaCAction action = new IaCAction(build, rawScanResultJson, scannedPath, ordinal);
+            build.addAction(action);
+            return action;
+        }
     }
 
     public Run<?, ?> getBuild() {

@@ -36,6 +36,7 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.slaves.WorkspaceList;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -176,21 +177,17 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         }
 
         logger.logInfo("Starting scan");
+        FilePath scanResultOutputFile = null;
         try {
             String exec = filePath.getRemote();
-            FilePath scanResultOutputFile = createScanResultOutputFile(workspace);
+            scanResultOutputFile = createScanResultOutputFile(workspace);
             SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec, scanResultOutputFile);
             logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
-            int exitCode;
-            try {
-                exitCode = processBuilder.launchAndWait(runContext.getLauncher());
-                logger.logInfo(String.format("Process finished with status %d", exitCode));
+            int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
+            logger.logInfo(String.format("Process finished with status %d", exitCode));
 
-                reportAndAttachScanResult(run, logger, scanResultOutputFile);
-            } finally {
-                scanResultOutputFile.delete();
-            }
+            reportAndAttachScanResult(run, logger, scanResultOutputFile);
 
             switch (exitCode) {
                 case 0:
@@ -216,17 +213,49 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         } catch (Exception e) {
             logger.logError(String.format("Failed processing output: %s", e.getMessage()), e);
             run.setResult(Result.FAILURE);
+        } finally {
+            deleteQuietly(scanResultOutputFile, logger);
         }
         logger.logInfo("Process completed");
+    }
+
+    /**
+     * Drops the scan's report file once it has been read. Deleting is cleanup, never a reason to fail a
+     * build, and it must not shadow whatever the scan itself reported: the exit code stays the source
+     * of truth for pass/fail.
+     */
+    private static void deleteQuietly(FilePath scanResultOutputFile, SysdigLogger logger) {
+        if (scanResultOutputFile == null) {
+            return;
+        }
+        try {
+            scanResultOutputFile.delete();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            logger.logWarn(String.format(
+                    "Could not delete the IaC scan report file %s: %s",
+                    scanResultOutputFile.getRemote(), e.getMessage()));
+        }
     }
 
     /**
      * Report file of a single scan. Every step gets its own file: the workspace is shared by all the
      * steps of a build, so a fixed name would let a scan that produced no report of its own read (and
      * attach) the report left behind by a previous scan, and would make parallel steps race for it.
+     *
+     * <p>It lives in the workspace's {@code @tmp} sibling directory rather than in the workspace itself,
+     * so the report of this run (or of a parallel one) is never part of the tree being scanned and a
+     * build leaves no scratch file behind in the checkout. Scanner 1.27.2 ignores stray {@code .json}
+     * files while walking, so this keeps the workspace clean rather than fixing a scan result.
      */
     static FilePath createScanResultOutputFile(FilePath workspace) throws IOException, InterruptedException {
-        return workspace.createTempFile("sysdig-iac-scan-result", ".json");
+        FilePath tempDir = WorkspaceList.tempDir(workspace);
+        if (tempDir == null) { // no parent to hang the sibling directory off, e.g. a filesystem root
+            tempDir = workspace;
+        }
+        tempDir.mkdirs();
+        return tempDir.createTempFile("sysdig-iac-scan-result", ".json");
     }
 
     /**
@@ -246,7 +275,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             if (scanResult.isEmpty()) return;
 
             logScanResultSummary(logger, scanResult.get());
-            run.addAction(IaCAction.createFor(run, json, path));
+            IaCAction.attachTo(run, json, path);
         } catch (Exception e) {
             logger.logWarn("Could not parse IaC scan result report: " + e.getMessage());
         }

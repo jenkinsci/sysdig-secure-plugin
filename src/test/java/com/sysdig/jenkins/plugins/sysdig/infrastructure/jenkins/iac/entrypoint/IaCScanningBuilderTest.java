@@ -9,6 +9,7 @@ import com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.ui.IaCAction
 import hudson.FilePath;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.slaves.WorkspaceList;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,16 +42,23 @@ class IaCScanningBuilderTest {
     /**
      * Two IaC steps share the workspace, so a fixed report name lets one scan read the previous
      * scan's report when its own run produced none (bad params, killed scanner, parallel stages).
+     * The report also has to stay out of the workspace: with the default path the scanner walks the
+     * workspace itself and would run into the report of its own (or of a parallel) run.
      */
     @Test
-    void eachScanGetsItsOwnReportFile() throws Exception {
+    void eachScanGetsItsOwnReportFileOutsideTheWorkspace() throws Exception {
         FilePath first = IaCScanningBuilder.createScanResultOutputFile(workspace());
         FilePath second = IaCScanningBuilder.createScanResultOutputFile(workspace());
 
         assertNotEquals(first.getRemote(), second.getRemote());
-        assertEquals(workspace().getRemote(), first.getParent().getRemote());
         assertTrue(first.getName().startsWith("sysdig-iac-scan-result"), first.getName());
         assertTrue(first.getName().endsWith(".json"), first.getName());
+
+        assertEquals(
+                WorkspaceList.tempDir(workspace()).getRemote(),
+                first.getParent().getRemote(),
+                "the report belongs in the workspace's @tmp sibling");
+        assertEquals(0, workspace().list().size(), "nothing written inside the scanned workspace");
     }
 
     @Test

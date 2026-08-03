@@ -7,6 +7,9 @@ import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Resource;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.util.XStream2;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.htmlunit.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,7 +83,7 @@ class IaCActionTest {
     void actionPageRendersTables() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        build.addAction(IaCAction.createFor(build, sampleJson(), "infra"));
+        IaCAction.attachTo(build, sampleJson(), "infra");
         build.save();
 
         JenkinsRule.WebClient wc = jenkins.createWebClient();
@@ -103,7 +106,7 @@ class IaCActionTest {
     void summaryTileAppearsOnBuildPage() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        build.addAction(IaCAction.createFor(build, sampleJson(), "infra"));
+        IaCAction.attachTo(build, sampleJson(), "infra");
         build.save();
 
         JenkinsRule.WebClient wc = jenkins.createWebClient();
@@ -125,8 +128,8 @@ class IaCActionTest {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
         // Same path on purpose: the url must stay unique even when two steps scan the same directory.
-        build.addAction(IaCAction.createFor(build, jsonWithFindingNamed("FIRST-SCAN-CONTROL"), "infra"));
-        build.addAction(IaCAction.createFor(build, jsonWithFindingNamed("SECOND-SCAN-CONTROL"), "infra"));
+        IaCAction.attachTo(build, jsonWithFindingNamed("FIRST-SCAN-CONTROL"), "infra");
+        IaCAction.attachTo(build, jsonWithFindingNamed("SECOND-SCAN-CONTROL"), "infra");
         build.save();
 
         var actions = build.getActions(IaCAction.class);
@@ -144,6 +147,46 @@ class IaCActionTest {
         assertTrue(first.contains("FIRST-SCAN-CONTROL"), "first report reachable");
         assertFalse(first.contains("SECOND-SCAN-CONTROL"), "first report is not the second one");
         assertTrue(second.contains("SECOND-SCAN-CONTROL"), "second report reachable");
+    }
+
+    /**
+     * Parallel pipeline branches attach their reports from different threads, and the build's action
+     * list gives no atomicity, so the ordinal has to be picked and used under a lock.
+     */
+    @Test
+    void concurrentAttachesStillGetDistinctUrls() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+
+        int branches = 16;
+        var start = new CountDownLatch(1);
+        var done = new CountDownLatch(branches);
+        var pool = Executors.newFixedThreadPool(branches);
+        try {
+            for (int i = 0; i < branches; i++) {
+                String path = "infra-" + i;
+                pool.submit(() -> {
+                    try {
+                        start.await();
+                        IaCAction.attachTo(build, jsonWithFindingNamed("CONTROL"), path);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        done.countDown();
+                    }
+                });
+            }
+            start.countDown();
+            assertTrue(done.await(30, TimeUnit.SECONDS), "all branches attached");
+        } finally {
+            pool.shutdownNow();
+        }
+
+        var urls = build.getActions(IaCAction.class).stream()
+                .map(IaCAction::getUrlName)
+                .collect(java.util.stream.Collectors.toSet());
+        assertEquals(branches, build.getActions(IaCAction.class).size());
+        assertEquals(branches, urls.size(), "every attached report needs its own url: " + urls);
     }
 
     @Test
@@ -190,7 +233,7 @@ class IaCActionTest {
     void findingsTableShowsLocationWithoutTheScannerPrefix() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        build.addAction(IaCAction.createFor(build, sampleJson(), "infra"));
+        IaCAction.attachTo(build, sampleJson(), "infra");
         build.save();
 
         JenkinsRule.WebClient wc = jenkins.createWebClient();
