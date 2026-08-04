@@ -235,31 +235,47 @@ public class IaCAction implements Action {
     public String locationOf(Resource resource) {
         String raw =
                 resource.location() == null || resource.location().isBlank() ? resource.source() : resource.location();
-        if (raw == null) {
-            return SCAN_ROOT_LABEL;
+        String path = pathOf(raw);
+        return path.isEmpty() ? SCAN_ROOT_LABEL : path;
+    }
+
+    /**
+     * Any path the scanner reports — the source of an unsupported resource or of a parse error as much
+     * as a finding's module — shown relative to the scanned path, so every table reads the same way.
+     */
+    public String pathOf(String scannerPath) {
+        if (scannerPath == null) {
+            return "";
         }
-        String path = raw.trim();
+        String path = scannerPath.trim();
         if (path.startsWith(SCANNER_LOCATION_PREFIX)) {
             path = path.substring(SCANNER_LOCATION_PREFIX.length()).trim();
         }
-        if (path.isEmpty() || path.equals("/")) {
+        if (path.equals("/")) {
             return SCAN_ROOT_LABEL;
         }
         return path.startsWith("/") ? path.substring(1) : path;
     }
 
     /**
-     * The resource's module prefixed with the scan root, for the cell's tooltip: the table stays narrow
-     * and the whole path is one hover away. Falls back to the module alone when the step configured no
-     * path, since then the root is whatever the scanner defaulted to.
+     * The same path prefixed with the scan root, for a cell's tooltip: the tables stay narrow and the
+     * whole path is one hover away. Falls back to the relative path alone when the step configured none,
+     * since then the root is whatever the scanner defaulted to.
      */
+    public String fullPathOf(String scannerPath) {
+        return withScanRoot(pathOf(scannerPath));
+    }
+
     public String fullLocationOf(Resource resource) {
-        String module = locationOf(resource);
+        return withScanRoot(locationOf(resource));
+    }
+
+    private String withScanRoot(String path) {
         if (!getHasScannedPath()) {
-            return module;
+            return path;
         }
         String root = withoutTrailingSlash(getScannedPath());
-        return module.equals(SCAN_ROOT_LABEL) ? root : root + "/" + module;
+        return path.isEmpty() || path.equals(SCAN_ROOT_LABEL) ? root : root + "/" + path;
     }
 
     private static String withoutTrailingSlash(String path) {

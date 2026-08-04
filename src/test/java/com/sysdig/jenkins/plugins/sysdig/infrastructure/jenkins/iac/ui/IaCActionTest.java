@@ -305,6 +305,42 @@ class IaCActionTest {
         assertTrue(text.contains("Sysdig Secure IaC Report (demo-agentic)"), "heading identifies the scan");
     }
 
+    /**
+     * The unsupported-resources and parse-error tables carry the same kind of scanner path as the
+     * findings table, so they read the same way instead of showing the raw leading-slash value.
+     */
+    @Test
+    void unsupportedResourcesAndParseErrorsShowPathsTheSameWay() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        IaCAction.attachTo(build, sampleJson(), "/home/jenkins/demo-agentic");
+        build.save();
+
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        String text =
+                wc.getPage(build, "sysdig-secure-iac-results").getWebResponse().getContentAsString();
+
+        assertTrue(
+                text.contains("title=\"/home/jenkins/demo-agentic/infra/infra\">infra/infra</td>"),
+                "unsupported resource path");
+        assertTrue(
+                text.contains(
+                        "title=\"/home/jenkins/demo-agentic/.venv/lib/python3.13/site-packages/markdown_it/port.yaml\">"
+                                + ".venv/lib/python3.13/site-packages/markdown_it/port.yaml</td>"),
+                "parse error path");
+        assertFalse(text.contains("<td>/"), "no raw leading-slash path left in any table");
+    }
+
+    @Test
+    void pathsAreRelativeEvenWithoutAConfiguredScanRoot() {
+        IaCAction action = new IaCAction(null, sampleJson(), "", 1);
+
+        assertEquals("infra/infra", action.pathOf("/infra/infra"));
+        assertEquals("infra/infra", action.fullPathOf("/infra/infra"));
+        assertEquals("scan root", action.pathOf("/"));
+        assertEquals("", action.pathOf(null));
+    }
+
     /** With no configured path there is no root to state, so the header stays as it was. */
     @Test
     void pageWithoutAConfiguredPathStatesNoScanRoot() throws Exception {

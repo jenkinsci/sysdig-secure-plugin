@@ -125,14 +125,14 @@
                     <table id="unsupported_table" class="table table-striped table-bordered" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Source</th>
+                                <th>Path</th>
                                 <th>Unsupported resource kinds</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="u" items="${it.unsupportedResources}">
                                 <tr>
-                                    <td>${u.source()}</td>
+                                    <td title="${it.fullPathOf(u.source())}">${it.pathOf(u.source())}</td>
                                     <td>
                                         <j:forEach var="d" items="${u.details()}" varStatus="s"><j:if
                                                 test="${!s.first}">, </j:if>${d}</j:forEach>
@@ -148,14 +148,14 @@
                     <table id="errors_table" class="table table-striped table-bordered" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Source</th>
+                                <th>Path</th>
                                 <th>Details</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="e" items="${it.errors}">
                                 <tr>
-                                    <td>${e.source()}</td>
+                                    <td title="${it.fullPathOf(e.source())}">${it.pathOf(e.source())}</td>
                                     <td>
                                         <j:forEach var="d" items="${e.details()}" varStatus="s"><j:if
                                                 test="${!s.first}">
