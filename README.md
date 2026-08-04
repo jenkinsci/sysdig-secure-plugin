@@ -358,7 +358,8 @@ resource that fails three controls counts three times; it is unrelated to the nu
 **Module path** column is the module, folder or file the scanner attributes the resource to, relative to the path
 that was scanned — which the page states once, under the heading — so a resource declared at the top of it shows up
 as `scan root` and anything deeper shows its path within the scan (for example `infra`). Hover a cell for the whole
-path.
+path. When the scanner reports which part of the resource failed the control, it appears under the resource's name
+(`runAsUser in container dind`).
 
 A build that runs several IaC steps gets one report page per step, each named after the last segment of the path it
 scanned (the full path is in the heading, and in the tooltip of the build page's link). The

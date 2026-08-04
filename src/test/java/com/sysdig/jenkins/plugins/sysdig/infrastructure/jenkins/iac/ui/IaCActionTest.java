@@ -55,6 +55,32 @@ class IaCActionTest {
             """.formatted(controlName);
     }
 
+    /** Shape a real Kubernetes scan produces: the location names a field, not a path. */
+    private static String kubernetesStyleJson() {
+        return """
+            {
+              "result": {
+                "type": "IaCGitScan",
+                "metadata": {"sources": ["/terraform"], "totalModules": 1, "totalResource": 3, "totalFolders": 1},
+                "findingsSummaryBySeverity": {"high": 1},
+                "findings": [
+                  {
+                    "controlId": 3,
+                    "name": "Workload - Container Running As Root",
+                    "severity": "High",
+                    "resources": [
+                      {"name": "kubernetes_deployment_v1.nemoclaw", "type": "Deployment",
+                       "location": "runAsUser in container dind", "source": "/terraform"}
+                    ],
+                    "policies": ["All Posture Findings"],
+                    "requirements": []
+                  }
+                ]
+              }
+            }
+            """;
+    }
+
     @Test
     void actionSurvivesXStreamRoundTripAndReparses() {
         // The action is stored in the build's XStream-serialized build.xml. Only the raw JSON string is
@@ -241,34 +267,74 @@ class IaCActionTest {
     }
 
     /**
-     * The scanner reports the module/folder the resource was found in as {@code "source file: <path>"},
-     * relative to the scanned path and with a leading slash, which reads like a filesystem root. The
-     * column shows it relative to the scan, since the page states what was scanned.
+     * The module path comes from the resource's {@code source}, which is always a path relative to the
+     * scanned one. Its {@code location} is not: for Kubernetes resources the scanner puts the offending
+     * field there ({@code "runAsUser in container dind"}) and only falls back to
+     * {@code "source file: <path>"}, a copy of the source, when it has nothing better to say.
      */
     @Test
-    void locationIsShownRelativeToTheScannedPath() {
+    void modulePathComesFromTheSourceAndIsRelativeToTheScannedPath() {
         IaCAction action = new IaCAction(null, sampleJson(), "/home/jenkins/demo", 1);
 
-        assertEquals("infra", action.locationOf(resourceAt("source file: /infra", "/infra")));
-        assertEquals("nested/deep.tf", action.locationOf(resourceAt("source file: /nested/deep.tf", "/nested")));
-        assertEquals("scan root", action.locationOf(resourceAt("source file: /", "/")));
-        assertEquals("scan root", action.locationOf(resourceAt("", "")));
-        assertEquals("infra", action.locationOf(resourceAt(null, "/infra")));
-        assertEquals("scan root", action.locationOf(resourceAt(null, null)));
+        assertEquals("infra", action.modulePathOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("terraform", action.modulePathOf(resourceAt("runAsUser in container dind", "/terraform")));
+        assertEquals("nested", action.modulePathOf(resourceAt("source file: /nested/deep.tf", "/nested")));
+        assertEquals("scan root", action.modulePathOf(resourceAt("source file: /", "/")));
+
+        // Without a source, only a location that looks like one can stand in for it.
+        assertEquals("infra", action.modulePathOf(resourceAt("source file: /infra", null)));
+        assertEquals("", action.modulePathOf(resourceAt("runAsUser in container dind", null)));
+        assertEquals("", action.modulePathOf(resourceAt(null, null)));
     }
 
     /** The whole path, for the cell's tooltip: short cells, full detail one hover away. */
     @Test
-    void fullLocationJoinsTheScannedPathWithTheModule() {
+    void fullModulePathJoinsTheScannedPathWithTheModule() {
         IaCAction action = new IaCAction(null, sampleJson(), "/home/jenkins/demo", 1);
 
-        assertEquals("/home/jenkins/demo/infra", action.fullLocationOf(resourceAt("source file: /infra", "/infra")));
-        assertEquals("/home/jenkins/demo", action.fullLocationOf(resourceAt("source file: /", "/")));
+        assertEquals("/home/jenkins/demo/infra", action.fullModulePathOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("/home/jenkins/demo", action.fullModulePathOf(resourceAt("source file: /", "/")));
+        assertEquals(
+                "/home/jenkins/demo/terraform",
+                action.fullModulePathOf(resourceAt("runAsUser in container dind", "/terraform")));
 
         // Nothing to join when the step did not configure a path: what the scanner reports is all we know.
         IaCAction noPath = new IaCAction(null, sampleJson(), "", 1);
-        assertEquals("infra", noPath.fullLocationOf(resourceAt("source file: /infra", "/infra")));
-        assertEquals("scan root", noPath.fullLocationOf(resourceAt("source file: /", "/")));
+        assertEquals("infra", noPath.fullModulePathOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("scan root", noPath.fullModulePathOf(resourceAt("source file: /", "/")));
+    }
+
+    /** What failed inside the resource, when the scanner says more than where the resource lives. */
+    @Test
+    void detailKeepsTheOffendingFieldAndDropsThePathRepetition() {
+        IaCAction action = new IaCAction(null, sampleJson(), "/home/jenkins/demo", 1);
+
+        assertEquals(
+                "runAsUser in container dind",
+                action.detailOf(resourceAt("runAsUser in container dind", "/terraform")));
+        assertEquals("`runAsGroup` in workload", action.detailOf(resourceAt("`runAsGroup` in workload", "/terraform")));
+        assertEquals("", action.detailOf(resourceAt("source file: /infra", "/infra")), "already the module path");
+        assertEquals("", action.detailOf(resourceAt("", "/infra")));
+        assertEquals("", action.detailOf(resourceAt(null, "/infra")));
+    }
+
+    @Test
+    void findingsTablePairsTheResourceWithWhatFailedInIt() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        IaCAction.attachTo(build, kubernetesStyleJson(), "/home/jenkins/nemoclaw");
+        build.save();
+
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        String text =
+                wc.getPage(build, "sysdig-secure-iac-results").getWebResponse().getContentAsString();
+
+        assertTrue(text.contains("kubernetes_deployment_v1.nemoclaw"), "resource name");
+        assertTrue(text.contains("runAsUser in container dind"), "offending field kept");
+        assertTrue(
+                text.contains("title=\"/home/jenkins/nemoclaw/terraform\">terraform</td>"),
+                "module path comes from the source");
+        assertFalse(text.contains("\"/home/jenkins/nemoclaw/runAsUser"), "no field description turned into a path");
     }
 
     /** An absolute agent path is unreadable in a sidebar, so the name keeps only its last segment. */

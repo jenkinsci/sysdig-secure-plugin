@@ -228,15 +228,44 @@ public class IaCAction implements Action {
     }
 
     /**
-     * Module, folder or file the resource was declared in, shown relative to the scanned path. The
-     * scanner reports it as {@code "source file: <path>"} with a leading slash, which reads like a
-     * filesystem root; the report page states the scan root instead, once.
+     * Module, folder or file the resource was declared in, shown relative to the scanned path — which
+     * the report page states once, so the leading slash the scanner uses (and which reads like a
+     * filesystem root) is dropped.
      */
-    public String locationOf(Resource resource) {
-        String raw =
-                resource.location() == null || resource.location().isBlank() ? resource.source() : resource.location();
-        String path = pathOf(raw);
-        return path.isEmpty() ? SCAN_ROOT_LABEL : path;
+    public String modulePathOf(Resource resource) {
+        return pathOf(modulePathSourceOf(resource));
+    }
+
+    /**
+     * What the scanner says failed inside the resource, empty when it has nothing to add. Its
+     * {@code location} is free-form: usually the offending field or container ({@code "runAsUser in
+     * container dind"}), and {@code "source file: <path>"} when all it can say is where the resource
+     * lives — which the module path column already shows.
+     */
+    public String detailOf(Resource resource) {
+        String location = resource.location();
+        if (location == null || location.isBlank()) {
+            return "";
+        }
+        String detail = location.trim();
+        return looksLikeAPath(detail) ? "" : detail;
+    }
+
+    /**
+     * A resource's {@code source} is always the path of the module it was declared in. Only a
+     * {@code location} that looks like a path stands in for a missing one, so a field description never
+     * ends up rendered (or tooltipped) as a directory.
+     */
+    private static String modulePathSourceOf(Resource resource) {
+        if (resource.source() != null && !resource.source().isBlank()) {
+            return resource.source();
+        }
+        String location = resource.location();
+        return location != null && looksLikeAPath(location.trim()) ? location : null;
+    }
+
+    private static boolean looksLikeAPath(String value) {
+        return value.startsWith(SCANNER_LOCATION_PREFIX) || value.startsWith("/");
     }
 
     /**
@@ -266,8 +295,8 @@ public class IaCAction implements Action {
         return withScanRoot(pathOf(scannerPath));
     }
 
-    public String fullLocationOf(Resource resource) {
-        return withScanRoot(locationOf(resource));
+    public String fullModulePathOf(Resource resource) {
+        return withScanRoot(modulePathOf(resource));
     }
 
     private String withScanRoot(String path) {

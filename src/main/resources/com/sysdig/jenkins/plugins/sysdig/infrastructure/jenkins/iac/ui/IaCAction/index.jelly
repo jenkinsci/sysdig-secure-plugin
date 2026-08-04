@@ -38,6 +38,7 @@
                     padding: 4px 10px; cursor: pointer;
                 }
                 .sysdig-iac table.dataTable td { vertical-align: top; }
+                .sysdig-iac .detail { color: #6b7683; font-size: 0.9em; margin-top: 2px; }
             </style>
 
             <div class="sysdig-iac">
@@ -102,9 +103,11 @@
                                             </td>
                                             <td>${f.controlId()}</td>
                                             <td>${f.name()}</td>
-                                            <td>${r.name()}</td>
+                                            <td>${r.name()}<j:if
+                                                    test="${!empty(it.detailOf(r))}"><div
+                                                    class="detail">${it.detailOf(r)}</div></j:if></td>
                                             <td>${r.type()}</td>
-                                            <td title="${it.fullLocationOf(r)}">${it.locationOf(r)}</td>
+                                            <td title="${it.fullModulePathOf(r)}">${it.modulePathOf(r)}</td>
                                             <td>
                                                 <j:forEach var="p" items="${f.policies()}" varStatus="s"><j:if
                                                         test="${!s.first}">, </j:if>${p}</j:forEach>
