@@ -24,7 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * custom version configured by the user and falling back to a pinned version.
  */
 public class ScannerVersionResolver {
-    private static final String FIXED_SCANNED_VERSION = "1.27.2"; // newest-version-marker
+    private static final String FIXED_SCANNED_VERSION = "1.28.0"; // newest-version-marker
 
     private final ImageScanningConfig config;
 
