@@ -242,24 +242,51 @@ class IaCActionTest {
 
     /**
      * The scanner reports the module/folder the resource was found in as {@code "source file: <path>"},
-     * which reads like a broken value when the whole repository is scanned (path {@code "/"}).
+     * relative to the scanned path and with a leading slash, which reads like a filesystem root. The
+     * column shows it relative to the scan, since the page states what was scanned.
      */
     @Test
-    void locationDropsTheScannerPrefixAndNamesTheScanRoot() {
-        IaCAction action = new IaCAction(null, sampleJson(), "infra", 1);
+    void locationIsShownRelativeToTheScannedPath() {
+        IaCAction action = new IaCAction(null, sampleJson(), "/home/jenkins/demo", 1);
 
-        assertEquals("/infra", action.locationOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("infra", action.locationOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("nested/deep.tf", action.locationOf(resourceAt("source file: /nested/deep.tf", "/nested")));
         assertEquals("scan root", action.locationOf(resourceAt("source file: /", "/")));
         assertEquals("scan root", action.locationOf(resourceAt("", "")));
-        assertEquals("/infra", action.locationOf(resourceAt(null, "/infra")));
+        assertEquals("infra", action.locationOf(resourceAt(null, "/infra")));
         assertEquals("scan root", action.locationOf(resourceAt(null, null)));
+    }
+
+    /** The whole path, for the cell's tooltip: short cells, full detail one hover away. */
+    @Test
+    void fullLocationJoinsTheScannedPathWithTheModule() {
+        IaCAction action = new IaCAction(null, sampleJson(), "/home/jenkins/demo", 1);
+
+        assertEquals("/home/jenkins/demo/infra", action.fullLocationOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("/home/jenkins/demo", action.fullLocationOf(resourceAt("source file: /", "/")));
+
+        // Nothing to join when the step did not configure a path: what the scanner reports is all we know.
+        IaCAction noPath = new IaCAction(null, sampleJson(), "", 1);
+        assertEquals("infra", noPath.fullLocationOf(resourceAt("source file: /infra", "/infra")));
+        assertEquals("scan root", noPath.fullLocationOf(resourceAt("source file: /", "/")));
+    }
+
+    /** An absolute agent path is unreadable in a sidebar, so the name keeps only its last segment. */
+    @Test
+    void displayNameShortensTheScannedPathToItsLastSegment() {
+        assertEquals(
+                "Sysdig Secure IaC Report (demo-agentic)",
+                new IaCAction(null, sampleJson(), "/Users/fede/Documents/demo-agentic", 1).getDisplayName());
+        assertEquals(
+                "Sysdig Secure IaC Report (infra)", new IaCAction(null, sampleJson(), "infra/", 1).getDisplayName());
+        assertEquals("Sysdig Secure IaC Report", new IaCAction(null, sampleJson(), "/", 1).getDisplayName());
     }
 
     @Test
     void findingsTableShowsLocationWithoutTheScannerPrefix() throws Exception {
         FreeStyleProject project = jenkins.createFreeStyleProject();
         FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
-        IaCAction.attachTo(build, sampleJson(), "infra");
+        IaCAction.attachTo(build, sampleJson(), "/home/jenkins/demo-agentic");
         build.save();
 
         JenkinsRule.WebClient wc = jenkins.createWebClient();
@@ -270,7 +297,28 @@ class IaCActionTest {
         assertFalse(text.contains("source file:"), "scanner prefix stripped");
         // On the cell itself: the fixture also mentions /infra in the unsupported-resources table, so
         // a looser assertion would hold even if the column rendered something else entirely.
-        assertTrue(text.contains("<td>/infra</td>"), "module path cell");
+        assertTrue(text.contains("title=\"/home/jenkins/demo-agentic/infra\">infra</td>"), "module path cell");
+
+        // The scan root is stated once, so a relative cell has something to be relative to.
+        assertTrue(text.contains("Scanned: "), "scanned path label");
+        assertTrue(text.contains("/home/jenkins/demo-agentic"), "scanned path");
+        assertTrue(text.contains("Sysdig Secure IaC Report (demo-agentic)"), "heading identifies the scan");
+    }
+
+    /** With no configured path there is no root to state, so the header stays as it was. */
+    @Test
+    void pageWithoutAConfiguredPathStatesNoScanRoot() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        IaCAction.attachTo(build, sampleJson(), "");
+        build.save();
+
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        String text =
+                wc.getPage(build, "sysdig-secure-iac-results").getWebResponse().getContentAsString();
+
+        assertFalse(text.contains("Scanned: "), "no root to state");
+        assertTrue(text.contains("Resources scanned:"), "the rest of the meta line is still there");
     }
 
     private static Resource resourceAt(String location, String source) {

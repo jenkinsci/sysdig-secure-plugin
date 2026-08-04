@@ -43,6 +43,8 @@ public class IaCAction implements Action {
     private static final String BASE_DISPLAY_NAME = "Sysdig Secure IaC Report";
     /** The scanner reports a resource's module as {@code "source file: <path>"}. */
     private static final String SCANNER_LOCATION_PREFIX = "source file:";
+    /** Stands in for the scanned path itself, which the scanner reports as {@code "/"}. */
+    private static final String SCAN_ROOT_LABEL = "scan root";
     /** Guards the ordinal-then-attach sequence in {@link #attachTo}. */
     private static final Object ATTACH_LOCK = new Object();
 
@@ -96,8 +98,25 @@ public class IaCAction implements Action {
         return build;
     }
 
+    /** Path the step was configured to scan, empty when it scanned whatever the default is. */
     public String getScannedPath() {
-        return scannedPath;
+        return scannedPath == null ? "" : scannedPath.trim();
+    }
+
+    /** Whether there is a scan root worth stating on the report page. */
+    public boolean getHasScannedPath() {
+        String path = getScannedPath();
+        return !path.isEmpty() && !path.equals(".") && !path.equals("/");
+    }
+
+    /**
+     * Last segment of the scanned path. The configured path is often absolute and agent-specific
+     * ({@code /home/jenkins/agent/workspace/demo}), which is unreadable in a sidebar or a breadcrumb.
+     */
+    public String getScannedPathName() {
+        String path = withoutTrailingSlash(getScannedPath());
+        int lastSeparator = path.lastIndexOf('/');
+        return lastSeparator < 0 ? path : path.substring(lastSeparator + 1);
     }
 
     public IaCScanResult getScanResult() {
@@ -209,21 +228,42 @@ public class IaCAction implements Action {
     }
 
     /**
-     * Module or folder the resource was declared in, as the scanner reports it: the raw value carries a
-     * {@code "source file: "} prefix and degrades to {@code "/"} when the scan root itself is scanned,
-     * which reads like a missing value.
+     * Module, folder or file the resource was declared in, shown relative to the scanned path. The
+     * scanner reports it as {@code "source file: <path>"} with a leading slash, which reads like a
+     * filesystem root; the report page states the scan root instead, once.
      */
     public String locationOf(Resource resource) {
         String raw =
                 resource.location() == null || resource.location().isBlank() ? resource.source() : resource.location();
         if (raw == null) {
-            return "scan root";
+            return SCAN_ROOT_LABEL;
         }
         String path = raw.trim();
         if (path.startsWith(SCANNER_LOCATION_PREFIX)) {
             path = path.substring(SCANNER_LOCATION_PREFIX.length()).trim();
         }
-        return path.isEmpty() || path.equals("/") ? "scan root" : path;
+        if (path.isEmpty() || path.equals("/")) {
+            return SCAN_ROOT_LABEL;
+        }
+        return path.startsWith("/") ? path.substring(1) : path;
+    }
+
+    /**
+     * The resource's module prefixed with the scan root, for the cell's tooltip: the table stays narrow
+     * and the whole path is one hover away. Falls back to the module alone when the step configured no
+     * path, since then the root is whatever the scanner defaulted to.
+     */
+    public String fullLocationOf(Resource resource) {
+        String module = locationOf(resource);
+        if (!getHasScannedPath()) {
+            return module;
+        }
+        String root = withoutTrailingSlash(getScannedPath());
+        return module.equals(SCAN_ROOT_LABEL) ? root : root + "/" + module;
+    }
+
+    private static String withoutTrailingSlash(String path) {
+        return path.length() > 1 && path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
     }
 
     private int findingsCount(Severity severity) {
@@ -239,8 +279,8 @@ public class IaCAction implements Action {
     @Override
     public String getDisplayName() {
         StringBuilder name = new StringBuilder(BASE_DISPLAY_NAME);
-        if (scannedPath != null && !scannedPath.isBlank() && !scannedPath.trim().equals(".")) {
-            name.append(" (").append(scannedPath.trim()).append(")");
+        if (getHasScannedPath()) {
+            name.append(" (").append(getScannedPathName()).append(")");
         }
         if (ordinal > 1) {
             name.append(" #").append(ordinal);

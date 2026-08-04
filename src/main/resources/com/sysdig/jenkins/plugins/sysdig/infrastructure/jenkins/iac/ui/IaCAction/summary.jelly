@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:t="/lib/hudson">
     <t:summary icon="/plugin/sysdig-secure/images/sysdig-shovel.png">
-        <a href="${it.urlName}">${it.displayName}</a>
+        <a href="${it.urlName}" title="${it.scannedPath}">${it.displayName}</a>
         <j:choose>
             <j:when test="${it.hasFindings}">
                 &#160;&#8212;&#160;${it.totalFindings} failed control(s)
