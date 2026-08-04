@@ -224,7 +224,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
      * build, and it must not shadow whatever the scan itself reported: the exit code stays the source
      * of truth for pass/fail.
      */
-    private static void deleteQuietly(FilePath scanResultOutputFile, SysdigLogger logger) {
+    static void deleteQuietly(FilePath scanResultOutputFile, SysdigLogger logger) {
         if (scanResultOutputFile == null) {
             return;
         }
@@ -245,9 +245,9 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
      * attach) the report left behind by a previous scan, and would make parallel steps race for it.
      *
      * <p>It lives in the workspace's {@code @tmp} sibling directory rather than in the workspace itself,
-     * so the report of this run (or of a parallel one) is never part of the tree being scanned and a
-     * build leaves no scratch file behind in the checkout. Scanner 1.27.2 ignores stray {@code .json}
-     * files while walking, so this keeps the workspace clean rather than fixing a scan result.
+     * to keep reports out of whatever tree gets scanned and to leave no scratch file of ours in a
+     * checkout. The scanner does walk and parse {@code .json} files it finds, it just does not
+     * recognise a report of its own as a resource.
      */
     static FilePath createScanResultOutputFile(FilePath workspace) throws IOException, InterruptedException {
         FilePath tempDir = WorkspaceList.tempDir(workspace);

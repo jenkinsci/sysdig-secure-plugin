@@ -1,7 +1,9 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.entrypoint;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
@@ -10,12 +12,14 @@ import hudson.FilePath;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.slaves.WorkspaceList;
+import java.io.IOException;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+import org.mockito.ArgumentCaptor;
 
 @WithJenkins
 class IaCScanningBuilderTest {
@@ -29,8 +33,14 @@ class IaCScanningBuilderTest {
         jenkins = rule;
     }
 
-    private FilePath workspace() {
-        return new FilePath(workspaceDir.toFile());
+    /**
+     * A subdirectory of the temporary directory, not the temporary directory itself: the report goes to
+     * the workspace's {@code @tmp} <em>sibling</em>, which has to land inside the tree JUnit cleans up.
+     */
+    private FilePath workspace() throws Exception {
+        FilePath workspace = new FilePath(workspaceDir.toFile()).child("workspace");
+        workspace.mkdirs();
+        return workspace;
     }
 
     private IaCScanningBuilder builderScanning(String path) {
@@ -42,8 +52,8 @@ class IaCScanningBuilderTest {
     /**
      * Two IaC steps share the workspace, so a fixed report name lets one scan read the previous
      * scan's report when its own run produced none (bad params, killed scanner, parallel stages).
-     * The report also has to stay out of the workspace: with the default path the scanner walks the
-     * workspace itself and would run into the report of its own (or of a parallel) run.
+     * The report also stays out of the workspace, to keep it out of any tree that gets scanned and out
+     * of the checkout.
      */
     @Test
     void eachScanGetsItsOwnReportFileOutsideTheWorkspace() throws Exception {
@@ -94,5 +104,35 @@ class IaCScanningBuilderTest {
         assertTrue(
                 actions.get(0).getDisplayName().contains("infra"),
                 actions.get(0).getDisplayName());
+    }
+
+    /**
+     * Deleting the report is cleanup: a failure to delete it must never reach the caller, where it would
+     * skip the exit-code handling and turn a clean scan into a failed build, or replace the exception the
+     * scan itself raised.
+     */
+    @Test
+    void aReportThatCannotBeDeletedIsOnlyWarnedAbout() throws Exception {
+        FilePath undeletable = mock(FilePath.class);
+        when(undeletable.getRemote()).thenReturn("/ws@tmp/sysdig-iac-scan-result1.json");
+        doThrow(new IOException("channel is closed")).when(undeletable).delete();
+        SysdigLogger logger = mock(SysdigLogger.class);
+
+        assertDoesNotThrow(() -> IaCScanningBuilder.deleteQuietly(undeletable, logger));
+
+        var warning = ArgumentCaptor.forClass(String.class);
+        verify(logger).logWarn(warning.capture());
+        assertTrue(warning.getValue().contains("sysdig-iac-scan-result1.json"), warning.getValue());
+        verify(logger, never()).logError(anyString());
+        verify(logger, never()).logError(anyString(), any());
+    }
+
+    @Test
+    void nothingToDeleteIsNotAWarning() {
+        SysdigLogger logger = mock(SysdigLogger.class);
+
+        assertDoesNotThrow(() -> IaCScanningBuilder.deleteQuietly(null, logger));
+
+        verifyNoInteractions(logger);
     }
 }

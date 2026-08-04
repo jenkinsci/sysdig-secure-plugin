@@ -58,7 +58,7 @@ public class IaCAction implements Action {
 
     private transient IaCScanResult cachedScanResult;
 
-    public IaCAction(Run<?, ?> build, String rawScanResultJson, String scannedPath, int ordinal) {
+    IaCAction(Run<?, ?> build, String rawScanResultJson, String scannedPath, int ordinal) {
         this.build = build;
         this.rawScanResultJson = rawScanResultJson;
         this.scannedPath = scannedPath;
@@ -69,16 +69,22 @@ public class IaCAction implements Action {
      * Attaches a report whose url name does not clash with the IaC reports already on the build, so
      * every step of a multi-scan build stays reachable from the build page.
      *
-     * <p>{@link hudson.model.Actionable} does not synchronize its action list, so picking the ordinal
-     * and adding the action have to happen as one atomic step: parallel branches of a pipeline run
-     * their steps on different threads and would otherwise both read the same list size and publish
-     * the same url name.
+     * <p>Adding to the build's action list is thread safe on its own, but reading it to pick the
+     * ordinal and then adding is not: parallel branches of a pipeline run their steps on different
+     * threads and would otherwise both settle on the same url name, so the whole sequence takes a
+     * lock. The ordinal counts the reports already attached <em>and</em> stays above the highest one
+     * of them, because a report persisted before this field existed deserializes with ordinal zero
+     * and would otherwise be handed the same url name as the next one.
      */
     public static IaCAction attachTo(Run<?, ?> build, String rawScanResultJson, String scannedPath) {
         synchronized (ATTACH_LOCK) {
+            // The raw action list, not getActions(Class): that one also runs every TransientActionFactory
+            // in the instance, which is third-party code we should not call while holding a lock.
             int ordinal = 1;
-            for (IaCAction attached : build.getActions(IaCAction.class)) {
-                ordinal = Math.max(ordinal, attached.ordinal + 1);
+            for (Action attached : build.getActions()) {
+                if (attached instanceof IaCAction report) {
+                    ordinal = Math.max(ordinal + 1, report.ordinal + 1);
+                }
             }
             IaCAction action = new IaCAction(build, rawScanResultJson, scannedPath, ordinal);
             build.addAction(action);

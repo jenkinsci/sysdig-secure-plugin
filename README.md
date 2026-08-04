@@ -360,8 +360,8 @@ to the scanned path: a resource declared at the top of the scanned path shows up
 deeper shows its path within the scan (for example `/infra`).
 
 A build that runs several IaC steps gets one report page per step, each named after the path it scanned. The
-scanner's JSON report is written next to the workspace (in the `@tmp` directory) and removed once it has been read,
-so it neither pollutes the scanned tree nor survives the build; enable debug logging to dump it into the console.
+scanner's JSON report is a temporary file: it is written to the workspace's `@tmp` directory, parsed into the
+report page, and removed, so it does not survive the build and never lands in the tree being scanned.
 
 <img src="docs/images/IaCScanResults.png" height="500px" />
 

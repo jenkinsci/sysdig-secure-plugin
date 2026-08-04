@@ -199,6 +199,32 @@ class IaCActionTest {
         assertEquals("Sysdig Secure IaC Report", new IaCAction(null, sampleJson(), ".", 1).getDisplayName());
     }
 
+    /**
+     * A build persisted by an earlier version carries a report with no ordinal at all, which owns the
+     * base url. The next scan of that build (a resumed pipeline, say) has to move out of its way.
+     */
+    @Test
+    void attachingNextToALegacyReportDoesNotReuseItsUrl() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        XStream2 xstream = new XStream2();
+        String legacyXml = xstream.toXML(new IaCAction(build, sampleJson(), "infra", 1))
+                .replaceAll("\\s*<ordinal>.*</ordinal>", "")
+                .replaceAll("\\s*<scannedPath>.*</scannedPath>", "");
+        build.addAction((IaCAction) xstream.fromXML(legacyXml));
+
+        IaCAction attached = IaCAction.attachTo(build, jsonWithFindingNamed("AFTER-UPGRADE"), "infra");
+
+        assertEquals(
+                "sysdig-secure-iac-results",
+                build.getActions(IaCAction.class).get(0).getUrlName());
+        assertEquals("sysdig-secure-iac-results-2", attached.getUrlName());
+
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        String page = wc.getPage(build, attached.getUrlName()).getWebResponse().getContentAsString();
+        assertTrue(page.contains("AFTER-UPGRADE"), "the new report is the one served");
+    }
+
     /** Actions persisted by earlier plugin versions have neither ordinal nor scanned path. */
     @Test
     void legacyPersistedActionKeepsTheBaseUrlAndName() {
@@ -242,7 +268,9 @@ class IaCActionTest {
 
         assertTrue(text.contains("Resource violations"), "tile renamed away from affected resources");
         assertFalse(text.contains("source file:"), "scanner prefix stripped");
-        assertTrue(text.contains("/infra"), "module path still shown");
+        // On the cell itself: the fixture also mentions /infra in the unsupported-resources table, so
+        // a looser assertion would hold even if the column rendered something else entirely.
+        assertTrue(text.contains("<td>/infra</td>"), "module path cell");
     }
 
     private static Resource resourceAt(String location, String source) {
