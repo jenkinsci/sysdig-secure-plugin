@@ -288,16 +288,30 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
                 scanResult.metadata().totalResources(),
                 scanResult.metadata().totalModules(),
                 scanResult.metadata().totalFolders()));
+        logger.logInfo("  Failed controls by severity: " + failedControlsBySeverity(scanResult));
         logger.logInfo(String.format(
-                "  Resource violations by severity: high=%d, medium=%d, low=%d",
-                scanResult.reportedFindingsCount(Severity.High),
-                scanResult.reportedFindingsCount(Severity.Medium),
-                scanResult.reportedFindingsCount(Severity.Low)));
-        logger.logInfo(String.format(
-                "  %d failed control(s), %d unsupported resource file(s), %d parse error(s)",
+                "  %d failed control(s) across %d resource violation(s), %d unsupported resource file(s), %d parse error(s)",
                 scanResult.findings().size(),
+                scanResult.resourceViolations(),
                 scanResult.unsupportedResources().size(),
                 scanResult.errors().size()));
+    }
+
+    /**
+     * Per-severity failed-control counts, worded like the report page: derived from the findings
+     * themselves and covering every severity the scan reports, so a Critical is never left out of a
+     * line that claims to break the findings down.
+     */
+    private static String failedControlsBySeverity(IaCScanResult scanResult) {
+        StringBuilder counts = new StringBuilder();
+        for (Severity severity : Severity.values()) { // declaration order is most-severe-first
+            int count = scanResult.findingsCountBySeverity(severity);
+            if (count > 0) {
+                if (!counts.isEmpty()) counts.append(", ");
+                counts.append(severity).append("=").append(count);
+            }
+        }
+        return counts.isEmpty() ? "none" : counts.toString();
     }
 
     // FIXME(fede): Remove this duplicate method

@@ -5,7 +5,8 @@
         <j:choose>
             <j:when test="${it.hasFindings}">
                 &#160;&#8212;&#160;${it.totalFindings} failed control(s)
-                (high=${it.highFindings}, medium=${it.mediumFindings}, low=${it.lowFindings})
+                (<j:forEach var="sc" items="${it.severityBreakdown}" varStatus="s"><j:if
+                        test="${!s.first}">, </j:if>${sc.name}=${sc.count}</j:forEach>)
                 across ${it.resourceViolations} resource violation(s)
             </j:when>
             <j:otherwise>

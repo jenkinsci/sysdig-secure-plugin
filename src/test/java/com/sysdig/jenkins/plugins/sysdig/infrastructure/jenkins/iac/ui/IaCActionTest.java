@@ -55,6 +55,43 @@ class IaCActionTest {
             """.formatted(controlName);
     }
 
+    /** A scan whose findings carry a severity the old high/medium/low wording could not express. */
+    private static String jsonWithACriticalFinding() {
+        return """
+            {
+              "result": {
+                "type": "IaCGitScan",
+                "metadata": {"sources": ["/"], "totalModules": 1, "totalResource": 2, "totalFolders": 1},
+                "findingsSummaryBySeverity": {"critical": 1, "high": 1},
+                "findings": [
+                  {
+                    "controlId": 1,
+                    "name": "S3 - Block Public Access",
+                    "severity": "Critical",
+                    "resources": [
+                      {"name": "aws_s3_bucket.one", "type": "AWS_S3_BUCKET",
+                       "location": "source file: /", "source": "/"}
+                    ],
+                    "policies": ["All Posture Findings"],
+                    "requirements": []
+                  },
+                  {
+                    "controlId": 2,
+                    "name": "ECR - Enabled Vulnerability Scanning",
+                    "severity": "High",
+                    "resources": [
+                      {"name": "aws_ecr_repository.two", "type": "AWS_ECR_REPOSITORY",
+                       "location": "source file: /", "source": "/"}
+                    ],
+                    "policies": ["All Posture Findings"],
+                    "requirements": []
+                  }
+                ]
+              }
+            }
+            """;
+    }
+
     /** Shape a real Kubernetes scan produces: the location names a field, not a path. */
     private static String kubernetesStyleJson() {
         return """
@@ -142,6 +179,27 @@ class IaCActionTest {
         assertTrue(text.contains("Sysdig Secure IaC Report"), "summary link");
         assertTrue(text.contains("failed control(s)"), "summary counts");
         assertTrue(text.contains("resource violation(s)"), "violations wording");
+    }
+
+    /**
+     * The per-severity counts have to add up to the total next to them, so the summary breaks the
+     * findings down by whatever severities the scan reports: a hardcoded high/medium/low list drops a
+     * Critical finding from a line that claims to be the breakdown.
+     */
+    @Test
+    void theBuildPageSummaryCountsEverySeverityTheScanReports() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        IaCAction.attachTo(build, jsonWithACriticalFinding(), "infra");
+        build.save();
+
+        JenkinsRule.WebClient wc = jenkins.createWebClient();
+        String text = wc.getPage(build).getWebResponse().getContentAsString();
+
+        assertTrue(text.contains("2 failed control(s)"), "total");
+        assertTrue(text.contains("Critical=1"), "the critical finding is in the breakdown");
+        assertTrue(text.contains("High=1"), "and so is the high one");
+        assertTrue(text.contains("2 resource violation(s)"), "one row per control/resource pair");
     }
 
     /**

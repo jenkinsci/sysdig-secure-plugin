@@ -43,6 +43,43 @@ class IaCScanningBuilderTest {
         return workspace;
     }
 
+    /** Two failed controls over three resources, one of them at a severity outside high/medium/low. */
+    private static final String CRITICAL_FINDING_REPORT = """
+            {
+              "result": {
+                "type": "IaCGitScan",
+                "metadata": {"sources": ["/"], "totalModules": 1, "totalResource": 3, "totalFolders": 1},
+                "findingsSummaryBySeverity": {"critical": 2, "high": 1},
+                "findings": [
+                  {
+                    "controlId": 1,
+                    "name": "S3 - Block Public Access",
+                    "severity": "Critical",
+                    "resources": [
+                      {"name": "aws_s3_bucket.one", "type": "AWS_S3_BUCKET",
+                       "location": "source file: /", "source": "/"},
+                      {"name": "aws_s3_bucket.two", "type": "AWS_S3_BUCKET",
+                       "location": "source file: /", "source": "/"}
+                    ],
+                    "policies": ["All Posture Findings"],
+                    "requirements": []
+                  },
+                  {
+                    "controlId": 2,
+                    "name": "ECR - Enabled Vulnerability Scanning",
+                    "severity": "High",
+                    "resources": [
+                      {"name": "aws_ecr_repository.three", "type": "AWS_ECR_REPOSITORY",
+                       "location": "source file: /", "source": "/"}
+                    ],
+                    "policies": ["All Posture Findings"],
+                    "requirements": []
+                  }
+                ]
+              }
+            }
+            """;
+
     private IaCScanningBuilder builderScanning(String path) {
         IaCScanningBuilder builder = new IaCScanningBuilder("sysdig-secure");
         builder.setPath(path);
@@ -104,6 +141,30 @@ class IaCScanningBuilderTest {
         assertTrue(
                 actions.get(0).getDisplayName().contains("infra"),
                 actions.get(0).getDisplayName());
+    }
+
+    /**
+     * The console summary and the report page have to say the same thing about the same scan, so the
+     * breakdown comes from the findings and covers every severity they carry: a fixed high/medium/low
+     * triple, read off the scanner's own summary map, left a Critical out of the line that claims to
+     * break the findings down, and counted something different from the page's violations tile.
+     */
+    @Test
+    void theConsoleSummaryBreaksTheFindingsDownLikeTheReportPage() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        SysdigLogger logger = mock(SysdigLogger.class);
+
+        FilePath report = IaCScanningBuilder.createScanResultOutputFile(workspace());
+        report.write(CRITICAL_FINDING_REPORT, "UTF-8");
+        builderScanning("infra").reportAndAttachScanResult(build, logger, report);
+
+        var lines = ArgumentCaptor.forClass(String.class);
+        verify(logger, atLeastOnce()).logInfo(lines.capture());
+        String summary = String.join("\n", lines.getAllValues());
+
+        assertTrue(summary.contains("Failed controls by severity: Critical=1, High=1"), summary);
+        assertTrue(summary.contains("2 failed control(s) across 3 resource violation(s)"), summary);
     }
 
     /**

@@ -220,11 +220,8 @@ public class IaCAction implements Action {
      * violations and not of distinct resources.
      */
     public int getResourceViolations() {
-        int total = 0;
-        for (Finding finding : getFindings()) {
-            total += finding.resources().size();
-        }
-        return total;
+        IaCScanResult result = getScanResult();
+        return result == null ? 0 : result.resourceViolations();
     }
 
     /**
