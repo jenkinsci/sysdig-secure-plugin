@@ -114,6 +114,26 @@ class IaCScanE2EFreestyleTests {
                 .toList();
     }
 
+    /**
+     * With no path configured the scan has to walk the workspace: the process runs there and gets the
+     * current directory as its path, instead of an empty path in whatever directory the agent's JVM
+     * happens to sit in.
+     */
+    @Test
+    void testTheDefaultPathScansTheWorkspace() throws Exception {
+        var project = helpers.createFreestyleProjectWithIaCScanBuilder()
+                .withConfig(b -> b.setEngineCredentialsId("sysdig-secure"))
+                .build();
+
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+        var workspace = project.getSomeWorkspace();
+        assertNotNull(workspace);
+        jenkins.assertLogContains("--recursive --severity-threshold=high .", build);
+        jenkins.assertLogContains("[" + workspace.getName() + "] $ ", build);
+        jenkins.assertLogContains("Scanning paths paths=[\".\"]", build);
+    }
+
     @Test
     void testFreestyleWithAllConfigs() throws Exception {
         var project = helpers.createFreestyleProjectWithIaCScanBuilder()
