@@ -26,9 +26,9 @@ public class TestMother {
      * (via {@code just update-cli-scanner} / {@code just update-oldest-cli-scanner}), regenerate the
      * matching fixtures with {@code just generate-scanner-fixtures}.
      */
-    public static final String NEWEST_FIXTURE_VERSION = "1.27.2"; // newest-version-marker
+    public static final String NEWEST_FIXTURE_VERSION = "1.28.0"; // newest-version-marker
 
-    public static final String OLDEST_FIXTURE_VERSION = "1.22.5"; // oldest-version-marker
+    public static final String OLDEST_FIXTURE_VERSION = "1.22.6"; // oldest-version-marker
 
     private static final String NEWEST_FIXTURE = FIXTURE_DIR + "scanner_newest_scan_result.json.gz";
     private static final String OLDEST_FIXTURE = FIXTURE_DIR + "scanner_oldest_scan_result.json.gz";
