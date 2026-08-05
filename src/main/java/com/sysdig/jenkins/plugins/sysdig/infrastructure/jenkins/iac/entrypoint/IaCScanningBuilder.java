@@ -141,6 +141,9 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
                 .withSeverity(SysdigIaCScanningProcessBuilder.Severity.fromString(severityThreshold))
                 .withScanResultOutputPath(scanResultOutputFile.getRemote())
                 .withPathsToScan(path)
+                // Relative paths, and the default of the current directory, are meant to be the
+                // workspace's; without this the scanner walks whatever directory the agent's JVM sits in.
+                .withWorkingDirectory(runContext.getPathFromWorkspace())
                 .withStdoutRedirectedTo(runContext.getLogger())
                 .withStderrRedirectedTo(runContext.getLogger());
 
@@ -187,7 +190,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             int exitCode = processBuilder.launchAndWait(runContext.getLauncher());
             logger.logInfo(String.format("Process finished with status %d", exitCode));
 
-            reportAndAttachScanResult(run, logger, scanResultOutputFile);
+            reportAndAttachScanResult(run, logger, scanResultOutputFile, workspace);
 
             switch (exitCode) {
                 case 0:
@@ -263,7 +266,8 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
      * that renders the result tables on the build page. Never alters the build result: the exit code
      * remains the source of truth for pass/fail.
      */
-    void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
+    void reportAndAttachScanResult(
+            Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile, FilePath workspace) {
         try {
             if (!scanResultOutputFile.exists()) return;
 
@@ -275,7 +279,9 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             if (scanResult.isEmpty()) return;
 
             logScanResultSummary(logger, scanResult.get());
-            IaCAction.attachTo(run, json, path);
+            // An empty path means the workspace, which is what the report should name: "" would leave
+            // the page unable to say what the module paths in it are relative to.
+            IaCAction.attachTo(run, json, path.isBlank() ? workspace.getRemote() : path);
         } catch (Exception e) {
             logger.logWarn("Could not parse IaC scan result report: " + e.getMessage());
         }

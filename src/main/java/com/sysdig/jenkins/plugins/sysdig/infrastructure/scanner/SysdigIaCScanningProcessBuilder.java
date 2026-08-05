@@ -2,6 +2,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner;
 
 import com.google.common.base.Strings;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SysdigIaCScanningProcessBuilder extends SysdigProcessBuilderBase<SysdigIaCScanningProcessBuilder> {
@@ -37,9 +38,17 @@ public class SysdigIaCScanningProcessBuilder extends SysdigProcessBuilderBase<Sy
         return clone;
     }
 
+    /**
+     * Paths for the scanner to walk. Blank ones are dropped rather than passed on: the build step hands
+     * over its configured path as is, and that path is empty until someone fills it in, which would
+     * otherwise reach the scanner as an empty path instead of falling back to the current directory.
+     */
     public SysdigIaCScanningProcessBuilder withPathsToScan(String... pathListToScan) {
         SysdigIaCScanningProcessBuilder clone = this.clone();
-        clone.pathsToScan.addAll(List.of(pathListToScan));
+        Arrays.stream(pathListToScan)
+                .filter(path -> !Strings.nullToEmpty(path).isBlank())
+                .map(String::trim)
+                .forEach(clone.pathsToScan::add);
         return clone;
     }
 

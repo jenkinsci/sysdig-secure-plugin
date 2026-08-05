@@ -115,9 +115,9 @@ class IaCScanningBuilderTest {
         IaCScanningBuilder builder = builderScanning("infra");
 
         builder.reportAndAttachScanResult(
-                build, mock(SysdigLogger.class), workspace().child("does-not-exist.json"));
+                build, mock(SysdigLogger.class), workspace().child("does-not-exist.json"), workspace());
         FilePath empty = IaCScanningBuilder.createScanResultOutputFile(workspace());
-        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), empty);
+        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), empty, workspace());
 
         assertTrue(build.getActions(IaCAction.class).isEmpty());
     }
@@ -130,8 +130,8 @@ class IaCScanningBuilderTest {
 
         FilePath report = IaCScanningBuilder.createScanResultOutputFile(workspace());
         report.write(TestMother.iacScanResultJson(), "UTF-8");
-        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), report);
-        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), report);
+        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), report, workspace());
+        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), report, workspace());
 
         var actions = build.getActions(IaCAction.class);
         assertEquals(2, actions.size());
@@ -157,7 +157,7 @@ class IaCScanningBuilderTest {
 
         FilePath report = IaCScanningBuilder.createScanResultOutputFile(workspace());
         report.write(CRITICAL_FINDING_REPORT, "UTF-8");
-        builderScanning("infra").reportAndAttachScanResult(build, logger, report);
+        builderScanning("infra").reportAndAttachScanResult(build, logger, report, workspace());
 
         var lines = ArgumentCaptor.forClass(String.class);
         verify(logger, atLeastOnce()).logInfo(lines.capture());
@@ -165,6 +165,25 @@ class IaCScanningBuilderTest {
 
         assertTrue(summary.contains("Failed controls by severity: Critical=1, High=1"), summary);
         assertTrue(summary.contains("2 failed control(s) across 3 resource violation(s)"), summary);
+    }
+
+    /**
+     * With no path configured the scan walks the workspace, so that is what the report has to name: the
+     * step's own (empty) setting would leave the page unable to say what its module paths are relative to.
+     */
+    @Test
+    void aScanWithoutAConfiguredPathReportsTheWorkspace() throws Exception {
+        FreeStyleProject project = jenkins.createFreeStyleProject();
+        FreeStyleBuild build = jenkins.buildAndAssertSuccess(project);
+        IaCScanningBuilder builder = builderScanning("");
+
+        FilePath report = IaCScanningBuilder.createScanResultOutputFile(workspace());
+        report.write(TestMother.iacScanResultJson(), "UTF-8");
+        builder.reportAndAttachScanResult(build, mock(SysdigLogger.class), report, workspace());
+
+        IaCAction attached = build.getActions(IaCAction.class).get(0);
+        assertEquals(workspace().getRemote(), attached.getScannedPath());
+        assertTrue(attached.getDisplayName().contains("workspace"), attached.getDisplayName());
     }
 
     /**

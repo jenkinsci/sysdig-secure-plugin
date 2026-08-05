@@ -339,7 +339,7 @@ The parameter names and semantics are kept backwards compatible, matching the `s
 | Option                        | Pipeline parameter    | Description                                                                                 | Default         |
 |-------------------------------|-----------------------|---------------------------------------------------------------------------------------------|-----------------|
 | Sysdig Secure API Credentials | `engineCredentialsId` | Jenkins credential holding the Sysdig Secure API token. **Mandatory.**                      | |
-| Path to scan                  | `path`                | Directory or file containing the IaC manifests to scan.                                     | `.` (workspace) |
+| Path to scan                  | `path`                | Directory or file containing the IaC manifests to scan. Relative paths resolve against the workspace. | `.` (workspace) |
 | Recursive                     | `isRecursive`         | Scan the given path recursively.                                                            | `true`          |
 | List unsupported resources    | `listUnsupported`     | Include unsupported resources in the scan output.                                           | `false`         |
 | Severity threshold            | `severityThreshold`   | Minimum severity that fails the build (`high`, `medium`, `low`, `never`).                    | `high`          |
