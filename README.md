@@ -353,7 +353,18 @@ or an invalid token fail the build.
 
 Each build with an IaC scan gets a **Sysdig Secure IaC Report** page with a per-severity summary, the failed
 controls (filterable and sortable by severity), and the unsupported resources and parse errors reported by the
-scanner.
+scanner. The **Resource violations** tile counts control/resource pairs, one per row of the findings table, so a
+resource that fails three controls counts three times; it is unrelated to the number of resources scanned. The
+**Module path** column is the module, folder or file the scanner attributes the resource to, relative to the path
+that was scanned — which the page states once, under the heading — so a resource declared at the top of it shows up
+as `scan root` and anything deeper shows its path within the scan (for example `infra`). Hover a cell for the whole
+path. When the scanner reports which part of the resource failed the control, it appears under the resource's name
+(`runAsUser in container dind`).
+
+A build that runs several IaC steps gets one report page per step, each named after the last segment of the path it
+scanned (the full path is in the heading, and in the tooltip of the build page's link). The
+scanner's JSON report is a temporary file: it is written to the workspace's `@tmp` directory, parsed into the
+report page, and removed, so it does not survive the build and never lands in the tree being scanned.
 
 <img src="docs/images/IaCScanResults.png" height="500px" />
 

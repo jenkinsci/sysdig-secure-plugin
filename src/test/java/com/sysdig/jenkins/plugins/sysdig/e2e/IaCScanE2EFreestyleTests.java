@@ -1,6 +1,13 @@
 package com.sysdig.jenkins.plugins.sysdig.e2e;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import hudson.FilePath;
 import hudson.model.Result;
+import hudson.slaves.WorkspaceList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -63,6 +70,48 @@ class IaCScanE2EFreestyleTests {
         jenkins.assertLogContains("--recursive --severity-threshold=high", build);
         jenkins.assertLogContains("Process finished with status 3", build);
         jenkins.assertLogContains("(status 401):", build);
+    }
+
+    /**
+     * The report file is created before the credentials are resolved, so the step must clean it up on
+     * every exit path. Random names make a leak accumulate across builds instead of being overwritten,
+     * and the report must never land inside the scanned workspace.
+     */
+    @Test
+    void testTheReportFileLeavesNothingBehindWhenCredentialsAreMissing() throws Exception {
+        var project = helpers.createFreestyleProjectWithIaCScanBuilder().build();
+
+        jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+        var workspace = project.getSomeWorkspace();
+        assertNotNull(workspace);
+        assertEquals(List.of(), reportFilesIn(workspace), "workspace");
+        assertEquals(List.of(), reportFilesIn(WorkspaceList.tempDir(workspace)), "workspace @tmp");
+    }
+
+    @Test
+    void testTheReportFileIsWrittenOutsideTheScannedWorkspaceAndDeleted() throws Exception {
+        var project = helpers.createFreestyleProjectWithIaCScanBuilder()
+                .withConfig(b -> b.setEngineCredentialsId("sysdig-secure"))
+                .build();
+
+        var build = jenkins.buildAndAssertStatus(Result.FAILURE, project);
+
+        var workspace = project.getSomeWorkspace();
+        assertNotNull(workspace);
+        jenkins.assertLogContains(
+                "--output-json=" + WorkspaceList.tempDir(workspace).getRemote(), build);
+        assertEquals(List.of(), reportFilesIn(workspace), "workspace");
+        assertEquals(List.of(), reportFilesIn(WorkspaceList.tempDir(workspace)), "workspace @tmp");
+    }
+
+    private static List<String> reportFilesIn(FilePath directory) throws Exception {
+        if (directory == null || !directory.exists()) {
+            return List.of();
+        }
+        return Arrays.stream(directory.list("sysdig-iac-scan-result*"))
+                .map(FilePath::getName)
+                .toList();
     }
 
     @Test

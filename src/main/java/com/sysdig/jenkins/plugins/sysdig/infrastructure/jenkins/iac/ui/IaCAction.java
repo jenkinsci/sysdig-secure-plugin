@@ -18,6 +18,7 @@ package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.ui;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Finding;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.IaCScanResult;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Metadata;
+import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Resource;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.ScanError;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.Severity;
 import com.sysdig.jenkins.plugins.sysdig.domain.iac.scanresult.UnsupportedResource;
@@ -38,18 +39,84 @@ import java.util.List;
  */
 public class IaCAction implements Action {
 
+    private static final String BASE_URL_NAME = "sysdig-secure-iac-results";
+    private static final String BASE_DISPLAY_NAME = "Sysdig Secure IaC Report";
+    /** The scanner reports a resource's module as {@code "source file: <path>"}. */
+    private static final String SCANNER_LOCATION_PREFIX = "source file:";
+    /** Stands in for the scanned path itself, which the scanner reports as {@code "/"}. */
+    private static final String SCAN_ROOT_LABEL = "scan root";
+    /** Guards the ordinal-then-attach sequence in {@link #attachTo}. */
+    private static final Object ATTACH_LOCK = new Object();
+
     private final Run<?, ?> build;
     private final String rawScanResultJson;
+    /** Path the step was configured to scan, to tell several reports in one build apart. */
+    private final String scannedPath;
+    /**
+     * Position of this action among the build's IaC actions, starting at 1. Keeps the url name unique
+     * even when two steps scan the same path. Zero for actions persisted before this field existed.
+     */
+    private final int ordinal;
 
     private transient IaCScanResult cachedScanResult;
 
-    public IaCAction(Run<?, ?> build, String rawScanResultJson) {
+    IaCAction(Run<?, ?> build, String rawScanResultJson, String scannedPath, int ordinal) {
         this.build = build;
         this.rawScanResultJson = rawScanResultJson;
+        this.scannedPath = scannedPath;
+        this.ordinal = ordinal;
+    }
+
+    /**
+     * Attaches a report whose url name does not clash with the IaC reports already on the build, so
+     * every step of a multi-scan build stays reachable from the build page.
+     *
+     * <p>Adding to the build's action list is thread safe on its own, but reading it to pick the
+     * ordinal and then adding is not: parallel branches of a pipeline run their steps on different
+     * threads and would otherwise both settle on the same url name, so the whole sequence takes a
+     * lock. The ordinal counts the reports already attached <em>and</em> stays above the highest one
+     * of them, because a report persisted before this field existed deserializes with ordinal zero
+     * and would otherwise be handed the same url name as the next one.
+     */
+    public static IaCAction attachTo(Run<?, ?> build, String rawScanResultJson, String scannedPath) {
+        synchronized (ATTACH_LOCK) {
+            // The raw action list, not getActions(Class): that one also runs every TransientActionFactory
+            // in the instance, which is third-party code we should not call while holding a lock.
+            int ordinal = 1;
+            for (Action attached : build.getActions()) {
+                if (attached instanceof IaCAction report) {
+                    ordinal = Math.max(ordinal + 1, report.ordinal + 1);
+                }
+            }
+            IaCAction action = new IaCAction(build, rawScanResultJson, scannedPath, ordinal);
+            build.addAction(action);
+            return action;
+        }
     }
 
     public Run<?, ?> getBuild() {
         return build;
+    }
+
+    /** Path the step was configured to scan, empty when it scanned whatever the default is. */
+    public String getScannedPath() {
+        return scannedPath == null ? "" : scannedPath.trim();
+    }
+
+    /** Whether there is a scan root worth stating on the report page. */
+    public boolean getHasScannedPath() {
+        String path = getScannedPath();
+        return !path.isEmpty() && !path.equals(".") && !path.equals("/");
+    }
+
+    /**
+     * Last segment of the scanned path. The configured path is often absolute and agent-specific
+     * ({@code /home/jenkins/agent/workspace/demo}), which is unreadable in a sidebar or a breadcrumb.
+     */
+    public String getScannedPathName() {
+        String path = withoutTrailingSlash(getScannedPath());
+        int lastSeparator = path.lastIndexOf('/');
+        return lastSeparator < 0 ? path : path.substring(lastSeparator + 1);
     }
 
     public IaCScanResult getScanResult() {
@@ -147,23 +214,103 @@ public class IaCAction implements Action {
         }
     }
 
-    // Affected resources across all findings (a control can affect several resources).
-    public int getAffectedResources() {
-        int total = 0;
-        for (Severity severity : Severity.values()) {
-            total += reportedCount(severity);
+    /**
+     * Number of control/resource pairs, i.e. one per row of the findings table. A failed control can
+     * hit several resources, and the same resource can fail several controls, so this is a count of
+     * violations and not of distinct resources.
+     */
+    public int getResourceViolations() {
+        IaCScanResult result = getScanResult();
+        return result == null ? 0 : result.resourceViolations();
+    }
+
+    /**
+     * Module, folder or file the resource was declared in, shown relative to the scanned path — which
+     * the report page states once, so the leading slash the scanner uses (and which reads like a
+     * filesystem root) is dropped.
+     */
+    public String modulePathOf(Resource resource) {
+        return pathOf(modulePathSourceOf(resource));
+    }
+
+    /**
+     * What the scanner says failed inside the resource, empty when it has nothing to add. Its
+     * {@code location} is free-form: usually the offending field or container ({@code "runAsUser in
+     * container dind"}), and {@code "source file: <path>"} when all it can say is where the resource
+     * lives — which the module path column already shows.
+     */
+    public String detailOf(Resource resource) {
+        String location = resource.location();
+        if (location == null || location.isBlank()) {
+            return "";
         }
-        return total;
+        String detail = location.trim();
+        return looksLikeAPath(detail) ? "" : detail;
+    }
+
+    /**
+     * A resource's {@code source} is always the path of the module it was declared in. Only a
+     * {@code location} that looks like a path stands in for a missing one, so a field description never
+     * ends up rendered (or tooltipped) as a directory.
+     */
+    private static String modulePathSourceOf(Resource resource) {
+        if (resource.source() != null && !resource.source().isBlank()) {
+            return resource.source();
+        }
+        String location = resource.location();
+        return location != null && looksLikeAPath(location.trim()) ? location : null;
+    }
+
+    private static boolean looksLikeAPath(String value) {
+        return value.startsWith(SCANNER_LOCATION_PREFIX) || value.startsWith("/");
+    }
+
+    /**
+     * Any path the scanner reports — the source of an unsupported resource or of a parse error as much
+     * as a finding's module — shown relative to the scanned path, so every table reads the same way.
+     */
+    public String pathOf(String scannerPath) {
+        if (scannerPath == null) {
+            return "";
+        }
+        String path = scannerPath.trim();
+        if (path.startsWith(SCANNER_LOCATION_PREFIX)) {
+            path = path.substring(SCANNER_LOCATION_PREFIX.length()).trim();
+        }
+        if (path.equals("/")) {
+            return SCAN_ROOT_LABEL;
+        }
+        return path.startsWith("/") ? path.substring(1) : path;
+    }
+
+    /**
+     * The same path prefixed with the scan root, for a cell's tooltip: the tables stay narrow and the
+     * whole path is one hover away. Falls back to the relative path alone when the step configured none,
+     * since then the root is whatever the scanner defaulted to.
+     */
+    public String fullPathOf(String scannerPath) {
+        return withScanRoot(pathOf(scannerPath));
+    }
+
+    public String fullModulePathOf(Resource resource) {
+        return withScanRoot(modulePathOf(resource));
+    }
+
+    private String withScanRoot(String path) {
+        if (!getHasScannedPath()) {
+            return path;
+        }
+        String root = withoutTrailingSlash(getScannedPath());
+        return path.isEmpty() || path.equals(SCAN_ROOT_LABEL) ? root : root + "/" + path;
+    }
+
+    private static String withoutTrailingSlash(String path) {
+        return path.length() > 1 && path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
     }
 
     private int findingsCount(Severity severity) {
         IaCScanResult result = getScanResult();
         return result == null ? 0 : result.findingsCountBySeverity(severity);
-    }
-
-    private int reportedCount(Severity severity) {
-        IaCScanResult result = getScanResult();
-        return result == null ? 0 : result.reportedFindingsCount(severity);
     }
 
     @Override
@@ -173,11 +320,18 @@ public class IaCAction implements Action {
 
     @Override
     public String getDisplayName() {
-        return "Sysdig Secure IaC Report";
+        StringBuilder name = new StringBuilder(BASE_DISPLAY_NAME);
+        if (getHasScannedPath()) {
+            name.append(" (").append(getScannedPathName()).append(")");
+        }
+        if (ordinal > 1) {
+            name.append(" #").append(ordinal);
+        }
+        return name.toString();
     }
 
     @Override
     public String getUrlName() {
-        return "sysdig-secure-iac-results";
+        return ordinal > 1 ? BASE_URL_NAME + "-" + ordinal : BASE_URL_NAME;
     }
 }

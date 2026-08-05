@@ -38,12 +38,16 @@
                     padding: 4px 10px; cursor: pointer;
                 }
                 .sysdig-iac table.dataTable td { vertical-align: top; }
+                .sysdig-iac .detail { color: #6b7683; font-size: 0.9em; margin-top: 2px; }
             </style>
 
             <div class="sysdig-iac">
-                <h1>Sysdig Secure IaC Report</h1>
+                <h1>${it.displayName}</h1>
 
                 <p class="meta">
+                    <j:if test="${it.hasScannedPath}">
+                        <span>Scanned: <b>${it.scannedPath}</b></span>
+                    </j:if>
                     <span>Resources scanned: <b>${it.metadata.totalResources()}</b></span>
                     <span>Modules: <b>${it.metadata.totalModules()}</b></span>
                     <span>Folders: <b>${it.metadata.totalFolders()}</b></span>
@@ -61,8 +65,8 @@
                         </div>
                     </j:forEach>
                     <div class="tile">
-                        <div class="num">${it.affectedResources}</div>
-                        <div class="lbl">Affected resources</div>
+                        <div class="num">${it.resourceViolations}</div>
+                        <div class="lbl">Resource violations</div>
                     </div>
                 </div>
 
@@ -86,7 +90,7 @@
                                     <th>Control</th>
                                     <th>Resource</th>
                                     <th>Type</th>
-                                    <th>Location</th>
+                                    <th>Module path</th>
                                     <th>Policies</th>
                                 </tr>
                             </thead>
@@ -99,9 +103,11 @@
                                             </td>
                                             <td>${f.controlId()}</td>
                                             <td>${f.name()}</td>
-                                            <td>${r.name()}</td>
+                                            <td>${r.name()}<j:if
+                                                    test="${!empty(it.detailOf(r))}"><div
+                                                    class="detail">${it.detailOf(r)}</div></j:if></td>
                                             <td>${r.type()}</td>
-                                            <td>${r.location()}</td>
+                                            <td title="${it.fullModulePathOf(r)}">${it.modulePathOf(r)}</td>
                                             <td>
                                                 <j:forEach var="p" items="${f.policies()}" varStatus="s"><j:if
                                                         test="${!s.first}">, </j:if>${p}</j:forEach>
@@ -122,14 +128,14 @@
                     <table id="unsupported_table" class="table table-striped table-bordered" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Source</th>
+                                <th>Path</th>
                                 <th>Unsupported resource kinds</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="u" items="${it.unsupportedResources}">
                                 <tr>
-                                    <td>${u.source()}</td>
+                                    <td title="${it.fullPathOf(u.source())}">${it.pathOf(u.source())}</td>
                                     <td>
                                         <j:forEach var="d" items="${u.details()}" varStatus="s"><j:if
                                                 test="${!s.first}">, </j:if>${d}</j:forEach>
@@ -145,14 +151,14 @@
                     <table id="errors_table" class="table table-striped table-bordered" style="width: 100%;">
                         <thead>
                             <tr>
-                                <th>Source</th>
+                                <th>Path</th>
                                 <th>Details</th>
                             </tr>
                         </thead>
                         <tbody>
                             <j:forEach var="e" items="${it.errors}">
                                 <tr>
-                                    <td>${e.source()}</td>
+                                    <td title="${it.fullPathOf(e.source())}">${it.pathOf(e.source())}</td>
                                     <td>
                                         <j:forEach var="d" items="${e.details()}" varStatus="s"><j:if
                                                 test="${!s.first}">

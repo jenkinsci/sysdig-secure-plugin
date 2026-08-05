@@ -36,10 +36,12 @@ import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.security.ACL;
+import hudson.slaves.WorkspaceList;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -175,9 +177,10 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         }
 
         logger.logInfo("Starting scan");
+        FilePath scanResultOutputFile = null;
         try {
             String exec = filePath.getRemote();
-            FilePath scanResultOutputFile = runContext.getPathFromWorkspace("sysdig-iac-scan-result.json");
+            scanResultOutputFile = createScanResultOutputFile(workspace);
             SysdigIaCScanningProcessBuilder processBuilder = buildCommand(runContext, exec, scanResultOutputFile);
             logger.logDebug("Command to execute: " + String.join(" ", processBuilder.toCommandLineArguments()));
 
@@ -210,20 +213,57 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
         } catch (Exception e) {
             logger.logError(String.format("Failed processing output: %s", e.getMessage()), e);
             run.setResult(Result.FAILURE);
+        } finally {
+            deleteQuietly(scanResultOutputFile, logger);
         }
         logger.logInfo("Process completed");
     }
 
     /**
-     * Best-effort parsing of the scanner's JSON report into the domain model, to log a human-readable
-     * summary. Never alters the build result: the exit code remains the source of truth for pass/fail.
+     * Drops the scan's report file once it has been read. Deleting is cleanup, never a reason to fail a
+     * build, and it must not shadow whatever the scan itself reported: the exit code stays the source
+     * of truth for pass/fail.
      */
+    static void deleteQuietly(FilePath scanResultOutputFile, SysdigLogger logger) {
+        if (scanResultOutputFile == null) {
+            return;
+        }
+        try {
+            scanResultOutputFile.delete();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            logger.logWarn(String.format(
+                    "Could not delete the IaC scan report file %s: %s",
+                    scanResultOutputFile.getRemote(), e.getMessage()));
+        }
+    }
+
+    /**
+     * Report file of a single scan. Every step gets its own file: the workspace is shared by all the
+     * steps of a build, so a fixed name would let a scan that produced no report of its own read (and
+     * attach) the report left behind by a previous scan, and would make parallel steps race for it.
+     *
+     * <p>It lives in the workspace's {@code @tmp} sibling directory rather than in the workspace itself,
+     * to keep reports out of whatever tree gets scanned and to leave no scratch file of ours in a
+     * checkout. The scanner does walk and parse {@code .json} files it finds, it just does not
+     * recognise a report of its own as a resource.
+     */
+    static FilePath createScanResultOutputFile(FilePath workspace) throws IOException, InterruptedException {
+        FilePath tempDir = WorkspaceList.tempDir(workspace);
+        if (tempDir == null) { // no parent to hang the sibling directory off, e.g. a filesystem root
+            tempDir = workspace;
+        }
+        tempDir.mkdirs();
+        return tempDir.createTempFile("sysdig-iac-scan-result", ".json");
+    }
+
     /**
      * Best-effort: parse the scanner's JSON report to log a summary and attach the {@link IaCAction}
      * that renders the result tables on the build page. Never alters the build result: the exit code
      * remains the source of truth for pass/fail.
      */
-    private void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
+    void reportAndAttachScanResult(Run<?, ?> run, SysdigLogger logger, FilePath scanResultOutputFile) {
         try {
             if (!scanResultOutputFile.exists()) return;
 
@@ -235,7 +275,7 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
             if (scanResult.isEmpty()) return;
 
             logScanResultSummary(logger, scanResult.get());
-            run.addAction(new IaCAction(run, json));
+            IaCAction.attachTo(run, json, path);
         } catch (Exception e) {
             logger.logWarn("Could not parse IaC scan result report: " + e.getMessage());
         }
@@ -248,16 +288,30 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
                 scanResult.metadata().totalResources(),
                 scanResult.metadata().totalModules(),
                 scanResult.metadata().totalFolders()));
+        logger.logInfo("  Failed controls by severity: " + failedControlsBySeverity(scanResult));
         logger.logInfo(String.format(
-                "  Findings by severity: high=%d, medium=%d, low=%d",
-                scanResult.reportedFindingsCount(Severity.High),
-                scanResult.reportedFindingsCount(Severity.Medium),
-                scanResult.reportedFindingsCount(Severity.Low)));
-        logger.logInfo(String.format(
-                "  %d failed control(s), %d unsupported resource file(s), %d parse error(s)",
+                "  %d failed control(s) across %d resource violation(s), %d unsupported resource file(s), %d parse error(s)",
                 scanResult.findings().size(),
+                scanResult.resourceViolations(),
                 scanResult.unsupportedResources().size(),
                 scanResult.errors().size()));
+    }
+
+    /**
+     * Per-severity failed-control counts, worded like the report page: derived from the findings
+     * themselves and covering every severity the scan reports, so a Critical is never left out of a
+     * line that claims to break the findings down.
+     */
+    private static String failedControlsBySeverity(IaCScanResult scanResult) {
+        StringBuilder counts = new StringBuilder();
+        for (Severity severity : Severity.values()) { // declaration order is most-severe-first
+            int count = scanResult.findingsCountBySeverity(severity);
+            if (count > 0) {
+                if (!counts.isEmpty()) counts.append(", ");
+                counts.append(severity).append("=").append(count);
+            }
+        }
+        return counts.isEmpty() ? "none" : counts.toString();
     }
 
     // FIXME(fede): Remove this duplicate method

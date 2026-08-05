@@ -107,6 +107,14 @@ public class IaCScanResult implements Serializable {
     }
 
     /**
+     * Number of control/resource pairs. A failed control can hit several resources, and the same
+     * resource can fail several controls, so this counts violations and not distinct resources.
+     */
+    public int resourceViolations() {
+        return findings.stream().mapToInt(finding -> finding.resources().size()).sum();
+    }
+
+    /**
      * Whether the scan produced any policy finding at all.
      */
     public boolean hasFindings() {
