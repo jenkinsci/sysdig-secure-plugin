@@ -13,7 +13,7 @@
     }:
     let
       setJavaVersion = final: prev: {
-        jdk = prev.temurin-bin-17;
+        jdk = prev.temurin-bin-21;
         jdt-language-server = prev.jdt-language-server.override { jdk = prev.jdk; };
       };
     in
