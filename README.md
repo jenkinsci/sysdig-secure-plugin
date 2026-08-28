@@ -130,8 +130,8 @@ The table below describes the available configuration options.
 The plugin pins a default `sysdig-cli-scanner` version and is tested end-to-end against both the
 default and the oldest still-maintained version:
 
-- Default pinned version: <!-- newest-version-marker -->1.28.0<!-- /newest-version-marker -->
-- Oldest maintained version tested: <!-- oldest-version-marker -->1.22.6<!-- /oldest-version-marker -->
+- Default pinned version: <!-- newest-version-marker -->1.29.0<!-- /newest-version-marker -->
+- Oldest maintained version tested: <!-- oldest-version-marker -->1.23.0<!-- /oldest-version-marker -->
 
 Both values are kept in sync by `just update-cli-scanner` and `just update-oldest-cli-scanner`.
 

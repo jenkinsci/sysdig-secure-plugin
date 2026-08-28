@@ -62,7 +62,7 @@ class IaCScanE2EFreestyleTests {
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
-                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.28.0", // newest-version-marker
+                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.29.0", // newest-version-marker
                 build);
         jenkins.assertLogContains("Starting scan", build);
         jenkins.assertLogContains("--iac --apiurl=https://secure.sysdig.com --loglevel=info", build);
@@ -144,7 +144,7 @@ class IaCScanE2EFreestyleTests {
                     b.setIsRecursive(false);
                     b.setSeverityThreshold("m");
                     b.setSysdigEnv("https://us2.app.sysdig.com");
-                    b.setVersion("1.22.6"); // oldest-version-marker
+                    b.setVersion("1.23.0"); // oldest-version-marker
                 })
                 .build();
 
@@ -152,7 +152,7 @@ class IaCScanE2EFreestyleTests {
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
-                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.22.6", // oldest-version-marker
+                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.23.0", // oldest-version-marker
                 build);
         jenkins.assertLogContains("Starting scan", build);
         jenkins.assertLogContains("--iac --apiurl=https://us2.app.sysdig.com --loglevel=info", build);

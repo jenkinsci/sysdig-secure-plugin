@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 class ScannerBinaryProviderTest {
     /** Pinned default version. Kept in sync by {@code just update-cli-scanner}; do not drop the marker. */
-    private static final String PINNED_VERSION = "1.28.0"; // newest-version-marker
+    private static final String PINNED_VERSION = "1.29.0"; // newest-version-marker
 
     /** Arbitrary version for the URL-shape tests below: they assert os/arch mapping, not the pin. */
     private static final String ANY_VERSION = "1.27.2";
