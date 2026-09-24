@@ -16,8 +16,6 @@ limitations under the License.
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.jenkins.iac.entrypoint;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.sysdig.jenkins.plugins.sysdig.domain.SysdigLogger;
@@ -54,7 +52,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
 public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
-    private static final String FIXED_SCANNED_VERSION = "1.29.0"; // newest-version-marker
+    private static final String FIXED_SCANNED_VERSION = "1.30.1"; // newest-version-marker
 
     private String engineCredentialsId;
     private boolean listUnsupported = false;
@@ -387,24 +385,6 @@ public class IaCScanningBuilder extends Builder implements SimpleBuildStep {
                             StandardUsernamePasswordCredentials.class,
                             Collections.emptyList(),
                             CredentialsMatchers.always());
-        }
-
-        public FormValidation doCheckCredentialsId(@QueryParameter String value) {
-            if (value == null || value.trim().isEmpty()) {
-                return FormValidation.error("Credentials ID must be provided.");
-            }
-
-            // Optionally, verify that the credentials exist
-            StandardCredentials credentials = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentialsInItemGroup(
-                            StandardCredentials.class, Jenkins.get(), ACL.SYSTEM2, Collections.emptyList()),
-                    CredentialsMatchers.withId(value));
-
-            if (credentials == null) {
-                return FormValidation.error("No credentials found with the given ID.");
-            }
-
-            return FormValidation.ok();
         }
 
         @Override
