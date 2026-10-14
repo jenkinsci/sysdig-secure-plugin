@@ -40,8 +40,8 @@ public class PolicyBundleRulePkgVuln implements PolicyBundleRule {
         return parent;
     }
 
-    public PolicyBundleRulePkgVulnFailure addFailure(String remediation, Package pkg, Vulnerability vuln) {
-        PolicyBundleRulePkgVulnFailure failure = new PolicyBundleRulePkgVulnFailure(remediation, pkg, vuln, this);
+    public PolicyBundleRulePkgVulnFailure addFailure(String remediation, Component component, Vulnerability vuln) {
+        PolicyBundleRulePkgVulnFailure failure = new PolicyBundleRulePkgVulnFailure(remediation, component, vuln, this);
         this.failures.add(failure);
         return failure;
     }

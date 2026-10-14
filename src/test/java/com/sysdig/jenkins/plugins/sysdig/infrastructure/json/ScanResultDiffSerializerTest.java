@@ -41,10 +41,10 @@ class ScanResultDiffSerializerTest {
                 oldScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-2", "2.0", "/path", layer);
         Vulnerability vuln1 =
                 oldScan.addVulnerability("CVE-2023-0001", Severity.High, new Date(), null, true, "1.1", true, 6.5f);
-        vuln1.addFoundInPackage(pkg1);
+        vuln1.addFoundIn(pkg1);
         Vulnerability vuln2 =
                 oldScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null, false, null);
-        vuln2.addFoundInPackage(pkg2);
+        vuln2.addFoundIn(pkg2);
 
         ScanResult newScan =
                 new ScanResult(EvaluationResult.Passed, null, null, null, null, null, null, null, null, null);
@@ -55,10 +55,10 @@ class ScanResultDiffSerializerTest {
                 newScan.addPackage(String.valueOf(pkgId++), PackageType.OS, "pkg-3", "3.0", "/path", newLayer);
         Vulnerability newVuln2 =
                 newScan.addVulnerability("CVE-2023-0002", Severity.Medium, new Date(), null, false, null, false, null);
-        newVuln2.addFoundInPackage(newPkg2);
+        newVuln2.addFoundIn(newPkg2);
         Vulnerability newVuln3 =
                 newScan.addVulnerability("CVE-2023-0003", Severity.Low, new Date(), null, false, "3.1", false, 5.25f);
-        newVuln3.addFoundInPackage(newPkg3);
+        newVuln3.addFoundIn(newPkg3);
 
         ScanResultDiff diff = ScanResultDiff.betweenPreviousAndNew(oldScan, newScan);
 

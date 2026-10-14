@@ -26,7 +26,7 @@ public class TestMother {
      * (via {@code just update-cli-scanner} / {@code just update-oldest-cli-scanner}), regenerate the
      * matching fixtures with {@code just generate-scanner-fixtures}.
      */
-    public static final String NEWEST_FIXTURE_VERSION = "1.29.0"; // newest-version-marker
+    public static final String NEWEST_FIXTURE_VERSION = "1.30.2"; // newest-version-marker
 
     public static final String OLDEST_FIXTURE_VERSION = "1.23.0"; // oldest-version-marker
 
@@ -99,6 +99,16 @@ public class TestMother {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static JsonScanResultV1 scanResultWithGhsaVulnerabilityWithoutDisclosureDate() {
+        String resourcePath =
+                "com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1/scanner_1.30.2_ghsa_vulnerability_without_disclosure_date.json";
+        InputStream imageStream = TestMother.class.getClassLoader().getResourceAsStream(resourcePath);
+        assertNotNull(imageStream);
+
+        return GsonBuilder.build()
+                .fromJson(new InputStreamReader(imageStream, StandardCharsets.UTF_8), JsonScanResultV1.class);
     }
 
     public static JsonScanResultV1 scanResultWithPackageWithoutLayer() {

@@ -11,7 +11,7 @@ public class ScanResult implements Serializable {
     private final ScanType type;
     private final Metadata metadata;
     private final Map<String, Layer> layers;
-    private final Map<String, Package> packages;
+    private final Map<String, Component> components;
     private final Map<String, Vulnerability> vulnerabilities;
     private final Map<String, Policy> policies;
     private final Map<String, PolicyBundle> policyBundles;
@@ -33,7 +33,7 @@ public class ScanResult implements Serializable {
         this.metadata =
                 new Metadata(pullString, imageID, digest, baseOS, sizeInBytes, architecture, labels, createdAt, this);
         this.layers = new HashMap<>();
-        this.packages = new HashMap<>();
+        this.components = new HashMap<>();
         this.vulnerabilities = new HashMap<>();
         this.policies = new HashMap<>();
         this.policyBundles = new HashMap<>();
@@ -56,26 +56,57 @@ public class ScanResult implements Serializable {
 
     public Package addPackage(
             String id, PackageType type, String name, String version, String path, @Nullable Layer layer) {
-        Package aPackage = new Package(id, type, name, version, path, layer, this);
-        this.packages.put(id, aPackage);
-        if (layer != null) {
-            layer.addPackage(aPackage);
-        }
-        return aPackage;
+        return register(new Package(id, type, name, version, path, layer, this));
     }
 
-    public Optional<Package> findPackageById(String id) {
-        return Optional.ofNullable(this.packages.get(id));
+    public Application addApplication(
+            String id, String type, String name, String version, String path, @Nullable Layer layer) {
+        return register(new Application(id, type, name, version, path, layer, this));
+    }
+
+    public ImageComponent addImageComponent(
+            String id, Component.ComponentKind kind, String type, String name, String version) {
+        return register(new ImageComponent(id, kind, type, name, version, this));
+    }
+
+    private <T extends Component> T register(T component) {
+        this.components.put(component.id(), component);
+        component.foundInLayer().ifPresent(layer -> layer.addComponent(component));
+        return component;
+    }
+
+    public Optional<Component> findComponentById(String id) {
+        return Optional.ofNullable(this.components.get(id));
+    }
+
+    /** Every component of the scan result: packages, applications and image components. */
+    public Collection<Component> components() {
+        return Collections.unmodifiableCollection(components.values());
     }
 
     public Collection<Package> packages() {
-        return Collections.unmodifiableCollection(packages.values());
+        return componentsOf(Package.class);
+    }
+
+    public Collection<Application> applications() {
+        return componentsOf(Application.class);
+    }
+
+    public Collection<ImageComponent> imageComponents() {
+        return componentsOf(ImageComponent.class);
+    }
+
+    private <T extends Component> Collection<T> componentsOf(Class<T> kind) {
+        return components.values().stream()
+                .filter(kind::isInstance)
+                .map(kind::cast)
+                .toList();
     }
 
     public Vulnerability addVulnerability(
             String cve,
             Severity severity,
-            Date disclosureDate,
+            @Nullable Date disclosureDate,
             @Nullable Date solutionDate,
             boolean exploitable,
             @Nullable String fixVersion,
@@ -174,7 +205,7 @@ public class ScanResult implements Serializable {
         return type == that.type
                 && Objects.equals(metadata, that.metadata)
                 && Objects.equals(layers, that.layers)
-                && Objects.equals(packages, that.packages)
+                && Objects.equals(components, that.components)
                 && Objects.equals(vulnerabilities, that.vulnerabilities)
                 && Objects.equals(policies, that.policies)
                 && Objects.equals(policyBundles, that.policyBundles)
@@ -183,6 +214,7 @@ public class ScanResult implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, metadata, layers, packages, vulnerabilities, policies, policyBundles, acceptedRisks);
+        return Objects.hash(
+                type, metadata, layers, components, vulnerabilities, policies, policyBundles, acceptedRisks);
     }
 }

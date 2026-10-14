@@ -171,7 +171,7 @@ update-cli-scanner:
 # The endpoint comes from SECURE_API_URL (default https://secure.sysdig.com).
 [private]
 [group('scanner')]
-generate-scanner-fixture version out image="debian:11.4-slim" api_url=env_var_or_default("SECURE_API_URL", "https://secure.sysdig.com") _token=env_var("SECURE_API_TOKEN"):
+generate-scanner-fixture version out image="grafana/grafana:9.5.21" api_url=env_var_or_default("SECURE_API_URL", "https://secure.sysdig.com") _token=env_var("SECURE_API_TOKEN"):
     #!/usr/bin/env bash
     set -euo pipefail
     case "$(uname -s)" in Linux) os=linux;; Darwin) os=darwin;; *) echo "unsupported OS" >&2; exit 1;; esac
@@ -203,7 +203,7 @@ generate-scanner-fixture version out image="debian:11.4-slim" api_url=env_var_or
 # script; the scanner reads it straight from the inherited environment. The Sysdig Secure
 # endpoint is configurable via SECURE_API_URL (defaults to https://secure.sysdig.com).
 [group('scanner')]
-generate-scanner-fixtures image="debian:11.4-slim" api_url=env_var_or_default("SECURE_API_URL", "https://secure.sysdig.com") _token=env_var("SECURE_API_TOKEN"):
+generate-scanner-fixtures image="grafana/grafana:9.5.21" api_url=env_var_or_default("SECURE_API_URL", "https://secure.sysdig.com") _token=env_var("SECURE_API_TOKEN"):
     #!/usr/bin/env bash
     set -euo pipefail
     dir="src/test/resources/com/sysdig/jenkins/plugins/sysdig/infrastructure/scanner/report/v1"

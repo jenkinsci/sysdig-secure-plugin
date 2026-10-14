@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.sysdig.jenkins.plugins.sysdig.TestMother;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -225,6 +227,101 @@ class JsonScanResultTest {
         }));
     }
 
+    @Test
+    void whenParsingNewestScannerOutputApplicationsAreParsedAsApplications() {
+        // grafana/grafana:9.5.21: the scanner reports the grafana binary as an "application" SBOM
+        // component alongside the Go modules and the Alpine packages.
+        ScanResult result = TestMother.scanResultFromNewestScanner().toDomain().orElseThrow();
+
+        assertEquals(1, result.applications().size());
+        Application grafana = result.applications().iterator().next();
+        assertEquals("219adaa3-9c69-4f07-adc8-90fab4a74622", grafana.id());
+        assertEquals(Component.ComponentKind.Application, grafana.kind());
+        assertEquals("grafana", grafana.name());
+        assertEquals("9.5.21", grafana.version());
+        assertEquals("/usr/share/grafana/bin/grafana", grafana.path());
+        assertEquals("Observability And Monitoring Software", grafana.type());
+        assertEquals("Observability And Monitoring Software", grafana.typeName());
+        assertEquals(grafana, result.findComponentById(grafana.id()).orElseThrow());
+        assertTrue(result.packages().stream().noneMatch(p -> p.id().equals(grafana.id())));
+
+        // Applications live in a layer like packages do.
+        Layer layer = grafana.foundInLayer().orElseThrow();
+        assertEquals(
+                "sha256:c2045b4be6e63b4eea647c89c3125202397573cf083ed1d5d09e77e1f16a55f3",
+                layer.digest().orElseThrow());
+        assertEquals(List.of(grafana), List.copyOf(layer.applications()));
+        assertTrue(layer.components().contains(grafana));
+
+        // Vulnerabilities are linked both ways.
+        assertEquals(3, grafana.vulnerabilities().size());
+        // CVE-2025-1088 is only found in the application.
+        Vulnerability grafanaVuln =
+                result.findVulnerabilityByCVE("CVE-2025-1088").orElseThrow();
+        assertEquals(Set.of(grafana), grafanaVuln.foundInComponents());
+        assertEquals(Set.of(grafana), grafanaVuln.foundInApplications());
+        assertTrue(grafanaVuln.foundInPackages().isEmpty());
+        assertTrue(grafanaVuln.foundInLayers().contains(layer));
+        assertEquals(Severity.Low, grafanaVuln.severity());
+    }
+
+    @Test
+    void whenParsingNewestScannerOutputGoModulesArePackagesWithPolicyFailures() {
+        ScanResult result = TestMother.scanResultFromNewestScanner().toDomain().orElseThrow();
+
+        List<Package> goModules = result.packages().stream()
+                .filter(p -> p.type() == PackageType.Golang)
+                .toList();
+        assertEquals(311, goModules.size());
+
+        long failuresOnGoModules = result.policyBundles().stream()
+                .flatMap(b -> b.rules().stream())
+                .filter(PolicyBundleRulePkgVuln.class::isInstance)
+                .map(PolicyBundleRulePkgVuln.class::cast)
+                .flatMap(r -> r.failures().stream())
+                .filter(f -> f.component() instanceof Package p && p.type() == PackageType.Golang)
+                .count();
+        assertEquals(206, failuresOnGoModules);
+    }
+
+    @Test
+    void whenParsingNewestScannerOutputEveryComponentKindIsMapped() {
+        ScanResult result = TestMother.scanResultFromNewestScanner().toDomain().orElseThrow();
+
+        assertEquals(348, result.components().size());
+        assertEquals(345, result.packages().size());
+        assertEquals(1, result.applications().size());
+        assertEquals(2, result.imageComponents().size());
+
+        ImageComponent os = imageComponentOfKind(result, Component.ComponentKind.OperatingSystem);
+        assertEquals("alpine", os.name());
+        assertEquals("os", os.type());
+        assertEquals("OS", os.typeName());
+        assertTrue(os.foundInLayer().isEmpty());
+
+        ImageComponent image = imageComponentOfKind(result, Component.ComponentKind.ContainerImage);
+        assertEquals("docker.io/grafana/grafana", image.name());
+        assertEquals("oci", image.type());
+        assertTrue(image.foundInLayer().isEmpty());
+    }
+
+    @Test
+    void whenParsingScannerOutputWithoutCategoriesEveryComponentIsAPackage() {
+        // sysdig-cli-scanner 1.23.x predates the "category" field and does not report applications.
+        ScanResult result = TestMother.scanResultFromOldestScanner().toDomain().orElseThrow();
+
+        assertTrue(result.applications().isEmpty());
+        assertTrue(result.imageComponents().isEmpty());
+        assertEquals(result.components().size(), result.packages().size());
+    }
+
+    private static ImageComponent imageComponentOfKind(ScanResult result, Component.ComponentKind kind) {
+        return result.imageComponents().stream()
+                .filter(c -> c.kind() == kind)
+                .findFirst()
+                .orElseThrow();
+    }
+
     private static void assertPopulatedScanResult(ScanResult result) {
         assertNotNull(result.type());
         assertNotNull(result.evaluationResult());
@@ -256,6 +353,7 @@ class JsonScanResultTest {
             assertFalse(vuln.cve().isBlank());
             assertNotNull(vuln.severity());
             assertNotNull(vuln.disclosureDate());
+            assertTrue(vuln.disclosureDate().isPresent(), vuln.cve());
             if (vuln.fixable()) {
                 assertTrue(vuln.fixVersion().isPresent(), () -> vuln.cve() + " is fixable but has no fix version");
             }
@@ -282,8 +380,43 @@ class JsonScanResultTest {
 
         ScanResult result = assertDoesNotThrow(() -> jsonScanResult.toDomain().get());
 
-        assertEquals(2, result.packages().size());
-        assertTrue(result.packages().stream().anyMatch(p -> p.name().equals("ubuntu")));
-        assertTrue(result.packages().stream().anyMatch(p -> p.name().equals("libcurl")));
+        assertEquals(2, result.components().size());
+        // the distro meta-package is reported with category "operating-system"
+        ImageComponent ubuntu = result.imageComponents().iterator().next();
+        assertEquals("ubuntu", ubuntu.name());
+        assertEquals(Component.ComponentKind.OperatingSystem, ubuntu.kind());
+        assertTrue(ubuntu.foundInLayer().isEmpty());
+        assertEquals(
+                List.of("libcurl"),
+                result.packages().stream().map(Package::name).toList());
+    }
+
+    @Test
+    void whenAVulnerabilityIsAGhsaAdvisoryWithoutDisclosureDateItIsParsed() {
+        // Advisories without a CVE alias are reported under their GHSA ID (19 chars, longer than a CVE ID)
+        // and disclosureDate is optional in the v1 contract.
+        ScanResult result = assertDoesNotThrow(() -> TestMother.scanResultWithGhsaVulnerabilityWithoutDisclosureDate()
+                .toDomain()
+                .orElseThrow());
+
+        Vulnerability ghsa =
+                result.findVulnerabilityByCVE("GHSA-5j5w-g665-5m35").orElseThrow();
+        assertEquals(Severity.High, ghsa.severity());
+        assertTrue(ghsa.disclosureDate().isEmpty());
+        assertEquals("0.31.0", ghsa.fixVersion().orElseThrow());
+
+        Package goPackage = result.packages().iterator().next();
+        assertEquals(PackageType.Golang, goPackage.type());
+        assertEquals(Set.of(goPackage), ghsa.foundInPackages());
+
+        PolicyBundleRulePkgVulnFailure failure = result.policyBundles().stream()
+                .flatMap(b -> b.rules().stream())
+                .map(PolicyBundleRulePkgVuln.class::cast)
+                .flatMap(r -> r.failures().stream())
+                .findFirst()
+                .orElseThrow();
+        assertEquals(ghsa, failure.vuln());
+        assertEquals(goPackage, failure.component());
+        assertEquals("GHSA-5j5w-g665-5m35 found in golang.org/x/crypto (0.30.0)", failure.description());
     }
 }
