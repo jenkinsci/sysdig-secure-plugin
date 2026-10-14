@@ -106,7 +106,7 @@ public class ScanResult implements Serializable {
     public Vulnerability addVulnerability(
             String cve,
             Severity severity,
-            Date disclosureDate,
+            @Nullable Date disclosureDate,
             @Nullable Date solutionDate,
             boolean exploitable,
             @Nullable String fixVersion,

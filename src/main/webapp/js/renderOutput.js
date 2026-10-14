@@ -19,6 +19,22 @@ const isSourceNoneString = (source) => {
   return isNone;
 };
 
+// Vulnerability IDs are usually CVEs, but advisories without a CVE alias are reported
+// under their own ID (e.g. GHSA-5j5w-g665-5m35). Returns null when no public page is known.
+function vulnerabilityAdvisoryUrl(id) {
+  if (typeof id !== "string") {
+    return null;
+  }
+  const vulnId = id.trim();
+  if (vulnId.startsWith("CVE-")) {
+    return `https://nvd.nist.gov/vuln/detail/${encodeURIComponent(vulnId)}`;
+  }
+  if (vulnId.startsWith("GHSA-")) {
+    return `https://github.com/advisories/${encodeURIComponent(vulnId)}`;
+  }
+  return null;
+}
+
 function gateAction(source) {
   var el = `<span>${source}</span>`;
   if (
@@ -341,9 +357,7 @@ function drawSecurityTable() {
       `;
     } else {
       let linkUrl = url;
-      if (cveID && cveID.startsWith("CVE-")) {
-        linkUrl = `https://nvd.nist.gov/vuln/detail/${cveID}`;
-      }
+      linkUrl = vulnerabilityAdvisoryUrl(cveID) || linkUrl;
 
       if (linkUrl) {
         vulnColumn = `
@@ -451,8 +465,9 @@ function buildDiffTable(addedTableId, fixedTableId, outputFile) {
       var addedRows = [];
       if (data.vulnerabilitiesAdded) {
         data.vulnerabilitiesAdded.forEach(function (vuln) {
-          var cveLink = vuln.cve.startsWith("CVE-")
-            ? `<a href="https://nvd.nist.gov/vuln/detail/${vuln.cve}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
+          var advisoryUrl = vulnerabilityAdvisoryUrl(vuln.cve);
+          var cveLink = advisoryUrl
+            ? `<a style="white-space: nowrap;" href="${advisoryUrl}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
             : vuln.cve;
           addedRows.push([
             cveLink,
@@ -472,8 +487,9 @@ function buildDiffTable(addedTableId, fixedTableId, outputFile) {
       var fixedRows = [];
       if (data.vulnerabilitiesFixed) {
         data.vulnerabilitiesFixed.forEach(function (vuln) {
-          var cveLink = vuln.cve.startsWith("CVE-")
-            ? `<a href="https://nvd.nist.gov/vuln/detail/${vuln.cve}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
+          var advisoryUrl = vulnerabilityAdvisoryUrl(vuln.cve);
+          var cveLink = advisoryUrl
+            ? `<a style="white-space: nowrap;" href="${advisoryUrl}" target="_blank" rel="noopener noreferrer">${vuln.cve}</a>`
             : vuln.cve;
           fixedRows.push([
             cveLink,

@@ -353,6 +353,7 @@ class JsonScanResultTest {
             assertFalse(vuln.cve().isBlank());
             assertNotNull(vuln.severity());
             assertNotNull(vuln.disclosureDate());
+            assertTrue(vuln.disclosureDate().isPresent(), vuln.cve());
             if (vuln.fixable()) {
                 assertTrue(vuln.fixVersion().isPresent(), () -> vuln.cve() + " is fixable but has no fix version");
             }
@@ -388,5 +389,34 @@ class JsonScanResultTest {
         assertEquals(
                 List.of("libcurl"),
                 result.packages().stream().map(Package::name).toList());
+    }
+
+    @Test
+    void whenAVulnerabilityIsAGhsaAdvisoryWithoutDisclosureDateItIsParsed() {
+        // Advisories without a CVE alias are reported under their GHSA ID (19 chars, longer than a CVE ID)
+        // and disclosureDate is optional in the v1 contract.
+        ScanResult result = assertDoesNotThrow(() -> TestMother.scanResultWithGhsaVulnerabilityWithoutDisclosureDate()
+                .toDomain()
+                .orElseThrow());
+
+        Vulnerability ghsa =
+                result.findVulnerabilityByCVE("GHSA-5j5w-g665-5m35").orElseThrow();
+        assertEquals(Severity.High, ghsa.severity());
+        assertTrue(ghsa.disclosureDate().isEmpty());
+        assertEquals("0.31.0", ghsa.fixVersion().orElseThrow());
+
+        Package goPackage = result.packages().iterator().next();
+        assertEquals(PackageType.Golang, goPackage.type());
+        assertEquals(Set.of(goPackage), ghsa.foundInPackages());
+
+        PolicyBundleRulePkgVulnFailure failure = result.policyBundles().stream()
+                .flatMap(b -> b.rules().stream())
+                .map(PolicyBundleRulePkgVuln.class::cast)
+                .flatMap(r -> r.failures().stream())
+                .findFirst()
+                .orElseThrow();
+        assertEquals(ghsa, failure.vuln());
+        assertEquals(goPackage, failure.component());
+        assertEquals("GHSA-5j5w-g665-5m35 found in golang.org/x/crypto (0.30.0)", failure.description());
     }
 }

@@ -73,7 +73,9 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
             Vulnerability vuln = scanResult.addVulnerability(
                     jsonVuln.name(),
                     severityFromString(jsonVuln.severity()),
-                    dateFromShortString(jsonVuln.disclosureDate()),
+                    jsonVuln.optDisclosureDate()
+                            .map(JsonScanResultV1::dateFromShortString)
+                            .orElse(null),
                     jsonVuln.optSolutionDate()
                             .map(JsonScanResultV1::dateFromShortString)
                             .orElse(null),
