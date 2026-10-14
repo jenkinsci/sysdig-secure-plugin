@@ -53,7 +53,7 @@ class IaCScanE2EPipelineTests {
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
-                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.29.0", // newest-version-marker
+                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.30.2", // newest-version-marker
                 build);
         jenkins.assertLogContains("Starting scan", build);
         jenkins.assertLogContains("--iac --apiurl=https://secure.sysdig.com --loglevel=info", build);
