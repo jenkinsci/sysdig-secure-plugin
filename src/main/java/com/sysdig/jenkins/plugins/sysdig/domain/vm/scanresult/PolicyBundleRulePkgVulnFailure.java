@@ -4,13 +4,14 @@ import java.util.Objects;
 
 public class PolicyBundleRulePkgVulnFailure implements PolicyBundleRuleFailure {
     private final String remediation;
-    private final Package pkg;
+    private final Component component;
     private final Vulnerability vuln;
     private final PolicyBundleRule parent;
 
-    PolicyBundleRulePkgVulnFailure(String remediation, Package pkg, Vulnerability vuln, PolicyBundleRule parent) {
+    PolicyBundleRulePkgVulnFailure(
+            String remediation, Component component, Vulnerability vuln, PolicyBundleRule parent) {
         this.remediation = remediation;
-        this.pkg = pkg;
+        this.component = component;
         this.vuln = vuln;
         this.parent = parent;
     }
@@ -22,15 +23,15 @@ public class PolicyBundleRulePkgVulnFailure implements PolicyBundleRuleFailure {
 
     @Override
     public String description() {
-        return String.format("%s found in %s (%s)", this.vuln.cve(), this.pkg.name(), this.pkg.version());
+        return String.format("%s found in %s (%s)", this.vuln.cve(), this.component.name(), this.component.version());
     }
 
     public String remediation() {
         return remediation;
     }
 
-    public Package pkg() {
-        return pkg;
+    public Component component() {
+        return component;
     }
 
     public Vulnerability vuln() {
@@ -48,13 +49,13 @@ public class PolicyBundleRulePkgVulnFailure implements PolicyBundleRuleFailure {
         if (o == null || getClass() != o.getClass()) return false;
         PolicyBundleRulePkgVulnFailure that = (PolicyBundleRulePkgVulnFailure) o;
         return Objects.equals(remediation, that.remediation)
-                && Objects.equals(pkg, that.pkg)
+                && Objects.equals(component, that.component)
                 && Objects.equals(vuln, that.vuln)
                 && Objects.equals(parent, that.parent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(remediation, pkg, vuln, parent);
+        return Objects.hash(remediation, component, vuln, parent);
     }
 }

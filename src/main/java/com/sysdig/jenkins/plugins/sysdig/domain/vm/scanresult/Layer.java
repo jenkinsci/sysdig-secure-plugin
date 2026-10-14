@@ -10,14 +10,14 @@ public class Layer implements AggregateChild<ScanResult>, Serializable {
     private final String digest;
     private final BigInteger size;
     private final String command;
-    private final Set<Package> packages;
+    private final Set<Component> components;
     private final ScanResult root;
 
     Layer(String digest, BigInteger size, String command, ScanResult root) {
         this.digest = digest;
         this.size = size;
         this.command = command;
-        this.packages = new HashSet<>();
+        this.components = new HashSet<>();
         this.root = root;
     }
 
@@ -41,17 +41,29 @@ public class Layer implements AggregateChild<ScanResult>, Serializable {
         return root;
     }
 
-    void addPackage(Package aPackage) {
-        this.packages.add(aPackage);
+    void addComponent(Component component) {
+        this.components.add(component);
+    }
+
+    public Collection<Component> components() {
+        return Collections.unmodifiableCollection(this.components);
     }
 
     public Collection<Package> packages() {
-        return Collections.unmodifiableCollection(this.packages);
+        return componentsOf(Package.class);
+    }
+
+    public Collection<Application> applications() {
+        return componentsOf(Application.class);
+    }
+
+    private <T extends Component> Collection<T> componentsOf(Class<T> kind) {
+        return components.stream().filter(kind::isInstance).map(kind::cast).toList();
     }
 
     public Collection<Vulnerability> vulnerabilities() {
-        return this.packages().stream()
-                .flatMap(p -> p.vulnerabilities().stream())
+        return this.components().stream()
+                .flatMap(c -> c.vulnerabilities().stream())
                 .collect(Collectors.toUnmodifiableSet());
     }
 

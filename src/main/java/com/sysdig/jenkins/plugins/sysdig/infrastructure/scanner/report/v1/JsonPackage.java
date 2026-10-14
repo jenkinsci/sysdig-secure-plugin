@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 record JsonPackage(
+        String category,
         boolean isRemoved,
         boolean irRunning,
         String layerRef,

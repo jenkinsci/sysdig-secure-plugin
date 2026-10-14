@@ -1,7 +1,7 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.json;
 
 import com.google.gson.*;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
+import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Component;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Vulnerability;
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.diff.ScanResultDiff;
 import java.lang.reflect.Type;
@@ -41,16 +41,22 @@ public class ScanResultDiffSerializer implements JsonSerializer<ScanResultDiff> 
     }
 
     private String getPackageName(Vulnerability vuln) {
-        return vuln.foundInPackages().stream().map(Package::name).findFirst().orElse("N/A");
+        return vuln.foundInComponents().stream()
+                .map(Component::name)
+                .findFirst()
+                .orElse("N/A");
     }
 
     private String getPackageVersion(Vulnerability vuln) {
-        return vuln.foundInPackages().stream().map(Package::version).findFirst().orElse("N/A");
+        return vuln.foundInComponents().stream()
+                .map(Component::version)
+                .findFirst()
+                .orElse("N/A");
     }
 
     private String getPackageType(Vulnerability vuln) {
-        return vuln.foundInPackages().stream()
-                .map(p -> p.type().toString())
+        return vuln.foundInComponents().stream()
+                .map(Component::typeName)
                 .findFirst()
                 .orElse("N/A");
     }

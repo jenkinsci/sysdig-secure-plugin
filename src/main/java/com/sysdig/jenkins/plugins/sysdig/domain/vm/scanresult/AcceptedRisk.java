@@ -13,7 +13,7 @@ public class AcceptedRisk implements AggregateChild<ScanResult>, Serializable {
     private final Date createdAt;
     private final Date updatedAt;
     private final Set<Vulnerability> assignedToVulnerabilities;
-    private final Set<Package> assignedToPackages;
+    private final Set<Component> assignedToComponents;
     private final ScanResult root;
 
     public AcceptedRisk(
@@ -33,7 +33,7 @@ public class AcceptedRisk implements AggregateChild<ScanResult>, Serializable {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.assignedToVulnerabilities = new HashSet<>();
-        this.assignedToPackages = new HashSet<>();
+        this.assignedToComponents = new HashSet<>();
         this.root = root;
     }
 
@@ -75,14 +75,14 @@ public class AcceptedRisk implements AggregateChild<ScanResult>, Serializable {
         return Collections.unmodifiableSet(assignedToVulnerabilities);
     }
 
-    public void addForPackage(Package aPackage) {
-        if (assignedToPackages.add(aPackage)) {
-            aPackage.addAcceptedRisk(this);
+    public void addForComponent(Component component) {
+        if (assignedToComponents.add(component)) {
+            component.addAcceptedRisk(this);
         }
     }
 
-    public Set<Package> assignedToPackages() {
-        return Collections.unmodifiableSet(assignedToPackages);
+    public Set<Component> assignedToComponents() {
+        return Collections.unmodifiableSet(assignedToComponents);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.sysdig.jenkins.plugins.sysdig.infrastructure.scanner.report.v1;
 
 import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.*;
-import com.sysdig.jenkins.plugins.sysdig.domain.vm.scanresult.Package;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
         addLayersTo(scanResult);
         addRiskAcceptsTo(scanResult);
         addVulnerabilitiesTo(scanResult);
-        addPackagesTo(scanResult);
+        addComponentsTo(scanResult);
         addPoliciesTo(scanResult);
 
         return Optional.of(scanResult);
@@ -90,9 +90,9 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
         });
     }
 
-    private void addPackagesTo(ScanResult scanResult) {
+    private void addComponentsTo(ScanResult scanResult) {
         result().packages().entrySet().stream().forEach(entry -> {
-            String pkgId = entry.getKey();
+            String componentId = entry.getKey();
             JsonPackage jsonPkg = entry.getValue();
 
             // sysdig-cli-scanner >= 1.25.0 emits meta-packages (base OS distro, container image)
@@ -103,19 +103,13 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                     ? null
                     : scanResult.findLayerByDigest(jsonLayer.digest()).orElse(null);
 
-            Package addedPackage = scanResult.addPackage(
-                    pkgId,
-                    packageTypeFromString(jsonPkg.type()),
-                    jsonPkg.name(),
-                    jsonPkg.version(),
-                    jsonPkg.path(),
-                    layerWhereThisPackageIsFound);
+            Component component = addComponent(scanResult, componentId, jsonPkg, layerWhereThisPackageIsFound);
 
             jsonPkg.vulnerabilitiesRefs().stream()
                     .map(jsonVulnRef -> this.result().vulnerabilities().get(jsonVulnRef))
                     .map(jsonVuln ->
                             scanResult.findVulnerabilityByCVE(jsonVuln.name()).get())
-                    .forEach(addedPackage::addVulnerabilityFound);
+                    .forEach(component::addVulnerabilityFound);
 
             jsonPkg.vulnerabilitiesRefs().stream()
                     .map(jsonVulnRef -> this.result().vulnerabilities().get(jsonVulnRef))
@@ -123,8 +117,38 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
                     .map(jsonRiskRef -> result().riskAccepts().get(jsonRiskRef))
                     .map(jsonRisk ->
                             scanResult.findAcceptedRiskByID(jsonRisk.id()).get())
-                    .forEach(addedPackage::addAcceptedRisk);
+                    .forEach(component::addAcceptedRisk);
         });
+    }
+
+    /**
+     * Despite its name, {@code result.packages} holds every SBOM component, told apart by
+     * {@code category}. Scanners predating that field (e.g. 1.23.x) only report packages, so a
+     * missing category means a package. Categories without a dedicated domain kind ({@code file}
+     * or any future one) are kept as packages so their vulnerabilities and policy failures are
+     * still reported.
+     */
+    private static Component addComponent(
+            ScanResult scanResult, String id, JsonPackage jsonPkg, @Nullable Layer layer) {
+        String category = jsonPkg.category() == null ? "package" : jsonPkg.category();
+        return switch (category) {
+            case "application" ->
+                scanResult.addApplication(id, jsonPkg.type(), jsonPkg.name(), jsonPkg.version(), jsonPkg.path(), layer);
+            case "operating-system" ->
+                scanResult.addImageComponent(
+                        id, Component.ComponentKind.OperatingSystem, jsonPkg.type(), jsonPkg.name(), jsonPkg.version());
+            case "image" ->
+                scanResult.addImageComponent(
+                        id, Component.ComponentKind.ContainerImage, jsonPkg.type(), jsonPkg.name(), jsonPkg.version());
+            default ->
+                scanResult.addPackage(
+                        id,
+                        packageTypeFromString(jsonPkg.type()),
+                        jsonPkg.name(),
+                        jsonPkg.version(),
+                        jsonPkg.path(),
+                        layer);
+        };
     }
 
     private void addPoliciesTo(ScanResult scanResult) {
@@ -168,13 +192,13 @@ public record JsonScanResultV1(JsonInfo info, JsonScanner scanner, JsonResult re
         });
     }
 
-    private AbstractMap.SimpleEntry<Package, Vulnerability> getPkgAndVulnFrom(
+    private AbstractMap.SimpleEntry<Component, Vulnerability> getPkgAndVulnFrom(
             ScanResult scanResult, String jsonPackageRef, String jsonVulnerabilityRef) {
         JsonVulnerability jsonVulnerability = result().vulnerabilities().get(jsonVulnerabilityRef);
 
-        var pkg = scanResult.findPackageById(jsonPackageRef).get();
+        var component = scanResult.findComponentById(jsonPackageRef).get();
         var vuln = scanResult.findVulnerabilityByCVE(jsonVulnerability.name()).get();
-        return new AbstractMap.SimpleEntry<>(pkg, vuln);
+        return new AbstractMap.SimpleEntry<>(component, vuln);
     }
 
     /**
