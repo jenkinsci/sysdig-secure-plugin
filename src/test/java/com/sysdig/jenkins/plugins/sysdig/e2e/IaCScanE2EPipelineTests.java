@@ -53,7 +53,7 @@ class IaCScanE2EPipelineTests {
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
-                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.30.2", // newest-version-marker
+                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.32.0", // newest-version-marker
                 build);
         jenkins.assertLogContains("Starting scan", build);
         jenkins.assertLogContains("--iac --apiurl=https://secure.sysdig.com --loglevel=info", build);
@@ -72,14 +72,14 @@ class IaCScanE2EPipelineTests {
                                       isRecursive: false,
                                       severityThreshold: 'm',
                                       sysdigEnv: 'https://us2.app.sysdig.com',
-                                      version: '1.23.0'""") // oldest-version-marker
+                                      version: '1.24.0'""") // oldest-version-marker
                 .buildWithRemoteExecution();
 
         var build = jenkins.buildAndAssertStatus(Result.FAILURE, job);
 
         jenkins.assertLogContains("Attempting to download CLI", build);
         jenkins.assertLogContains(
-                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.23.0", // oldest-version-marker
+                "Downloading https://download.sysdig.com/scanning/bin/sysdig-cli-scanner/1.24.0", // oldest-version-marker
                 build);
         jenkins.assertLogContains("Starting scan", build);
         jenkins.assertLogContains("--iac --apiurl=https://us2.app.sysdig.com --loglevel=info", build);

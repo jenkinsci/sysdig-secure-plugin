@@ -235,7 +235,7 @@ class JsonScanResultTest {
 
         assertEquals(1, result.applications().size());
         Application grafana = result.applications().iterator().next();
-        assertEquals("219adaa3-9c69-4f07-adc8-90fab4a74622", grafana.id());
+        assertEquals("94cfb0f5-a6e8-447c-adfd-127bfc613bd4", grafana.id());
         assertEquals(Component.ComponentKind.Application, grafana.kind());
         assertEquals("grafana", grafana.name());
         assertEquals("9.5.21", grafana.version());
@@ -254,7 +254,7 @@ class JsonScanResultTest {
         assertTrue(layer.components().contains(grafana));
 
         // Vulnerabilities are linked both ways.
-        assertEquals(3, grafana.vulnerabilities().size());
+        assertEquals(4, grafana.vulnerabilities().size());
         // CVE-2025-1088 is only found in the application.
         Vulnerability grafanaVuln =
                 result.findVulnerabilityByCVE("CVE-2025-1088").orElseThrow();
@@ -281,7 +281,7 @@ class JsonScanResultTest {
                 .flatMap(r -> r.failures().stream())
                 .filter(f -> f.component() instanceof Package p && p.type() == PackageType.Golang)
                 .count();
-        assertEquals(206, failuresOnGoModules);
+        assertEquals(218, failuresOnGoModules);
     }
 
     @Test

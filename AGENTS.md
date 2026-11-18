@@ -83,7 +83,7 @@ Regularly update the parent POM and project dependencies to ensure security and 
     Run `just update-dependencies` (executes `mvn versions:use-latest-versions`).
 
 3.  **Update All (Recommended)**:
-    Run `just update` to update the parent POM, dependencies, flake, and the Sysdig CLI version in one go.
+    Run `just update` to update the Jenkins version, parent POM, dependencies, flake, the newest/oldest Sysdig CLI versions and regenerate the scanner fixtures in one go (fixture regeneration requires `SECURE_API_TOKEN`, optionally `SECURE_API_URL`).
 
 ### Updating Base Jenkins Version
 **Important:** Update the base Jenkins version **before** updating the parent POM or other dependencies.
@@ -99,7 +99,8 @@ Regularly update the parent POM and project dependencies to ensure security and 
     Run `just verify` to ensure the plugin builds and tests pass with the new version.
 
 ### Updating Sysdig CLI Version
-To update the embedded Sysdig CLI version used by the scanner:
+The scanner versions are tracked with `newest-version-marker` / `oldest-version-marker` comments (do not remove them):
 
-1.  Run `just update-sysdig-cli-version`.
-    This fetches the latest version from Sysdig and updates `RemoteSysdigImageScanner.java`.
+1.  Run `just update-cli-scanner` to set the default (newest) version, e.g. in `ScannerVersionResolver.java`.
+2.  Run `just update-oldest-cli-scanner` to set the oldest supported version (365-day window).
+3.  Run `just generate-scanner-fixtures` (requires `SECURE_API_TOKEN`) to regenerate the recorded scan-result fixtures for both.
