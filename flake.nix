@@ -14,7 +14,7 @@
     let
       setJavaVersion = final: prev: {
         jdk = prev.temurin-bin-21;
-        jdt-language-server = prev.jdt-language-server.override { jdk = prev.jdk; };
+        jdt-language-server = prev.jdt-language-server.override { jdk25 = prev.jdk; };
       };
     in
     flake-utils.lib.eachDefaultSystem (
